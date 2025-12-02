@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Plus, Flag, MoreVertical, Pencil, Edit2, X } from "lucide-react";
+import { CheckCircle2, Circle, Plus, Flag, MoreVertical, Pencil, Edit2, X, Bell } from "lucide-react";
 import { MOCK_VISION, VisionGoal, DailyGoal, Todo } from "@/lib/mockData";
 import { useState, useEffect } from "react";
 import { useMobileAction } from "@/lib/MobileActionContext";
@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -19,6 +21,10 @@ export default function Goals() {
   const [vision, setVision] = useState<VisionGoal>(MOCK_VISION);
   const { setAction } = useMobileAction();
   const { toast } = useToast();
+
+  // Reminder State
+  const [isReminderEnabled, setIsReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState("09:00");
 
   // Selection State - Initialize with the first item of each level
   const [selectedYearId, setSelectedYearId] = useState<string | null>(vision.children[0]?.id || null);
@@ -71,6 +77,16 @@ export default function Goals() {
       }
   }, [selectedMonthId, selectedMonth]);
 
+  const handleSetCurrentTime = () => {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      setReminderTime(`${hours}:${minutes}`);
+      toast({
+          title: "시간 설정 완료",
+          description: `매일 ${hours}:${minutes}에 알림을 보내드립니다.`,
+      });
+  };
 
   const toggleTodo = (dailyId: string, todoId: string) => {
       const newVision = JSON.parse(JSON.stringify(vision)) as VisionGoal;
@@ -174,7 +190,46 @@ export default function Goals() {
   return (
     <Layout>
       <div className="space-y-8 max-w-5xl mx-auto pb-20 px-4 md:px-0">
-        <div className="text-center mb-8 pt-6">
+        
+        {/* Reminder Section */}
+        <div className="flex justify-between items-center bg-[#F9FAFB] p-4 rounded-xl mb-6">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-white rounded-full shadow-sm text-[#3182F6]">
+                    <Bell className="h-5 w-5" />
+                </div>
+                <div>
+                    <h3 className="text-sm font-bold text-[#191F28]">Remind Me</h3>
+                    <p className="text-xs text-[#8B95A1]">매일 목표 점검 알림 받기</p>
+                </div>
+            </div>
+            <div className="flex items-center gap-3">
+                 {isReminderEnabled && (
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-5 duration-300">
+                        <Input 
+                            type="time" 
+                            value={reminderTime}
+                            onChange={(e) => setReminderTime(e.target.value)}
+                            className="w-28 h-8 text-xs bg-white border-none shadow-sm"
+                        />
+                        <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 text-xs bg-white border-none shadow-sm text-[#3182F6] hover:text-[#2b72d7]"
+                            onClick={handleSetCurrentTime}
+                        >
+                            Now
+                        </Button>
+                    </div>
+                 )}
+                 <Switch 
+                    checked={isReminderEnabled}
+                    onCheckedChange={setIsReminderEnabled}
+                    className="data-[state=checked]:bg-[#3182F6]"
+                 />
+            </div>
+        </div>
+
+        <div className="text-center mb-8 pt-2">
             <h2 className="text-[28px] font-bold text-[#191F28]">목표 관리 (Vision Tree)</h2>
             <p className="text-[#8B95A1] mt-2 text-lg">꿈을 현실로 만드는 가장 확실한 방법</p>
         </div>
@@ -226,8 +281,10 @@ export default function Goals() {
                                     )}
                                 </div>
                                 <div>
-                                    <Progress value={year.progress} className="h-1.5 mb-1" indicatorClassName={year.progress === 100 ? "bg-[#00BFA5]" : selectedYearId === year.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                    <p className="text-xs font-bold text-[#8B95A1]">{year.progress}%</p>
+                                    <div className="flex justify-between items-end mb-1">
+                                        <Progress value={year.progress} className="h-1.5 flex-1 mr-2" indicatorClassName={year.progress === 100 ? "bg-[#00BFA5]" : selectedYearId === year.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                        <span className="text-[10px] font-bold text-[#8B95A1] whitespace-nowrap">{year.progress}%</span>
+                                    </div>
                                 </div>
                             </CardContent>
                             <div className="absolute top-3 right-3">
@@ -277,8 +334,10 @@ export default function Goals() {
                                     )}
                                 </div>
                                 <div>
-                                    <Progress value={half.progress} className="h-1.5 mb-1" indicatorClassName={half.progress === 100 ? "bg-[#00BFA5]" : selectedHalfYearId === half.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                    <p className="text-xs font-bold text-[#8B95A1]">{half.progress}%</p>
+                                    <div className="flex justify-between items-end mb-1">
+                                        <Progress value={half.progress} className="h-1.5 flex-1 mr-2" indicatorClassName={half.progress === 100 ? "bg-[#00BFA5]" : selectedHalfYearId === half.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                        <span className="text-[10px] font-bold text-[#8B95A1] whitespace-nowrap">{half.progress}%</span>
+                                    </div>
                                 </div>
                             </CardContent>
                             <div className="absolute top-3 right-3">
@@ -328,7 +387,10 @@ export default function Goals() {
                                         <p className="text-[10px] text-[#8B95A1] mb-2 line-clamp-2 leading-tight">{month.description}</p>
                                     )}
                                 </div>
-                                <Progress value={month.progress} className="h-1" indicatorClassName={month.progress === 100 ? "bg-[#00BFA5]" : selectedMonthId === month.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                <div className="flex items-center gap-2">
+                                    <Progress value={month.progress} className="h-1 flex-1" indicatorClassName={month.progress === 100 ? "bg-[#00BFA5]" : selectedMonthId === month.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                    <span className="text-[9px] font-bold text-[#8B95A1] w-5 text-right">{month.progress}%</span>
+                                </div>
                             </CardContent>
                             <div className="absolute top-2 right-2">
                                 <CheckCircle2 className={cn("w-3 h-3", month.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
@@ -377,7 +439,10 @@ export default function Goals() {
                                         <p className="text-[10px] text-[#8B95A1] mb-2 line-clamp-2 leading-tight">{week.description}</p>
                                     )}
                                 </div>
-                                <Progress value={week.progress} className="h-1" indicatorClassName={week.progress === 100 ? "bg-[#00BFA5]" : selectedWeekId === week.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                <div className="flex items-center gap-2">
+                                    <Progress value={week.progress} className="h-1 flex-1" indicatorClassName={week.progress === 100 ? "bg-[#00BFA5]" : selectedWeekId === week.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                    <span className="text-[9px] font-bold text-[#8B95A1] w-5 text-right">{week.progress}%</span>
+                                </div>
                             </CardContent>
                             <div className="absolute top-2 right-2">
                                 <CheckCircle2 className={cn("w-3 h-3", week.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
@@ -414,21 +479,19 @@ export default function Goals() {
                             isCompleted ? "border-l-[#00BFA5]" : "border-l-[#3182F6]"
                         )}>
                             <div className="p-3 flex-1 flex flex-col relative">
-                                <div className="flex justify-between items-start mb-2 pr-6">
+                                <div className="flex justify-between items-start mb-2">
                                     <span className="text-xs font-bold text-[#191F28]">{day.title}</span>
-                                    <div className="flex gap-1">
+                                    <div className="flex items-center gap-1">
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 
-                                            className="h-6 w-6 -mt-1 -mr-1 text-[#B0B8C1] hover:text-[#3182F6]"
+                                            className="h-6 w-6 text-[#B0B8C1] hover:text-[#3182F6]"
                                             onClick={(e) => openEditModal(e, day)}
                                         >
                                             <Edit2 className="h-3 w-3" />
                                         </Button>
+                                        <CheckCircle2 className={cn("w-4 h-4", isCompleted ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
                                     </div>
-                                </div>
-                                <div className="absolute top-2 right-8">
-                                    <CheckCircle2 className={cn("w-4 h-4", isCompleted ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
                                 </div>
                                 
                                 {/* Mini Todo List */}
@@ -455,8 +518,9 @@ export default function Goals() {
                                     ))}
                                 </div>
 
-                                <div className="mt-3 pt-2 border-t border-[#F2F4F6]">
-                                    <Progress value={day.progress} className="h-1" indicatorClassName={isCompleted ? "bg-[#00BFA5]" : "bg-[#3182F6]"} />
+                                <div className="mt-3 pt-2 border-t border-[#F2F4F6] flex items-center gap-2">
+                                    <Progress value={day.progress} className="h-1 flex-1" indicatorClassName={isCompleted ? "bg-[#00BFA5]" : "bg-[#3182F6]"} />
+                                    <span className="text-[9px] font-bold text-[#8B95A1]">{day.progress}%</span>
                                 </div>
                             </div>
                         </Card>
