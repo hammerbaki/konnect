@@ -194,7 +194,7 @@ export default function KompassDetail() {
       <div className="space-y-8 max-w-5xl mx-auto pb-20 px-4 md:px-0">
         
         {/* Reminder Section */}
-        <div className="flex justify-between items-center bg-[#F9FAFB] p-4 rounded-xl mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#F9FAFB] p-4 rounded-xl mb-6 gap-4 sm:gap-0">
             <div className="flex items-center gap-3">
                 <div className="p-2 bg-white rounded-full shadow-sm text-[#3182F6]">
                     <Bell className="h-5 w-5" />
@@ -204,7 +204,7 @@ export default function KompassDetail() {
                     <p className="text-xs text-[#8B95A1]">매일 목표 점검 알림 받기</p>
                 </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
                  {isReminderEnabled && (
                     <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-5 duration-300">
                         <Input 
@@ -259,7 +259,7 @@ export default function KompassDetail() {
              <div className="text-center">
                 <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Yearly</Badge>
              </div>
-             <div className="grid grid-cols-3 gap-3">
+             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {vision.children.map((year) => (
                     <div key={year.id} className="relative">
                         <Card 
@@ -312,7 +312,7 @@ export default function KompassDetail() {
                 <div className="text-center">
                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Half-Yearly</Badge>
                 </div>
-                <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
                     {selectedYear.children.map((half) => (
                         <Card 
                             key={half.id}
@@ -366,7 +366,7 @@ export default function KompassDetail() {
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Monthly</Badge>
                 </div>
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                     {selectedHalfYear.children.map((month) => (
                         <Card 
                             key={month.id}
@@ -418,7 +418,7 @@ export default function KompassDetail() {
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Weekly</Badge>
                 </div>
-                <div className="grid grid-cols-4 gap-2 max-w-3xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 max-w-3xl mx-auto">
                     {selectedMonth.children.map((week) => (
                         <Card 
                             key={week.id}
