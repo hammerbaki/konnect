@@ -8,8 +8,30 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save } from "lucide-react";
+import { useMobileAction } from "@/lib/MobileActionContext";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Profile() {
+  const { setAction } = useMobileAction();
+  const { toast } = useToast();
+
+  const handleSave = () => {
+    toast({
+      title: "프로필 저장 완료",
+      description: "프로필 정보가 성공적으로 업데이트되었습니다.",
+    });
+  };
+
+  useEffect(() => {
+    setAction({
+      icon: Save,
+      label: "저장",
+      onClick: handleSave
+    });
+    return () => setAction(null);
+  }, []);
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto space-y-8 pb-20">
@@ -18,7 +40,7 @@ export default function Profile() {
             <h2 className="text-[28px] font-bold text-[#191F28]">내 프로필</h2>
             <p className="text-[#8B95A1] mt-1 text-lg">AI 분석의 정확도를 높이기 위해 정보를 입력해주세요.</p>
           </div>
-          <Button className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base">
+          <Button onClick={handleSave} className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base hidden md:flex">
             <Save className="h-5 w-5" /> 저장하기
           </Button>
         </div>

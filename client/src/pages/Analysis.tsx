@@ -9,6 +9,8 @@ import { Brain, Sparkles, Loader2, ArrowRight, CheckCircle2, Settings } from "lu
 import { useState } from "react";
 import { useTokens } from "@/lib/TokenContext";
 import { useToast } from "@/hooks/use-toast";
+import { useMobileAction } from "@/lib/MobileActionContext";
+import { useEffect } from "react";
 import { Link } from "wouter";
 
 export default function Analysis() {
@@ -17,6 +19,22 @@ export default function Analysis() {
   const [targetRole, setTargetRole] = useState("시니어 프로덕트 매니저");
   const { credits, deductCredit } = useTokens();
   const { toast } = useToast();
+  const { setAction } = useMobileAction();
+
+  useEffect(() => {
+    setAction({
+      icon: showResults ? ArrowRight : Brain,
+      label: showResults ? "리포트" : "분석",
+      onClick: () => {
+        if (showResults) {
+           window.location.href = "/report";
+        } else {
+           handleAnalyze();
+        }
+      }
+    });
+    return () => setAction(null);
+  }, [showResults, isAnalyzing, targetRole, credits]);
 
   const handleAnalyze = () => {
     if (credits <= 0) {

@@ -1,5 +1,6 @@
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { MobileNav } from "./MobileNav";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,9 +16,10 @@ export function Layout({ children }: LayoutProps) {
       
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto px-4 py-6 md:p-10">
+        <main className="flex-1 overflow-y-auto px-4 py-6 md:p-10 pb-[100px] md:pb-10">
           {children}
         </main>
+        <MobileNav />
       </div>
     </div>
   );

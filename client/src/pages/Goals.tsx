@@ -5,10 +5,30 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Circle, Plus, ArrowRight, Calendar, Clock } from "lucide-react";
 import { MOCK_GOALS } from "@/lib/mockData";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useMobileAction } from "@/lib/MobileActionContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Goals() {
   const [goals, setGoals] = useState(MOCK_GOALS);
+  const { setAction } = useMobileAction();
+  const { toast } = useToast();
+
+  const handleNewGoal = () => {
+      toast({
+          title: "새 목표 만들기",
+          description: "목표 생성 기능이 곧 업데이트될 예정입니다.",
+      });
+  };
+
+  useEffect(() => {
+    setAction({
+      icon: Plus,
+      label: "추가",
+      onClick: handleNewGoal
+    });
+    return () => setAction(null);
+  }, []);
 
   const toggleStep = (goalId: string, stepId: string) => {
     setGoals(goals.map(goal => {
