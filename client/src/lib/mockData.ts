@@ -22,6 +22,13 @@ export interface CareerAnalysis {
   marketTrend: "상승세" | "안정적" | "하락세";
   skillsGap: string[];
   strengths: string[];
+  recommendedRoles: {
+    title: string;
+    matchScore: number;
+    description: string;
+    requirements: string[];
+    salary: string;
+  }[];
 }
 
 export interface UserProfile {
@@ -79,4 +86,27 @@ export const MOCK_ANALYSIS: CareerAnalysis = {
   marketTrend: "상승세",
   skillsGap: ["고급 SQL 활용 능력", "팀 리더십", "전략적 기획"],
   strengths: ["제품 생애주기 관리", "사용자 리서치", "이해관계자 관리"],
+  recommendedRoles: [
+    {
+      title: "시니어 프로덕트 매니저",
+      matchScore: 92,
+      description: "제품의 전체 라이프사이클을 주도하고 비즈니스 목표 달성을 위한 전략을 수립합니다.",
+      requirements: ["5년 이상의 PM 경력", "데이터 분석 능력", "Agile 방법론 숙련"],
+      salary: "₩8,000 ~ 12,000만"
+    },
+    {
+      title: "프로덕트 오너 (PO)",
+      matchScore: 85,
+      description: "개발 팀과 밀접하게 협업하며 백로그를 관리하고 제품 가치를 극대화합니다.",
+      requirements: ["CSPO 자격증 우대", "JIRA/Confluence 숙련", "기술적 이해도"],
+      salary: "₩7,000 ~ 10,000만"
+    },
+    {
+      title: "전략 기획 매니저",
+      matchScore: 78,
+      description: "회사의 장기적인 성장 전략을 수립하고 신규 사업 기회를 발굴합니다.",
+      requirements: ["컨설팅 경험 우대", "재무 모델링 능력", "시장 분석 역량"],
+      salary: "₩7,500 ~ 11,000만"
+    }
+  ]
 };

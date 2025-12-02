@@ -2,7 +2,10 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MOCK_ANALYSIS, MOCK_GOALS } from "@/lib/mockData";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { ArrowUpRight, TrendingUp, Activity, Award, ChevronRight } from "lucide-react";
+import { ArrowUpRight, TrendingUp, Activity, Award, ChevronRight, FileText, Target, User } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 const data = [
   { name: '1월', score: 65 },
@@ -20,6 +23,57 @@ export default function Dashboard() {
         <div>
           <h2 className="text-[28px] font-bold text-[#191F28]">대시보드</h2>
           <p className="text-[#8B95A1] mt-1 text-lg">반가워요! 현재 커리어 성장 궤적을 확인해보세요.</p>
+        </div>
+
+        {/* Progress Overview Section */}
+        <div className="grid gap-6 md:grid-cols-2">
+            {/* Vision Tree Progress */}
+            <Card className="toss-card p-6 bg-gradient-to-br from-[#191F28] to-[#2C3542] text-white border-none">
+                <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                            <Target className="h-5 w-5 text-[#3182F6]" /> 비전 트리 진행률
+                        </CardTitle>
+                        <CardDescription className="text-gray-400 mt-1">최종 커리어 목표 달성까지</CardDescription>
+                    </div>
+                    <span className="text-3xl font-bold text-[#3182F6]">45%</span>
+                </CardHeader>
+                <CardContent className="px-0 pb-0 mt-4">
+                    <Progress value={45} className="h-3 bg-white/10" indicatorClassName="bg-[#3182F6]" />
+                    <div className="mt-4 flex justify-between text-sm text-gray-400">
+                        <span>현재: 시니어 PM 직무 전환</span>
+                        <span>목표: CPO (2030)</span>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Essay Progress */}
+            <Card className="toss-card p-6">
+                <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                            <FileText className="h-5 w-5 text-[#00BFA5]" /> 자기소개서 완성도
+                        </CardTitle>
+                        <CardDescription className="text-[#8B95A1] mt-1">경력 기술서 및 포트폴리오</CardDescription>
+                    </div>
+                    <Button variant="outline" className="rounded-xl h-10 text-[#00BFA5] border-[#00BFA5]/20 hover:bg-[#00BFA5]/10 font-bold">
+                        작성하기
+                    </Button>
+                </CardHeader>
+                <CardContent className="px-0 pb-0 mt-4">
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-[#4E5968] font-medium">핵심 역량 기술</span>
+                            <span className="text-[#00BFA5] font-bold">완료</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-[#4E5968] font-medium">프로젝트 성과</span>
+                            <span className="text-[#FFB300] font-bold">작성중</span>
+                        </div>
+                        <Progress value={70} className="h-2 bg-[#F2F4F6] mt-2" indicatorClassName="bg-[#00BFA5]" />
+                    </div>
+                </CardContent>
+            </Card>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
