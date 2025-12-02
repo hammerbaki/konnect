@@ -2,24 +2,51 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronRight, Flag, Compass } from "lucide-react";
-import { MOCK_VISIONS } from "@/lib/mockData";
+import { Plus, ChevronRight, Flag, Compass, X } from "lucide-react";
+import { MOCK_VISIONS, generateTree } from "@/lib/mockData";
 import { useLocation } from "wouter";
 import { useMobileAction } from "@/lib/MobileActionContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Goals() {
   const [_, setLocation] = useLocation();
   const { setAction } = useMobileAction();
   const { toast } = useToast();
+  
+  // Creation Form State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newTargetYear, setNewTargetYear] = useState(String(new Date().getFullYear() + 3));
+  const [newDescription, setNewDescription] = useState("");
 
   const handleNewKompass = () => {
-    toast({
-      title: "새 Kompass 만들기",
-      description: "준비 중인 기능입니다.",
-    });
+    setIsCreateModalOpen(true);
+  };
+
+  const handleSubmit = () => {
+      if (!newTitle || !newTargetYear) {
+          toast({ title: "필수 입력 항목", description: "목표 제목과 목표 연도를 입력해주세요.", variant: "destructive" });
+          return;
+      }
+
+      const newId = String(MOCK_VISIONS.length + 1);
+      const newKompass = generateTree(newId, newTitle, parseInt(newTargetYear));
+      newKompass.description = newDescription;
+      
+      // In a real app, this would be a server call. 
+      // For mockup, we push to the exported array (which persists in memory until refresh)
+      MOCK_VISIONS.unshift(newKompass);
+      
+      setIsCreateModalOpen(false);
+      setNewTitle("");
+      setNewDescription("");
+      toast({ title: "Kompass 생성 완료", description: "새로운 목표 나침반이 생성되었습니다." });
   };
 
   useEffect(() => {
@@ -92,6 +119,61 @@ export default function Goals() {
                 </Card>
             ))}
         </div>
+
+        {/* Create Modal */}
+        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogContent className="sm:max-w-md rounded-2xl">
+                <DialogHeader>
+                    <DialogTitle className="text-xl font-bold text-[#191F28]">새 Kompass 만들기</DialogTitle>
+                </DialogHeader>
+                
+                <div className="space-y-6 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="title" className="text-sm font-bold text-[#333D4B]">목표 제목 (Vision)</Label>
+                        <Input 
+                            id="title" 
+                            placeholder="예: 유니콘 기업 CPO 되기" 
+                            value={newTitle}
+                            onChange={(e) => setNewTitle(e.target.value)}
+                            className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6]"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="year" className="text-sm font-bold text-[#333D4B]">목표 연도</Label>
+                        <Input 
+                            id="year" 
+                            type="number"
+                            placeholder="예: 2028" 
+                            value={newTargetYear}
+                            onChange={(e) => setNewTargetYear(e.target.value)}
+                            className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6]"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="desc" className="text-sm font-bold text-[#333D4B]">설명 (선택)</Label>
+                        <Textarea 
+                            id="desc" 
+                            placeholder="이 목표를 달성하고 싶은 이유나 구체적인 모습을 적어보세요." 
+                            value={newDescription}
+                            onChange={(e) => setNewDescription(e.target.value)}
+                            className="min-h-[100px] rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6] resize-none"
+                        />
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button 
+                        onClick={handleSubmit} 
+                        className="w-full h-12 bg-[#3182F6] hover:bg-[#2b72d7] text-white font-bold rounded-xl text-lg"
+                    >
+                        Kompass 생성하기
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
       </div>
     </Layout>
   );

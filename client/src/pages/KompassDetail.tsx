@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Plus, Flag, Bell, ChevronRight } from "lucide-react";
+import { CheckCircle2, Circle, Plus, Flag, Bell, Target } from "lucide-react";
 import { MOCK_VISIONS, VisionGoal, DailyGoal } from "@/lib/mockData";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,8 @@ export default function KompassDetail() {
   const [vision, setVision] = useState<VisionGoal | null>(null);
   const { setAction } = useMobileAction();
   const { toast } = useToast();
+
+  const dailyCardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Reminder State
   const [isReminderEnabled, setIsReminderEnabled] = useState(false);
@@ -53,21 +55,86 @@ export default function KompassDetail() {
   const selectedMonth = selectedHalfYear?.children.find(m => m.id === selectedMonthId);
   const selectedWeek = selectedMonth?.children.find(w => w.id === selectedWeekId);
 
-  const handleNewGoal = () => {
-      toast({
-          title: "새 목표 만들기",
-          description: "이 기능은 준비 중입니다.",
-      });
+  const handleGoToToday = () => {
+      if (!vision) return;
+
+      const today = new Date();
+      const currentYearVal = today.getFullYear();
+      const currentMonthVal = today.getMonth() + 1;
+      const currentDayVal = today.getDate();
+
+      // Find Year
+      const yearNode = vision.children.find(y => y.title.includes(String(currentYearVal)));
+      if (!yearNode) {
+          toast({ title: "오늘 날짜를 찾을 수 없습니다.", description: `${currentYearVal}년 목표가 없습니다.` });
+          return;
+      }
+
+      // Find Month
+      let monthNode;
+      let halfNode;
+      
+      // Search through halves to find month
+      for (const h of yearNode.children) {
+          const m = h.children.find(m => m.title === `${currentMonthVal}월`);
+          if (m) {
+              monthNode = m;
+              halfNode = h;
+              break;
+          }
+      }
+
+      if (!monthNode || !halfNode) {
+           toast({ title: "오늘 날짜를 찾을 수 없습니다.", description: `${currentMonthVal}월 목표가 없습니다.` });
+           return;
+      }
+
+      // Find Week (Approximate logic: 1-7 -> W1, 8-14 -> W2, etc.)
+      const weekNum = Math.ceil(currentDayVal / 7);
+      const weekNode = monthNode.children.find(w => w.title === `${weekNum}주차`);
+      
+      if (!weekNode) {
+           // Fallback to first week if 5th week doesn't exist or logic fails
+           toast({ title: "해당 주차를 찾을 수 없습니다.", description: `${weekNum}주차 목표가 없습니다.` });
+           return;
+      }
+
+      // Find Day
+      // In mock data, days are just "Day 1", "Day 2"... 
+      // We map currentDayVal % 7 || 7 to Day X? 
+      // Or just map 1st day of week to today?
+      // Let's try to find "Day {dayOfWeek}" where 1=Mon... 
+      // Actually mock data is just 1-7. 
+      // Let's just select the current day of the week (0-6 -> 1-7)
+      let dayOfWeek = today.getDay(); // 0=Sun, 1=Mon...
+      if (dayOfWeek === 0) dayOfWeek = 7; // Make Sunday 7
+      
+      const dayNode = weekNode.children.find(d => d.title === `Day ${dayOfWeek}`);
+
+      // Update State
+      setSelectedYearId(yearNode.id);
+      setSelectedHalfYearId(halfNode.id);
+      setSelectedMonthId(monthNode.id);
+      setSelectedWeekId(weekNode.id);
+
+      toast({ title: "오늘 날짜로 이동했습니다.", description: `${currentYearVal}년 ${currentMonthVal}월 ${weekNum}주차 Day ${dayOfWeek}` });
+
+      // Scroll to view
+      setTimeout(() => {
+          if (dayNode && dailyCardRefs.current[dayNode.id]) {
+              dailyCardRefs.current[dayNode.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+      }, 500); // Wait for animation
   };
 
   useEffect(() => {
     setAction({
-      icon: Plus,
-      label: "추가",
-      onClick: handleNewGoal
+      icon: Target,
+      label: "Today",
+      onClick: handleGoToToday
     });
     return () => setAction(null);
-  }, []);
+  }, [vision]);
 
   // Update selections when parent changes to keep drill-down valid
   useEffect(() => {
@@ -480,7 +547,10 @@ export default function KompassDetail() {
                             "toss-card hover:shadow-md transition-shadow h-full flex flex-col border-l-4",
                             isCompleted ? "border-l-[#00BFA5]" : "border-l-[#3182F6]"
                         )}>
-                            <div className="p-4 flex-1 flex flex-col relative">
+                            <div 
+                                className="p-4 flex-1 flex flex-col relative"
+                                ref={(el) => { dailyCardRefs.current[day.id] = el; }}
+                            >
                                 <div className="flex justify-between items-start mb-4 pr-6">
                                     <span className="text-lg font-bold text-[#191F28]">{day.title}</span>
                                 </div>

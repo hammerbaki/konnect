@@ -94,8 +94,7 @@ export interface UserProfile {
   };
 }
 
-// Helper to generate tree
-function generateTree(idSuffix: string, title: string, targetYear: number): VisionGoal {
+export function generateTree(idSuffix: string, title: string, targetYear: number, startYear: number = new Date().getFullYear()): VisionGoal {
     const vision: VisionGoal = {
         id: `vision-${idSuffix}`,
         title: title,
@@ -115,7 +114,7 @@ function generateTree(idSuffix: string, title: string, targetYear: number): Visi
 
     // 3 Years
     for (let y = 0; y < 3; y++) {
-        const yearVal = 2025 + y;
+        const yearVal = startYear + y;
         const year: YearlyGoal = {
             id: `year-${yearVal}-${idSuffix}`,
             title: `${yearVal}년`,
