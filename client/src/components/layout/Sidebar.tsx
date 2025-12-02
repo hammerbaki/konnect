@@ -12,7 +12,7 @@ export function Sidebar() {
   ];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-white border-r border-[#E5E8EB]">
       <div className="flex h-16 items-center px-6 mb-6">
         <div className="flex items-center gap-3 font-bold text-2xl text-[#191F28]">
           <div className="h-10 w-10 rounded-xl bg-[#3182F6] flex items-center justify-center text-white shadow-md shadow-blue-500/20">

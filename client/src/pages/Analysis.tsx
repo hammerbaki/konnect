@@ -14,6 +14,7 @@ import { useState } from "react";
 
 import { useTokens } from "@/lib/TokenContext";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
 export default function Analysis() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -270,9 +271,11 @@ export default function Analysis() {
                     </div>
 
                     {showResults && (
-                      <Button className="w-full h-12 rounded-xl border border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6] font-bold" variant="outline">
-                        전체 리포트 보기
-                      </Button>
+                      <Link href="/report">
+                        <Button className="w-full h-12 rounded-xl border border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6] font-bold" variant="outline">
+                          전체 리포트 보기
+                        </Button>
+                      </Link>
                     )}
                   </>
                 )}

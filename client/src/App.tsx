@@ -9,6 +9,8 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/not-found";
 import Analysis from "./pages/Analysis";
 import Goals from "./pages/Goals";
+import Profile from "./pages/Profile";
+import Report from "./pages/Report";
 
 // Temporary placeholders until we create the files
 const PlaceholderAnalysis = () => <div>Analysis Page Placeholder</div>;
@@ -21,6 +23,8 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/analysis" component={Analysis} />
       <Route path="/goals" component={Goals} />
+      <Route path="/profile" component={Profile} />
+      <Route path="/report" component={Report} />
       <Route component={NotFound} />
     </Switch>
   );

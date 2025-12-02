@@ -17,6 +17,7 @@ import {
 import { RedeemDialog } from "@/components/token/RedeemDialog";
 import { useTokens } from "@/lib/TokenContext";
 import { Sidebar } from "./Sidebar";
+import { Link } from "wouter";
 
 export function Header() {
   const { credits } = useTokens();
@@ -98,9 +99,11 @@ export function Header() {
                  <DropdownMenuSeparator className="bg-[#F2F4F6]" />
             </div>
 
-            <DropdownMenuItem className="rounded-lg px-3 py-2.5 text-[#4E5968] focus:bg-[#F2F4F6] focus:text-[#191F28] font-medium cursor-pointer">
-              프로필 설정
-            </DropdownMenuItem>
+            <Link href="/profile">
+              <DropdownMenuItem className="rounded-lg px-3 py-2.5 text-[#4E5968] focus:bg-[#F2F4F6] focus:text-[#191F28] font-medium cursor-pointer">
+                프로필 설정
+              </DropdownMenuItem>
+            </Link>
             <DropdownMenuItem className="rounded-lg px-3 py-2.5 text-[#4E5968] focus:bg-[#F2F4F6] focus:text-[#191F28] font-medium cursor-pointer">
               환경설정
             </DropdownMenuItem>
