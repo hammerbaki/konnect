@@ -26,7 +26,7 @@ export default function Dashboard() {
           <Card className="toss-card hover:scale-[1.02] transition-transform">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-semibold text-[#8B95A1]">커리어 매칭 점수</CardTitle>
-              <div className="p-2 bg-blue-50 rounded-full">
+              <div className="p-2 bg-blue-50 rounded-xl">
                 <Activity className="h-4 w-4 text-[#3182F6]" />
               </div>
             </CardHeader>
@@ -44,7 +44,7 @@ export default function Dashboard() {
           <Card className="toss-card hover:scale-[1.02] transition-transform">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-semibold text-[#8B95A1]">시장 트렌드</CardTitle>
-              <div className="p-2 bg-emerald-50 rounded-full">
+              <div className="p-2 bg-emerald-50 rounded-xl">
                 <TrendingUp className="h-4 w-4 text-[#00BFA5]" />
               </div>
             </CardHeader>
@@ -59,7 +59,7 @@ export default function Dashboard() {
           <Card className="toss-card hover:scale-[1.02] transition-transform">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-semibold text-[#8B95A1]">진행중인 목표</CardTitle>
-              <div className="p-2 bg-amber-50 rounded-full">
+              <div className="p-2 bg-amber-50 rounded-xl">
                 <Award className="h-4 w-4 text-[#FFB300]" />
               </div>
             </CardHeader>
@@ -74,7 +74,7 @@ export default function Dashboard() {
           <Card className="toss-card hover:scale-[1.02] transition-transform">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-semibold text-[#8B95A1]">예상 연봉 범위</CardTitle>
-              <div className="p-2 bg-purple-50 rounded-full">
+              <div className="p-2 bg-purple-50 rounded-xl">
                 <ArrowUpRight className="h-4 w-4 text-[#9852F8]" />
               </div>
             </CardHeader>
@@ -149,7 +149,7 @@ export default function Dashboard() {
             <CardContent className="px-0 mt-4">
               <div className="space-y-4">
                 {MOCK_ANALYSIS.skillsGap.map((skill, i) => (
-                  <div key={skill} className="flex items-center p-4 bg-[#F2F4F6] rounded-2xl group hover:bg-[#E8F3FF] transition-colors cursor-pointer">
+                  <div key={skill} className="flex items-center p-4 bg-[#F2F4F6] rounded-xl group hover:bg-[#E8F3FF] transition-colors cursor-pointer">
                     <div className="w-2.5 h-2.5 rounded-full bg-[#E44E48] mr-4" />
                     <div className="space-y-1 flex-1">
                       <p className="text-base font-bold text-[#333D4B]">{skill}</p>

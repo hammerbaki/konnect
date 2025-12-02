@@ -46,7 +46,7 @@ export default function Goals() {
             <h2 className="text-[28px] font-bold text-[#191F28]">커리어 목표</h2>
             <p className="text-[#8B95A1] mt-1 text-lg">다음 커리어 마일스톤을 향한 진척도를 관리하세요.</p>
           </div>
-          <Button className="gap-2 h-12 px-6 rounded-[16px] bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base">
+          <Button className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base">
             <Plus className="h-5 w-5" /> 새 목표 만들기
           </Button>
         </div>
@@ -80,7 +80,7 @@ export default function Goals() {
                     {goal.steps.map((step) => (
                       <div 
                         key={step.id} 
-                        className={`flex items-center p-4 rounded-[16px] border transition-all duration-200 cursor-pointer group ${
+                        className={`flex items-center p-4 rounded-xl border transition-all duration-200 cursor-pointer group ${
                           step.isCompleted 
                             ? 'bg-[#F9FAFB] border-transparent' 
                             : 'bg-white border-[#E5E8EB] hover:border-[#3182F6] hover:shadow-sm'
@@ -103,7 +103,7 @@ export default function Goals() {
                 <Button variant="ghost" size="sm" className="text-[#8B95A1] hover:text-[#3182F6] hover:bg-transparent font-medium text-sm px-0">
                   목표 상세 수정
                 </Button>
-                <Button variant="ghost" size="sm" className="text-[#3182F6] font-bold hover:bg-[#E8F3FF] rounded-[12px]">
+                <Button variant="ghost" size="sm" className="text-[#3182F6] font-bold hover:bg-[#E8F3FF] rounded-lg">
                   분석 결과 보기 <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardFooter>

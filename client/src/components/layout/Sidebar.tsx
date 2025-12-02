@@ -12,17 +12,17 @@ export function Sidebar() {
   ];
 
   return (
-    <div className="hidden md:flex h-full w-[280px] flex-col border-r border-transparent bg-[#F2F4F6] p-4">
-      <div className="flex h-16 items-center px-4 mb-6">
+    <div className="h-full flex flex-col">
+      <div className="flex h-16 items-center px-6 mb-6">
         <div className="flex items-center gap-3 font-bold text-2xl text-[#191F28]">
-          <div className="h-10 w-10 rounded-[14px] bg-[#3182F6] flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+          <div className="h-10 w-10 rounded-xl bg-[#3182F6] flex items-center justify-center text-white shadow-md shadow-blue-500/20">
             K
           </div>
           Konnect
         </div>
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1 px-4">
         <nav className="space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -31,9 +31,9 @@ export function Sidebar() {
               <Link key={item.href} href={item.href}>
                 <a
                   className={cn(
-                    "flex items-center gap-4 rounded-[20px] px-5 py-4 text-base font-semibold transition-all duration-200",
+                    "flex items-center gap-4 rounded-xl px-5 py-4 text-base font-semibold transition-all duration-200",
                     isActive
-                      ? "bg-white text-[#3182F6] shadow-[0_4px_16px_rgba(0,0,0,0.04)] scale-[1.02]"
+                      ? "bg-white text-[#3182F6] shadow-sm scale-[1.02]"
                       : "text-[#8B95A1] hover:bg-white/50 hover:text-[#4E5968]"
                   )}
                 >
@@ -46,9 +46,9 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <div className="mt-auto">
+      <div className="mt-auto p-4">
         <Link href="/">
-          <a className="flex w-full items-center gap-3 rounded-[16px] px-5 py-3 text-sm font-medium text-[#8B95A1] hover:bg-red-50 hover:text-[#E44E48] transition-colors">
+          <a className="flex w-full items-center gap-3 rounded-xl px-5 py-3 text-sm font-medium text-[#8B95A1] hover:bg-red-50 hover:text-[#E44E48] transition-colors">
             <LogOut className="h-4 w-4" />
             로그아웃
           </a>

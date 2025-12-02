@@ -50,12 +50,12 @@ export function RedeemDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-[#FFB300] hover:bg-[#FFCA28] text-white border-none shadow-sm gap-2 rounded-[12px] font-bold">
+        <Button size="sm" className="bg-[#FFB300] hover:bg-[#FFCA28] text-white border-none shadow-sm gap-2 rounded-lg font-bold">
           <Ticket className="h-4 w-4" />
           토큰 충전
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] rounded-[24px] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.12)] border-none">
+      <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.12)] border-none">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-[#191F28]">액세스 토큰 등록</DialogTitle>
           <DialogDescription className="text-[#8B95A1] mt-2">
@@ -71,7 +71,7 @@ export function RedeemDialog() {
                 placeholder="예: KNC-8829-XJ"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                className="uppercase tracking-widest font-mono h-12 rounded-[16px] bg-[#F2F4F6] border-none text-center text-lg font-bold focus-visible:ring-[#FFB300]"
+                className="uppercase tracking-widest font-mono h-12 rounded-xl bg-[#F2F4F6] border-none text-center text-lg font-bold focus-visible:ring-[#FFB300]"
               />
             </div>
           </div>
@@ -79,7 +79,7 @@ export function RedeemDialog() {
             <Button 
               type="submit" 
               disabled={isLoading || !code}
-              className="w-full h-12 rounded-[16px] bg-[#191F28] hover:bg-[#333D4B] text-white font-bold text-base"
+              className="w-full h-12 rounded-xl bg-[#191F28] hover:bg-[#333D4B] text-white font-bold text-base"
             >
               {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
               코드 등록하기

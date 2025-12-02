@@ -56,7 +56,7 @@ export default function Landing() {
           <p className="text-[#8B95A1] mt-2 text-lg">AI 기반 커리어 인텔리전스 플랫폼</p>
         </div>
 
-        <Card className="toss-card border-none shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-[32px] overflow-hidden">
+        <Card className="toss-card border-none shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-[24px] overflow-hidden">
           <CardHeader className="space-y-2 pt-8 px-8">
             <CardTitle className="text-2xl font-bold text-[#191F28]">
               {isLogin ? "반가워요 👋" : "회원가입"}

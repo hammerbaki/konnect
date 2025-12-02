@@ -53,10 +53,10 @@ export default function Analysis() {
           {/* Configuration Panel */}
           <div className="lg:col-span-2 space-y-6">
             <Tabs defaultValue="hard" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-[#F2F4F6] p-1 rounded-[16px]">
-                <TabsTrigger value="hard" className="rounded-[12px] py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:text-[#191F28] data-[state=active]:shadow-sm">필수 조건</TabsTrigger>
-                <TabsTrigger value="soft" className="rounded-[12px] py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:text-[#191F28] data-[state=active]:shadow-sm">선호 조건</TabsTrigger>
-                <TabsTrigger value="threshold" className="rounded-[12px] py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:text-[#191F28] data-[state=active]:shadow-sm">자격 요건</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 bg-[#F2F4F6] p-1 rounded-xl">
+                <TabsTrigger value="hard" className="rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:text-[#191F28] data-[state=active]:shadow-sm">필수 조건</TabsTrigger>
+                <TabsTrigger value="soft" className="rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:text-[#191F28] data-[state=active]:shadow-sm">선호 조건</TabsTrigger>
+                <TabsTrigger value="threshold" className="rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:text-[#191F28] data-[state=active]:shadow-sm">자격 요건</TabsTrigger>
               </TabsList>
               
               <div className="mt-6">
@@ -74,26 +74,26 @@ export default function Analysis() {
                           <Label className="text-[#4E5968] font-semibold">희망 근무지</Label>
                           <div className="relative">
                             <MapPin className="absolute left-4 top-3.5 h-5 w-5 text-[#B0B8C1]" />
-                            <Input className="pl-11 h-12 rounded-[16px] bg-[#F2F4F6] border-none text-base" placeholder="예: 서울 강남구, 판교" defaultValue="서울 강남구" />
+                            <Input className="pl-11 h-12 rounded-xl bg-[#F2F4F6] border-none text-base" placeholder="예: 서울 강남구, 판교" defaultValue="서울 강남구" />
                           </div>
                         </div>
                         <div className="space-y-2">
                           <Label className="text-[#4E5968] font-semibold">최소 연봉 (만원)</Label>
                           <div className="relative">
                             <DollarSign className="absolute left-4 top-3.5 h-5 w-5 text-[#B0B8C1]" />
-                            <Input type="number" className="pl-11 h-12 rounded-[16px] bg-[#F2F4F6] border-none text-base" placeholder="5000" defaultValue="6000" />
+                            <Input type="number" className="pl-11 h-12 rounded-xl bg-[#F2F4F6] border-none text-base" placeholder="5000" defaultValue="6000" />
                           </div>
                         </div>
                       </div>
                       
                       <div className="space-y-2">
                         <Label className="text-[#4E5968] font-semibold">제외 산업군</Label>
-                        <Input className="h-12 rounded-[16px] bg-[#F2F4F6] border-none text-base" placeholder="예: 도박, 사행성 게임 (쉼표로 구분)" />
+                        <Input className="h-12 rounded-xl bg-[#F2F4F6] border-none text-base" placeholder="예: 도박, 사행성 게임 (쉼표로 구분)" />
                       </div>
 
                       <div className="space-y-2">
                         <Label className="text-[#4E5968] font-semibold">목표 직무</Label>
-                        <Input className="h-12 rounded-[16px] bg-[#F2F4F6] border-none text-base" placeholder="예: 프로덕트 매니저" defaultValue="시니어 프로덕트 매니저" />
+                        <Input className="h-12 rounded-xl bg-[#F2F4F6] border-none text-base" placeholder="예: 프로덕트 매니저" defaultValue="시니어 프로덕트 매니저" />
                       </div>
                     </CardContent>
                   </Card>
@@ -112,7 +112,7 @@ export default function Analysis() {
                         <Label className="text-[#4E5968] font-semibold">직업적 관심사</Label>
                         <Textarea 
                           placeholder="어떤 업무에서 에너지를 얻으시나요?" 
-                          className="min-h-[120px] rounded-[16px] bg-[#F2F4F6] border-none text-base p-4 resize-none" 
+                          className="min-h-[120px] rounded-xl bg-[#F2F4F6] border-none text-base p-4 resize-none" 
                           defaultValue="다양한 팀과 협업하며 복잡한 사용자 문제를 데이터 기반으로 해결하는 것을 즐깁니다." 
                         />
                       </div>
@@ -121,7 +121,7 @@ export default function Analysis() {
                         <div className="space-y-2">
                           <Label className="text-[#4E5968] font-semibold">근무 형태</Label>
                           <Select defaultValue="hybrid">
-                            <SelectTrigger className="h-12 rounded-[16px] bg-[#F2F4F6] border-none text-base">
+                            <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none text-base">
                               <SelectValue placeholder="선택해주세요" />
                             </SelectTrigger>
                             <SelectContent>
@@ -134,7 +134,7 @@ export default function Analysis() {
                         <div className="space-y-2">
                           <Label className="text-[#4E5968] font-semibold">선호 팀 규모</Label>
                           <Select defaultValue="mid">
-                            <SelectTrigger className="h-12 rounded-[16px] bg-[#F2F4F6] border-none text-base">
+                            <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none text-base">
                               <SelectValue placeholder="선택해주세요" />
                             </SelectTrigger>
                             <SelectContent>
@@ -162,7 +162,7 @@ export default function Analysis() {
                         <div className="space-y-2">
                           <Label className="text-[#4E5968] font-semibold">최종 학력</Label>
                           <Select defaultValue="bachelors">
-                            <SelectTrigger className="h-12 rounded-[16px] bg-[#F2F4F6] border-none text-base">
+                            <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none text-base">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -175,7 +175,7 @@ export default function Analysis() {
                         </div>
                         <div className="space-y-2">
                           <Label className="text-[#4E5968] font-semibold">학점 / 성과 점수</Label>
-                          <Input type="number" step="0.1" className="h-12 rounded-[16px] bg-[#F2F4F6] border-none text-base" placeholder="4.5 만점 기준" defaultValue="3.8" />
+                          <Input type="number" step="0.1" className="h-12 rounded-xl bg-[#F2F4F6] border-none text-base" placeholder="4.5 만점 기준" defaultValue="3.8" />
                         </div>
                       </div>
                       
@@ -201,7 +201,7 @@ export default function Analysis() {
                 size="lg" 
                 onClick={handleAnalyze} 
                 disabled={isAnalyzing || showResults} 
-                className="w-full md:w-auto h-14 px-8 rounded-[20px] text-lg font-bold bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02]"
+                className="w-full md:w-auto h-14 px-8 rounded-xl text-lg font-bold bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02]"
               >
                 {isAnalyzing ? (
                   <>
@@ -245,11 +245,11 @@ export default function Analysis() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 pt-2">
-                      <div className="bg-[#F2F4F6] p-4 rounded-[20px]">
+                      <div className="bg-[#F2F4F6] p-4 rounded-xl">
                         <span className="text-sm text-[#8B95A1] font-medium block mb-1">연봉 타당성</span>
                         <span className="text-lg font-bold text-[#00BFA5]">높음</span>
                       </div>
-                      <div className="bg-[#F2F4F6] p-4 rounded-[20px]">
+                      <div className="bg-[#F2F4F6] p-4 rounded-xl">
                         <span className="text-sm text-[#8B95A1] font-medium block mb-1">시장 수요</span>
                         <span className="text-lg font-bold text-[#3182F6]">성장중</span>
                       </div>
@@ -270,7 +270,7 @@ export default function Analysis() {
                     </div>
 
                     {showResults && (
-                      <Button className="w-full h-12 rounded-[16px] border border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6] font-bold" variant="outline">
+                      <Button className="w-full h-12 rounded-xl border border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6] font-bold" variant="outline">
                         전체 리포트 보기
                       </Button>
                     )}
@@ -279,7 +279,7 @@ export default function Analysis() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-[#3182F6]/10 to-[#3182F6]/5 border-none shadow-none rounded-[24px]">
+            <Card className="bg-gradient-to-br from-[#3182F6]/10 to-[#3182F6]/5 border-none shadow-none rounded-2xl">
               <CardContent className="p-6">
                 <h3 className="font-bold text-[#3182F6] mb-2 flex items-center gap-2">
                   <Sparkles className="h-4 w-4" /> Pro Tip
