@@ -4,54 +4,56 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: hsl(210 40% 98%);
-  --color-foreground: hsl(215 28% 17%);
+  /* Toss Design System Colors */
+  --color-background: hsl(210 14% 95.7%); /* #F2F4F6 */
+  --color-foreground: hsl(216 24% 12.7%); /* #191F28 */
   
   --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(215 28% 17%);
+  --color-card-foreground: hsl(216 24% 12.7%);
   
   --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(215 28% 17%);
+  --color-popover-foreground: hsl(216 24% 12.7%);
   
-  --color-primary: hsl(221 83% 53%);
+  --color-primary: hsl(215 91% 58%); /* #3182F6 Toss Blue */
   --color-primary-foreground: hsl(0 0% 100%);
   
-  --color-secondary: hsl(151 84% 38%);
-  --color-secondary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(210 14% 95.7%); /* Light Grey for secondary buttons */
+  --color-secondary-foreground: hsl(216 24% 28%); /* #333D4B */
   
-  --color-muted: hsl(210 40% 96.1%);
-  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+  --color-muted: hsl(210 14% 95.7%);
+  --color-muted-foreground: hsl(214 10% 59%); /* #8B95A1 */
   
-  --color-accent: hsl(36 92% 50%);
+  --color-accent: hsl(215 91% 58%);
   --color-accent-foreground: hsl(0 0% 100%);
   
   --color-destructive: hsl(0 84% 60%);
   --color-destructive-foreground: hsl(0 0% 100%);
   
-  --color-border: hsl(214.3 31.8% 91.4%);
-  --color-input: hsl(214.3 31.8% 91.4%);
-  --color-ring: hsl(221 83% 53%);
+  --color-border: hsl(214 12% 90%); /* Subtle borders */
+  --color-input: hsl(214 12% 92%);
+  --color-ring: hsl(215 91% 58%);
   
-  --color-chart-1: hsl(221 83% 53%);
+  --color-chart-1: hsl(215 91% 58%);
   --color-chart-2: hsl(151 84% 38%);
   --color-chart-3: hsl(36 92% 50%);
   --color-chart-4: hsl(262 83% 58%);
   --color-chart-5: hsl(0 84% 60%);
   
   --color-sidebar: hsl(0 0% 100%);
-  --color-sidebar-foreground: hsl(215 28% 17%);
-  --color-sidebar-primary: hsl(221 83% 53%);
+  --color-sidebar-foreground: hsl(216 24% 28%);
+  --color-sidebar-primary: hsl(215 91% 58%);
   --color-sidebar-primary-foreground: hsl(0 0% 100%);
-  --color-sidebar-accent: hsl(210 40% 96.1%);
-  --color-sidebar-accent-foreground: hsl(215 28% 17%);
-  --color-sidebar-border: hsl(214.3 31.8% 91.4%);
-  --color-sidebar-ring: hsl(221 83% 53%);
+  --color-sidebar-accent: hsl(210 14% 95.7%);
+  --color-sidebar-accent-foreground: hsl(216 24% 12.7%);
+  --color-sidebar-border: hsl(0 0% 0% / 0); /* No border for sidebar in Toss style usually */
+  --color-sidebar-ring: hsl(215 91% 58%);
 
-  --font-sans: 'Inter', 'Roboto', sans-serif;
+  --font-sans: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Inter', sans-serif;
   
-  --radius-sm: 0.3rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem; /* 12px */
+  --radius-lg: 1rem;    /* 16px */
+  --radius-xl: 1.5rem;  /* 24px */
 }
 
 @layer base {
@@ -61,26 +63,23 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+  
+  /* Toss-like smooth font rendering */
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight text-[#191F28] font-bold;
+  }
 }
 
-/* Custom Glassmorphism Utilities */
-.glass-card {
-  @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-sm;
+/* Toss-style Card - Clean, soft shadow, rounded */
+.toss-card {
+  @apply bg-white rounded-3xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] border-none hover:translate-y-[-2px] transition-transform duration-300;
 }
 
-.glass-panel {
-  @apply bg-white/50 backdrop-blur-md border border-white/20;
+/* Toss-style Button - Vivid blue, rounded */
+.toss-button {
+  @apply bg-primary text-white rounded-2xl font-semibold hover:bg-blue-600 active:scale-95 transition-all shadow-lg shadow-blue-500/30;
 }
 
-/* Professional Dashboard Utilities */
 .dashboard-grid {
   @apply grid gap-6 md:grid-cols-2 lg:grid-cols-4;
-}
-
-.card-header-accent {
-  @apply relative overflow-hidden;
-}
-.card-header-accent::before {
-  content: '';
-  @apply absolute top-0 left-0 w-1 h-full bg-primary;
 }
