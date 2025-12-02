@@ -192,7 +192,6 @@ export default function Goals() {
                         <p className="text-right text-xs font-bold text-[#191F28] mt-1">{vision.progress}% 달성</p>
                     </CardContent>
                 </Card>
-                <div className="absolute left-1/2 bottom-[-32px] w-0.5 h-8 bg-[#E5E8EB] -translate-x-1/2 z-0" />
             </div>
         </div>
 
@@ -207,7 +206,7 @@ export default function Goals() {
                         <Card 
                             onClick={() => setSelectedYearId(year.id)}
                             className={cn(
-                                "toss-card cursor-pointer transition-all hover:-translate-y-1 h-full",
+                                "toss-card cursor-pointer transition-all hover:-translate-y-1 h-full box-border",
                                 selectedYearId === year.id 
                                     ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
                                     : "border border-transparent hover:shadow-sm"
@@ -231,9 +230,6 @@ export default function Goals() {
                                 </div>
                             </CardContent>
                         </Card>
-                        {selectedYearId === year.id && (
-                            <div className="absolute left-1/2 bottom-[-24px] w-0.5 h-8 bg-[#3182F6] -translate-x-1/2 z-10" />
-                        )}
                     </div>
                 ))}
              </div>
@@ -251,7 +247,7 @@ export default function Goals() {
                             key={half.id}
                             onClick={() => setSelectedHalfYearId(half.id)}
                             className={cn(
-                                "toss-card cursor-pointer transition-all",
+                                "toss-card cursor-pointer transition-all box-border",
                                 selectedHalfYearId === half.id 
                                     ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
                                     : "border border-transparent hover:shadow-sm"
@@ -292,7 +288,7 @@ export default function Goals() {
                             key={month.id}
                             onClick={() => setSelectedMonthId(month.id)}
                             className={cn(
-                                "toss-card cursor-pointer transition-all",
+                                "toss-card cursor-pointer transition-all box-border",
                                 selectedMonthId === month.id 
                                     ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
                                     : "border border-transparent hover:shadow-sm"
@@ -330,7 +326,7 @@ export default function Goals() {
                             key={week.id}
                             onClick={() => setSelectedWeekId(week.id)}
                             className={cn(
-                                "toss-card cursor-pointer transition-all",
+                                "toss-card cursor-pointer transition-all box-border",
                                 selectedWeekId === week.id 
                                     ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
                                     : "border border-transparent hover:shadow-sm"
