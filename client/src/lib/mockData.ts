@@ -1,14 +1,51 @@
-export interface CareerGoal {
+export interface Todo {
   id: string;
   title: string;
-  targetDate: string;
-  status: "pending" | "in-progress" | "completed";
+  completed: boolean;
+}
+
+export interface DailyGoal {
+  id: string;
+  title: string; // e.g., "Day 1: Study SQL Basics"
+  progress: number; // calculated from todos
+  todos: Todo[];
+}
+
+export interface WeeklyGoal {
+  id: string;
+  title: string; // e.g., "Week 1: Python Fundamentals"
+  progress: number; // calculated from children
+  children: DailyGoal[];
+}
+
+export interface MonthlyGoal {
+  id: string;
+  title: string; // e.g., "January: Data Analysis Foundation"
   progress: number;
-  steps: {
-    id: string;
-    title: string;
-    isCompleted: boolean;
-  }[];
+  children: WeeklyGoal[];
+}
+
+export interface HalfYearlyGoal {
+  id: string;
+  title: string; // e.g., "H1: Technical Skills Acquisition"
+  progress: number;
+  children: MonthlyGoal[];
+}
+
+export interface YearlyGoal {
+  id: string;
+  title: string; // e.g., "2025: Career Transition Year"
+  progress: number;
+  children: HalfYearlyGoal[];
+}
+
+export interface VisionGoal {
+  id: string;
+  title: string;
+  description: string;
+  targetYear: number;
+  progress: number;
+  children: YearlyGoal[];
 }
 
 export interface CareerAnalysis {
@@ -51,33 +88,96 @@ export interface UserProfile {
   };
 }
 
-export const MOCK_GOALS: CareerGoal[] = [
-  {
-    id: "1",
-    title: "시니어 PM 직무 전환",
-    targetDate: "2025-12-31",
-    status: "in-progress",
-    progress: 45,
-    steps: [
-      { id: "s1", title: "Agile(애자일) 자격증 취득", isCompleted: true },
-      { id: "s2", title: "크로스 펑셔널 프로젝트 리딩", isCompleted: true },
-      { id: "s3", title: "주니어 PM 멘토링 경험", isCompleted: false },
-      { id: "s4", title: "시니어 포지션 지원하기", isCompleted: false },
-    ],
-  },
-  {
-    id: "2",
-    title: "데이터 사이언스 역량 강화",
-    targetDate: "2025-06-30",
-    status: "pending",
-    progress: 15,
-    steps: [
-      { id: "d1", title: "파이썬 데이터 분석 과정 수료", isCompleted: true },
-      { id: "d2", title: "고급 SQL 쿼리 마스터", isCompleted: false },
-      { id: "d3", title: "포트폴리오 프로젝트 구축", isCompleted: false },
-    ],
-  },
-];
+// Mock Data for the Vision Tree
+export const MOCK_VISION: VisionGoal = {
+  id: "vision-1",
+  title: "CPO (Chief Product Officer)",
+  description: "유니콘 기업 규모의 제품 총괄 리더십 확보 및 글로벌 서비스 런칭 경험",
+  targetYear: 2028,
+  progress: 35,
+  children: [
+    {
+      id: "year-2025",
+      title: "2025: 시니어 PM 전환",
+      progress: 45,
+      children: [
+        {
+          id: "h1-2025",
+          title: "2025 상반기: 핵심 역량 강화",
+          progress: 60,
+          children: [
+            {
+              id: "m1-2025",
+              title: "1월: 데이터 분석 기초",
+              progress: 80,
+              children: [
+                {
+                  id: "w1-m1",
+                  title: "1주차: SQL 집중 학습",
+                  progress: 100,
+                  children: [
+                    {
+                      id: "d1-w1",
+                      title: "Day 1: SELECT/FROM",
+                      progress: 100,
+                      todos: [
+                        { id: "t1", title: "SQL 강의 1-3강 수강", completed: true },
+                        { id: "t2", title: "기초 예제 10문제 풀이", completed: true },
+                        { id: "t3", title: "학습 내용 블로그 정리", completed: true },
+                      ]
+                    },
+                    {
+                      id: "d2-w1",
+                      title: "Day 2: WHERE/GROUP BY",
+                      progress: 100,
+                      todos: [
+                        { id: "t4", title: "SQL 강의 4-6강 수강", completed: true },
+                        { id: "t5", title: "프로그래머스 Level 1 문제 풀이", completed: true },
+                        { id: "t6", title: "실습 데이터셋 쿼리 작성", completed: true },
+                      ]
+                    }
+                  ]
+                },
+                {
+                  id: "w2-m1",
+                  title: "2주차: Python 데이터 처리",
+                  progress: 60,
+                  children: [] // Simplified for brevity
+                }
+              ]
+            },
+            {
+              id: "m2-2025",
+              title: "2월: 제품 지표 설계",
+              progress: 40,
+              children: []
+            }
+          ]
+        },
+        {
+          id: "h2-2025",
+          title: "2025 하반기: 실무 리딩 경험",
+          progress: 20,
+          children: []
+        }
+      ]
+    },
+    {
+      id: "year-2026",
+      title: "2026: 헤드급 매니저 성장",
+      progress: 10,
+      children: []
+    },
+    {
+      id: "year-2027",
+      title: "2027: 사업 개발 역량 확보",
+      progress: 0,
+      children: []
+    }
+  ]
+};
+
+export const MOCK_GOALS: any[] = []; // Deprecated, using MOCK_VISION instead
 
 export const MOCK_ANALYSIS: CareerAnalysis = {
   score: 85,
