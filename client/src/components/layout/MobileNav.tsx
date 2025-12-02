@@ -11,9 +11,9 @@ export function MobileNav() {
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "홈" },
+    { href: "/profile", icon: User, label: "프로필" },
     { href: "/analysis", icon: PieChart, label: "분석" },
     { href: "/goals", icon: Target, label: "목표" },
-    { href: "/profile", icon: User, label: "프로필" },
   ];
 
   const handleActionClick = (e: React.MouseEvent) => {

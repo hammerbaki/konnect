@@ -7,9 +7,9 @@ export function Sidebar() {
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "홈" },
+    { href: "/profile", icon: User, label: "내 프로필" },
     { href: "/analysis", icon: PieChart, label: "커리어 분석" },
     { href: "/goals", icon: Target, label: "목표 관리" },
-    { href: "/profile", icon: User, label: "내 프로필" },
   ];
 
   return (
