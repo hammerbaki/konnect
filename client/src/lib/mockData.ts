@@ -1,3 +1,4 @@
+
 export interface Todo {
   id: string;
   title: string;
@@ -94,12 +95,12 @@ export interface UserProfile {
 }
 
 // Helper to generate tree
-function generateTree(): VisionGoal {
+function generateTree(idSuffix: string, title: string, targetYear: number): VisionGoal {
     const vision: VisionGoal = {
-        id: "vision-1",
-        title: "CPO (Chief Product Officer)",
+        id: `vision-${idSuffix}`,
+        title: title,
         description: "유니콘 기업 규모의 제품 총괄 리더십 확보 및 글로벌 서비스 런칭 경험",
-        targetYear: 2028,
+        targetYear: targetYear,
         progress: 0,
         children: []
     };
@@ -116,7 +117,7 @@ function generateTree(): VisionGoal {
     for (let y = 0; y < 3; y++) {
         const yearVal = 2025 + y;
         const year: YearlyGoal = {
-            id: `year-${yearVal}`,
+            id: `year-${yearVal}-${idSuffix}`,
             title: `${yearVal}년`,
             description: yearlyDescriptions[y] || "커리어 성장 목표 달성",
             progress: 0,
@@ -126,7 +127,7 @@ function generateTree(): VisionGoal {
         // 2 Half Years per Year
         for (let h = 1; h <= 2; h++) {
             const half: HalfYearlyGoal = {
-                id: `h${h}-${yearVal}`,
+                id: `h${h}-${yearVal}-${idSuffix}`,
                 title: `${yearVal}년 ${h === 1 ? "상반기" : "하반기"}`,
                 description: halfYearlyDescriptions[h-1] || "반기별 핵심 성과 달성",
                 progress: 0,
@@ -137,7 +138,7 @@ function generateTree(): VisionGoal {
             for (let m = 1; m <= 6; m++) {
                 const monthNum = (h - 1) * 6 + m;
                 const month: MonthlyGoal = {
-                    id: `m${monthNum}-${yearVal}`,
+                    id: `m${monthNum}-${yearVal}-${idSuffix}`,
                     title: `${monthNum}월`,
                     description: monthlyDescriptions[(m-1) % monthlyDescriptions.length],
                     progress: 0,
@@ -147,7 +148,7 @@ function generateTree(): VisionGoal {
                 // 4 Weeks per Month
                 for (let w = 1; w <= 4; w++) {
                     const week: WeeklyGoal = {
-                        id: `w${w}-m${monthNum}-${yearVal}`,
+                        id: `w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
                         title: `${w}주차`,
                         description: weeklyDescriptions[(w-1) % weeklyDescriptions.length],
                         progress: 0,
@@ -157,13 +158,13 @@ function generateTree(): VisionGoal {
                     // 7 Days per Week
                     for (let d = 1; d <= 7; d++) {
                         const day: DailyGoal = {
-                            id: `d${d}-w${w}-m${monthNum}-${yearVal}`,
+                            id: `d${d}-w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
                             title: `Day ${d}`,
                             progress: 0,
                             todos: [
-                                { id: `t1-${d}`, title: "핵심 과제 수행", completed: false },
-                                { id: `t2-${d}`, title: "학습 내용 정리", completed: false },
-                                { id: `t3-${d}`, title: "다음 단계 계획", completed: false }
+                                { id: `t1-${d}-${idSuffix}`, title: "핵심 과제 수행", completed: false },
+                                { id: `t2-${d}-${idSuffix}`, title: "학습 내용 정리", completed: false },
+                                { id: `t3-${d}-${idSuffix}`, title: "다음 단계 계획", completed: false }
                             ]
                         };
                         week.children.push(day);
@@ -177,26 +178,32 @@ function generateTree(): VisionGoal {
         vision.children.push(year);
     }
     
-    // Set some initial progress for demo purposes (Year 2025 -> H1 -> M1 -> W1)
-    const demoWeek = vision.children[0].children[0].children[0].children[0];
-    if (demoWeek && demoWeek.children[0]) {
-        demoWeek.children[0].progress = 66;
-        demoWeek.children[0].todos[0].completed = true;
-        demoWeek.children[0].todos[1].completed = true;
+    // Random progress for demo
+    if (idSuffix === '1') {
+        const demoWeek = vision.children[0].children[0].children[0].children[0];
+        if (demoWeek && demoWeek.children[0]) {
+            demoWeek.children[0].progress = 66;
+            demoWeek.children[0].todos[0].completed = true;
+            demoWeek.children[0].todos[1].completed = true;
+        }
+        vision.children[0].children[0].children[0].children[0].progress = 30; 
+        vision.children[0].children[0].children[0].progress = 10;
+        vision.children[0].children[0].progress = 5;
+        vision.children[0].progress = 2;
+        vision.progress = 1;
     }
-    
-    // Recalculate progress upwards
-    // Simplified calc for mock data
-    vision.children[0].children[0].children[0].children[0].progress = 30; 
-    vision.children[0].children[0].children[0].progress = 10;
-    vision.children[0].children[0].progress = 5;
-    vision.children[0].progress = 2;
-    vision.progress = 1;
 
     return vision;
 }
 
-export const MOCK_VISION = generateTree();
+export const MOCK_VISION = generateTree('1', "CPO (Chief Product Officer)", 2028);
+
+export const MOCK_VISIONS = [
+    MOCK_VISION,
+    generateTree('2', "Global Tech Lead", 2030),
+    generateTree('3', "Startup Founder", 2027)
+];
+
 export const MOCK_GOALS: any[] = []; 
 
 export const MOCK_ANALYSIS: CareerAnalysis = {
