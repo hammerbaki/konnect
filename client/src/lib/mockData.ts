@@ -15,6 +15,7 @@ export interface DailyGoal {
 export interface WeeklyGoal {
   id: string;
   title: string; // e.g., "Week 1"
+  description?: string;
   progress: number; // calculated from children
   children: DailyGoal[];
 }
@@ -22,6 +23,7 @@ export interface WeeklyGoal {
 export interface MonthlyGoal {
   id: string;
   title: string; // e.g., "January"
+  description?: string;
   progress: number;
   children: WeeklyGoal[];
 }
@@ -29,6 +31,7 @@ export interface MonthlyGoal {
 export interface HalfYearlyGoal {
   id: string;
   title: string; // e.g., "H1"
+  description?: string;
   progress: number;
   children: MonthlyGoal[];
 }
@@ -36,6 +39,7 @@ export interface HalfYearlyGoal {
 export interface YearlyGoal {
   id: string;
   title: string; // e.g., "2025"
+  description?: string;
   progress: number;
   children: HalfYearlyGoal[];
 }
@@ -100,12 +104,21 @@ function generateTree(): VisionGoal {
         children: []
     };
 
+    const yearlyDescriptions = ["시니어 PM 전환 및 핵심 역량 확보", "헤드급 매니저 성장 및 팀 리딩", "사업 개발 역량 및 창업 준비"];
+    const halfYearlyDescriptions = ["기초 역량 강화 및 자격증 취득", "실무 프로젝트 리딩 및 성과 창출"];
+    const monthlyDescriptions = [
+        "데이터 분석 기초 다지기", "제품 지표 설계 및 분석", "사용자 리서치 심화", 
+        "A/B 테스트 설계 및 실행", "서비스 기획 및 문서화", "MVP 출시 및 운영"
+    ];
+    const weeklyDescriptions = ["SQL 문법 마스터", "Python 데이터 분석", "Tableau 시각화", "지표 대시보드 구축"];
+
     // 3 Years
     for (let y = 0; y < 3; y++) {
         const yearVal = 2025 + y;
         const year: YearlyGoal = {
             id: `year-${yearVal}`,
             title: `${yearVal}년`,
+            description: yearlyDescriptions[y] || "커리어 성장 목표 달성",
             progress: 0,
             children: []
         };
@@ -115,6 +128,7 @@ function generateTree(): VisionGoal {
             const half: HalfYearlyGoal = {
                 id: `h${h}-${yearVal}`,
                 title: `${yearVal}년 ${h === 1 ? "상반기" : "하반기"}`,
+                description: halfYearlyDescriptions[h-1] || "반기별 핵심 성과 달성",
                 progress: 0,
                 children: []
             };
@@ -125,6 +139,7 @@ function generateTree(): VisionGoal {
                 const month: MonthlyGoal = {
                     id: `m${monthNum}-${yearVal}`,
                     title: `${monthNum}월`,
+                    description: monthlyDescriptions[(m-1) % monthlyDescriptions.length],
                     progress: 0,
                     children: []
                 };
@@ -134,6 +149,7 @@ function generateTree(): VisionGoal {
                     const week: WeeklyGoal = {
                         id: `w${w}-m${monthNum}-${yearVal}`,
                         title: `${w}주차`,
+                        description: weeklyDescriptions[(w-1) % weeklyDescriptions.length],
                         progress: 0,
                         children: []
                     };

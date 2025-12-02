@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-
 export default function Goals() {
   const [vision, setVision] = useState<VisionGoal>(MOCK_VISION);
   const { setAction } = useMobileAction();
@@ -74,13 +73,8 @@ export default function Goals() {
   const toggleTodo = (dailyId: string, todoId: string) => {
       const newVision = JSON.parse(JSON.stringify(vision)) as VisionGoal;
       
-      // Find path
-      // Note: This deep search is inefficient for large trees but okay for this mock scale.
-      // Better to pass path or IDs down, but we recalculate everything from root for simplicity here.
-      
       let targetDay: DailyGoal | undefined;
       
-      // Traverse to find the day
       for (const year of newVision.children) {
           for (const half of year.children) {
               for (const month of half.children) {
@@ -105,7 +99,6 @@ export default function Goals() {
               recalculateProgress(newVision);
               setVision(newVision);
               
-              // Also update editing state if open
               if (editingDailyGoal && editingDailyGoal.id === dailyId) {
                   setEditingDailyGoal(JSON.parse(JSON.stringify(targetDay)));
               }
@@ -115,7 +108,6 @@ export default function Goals() {
 
   const updateTodoText = (dailyId: string, todoId: string, newText: string) => {
       const newVision = JSON.parse(JSON.stringify(vision)) as VisionGoal;
-      // Find path (reusing logic - should be extracted in real app)
       let targetDay: DailyGoal | undefined;
        for (const year of newVision.children) {
           for (const half of year.children) {
@@ -221,15 +213,22 @@ export default function Goals() {
                                     : "border border-transparent hover:shadow-sm"
                             )}
                         >
-                            <CardContent className="p-4 text-center">
-                                <div className="flex justify-center items-center gap-2 mb-2">
-                                    <h3 className={cn("font-bold text-sm", selectedYearId === year.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                        {year.title}
-                                    </h3>
-                                    {year.progress === 100 && <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] border-none text-white text-[10px] px-1.5 py-0">Done</Badge>}
+                            <CardContent className="p-4 text-center flex flex-col h-full justify-between">
+                                <div>
+                                    <div className="flex justify-center items-center gap-2 mb-2">
+                                        <h3 className={cn("font-bold text-sm", selectedYearId === year.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                            {year.title}
+                                        </h3>
+                                        {year.progress === 100 && <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] border-none text-white text-[10px] px-1.5 py-0">Done</Badge>}
+                                    </div>
+                                    {year.description && (
+                                        <p className="text-xs text-[#8B95A1] mb-3 line-clamp-2">{year.description}</p>
+                                    )}
                                 </div>
-                                <Progress value={year.progress} className="h-1.5 mb-1" indicatorClassName={year.progress === 100 ? "bg-[#00BFA5]" : selectedYearId === year.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                <p className="text-xs font-bold text-[#8B95A1]">{year.progress}%</p>
+                                <div>
+                                    <Progress value={year.progress} className="h-1.5 mb-1" indicatorClassName={year.progress === 100 ? "bg-[#00BFA5]" : selectedYearId === year.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                    <p className="text-xs font-bold text-[#8B95A1]">{year.progress}%</p>
+                                </div>
                             </CardContent>
                         </Card>
                         {selectedYearId === year.id && (
@@ -258,15 +257,22 @@ export default function Goals() {
                                     : "border border-transparent hover:shadow-sm"
                             )}
                         >
-                            <CardContent className="p-4 text-center">
-                                <div className="flex justify-center items-center gap-2 mb-2">
-                                    <h4 className={cn("font-bold text-sm", selectedHalfYearId === half.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                        {half.title}
-                                    </h4>
-                                    {half.progress === 100 && <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] border-none text-white text-[10px] px-1.5 py-0">Done</Badge>}
+                            <CardContent className="p-4 text-center flex flex-col h-full justify-between">
+                                <div>
+                                    <div className="flex justify-center items-center gap-2 mb-2">
+                                        <h4 className={cn("font-bold text-sm", selectedHalfYearId === half.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                            {half.title}
+                                        </h4>
+                                        {half.progress === 100 && <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] border-none text-white text-[10px] px-1.5 py-0">Done</Badge>}
+                                    </div>
+                                    {half.description && (
+                                        <p className="text-xs text-[#8B95A1] mb-3 line-clamp-2">{half.description}</p>
+                                    )}
                                 </div>
-                                <Progress value={half.progress} className="h-1.5 mb-1" indicatorClassName={half.progress === 100 ? "bg-[#00BFA5]" : selectedHalfYearId === half.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                <p className="text-xs font-bold text-[#8B95A1]">{half.progress}%</p>
+                                <div>
+                                    <Progress value={half.progress} className="h-1.5 mb-1" indicatorClassName={half.progress === 100 ? "bg-[#00BFA5]" : selectedHalfYearId === half.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                    <p className="text-xs font-bold text-[#8B95A1]">{half.progress}%</p>
+                                </div>
                             </CardContent>
                         </Card>
                     ))}
@@ -292,12 +298,17 @@ export default function Goals() {
                                     : "border border-transparent hover:shadow-sm"
                             )}
                         >
-                            <CardContent className="p-3 text-center">
-                                <div className="flex justify-center items-center gap-1 mb-2">
-                                    <h5 className={cn("font-bold text-xs truncate", selectedMonthId === month.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                        {month.title}
-                                    </h5>
-                                    {month.progress === 100 && <div className="h-2 w-2 rounded-full bg-[#00BFA5]" />}
+                            <CardContent className="p-3 text-center flex flex-col h-full justify-between">
+                                <div>
+                                    <div className="flex justify-center items-center gap-1 mb-1">
+                                        <h5 className={cn("font-bold text-xs truncate", selectedMonthId === month.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                            {month.title}
+                                        </h5>
+                                        {month.progress === 100 && <div className="h-2 w-2 rounded-full bg-[#00BFA5]" />}
+                                    </div>
+                                    {month.description && (
+                                        <p className="text-[10px] text-[#8B95A1] mb-2 line-clamp-2 leading-tight">{month.description}</p>
+                                    )}
                                 </div>
                                 <Progress value={month.progress} className="h-1" indicatorClassName={month.progress === 100 ? "bg-[#00BFA5]" : selectedMonthId === month.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
                             </CardContent>
@@ -325,12 +336,17 @@ export default function Goals() {
                                     : "border border-transparent hover:shadow-sm"
                             )}
                         >
-                            <CardContent className="p-3 text-center">
-                                <div className="flex justify-center items-center gap-1 mb-2">
-                                    <h5 className={cn("font-bold text-xs truncate", selectedWeekId === week.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                        {week.title}
-                                    </h5>
-                                    {week.progress === 100 && <div className="h-2 w-2 rounded-full bg-[#00BFA5]" />}
+                            <CardContent className="p-3 text-center flex flex-col h-full justify-between">
+                                <div>
+                                    <div className="flex justify-center items-center gap-1 mb-1">
+                                        <h5 className={cn("font-bold text-xs truncate", selectedWeekId === week.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                            {week.title}
+                                        </h5>
+                                        {week.progress === 100 && <div className="h-2 w-2 rounded-full bg-[#00BFA5]" />}
+                                    </div>
+                                    {week.description && (
+                                        <p className="text-[10px] text-[#8B95A1] mb-2 line-clamp-2 leading-tight">{week.description}</p>
+                                    )}
                                 </div>
                                 <Progress value={week.progress} className="h-1" indicatorClassName={week.progress === 100 ? "bg-[#00BFA5]" : selectedWeekId === week.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
                             </CardContent>
