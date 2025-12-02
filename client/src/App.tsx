@@ -1,16 +1,21 @@
 import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
+import Landing from "./pages/Landing";
+import Dashboard from "./pages/Dashboard";
+import NotFound from "./pages/not-found";
+import Analysis from "./pages/Analysis"; // We will create this next
+import Goals from "./pages/Goals"; // We will create this next
+
+// Temporary placeholders until we create the files
+const PlaceholderAnalysis = () => <div>Analysis Page Placeholder</div>;
+const PlaceholderGoals = () => <div>Goals Page Placeholder</div>;
 
 function Router() {
   return (
     <Switch>
-      {/* Add pages below */}
-      {/* <Route path="/" component={Home}/> */}
-      {/* Fallback to 404 */}
+      <Route path="/" component={Landing} />
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/analysis" component={Analysis} />
+      <Route path="/goals" component={Goals} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -18,12 +23,7 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <Router />
   );
 }
 
