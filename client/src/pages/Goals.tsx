@@ -220,7 +220,6 @@ export default function Goals() {
                                         <h3 className={cn("font-bold text-sm", selectedYearId === year.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
                                             {year.title}
                                         </h3>
-                                        {year.progress === 100 && <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] border-none text-white text-[10px] px-1.5 py-0">Done</Badge>}
                                     </div>
                                     {year.description && (
                                         <p className="text-xs text-[#8B95A1] mb-3 line-clamp-2">{year.description}</p>
@@ -231,6 +230,9 @@ export default function Goals() {
                                     <p className="text-xs font-bold text-[#8B95A1]">{year.progress}%</p>
                                 </div>
                             </CardContent>
+                            <div className="absolute top-3 right-3">
+                                <CheckCircle2 className={cn("w-4 h-4", year.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
+                            </div>
                         </Card>
                     </div>
                 ))}
@@ -269,7 +271,6 @@ export default function Goals() {
                                         <h4 className={cn("font-bold text-sm", selectedHalfYearId === half.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
                                             {half.title}
                                         </h4>
-                                        {half.progress === 100 && <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] border-none text-white text-[10px] px-1.5 py-0">Done</Badge>}
                                     </div>
                                     {half.description && (
                                         <p className="text-xs text-[#8B95A1] mb-3 line-clamp-2">{half.description}</p>
@@ -280,6 +281,9 @@ export default function Goals() {
                                     <p className="text-xs font-bold text-[#8B95A1]">{half.progress}%</p>
                                 </div>
                             </CardContent>
+                            <div className="absolute top-3 right-3">
+                                <CheckCircle2 className={cn("w-4 h-4", half.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
+                            </div>
                         </Card>
                     ))}
                 </div>
@@ -319,7 +323,6 @@ export default function Goals() {
                                         <h5 className={cn("font-bold text-xs truncate", selectedMonthId === month.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
                                             {month.title}
                                         </h5>
-                                        {month.progress === 100 && <div className="h-2 w-2 rounded-full bg-[#00BFA5]" />}
                                     </div>
                                     {month.description && (
                                         <p className="text-[10px] text-[#8B95A1] mb-2 line-clamp-2 leading-tight">{month.description}</p>
@@ -327,6 +330,9 @@ export default function Goals() {
                                 </div>
                                 <Progress value={month.progress} className="h-1" indicatorClassName={month.progress === 100 ? "bg-[#00BFA5]" : selectedMonthId === month.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
                             </CardContent>
+                            <div className="absolute top-2 right-2">
+                                <CheckCircle2 className={cn("w-3 h-3", month.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
+                            </div>
                         </Card>
                     ))}
                 </div>
@@ -366,7 +372,6 @@ export default function Goals() {
                                         <h5 className={cn("font-bold text-xs truncate", selectedWeekId === week.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
                                             {week.title}
                                         </h5>
-                                        {week.progress === 100 && <div className="h-2 w-2 rounded-full bg-[#00BFA5]" />}
                                     </div>
                                     {week.description && (
                                         <p className="text-[10px] text-[#8B95A1] mb-2 line-clamp-2 leading-tight">{week.description}</p>
@@ -374,6 +379,9 @@ export default function Goals() {
                                 </div>
                                 <Progress value={week.progress} className="h-1" indicatorClassName={week.progress === 100 ? "bg-[#00BFA5]" : selectedWeekId === week.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
                             </CardContent>
+                            <div className="absolute top-2 right-2">
+                                <CheckCircle2 className={cn("w-3 h-3", week.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
+                            </div>
                         </Card>
                     ))}
                 </div>
@@ -405,11 +413,10 @@ export default function Goals() {
                             "toss-card hover:shadow-md transition-shadow h-full flex flex-col border-l-2",
                             isCompleted ? "border-l-[#00BFA5]" : "border-l-[#3182F6]"
                         )}>
-                            <div className="p-3 flex-1 flex flex-col">
-                                <div className="flex justify-between items-start mb-2">
+                            <div className="p-3 flex-1 flex flex-col relative">
+                                <div className="flex justify-between items-start mb-2 pr-6">
                                     <span className="text-xs font-bold text-[#191F28]">{day.title}</span>
                                     <div className="flex gap-1">
-                                        {isCompleted && <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] border-none text-white text-[10px] px-1.5 py-0">Done</Badge>}
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 
@@ -419,6 +426,9 @@ export default function Goals() {
                                             <Edit2 className="h-3 w-3" />
                                         </Button>
                                     </div>
+                                </div>
+                                <div className="absolute top-2 right-8">
+                                    <CheckCircle2 className={cn("w-4 h-4", isCompleted ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
                                 </div>
                                 
                                 {/* Mini Todo List */}
