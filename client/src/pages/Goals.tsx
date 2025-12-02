@@ -3,13 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Plus, Flag, MoreVertical, Pencil, Edit2, X, Bell } from "lucide-react";
+import { CheckCircle2, Circle, Plus, Flag, Bell } from "lucide-react";
 import { MOCK_VISION, VisionGoal, DailyGoal, Todo } from "@/lib/mockData";
 import { useState, useEffect } from "react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -32,15 +31,12 @@ export default function Goals() {
   const [selectedMonthId, setSelectedMonthId] = useState<string | null>(vision.children[0]?.children[0]?.children[0]?.id || null);
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(vision.children[0]?.children[0]?.children[0]?.children[0]?.id || null);
 
-  // Edit Modal State
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingDailyGoal, setEditingDailyGoal] = useState<DailyGoal | null>(null);
-
   // Derived Data based on selection
   const selectedYear = vision.children.find(y => y.id === selectedYearId);
   const selectedHalfYear = selectedYear?.children.find(h => h.id === selectedHalfYearId);
   const selectedMonth = selectedHalfYear?.children.find(m => m.id === selectedMonthId);
   const selectedWeek = selectedMonth?.children.find(w => w.id === selectedWeekId);
+
 
   const handleNewGoal = () => {
       toast({
@@ -116,10 +112,6 @@ export default function Goals() {
               todo.completed = !todo.completed;
               recalculateProgress(newVision);
               setVision(newVision);
-              
-              if (editingDailyGoal && editingDailyGoal.id === dailyId) {
-                  setEditingDailyGoal(JSON.parse(JSON.stringify(targetDay)));
-              }
           }
       }
   };
@@ -149,9 +141,6 @@ export default function Goals() {
           if (todo) {
               todo.title = newText;
               setVision(newVision);
-              if (editingDailyGoal && editingDailyGoal.id === dailyId) {
-                  setEditingDailyGoal(JSON.parse(JSON.stringify(targetDay)));
-              }
           }
       }
   };
@@ -179,12 +168,6 @@ export default function Goals() {
       });
       const totalYear = v.children.reduce((sum, y) => sum + y.progress, 0);
       v.progress = Math.round(totalYear / (v.children.length || 1));
-  };
-
-  const openEditModal = (e: React.MouseEvent, day: DailyGoal) => {
-      e.stopPropagation();
-      setEditingDailyGoal(day);
-      setIsEditModalOpen(true);
   };
 
   return (
@@ -469,58 +452,55 @@ export default function Goals() {
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Daily To-Dos</Badge>
                 </div>
                 
-                {/* Compact Grid for 7 Days */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                {/* Compact Grid for 7 Days - Expanded for direct editing */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {selectedWeek.children.map((day) => {
                         const isCompleted = day.progress === 100;
                         return (
                         <Card key={day.id} className={cn(
-                            "toss-card hover:shadow-md transition-shadow h-full flex flex-col border-l-2",
+                            "toss-card hover:shadow-md transition-shadow h-full flex flex-col border-l-4",
                             isCompleted ? "border-l-[#00BFA5]" : "border-l-[#3182F6]"
                         )}>
-                            <div className="p-3 flex-1 flex flex-col relative">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="text-xs font-bold text-[#191F28]">{day.title}</span>
-                                    <div className="flex items-center gap-1">
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-6 w-6 text-[#B0B8C1] hover:text-[#3182F6]"
-                                            onClick={(e) => openEditModal(e, day)}
-                                        >
-                                            <Edit2 className="h-3 w-3" />
-                                        </Button>
-                                        <CheckCircle2 className={cn("w-4 h-4", isCompleted ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
-                                    </div>
+                            <div className="p-4 flex-1 flex flex-col relative">
+                                <div className="flex justify-between items-start mb-4 pr-6">
+                                    <span className="text-lg font-bold text-[#191F28]">{day.title}</span>
+                                </div>
+                                <div className="absolute top-4 right-4">
+                                    <CheckCircle2 className={cn("w-5 h-5", isCompleted ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
                                 </div>
                                 
-                                {/* Mini Todo List */}
-                                <div className="space-y-1.5 flex-1">
+                                {/* Editable Todo List */}
+                                <div className="space-y-3 flex-1">
                                     {day.todos.map((todo) => (
                                         <div 
                                             key={todo.id} 
-                                            onClick={() => toggleTodo(day.id, todo.id)}
-                                            className="flex items-start gap-2 cursor-pointer group"
+                                            className="flex items-center gap-3 group"
                                         >
-                                            <div className={cn(
-                                                "mt-0.5 transition-colors",
-                                                todo.completed ? "text-[#00BFA5]" : "text-[#E5E8EB] group-hover:text-[#B0B8C1]"
-                                            )}>
-                                                {todo.completed ? <CheckCircle2 className="h-3 w-3" /> : <Circle className="h-3 w-3" />}
+                                            <div 
+                                                className={cn(
+                                                    "cursor-pointer transition-colors mt-1",
+                                                    todo.completed ? "text-[#00BFA5]" : "text-[#E5E8EB] group-hover:text-[#B0B8C1]"
+                                                )}
+                                                onClick={() => toggleTodo(day.id, todo.id)}
+                                            >
+                                                {todo.completed ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
                                             </div>
-                                            <span className={cn(
-                                                "text-[10px] leading-tight transition-colors line-clamp-2",
-                                                todo.completed ? "text-[#B0B8C1] line-through" : "text-[#4E5968] group-hover:text-[#333D4B]"
-                                            )}>
-                                                {todo.title}
-                                            </span>
+                                            <Input 
+                                                value={todo.title} 
+                                                onChange={(e) => updateTodoText(day.id, todo.id, e.target.value)}
+                                                className={cn(
+                                                    "flex-1 bg-transparent border-transparent px-0 h-auto py-1 text-sm focus-visible:ring-0 focus-visible:border-b focus-visible:border-[#3182F6] rounded-none placeholder:text-[#B0B8C1] shadow-none",
+                                                    todo.completed ? "text-[#B0B8C1] line-through" : "text-[#333D4B]"
+                                                )}
+                                                placeholder="할 일을 입력하세요"
+                                            />
                                         </div>
                                     ))}
                                 </div>
 
-                                <div className="mt-3 pt-2 border-t border-[#F2F4F6] flex items-center gap-2">
-                                    <Progress value={day.progress} className="h-1 flex-1" indicatorClassName={isCompleted ? "bg-[#00BFA5]" : "bg-[#3182F6]"} />
-                                    <span className="text-[9px] font-bold text-[#8B95A1]">{day.progress}%</span>
+                                <div className="mt-4 pt-3 border-t border-[#F2F4F6] flex items-center gap-3">
+                                    <Progress value={day.progress} className="h-1.5 flex-1" indicatorClassName={isCompleted ? "bg-[#00BFA5]" : "bg-[#3182F6]"} />
+                                    <span className="text-xs font-bold text-[#8B95A1]">{day.progress}%</span>
                                 </div>
                             </div>
                         </Card>
@@ -531,50 +511,6 @@ export default function Goals() {
         )}
         </AnimatePresence>
 
-        {/* Edit Todo Modal */}
-        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-            <DialogContent className="sm:max-w-md rounded-2xl">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <Pencil className="h-5 w-5 text-[#3182F6]" />
-                        {editingDailyGoal?.title} 수정
-                    </DialogTitle>
-                </DialogHeader>
-                
-                <div className="space-y-4 py-4">
-                    {editingDailyGoal?.todos.map((todo, idx) => (
-                        <div key={todo.id} className="flex items-center gap-3">
-                             <div 
-                                className={cn(
-                                    "cursor-pointer transition-colors",
-                                    todo.completed ? "text-[#3182F6]" : "text-[#D1D6DB]"
-                                )}
-                                onClick={() => toggleTodo(editingDailyGoal.id, todo.id)}
-                            >
-                                {todo.completed ? <CheckCircle2 className="h-6 w-6" /> : <Circle className="h-6 w-6" />}
-                            </div>
-                            <Input 
-                                value={todo.title} 
-                                onChange={(e) => updateTodoText(editingDailyGoal.id, todo.id, e.target.value)}
-                                className="flex-1 bg-[#F9FAFB] border-none focus-visible:ring-[#3182F6]"
-                            />
-                            <Button variant="ghost" size="icon" className="text-[#E44E48]/50 hover:text-[#E44E48] hover:bg-red-50">
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
-                    <Button variant="outline" className="w-full border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-[#E8F3FF]">
-                        <Plus className="h-4 w-4 mr-2" /> 새 할 일 추가
-                    </Button>
-                </div>
-
-                <DialogFooter className="sm:justify-end">
-                    <Button onClick={() => setIsEditModalOpen(false)} className="bg-[#3182F6] hover:bg-[#2b72d7] text-white font-bold rounded-xl px-6">
-                        저장
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
 
       </div>
     </Layout>
