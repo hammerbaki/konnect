@@ -25,72 +25,94 @@ export function MobileNav() {
   };
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 h-[80px] bg-white border-t border-[#E5E8EB] px-6 pb-4 flex items-center justify-between z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-      {navItems.map((item, index) => {
-        // Insert Special Button in the middle
-        if (index === 2) {
-            return (
-                <React.Fragment key="special-action-wrapper">
-                   <div className="relative -top-6">
-                        <Button 
-                            onClick={handleActionClick}
-                            className={cn(
-                                "h-14 w-14 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95",
-                                action 
-                                    ? "bg-[#3182F6] hover:bg-[#2b72d7] text-white shadow-blue-500/30" 
-                                    : "bg-[#3182F6] hover:bg-[#2b72d7] text-white"
-                            )}
-                        >
-                            {action?.icon ? (
-                                <action.icon className="h-6 w-6" />
-                            ) : (
-                                <Plus className="h-6 w-6" />
-                            )}
-                        </Button>
-                   </div>
-                   <Link key={item.href} href={item.href}>
-                    <a className="flex flex-col items-center justify-center gap-1 min-w-[60px]">
-                        <item.icon 
-                            className={cn(
-                                "h-6 w-6 transition-colors",
-                                location === item.href ? "text-[#191F28]" : "text-[#B0B8C1]"
-                            )} 
-                        />
-                        <span 
-                            className={cn(
-                                "text-[11px] font-medium transition-colors",
-                                location === item.href ? "text-[#191F28]" : "text-[#B0B8C1]"
-                            )}
-                        >
-                            {item.label}
-                        </span>
-                    </a>
-                  </Link>
-                </React.Fragment>
-            );
-        }
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
+      {/* Glassmorphism Background with Rounded Top */}
+      <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-t border-white/20 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] rounded-t-[24px]" />
+      
+      <div className="relative h-[84px] px-6 pb-5 pt-2 flex items-center justify-between">
+        {navItems.map((item, index) => {
+          const Icon = item.icon;
+          const isActive = location === item.href;
+          
+          // Insert Special Button in the middle
+          if (index === 2) {
+              return (
+                  <React.Fragment key="special-action-wrapper">
+                     <div className="relative -top-8">
+                          <Button 
+                              onClick={handleActionClick}
+                              className={cn(
+                                  "h-16 w-16 rounded-full flex items-center justify-center transition-all duration-300 active:scale-95",
+                                  "bg-gradient-to-br from-[#3182F6] to-[#1B64DA]",
+                                  "shadow-[0_8px_24px_rgba(49,130,246,0.4)]",
+                                  "border-[4px] border-white/50 backdrop-blur-sm"
+                              )}
+                          >
+                              {action?.icon ? (
+                                  <action.icon className="h-7 w-7 text-white" />
+                              ) : (
+                                  <Plus className="h-7 w-7 text-white" />
+                              )}
+                          </Button>
+                          {/* Pulsing Effect for Special Action */}
+                          {action && (
+                            <div className="absolute inset-0 rounded-full bg-[#3182F6] opacity-20 animate-ping -z-10" />
+                          )}
+                     </div>
+                     <Link key={item.href} href={item.href}>
+                      <a className="flex flex-col items-center justify-center gap-1.5 min-w-[60px] relative group">
+                          <div className={cn(
+                              "p-1.5 rounded-xl transition-all duration-300",
+                              isActive ? "bg-blue-50" : "bg-transparent"
+                          )}>
+                              <Icon 
+                                  className={cn(
+                                      "h-6 w-6 transition-colors duration-300",
+                                      isActive ? "text-[#3182F6]" : "text-[#B0B8C1] group-hover:text-[#8B95A1]"
+                                  )} 
+                              />
+                          </div>
+                          <span 
+                              className={cn(
+                                  "text-[11px] font-bold transition-colors duration-300",
+                                  isActive ? "text-[#3182F6]" : "text-[#B0B8C1]"
+                              )}
+                          >
+                              {item.label}
+                          </span>
+                      </a>
+                    </Link>
+                  </React.Fragment>
+              );
+          }
 
-        return (
-          <Link key={item.href} href={item.href}>
-            <a className="flex flex-col items-center justify-center gap-1 min-w-[60px]">
-              <item.icon 
-                className={cn(
-                  "h-6 w-6 transition-colors",
-                  location === item.href ? "text-[#191F28]" : "text-[#B0B8C1]"
-                )} 
-              />
-              <span 
-                className={cn(
-                  "text-[11px] font-medium transition-colors",
-                  location === item.href ? "text-[#191F28]" : "text-[#B0B8C1]"
-                )}
-              >
-                {item.label}
-              </span>
-            </a>
-          </Link>
-        );
-      })}
+          return (
+            <Link key={item.href} href={item.href}>
+              <a className="flex flex-col items-center justify-center gap-1.5 min-w-[60px] relative group">
+                <div className={cn(
+                    "p-1.5 rounded-xl transition-all duration-300",
+                    isActive ? "bg-blue-50" : "bg-transparent"
+                )}>
+                    <Icon 
+                        className={cn(
+                            "h-6 w-6 transition-colors duration-300",
+                            isActive ? "text-[#3182F6]" : "text-[#B0B8C1] group-hover:text-[#8B95A1]"
+                        )} 
+                    />
+                </div>
+                <span 
+                  className={cn(
+                    "text-[11px] font-bold transition-colors duration-300",
+                    isActive ? "text-[#3182F6]" : "text-[#B0B8C1]"
+                  )}
+                >
+                  {item.label}
+                </span>
+              </a>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
