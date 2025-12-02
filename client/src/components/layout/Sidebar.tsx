@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, PieChart, Target, LogOut } from "lucide-react";
+import { LayoutDashboard, PieChart, Target, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Sidebar() {
@@ -9,6 +9,7 @@ export function Sidebar() {
     { href: "/dashboard", icon: LayoutDashboard, label: "홈" },
     { href: "/analysis", icon: PieChart, label: "커리어 분석" },
     { href: "/goals", icon: Target, label: "목표 관리" },
+    { href: "/profile", icon: User, label: "내 프로필" },
   ];
 
   return (
