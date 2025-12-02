@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Sparkles, Loader2, ArrowRight, CheckCircle2, Settings, History, RefreshCcw, Briefcase, ChevronRight, FileText, ListTodo, Award } from "lucide-react";
+import { Brain, Sparkles, Loader2, ArrowRight, CheckCircle2, Settings, History, RefreshCcw, Briefcase, ChevronRight, FileText, ListTodo, Award, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTokens } from "@/lib/TokenContext";
 import { useToast } from "@/hooks/use-toast";
@@ -87,49 +87,65 @@ export default function Analysis() {
       );
   }
 
-  if (analysisState === 'results') {
-    return (
-      <Layout>
-         <div className="max-w-4xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="mb-8">
-                <Button variant="ghost" onClick={() => setAnalysisState('initial')} className="mb-4 pl-0 hover:bg-transparent hover:text-[#3182F6]">
-                    <ArrowRight className="h-4 w-4 mr-2 rotate-180" /> 돌아가기
-                </Button>
-                <h2 className="text-[28px] font-bold text-[#191F28]">분석 결과 및 추천</h2>
-                <p className="text-[#8B95A1] mt-2 text-lg">회원님의 프로필에 가장 적합한 커리어 패스입니다.</p>
+  // Common content for both initial (past report) and results view
+  // In a real app, initial view might show last saved report vs new results
+  // For this mockup, we'll show the same structure but maybe with different data context
+  
+  return (
+    <Layout>
+      <div className="max-w-4xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-6">
+        
+        {/* Heartwarming Summary Section */}
+        <div className="mb-10 text-center space-y-4">
+            <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-blue-50 mb-2">
+                <Sparkles className="h-10 w-10 text-[#3182F6]" />
             </div>
+            <h2 className="text-[32px] font-bold text-[#191F28] leading-tight">
+                John님, 정말 대단한 성장이네요!<br/>
+                <span className="text-[#3182F6]">상위 10%</span>의 역량을 보유하고 계십니다.
+            </h2>
+            <p className="text-[#4E5968] text-lg max-w-2xl mx-auto bg-[#F2F4F6] py-4 px-6 rounded-2xl leading-relaxed">
+                "현재 보유하신 <span className="font-bold text-[#191F28]">Product Strategy</span>와 <span className="font-bold text-[#191F28]">User Research</span> 역량은 시장에서 매우 높은 가치로 평가받고 있습니다. John님의 강점을 살려 도전해볼 수 있는 최고의 커리어 패스를 추천해드립니다."
+            </p>
+        </div>
 
-            <div className="grid gap-6">
-                {MOCK_ANALYSIS.recommendedRoles.map((role, index) => (
-                    <Card key={index} className={`toss-card border-l-4 ${index === 0 ? 'border-l-[#3182F6] bg-blue-50/30' : 'border-l-transparent'}`}>
-                        <CardContent className="p-6">
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <h3 className="text-xl font-bold text-[#191F28]">{role.title}</h3>
-                                        {index === 0 && <Badge className="bg-[#3182F6] hover:bg-[#3182F6]">Best Match</Badge>}
-                                    </div>
-                                    <p className="text-[#4E5968] text-sm font-medium">{role.salary}</p>
-                                </div>
-                                <div className="text-right">
-                                    <span className="text-2xl font-bold text-[#3182F6]">{role.matchScore}%</span>
-                                    <p className="text-xs text-[#8B95A1]">적합도</p>
-                                </div>
-                            </div>
-                            <p className="text-[#4E5968] mb-6 text-sm leading-relaxed">{role.description}</p>
-                            
-                            <div className="flex gap-2 mb-6">
-                                {role.requirements.map((req, i) => (
-                                    <Badge key={i} variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] font-normal">
-                                        {req}
-                                    </Badge>
-                                ))}
-                            </div>
+        <div className="flex items-center justify-between mb-6 px-2">
+             <h3 className="text-xl font-bold text-[#191F28] flex items-center gap-2">
+                <Brain className="h-5 w-5 text-[#3182F6]" /> AI 추천 커리어
+             </h3>
+             <Button onClick={handleAnalyze} variant="ghost" className="text-[#8B95A1] hover:text-[#3182F6]">
+                <RefreshCcw className="h-4 w-4 mr-1" /> 다시 분석하기
+             </Button>
+        </div>
 
-                            <Dialog>
+        {/* Recommended Careers List */}
+        <div className="grid gap-6 mb-16">
+            {MOCK_ANALYSIS.recommendedRoles.map((role, index) => (
+                <Card key={index} className={`toss-card overflow-hidden border-l-4 ${index === 0 ? 'border-l-[#3182F6] shadow-lg' : 'border-l-transparent'}`}>
+                    <CardContent className="p-6 sm:p-8">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                            <div>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <h3 className="text-2xl font-bold text-[#191F28]">{role.title}</h3>
+                                    {index === 0 && <Badge className="bg-[#3182F6] hover:bg-[#3182F6] px-3 py-1 text-sm">AI 최적 추천</Badge>}
+                                </div>
+                                <p className="text-[#4E5968] font-medium text-lg">{role.salary}</p>
+                            </div>
+                            <div className="flex items-center gap-3 bg-blue-50 px-4 py-2 rounded-xl">
+                                <span className="text-3xl font-bold text-[#3182F6]">{role.matchScore}%</span>
+                                <span className="text-sm text-[#6B7684] font-bold">적합도</span>
+                            </div>
+                        </div>
+                        
+                        <p className="text-[#4E5968] mb-8 text-base leading-relaxed border-b border-[#F2F4F6] pb-6">
+                            {role.description}
+                        </p>
+                        
+                        <div className="flex flex-col sm:flex-row gap-3">
+                             <Dialog>
                                 <DialogTrigger asChild>
-                                    <Button className="w-full h-12 rounded-xl font-bold text-base bg-white border border-[#E5E8EB] text-[#3182F6] hover:bg-[#E8F3FF] hover:border-[#E8F3FF] shadow-sm">
-                                        상세 정보 및 로드맵 보기
+                                    <Button variant="outline" className="flex-1 h-14 rounded-xl font-bold text-base border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6]">
+                                        상세 정보 보기
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent className="max-w-2xl rounded-[24px] p-0 gap-0 overflow-hidden border-none">
@@ -213,107 +229,34 @@ export default function Analysis() {
                                     </DialogFooter>
                                 </DialogContent>
                             </Dialog>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-         </div>
-      </Layout>
-    );
-  }
 
-  // Initial View: Past Reports or Empty State
-  return (
-    <Layout>
-      <div className="max-w-4xl mx-auto pb-10 pt-6">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-[28px] font-bold text-[#191F28]">커리어 분석</h2>
-            <p className="text-[#8B95A1] mt-1 text-lg">AI가 진단한 커리어 리포트 내역입니다.</p>
-          </div>
-          <Button onClick={handleAnalyze} className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base">
-            <RefreshCcw className="h-4 w-4" /> 재분석 실행
-          </Button>
+                            <Button 
+                                onClick={handleCreatePlan}
+                                className="flex-1 h-14 rounded-xl font-bold text-base bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 text-white"
+                            >
+                                <ListTodo className="mr-2 h-5 w-5" /> 이 커리어로 비전 트리 만들기
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
         </div>
 
-        {hasPastReports ? (
-            <div className="grid gap-6 md:grid-cols-2">
-                {/* Latest Report Card */}
-                <Card className="col-span-full toss-card bg-[#191F28] text-white border-none">
-                    <CardContent className="p-8">
-                        <div className="flex justify-between items-start mb-6">
-                            <div>
-                                <Badge className="bg-[#3182F6] text-white hover:bg-[#3182F6] border-none px-3 py-1.5 mb-3">최신 리포트</Badge>
-                                <h3 className="text-2xl font-bold">시니어 프로덕트 매니저 적합도 분석</h3>
-                                <p className="text-gray-400 mt-1">2025. 05. 20 분석됨</p>
-                            </div>
-                            <div className="text-right">
-                                <span className="text-5xl font-bold text-[#3182F6]">92</span>
-                                <span className="text-xl text-gray-500">/100</span>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-6 mb-8">
-                            <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm">
-                                <p className="text-sm text-gray-400 mb-1">시장 경쟁력</p>
-                                <p className="text-lg font-bold text-[#00BFA5]">상위 10%</p>
-                            </div>
-                            <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm">
-                                <p className="text-sm text-gray-400 mb-1">보유 역량</p>
-                                <p className="text-lg font-bold">8/10 매칭</p>
-                            </div>
-                            <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm">
-                                <p className="text-sm text-gray-400 mb-1">예상 연봉</p>
-                                <p className="text-lg font-bold">₩8,500만+</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-3">
-                            <Button onClick={() => setAnalysisState('results')} className="flex-1 h-12 bg-white text-[#191F28] hover:bg-gray-100 font-bold rounded-xl">
-                                추천 직무 보기
-                            </Button>
-                            <Button variant="outline" className="flex-1 h-12 border-white/20 text-white hover:bg-white/10 font-bold rounded-xl bg-transparent" onClick={() => setLocation('/report')}>
-                                상세 리포트 <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+        {/* Secondary Information (History, etc) */}
+        <div className="pt-8 border-t border-[#F2F4F6]">
+            <h3 className="text-lg font-bold text-[#8B95A1] mb-4 flex items-center gap-2">
+                <History className="h-5 w-5" /> 지난 분석 내역
+            </h3>
+            <div className="space-y-3 opacity-70 hover:opacity-100 transition-opacity">
+                {[1, 2].map((i) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-white border border-[#E5E8EB] rounded-xl cursor-pointer hover:bg-[#F9FAFB]">
+                        <span className="text-[#4E5968] font-medium text-sm">데이터 분석가 전환 가능성 진단</span>
+                        <span className="text-xs text-[#B0B8C1]">2025. 04. {10 - i}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
 
-                {/* Past History List */}
-                <Card className="col-span-full toss-card">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                            <History className="h-5 w-5 text-[#B0B8C1]" /> 분석 히스토리
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-1">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="flex items-center justify-between p-4 hover:bg-[#F9FAFB] rounded-xl cursor-pointer transition-colors group">
-                                <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 rounded-full bg-[#F2F4F6] flex items-center justify-center group-hover:bg-[#E8F3FF] transition-colors">
-                                        <FileText className="h-5 w-5 text-[#B0B8C1] group-hover:text-[#3182F6]" />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-[#191F28] text-sm">데이터 분석가 전환 가능성 진단</p>
-                                        <p className="text-xs text-[#8B95A1]">2025. 04. {10 - i}</p>
-                                    </div>
-                                </div>
-                                <ChevronRight className="h-5 w-5 text-[#D1D6DB] group-hover:text-[#333D4B]" />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            </div>
-        ) : (
-            <div className="text-center py-20 bg-white rounded-[32px] border border-[#E5E8EB]">
-                <div className="w-20 h-20 bg-[#F2F4F6] rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Brain className="h-10 w-10 text-[#B0B8C1]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#191F28] mb-2">아직 분석 내역이 없습니다</h3>
-                <p className="text-[#8B95A1] mb-8">프로필을 기반으로 첫 번째 커리어 분석을 시작해보세요.</p>
-                <Button onClick={handleAnalyze} size="lg" className="h-14 px-8 rounded-2xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-lg">
-                    <Sparkles className="mr-2 h-5 w-5" /> AI 분석 시작하기 (1 토큰)
-                </Button>
-            </div>
-        )}
       </div>
     </Layout>
   );
