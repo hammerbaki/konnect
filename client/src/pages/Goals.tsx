@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+
 export default function Goals() {
   const [vision, setVision] = useState<VisionGoal>(MOCK_VISION);
   const { setAction } = useMobileAction();
@@ -221,10 +222,13 @@ export default function Goals() {
                             )}
                         >
                             <CardContent className="p-4 text-center">
-                                <h3 className={cn("font-bold text-sm mb-2", selectedYearId === year.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                    {year.title}
-                                </h3>
-                                <Progress value={year.progress} className="h-1.5 mb-1" indicatorClassName={selectedYearId === year.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                <div className="flex justify-center items-center gap-2 mb-2">
+                                    <h3 className={cn("font-bold text-sm", selectedYearId === year.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                        {year.title}
+                                    </h3>
+                                    {year.progress === 100 && <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] border-none text-white text-[10px] px-1.5 py-0">Done</Badge>}
+                                </div>
+                                <Progress value={year.progress} className="h-1.5 mb-1" indicatorClassName={year.progress === 100 ? "bg-[#00BFA5]" : selectedYearId === year.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
                                 <p className="text-xs font-bold text-[#8B95A1]">{year.progress}%</p>
                             </CardContent>
                         </Card>
@@ -238,7 +242,7 @@ export default function Goals() {
 
         {/* Level 3: Half-Yearly Goals (2 Cards) */}
         {selectedYear && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300 mt-6">
+            <div className="space-y-2 mt-6">
                 <div className="text-center">
                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Half-Yearly</Badge>
                 </div>
@@ -250,15 +254,18 @@ export default function Goals() {
                             className={cn(
                                 "toss-card cursor-pointer transition-all",
                                 selectedHalfYearId === half.id 
-                                    ? "border-2 border-[#00BFA5] shadow-md bg-emerald-50/30" 
+                                    ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
                                     : "border border-transparent hover:shadow-sm"
                             )}
                         >
                             <CardContent className="p-4 text-center">
-                                <h4 className={cn("font-bold text-sm mb-2", selectedHalfYearId === half.id ? "text-[#00BFA5]" : "text-[#333D4B]")}>
-                                    {half.title}
-                                </h4>
-                                <Progress value={half.progress} className="h-1.5 mb-1" indicatorClassName={selectedHalfYearId === half.id ? "bg-[#00BFA5]" : "bg-[#B0B8C1]"} />
+                                <div className="flex justify-center items-center gap-2 mb-2">
+                                    <h4 className={cn("font-bold text-sm", selectedHalfYearId === half.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                        {half.title}
+                                    </h4>
+                                    {half.progress === 100 && <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] border-none text-white text-[10px] px-1.5 py-0">Done</Badge>}
+                                </div>
+                                <Progress value={half.progress} className="h-1.5 mb-1" indicatorClassName={half.progress === 100 ? "bg-[#00BFA5]" : selectedHalfYearId === half.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
                                 <p className="text-xs font-bold text-[#8B95A1]">{half.progress}%</p>
                             </CardContent>
                         </Card>
@@ -269,7 +276,7 @@ export default function Goals() {
 
         {/* Level 4: Monthly Goals (6 Cards) */}
         {selectedHalfYear && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300 mt-6">
+            <div className="space-y-2 mt-6">
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Monthly</Badge>
                 </div>
@@ -281,15 +288,18 @@ export default function Goals() {
                             className={cn(
                                 "toss-card cursor-pointer transition-all",
                                 selectedMonthId === month.id 
-                                    ? "border-2 border-[#FFB300] shadow-md bg-amber-50/30" 
+                                    ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
                                     : "border border-transparent hover:shadow-sm"
                             )}
                         >
                             <CardContent className="p-3 text-center">
-                                <h5 className={cn("font-bold text-xs mb-2 truncate", selectedMonthId === month.id ? "text-[#FFB300]" : "text-[#333D4B]")}>
-                                    {month.title}
-                                </h5>
-                                <Progress value={month.progress} className="h-1" indicatorClassName={selectedMonthId === month.id ? "bg-[#FFB300]" : "bg-[#B0B8C1]"} />
+                                <div className="flex justify-center items-center gap-1 mb-2">
+                                    <h5 className={cn("font-bold text-xs truncate", selectedMonthId === month.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                        {month.title}
+                                    </h5>
+                                    {month.progress === 100 && <div className="h-2 w-2 rounded-full bg-[#00BFA5]" />}
+                                </div>
+                                <Progress value={month.progress} className="h-1" indicatorClassName={month.progress === 100 ? "bg-[#00BFA5]" : selectedMonthId === month.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
                             </CardContent>
                         </Card>
                     ))}
@@ -299,7 +309,7 @@ export default function Goals() {
 
         {/* Level 5: Weekly Goals (4 Cards) */}
         {selectedMonth && (
-             <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300 mt-6">
+             <div className="space-y-2 mt-6">
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Weekly</Badge>
                 </div>
@@ -311,15 +321,18 @@ export default function Goals() {
                             className={cn(
                                 "toss-card cursor-pointer transition-all",
                                 selectedWeekId === week.id 
-                                    ? "border-2 border-[#9852F8] shadow-md bg-purple-50/30" 
+                                    ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
                                     : "border border-transparent hover:shadow-sm"
                             )}
                         >
                             <CardContent className="p-3 text-center">
-                                <h5 className={cn("font-bold text-xs mb-2 truncate", selectedWeekId === week.id ? "text-[#9852F8]" : "text-[#333D4B]")}>
-                                    {week.title}
-                                </h5>
-                                <Progress value={week.progress} className="h-1" indicatorClassName={selectedWeekId === week.id ? "bg-[#9852F8]" : "bg-[#B0B8C1]"} />
+                                <div className="flex justify-center items-center gap-1 mb-2">
+                                    <h5 className={cn("font-bold text-xs truncate", selectedWeekId === week.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                        {week.title}
+                                    </h5>
+                                    {week.progress === 100 && <div className="h-2 w-2 rounded-full bg-[#00BFA5]" />}
+                                </div>
+                                <Progress value={week.progress} className="h-1" indicatorClassName={week.progress === 100 ? "bg-[#00BFA5]" : selectedWeekId === week.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
                             </CardContent>
                         </Card>
                     ))}
@@ -329,7 +342,7 @@ export default function Goals() {
 
         {/* Level 6: Daily Goals (7 Cards - Small Compact) */}
         {selectedWeek && (
-             <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300 mt-6 pb-10">
+             <div className="space-y-2 mt-6 pb-10">
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Daily To-Dos</Badge>
                 </div>
