@@ -1,4 +1,4 @@
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Search, User, Coins } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +9,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { RedeemDialog } from "@/components/token/RedeemDialog";
+import { useTokens } from "@/lib/TokenContext";
 
 export function Header() {
+  const { credits } = useTokens();
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6 shadow-sm">
       <div className="w-full flex-1">
@@ -26,7 +30,12 @@ export function Header() {
         </form>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
+        <div className="flex items-center gap-2 mr-2 bg-slate-100 px-3 py-1.5 rounded-full">
+          <Coins className="h-4 w-4 text-amber-500" />
+          <span className="text-sm font-medium">{credits} Tokens</span>
+        </div>
+        <RedeemDialog />
+        <Button variant="ghost" size="icon" className="text-muted-foreground ml-2">
           <Bell className="h-5 w-5" />
           <span className="sr-only">Notifications</span>
         </Button>

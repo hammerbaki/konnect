@@ -1,9 +1,14 @@
 import { Switch, Route } from "wouter";
+import { queryClient } from "./lib/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { TokenProvider } from "@/lib/TokenContext";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/not-found";
-import Analysis from "./pages/Analysis"; // We will create this next
-import Goals from "./pages/Goals"; // We will create this next
+import Analysis from "./pages/Analysis";
+import Goals from "./pages/Goals";
 
 // Temporary placeholders until we create the files
 const PlaceholderAnalysis = () => <div>Analysis Page Placeholder</div>;
@@ -23,7 +28,14 @@ function Router() {
 
 function App() {
   return (
-    <Router />
+    <QueryClientProvider client={queryClient}>
+      <TokenProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </TokenProvider>
+    </QueryClientProvider>
   );
 }
 

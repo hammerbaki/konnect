@@ -27,7 +27,7 @@ export interface CareerAnalysis {
 export interface UserProfile {
   name: string;
   email: string;
-  token: string;
+  credits: number;
   hardConditions: {
     location: string[];
     salaryMin: number;

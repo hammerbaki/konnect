@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MOCK_ANALYSIS, MOCK_GOALS } from "@/lib/mockData";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';

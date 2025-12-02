@@ -5,23 +5,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Brain, Briefcase, MapPin, DollarSign, Sparkles, GraduationCap, Loader2 } from "lucide-react";
 import { useState } from "react";
 
+import { useTokens } from "@/lib/TokenContext";
+import { useToast } from "@/hooks/use-toast";
+
 export default function Analysis() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const { credits, deductCredit } = useTokens();
+  const { toast } = useToast();
 
   const handleAnalyze = () => {
-    setIsAnalyzing(true);
-    // Mock analysis delay
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setShowResults(true);
-    }, 2000);
+    if (credits <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Insufficient Tokens",
+        description: "You need at least 1 token to run a career analysis.",
+      });
+      return;
+    }
+
+    if (deductCredit()) {
+      setIsAnalyzing(true);
+      // Mock analysis delay
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        setShowResults(true);
+      }, 2000);
+    }
   };
 
   return (
@@ -169,18 +186,26 @@ export default function Analysis() {
               </div>
             </Tabs>
 
-            <div className="flex justify-end">
-              <Button size="lg" onClick={handleAnalyze} disabled={isAnalyzing} className="w-full md:w-auto bg-primary hover:bg-primary/90">
+            <div className="flex justify-end flex-col items-end gap-2">
+              <Button 
+                size="lg" 
+                onClick={handleAnalyze} 
+                disabled={isAnalyzing || showResults} 
+                className="w-full md:w-auto bg-primary hover:bg-primary/90"
+              >
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
                   </>
                 ) : (
                   <>
-                    <Brain className="mr-2 h-4 w-4" /> Run AI Analysis
+                    <Brain className="mr-2 h-4 w-4" /> Run AI Analysis (1 Token)
                   </>
                 )}
               </Button>
+              {credits === 0 && (
+                <p className="text-xs text-destructive">No tokens available. Please redeem a code.</p>
+              )}
             </div>
           </div>
 
