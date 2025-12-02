@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { motion, AnimatePresence } from "framer-motion";
+
 export default function Goals() {
   const [vision, setVision] = useState<VisionGoal>(MOCK_VISION);
   const { setAction } = useMobileAction();
@@ -209,7 +211,7 @@ export default function Goals() {
                                 "toss-card cursor-pointer transition-all hover:-translate-y-1 h-full box-border",
                                 selectedYearId === year.id 
                                     ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
-                                    : "border border-transparent hover:shadow-sm"
+                                    : "border-2 border-transparent hover:shadow-sm"
                             )}
                         >
                             <CardContent className="p-4 text-center flex flex-col h-full justify-between">
@@ -236,8 +238,16 @@ export default function Goals() {
         </div>
 
         {/* Level 3: Half-Yearly Goals (2 Cards) */}
+        <AnimatePresence mode="wait">
         {selectedYear && (
-            <div className="space-y-2 mt-6">
+            <motion.div 
+                key={selectedYear.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-2 mt-6"
+            >
                 <div className="text-center">
                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Half-Yearly</Badge>
                 </div>
@@ -250,7 +260,7 @@ export default function Goals() {
                                 "toss-card cursor-pointer transition-all box-border",
                                 selectedHalfYearId === half.id 
                                     ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
-                                    : "border border-transparent hover:shadow-sm"
+                                    : "border-2 border-transparent hover:shadow-sm"
                             )}
                         >
                             <CardContent className="p-4 text-center flex flex-col h-full justify-between">
@@ -273,12 +283,21 @@ export default function Goals() {
                         </Card>
                     ))}
                 </div>
-            </div>
+            </motion.div>
         )}
+        </AnimatePresence>
 
         {/* Level 4: Monthly Goals (6 Cards) */}
+        <AnimatePresence mode="wait">
         {selectedHalfYear && (
-            <div className="space-y-2 mt-6">
+            <motion.div 
+                key={selectedHalfYear.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-2 mt-6"
+            >
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Monthly</Badge>
                 </div>
@@ -291,7 +310,7 @@ export default function Goals() {
                                 "toss-card cursor-pointer transition-all box-border",
                                 selectedMonthId === month.id 
                                     ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
-                                    : "border border-transparent hover:shadow-sm"
+                                    : "border-2 border-transparent hover:shadow-sm"
                             )}
                         >
                             <CardContent className="p-3 text-center flex flex-col h-full justify-between">
@@ -311,12 +330,21 @@ export default function Goals() {
                         </Card>
                     ))}
                 </div>
-            </div>
+            </motion.div>
         )}
+        </AnimatePresence>
 
         {/* Level 5: Weekly Goals (4 Cards) */}
+        <AnimatePresence mode="wait">
         {selectedMonth && (
-             <div className="space-y-2 mt-6">
+             <motion.div 
+                key={selectedMonth.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-2 mt-6"
+            >
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Weekly</Badge>
                 </div>
@@ -329,7 +357,7 @@ export default function Goals() {
                                 "toss-card cursor-pointer transition-all box-border",
                                 selectedWeekId === week.id 
                                     ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
-                                    : "border border-transparent hover:shadow-sm"
+                                    : "border-2 border-transparent hover:shadow-sm"
                             )}
                         >
                             <CardContent className="p-3 text-center flex flex-col h-full justify-between">
@@ -349,12 +377,21 @@ export default function Goals() {
                         </Card>
                     ))}
                 </div>
-            </div>
+            </motion.div>
         )}
+        </AnimatePresence>
 
         {/* Level 6: Daily Goals (7 Cards - Small Compact) */}
+        <AnimatePresence mode="wait">
         {selectedWeek && (
-            <div className="space-y-2 mt-6 pb-10">
+            <motion.div 
+                key={selectedWeek.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-2 mt-6 pb-10"
+            >
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Daily To-Dos</Badge>
                 </div>
@@ -416,8 +453,9 @@ export default function Goals() {
                         );
                     })}
                 </div>
-            </div>
+            </motion.div>
         )}
+        </AnimatePresence>
 
         {/* Edit Todo Modal */}
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
