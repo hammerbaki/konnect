@@ -342,26 +342,34 @@ export default function Goals() {
 
         {/* Level 6: Daily Goals (7 Cards - Small Compact) */}
         {selectedWeek && (
-             <div className="space-y-2 mt-6 pb-10">
+            <div className="space-y-2 mt-6 pb-10">
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Daily To-Dos</Badge>
                 </div>
                 
                 {/* Compact Grid for 7 Days */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
-                    {selectedWeek.children.map((day) => (
-                        <Card key={day.id} className="toss-card border-l-2 border-l-[#3182F6] hover:shadow-md transition-shadow h-full flex flex-col">
+                    {selectedWeek.children.map((day) => {
+                        const isCompleted = day.progress === 100;
+                        return (
+                        <Card key={day.id} className={cn(
+                            "toss-card hover:shadow-md transition-shadow h-full flex flex-col border-l-2",
+                            isCompleted ? "border-l-[#00BFA5]" : "border-l-[#3182F6]"
+                        )}>
                             <div className="p-3 flex-1 flex flex-col">
                                 <div className="flex justify-between items-start mb-2">
                                     <span className="text-xs font-bold text-[#191F28]">{day.title}</span>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="h-6 w-6 -mt-1 -mr-1 text-[#B0B8C1] hover:text-[#3182F6]"
-                                        onClick={(e) => openEditModal(e, day)}
-                                    >
-                                        <Edit2 className="h-3 w-3" />
-                                    </Button>
+                                    <div className="flex gap-1">
+                                        {isCompleted && <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] border-none text-white text-[10px] px-1.5 py-0">Done</Badge>}
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-6 w-6 -mt-1 -mr-1 text-[#B0B8C1] hover:text-[#3182F6]"
+                                            onClick={(e) => openEditModal(e, day)}
+                                        >
+                                            <Edit2 className="h-3 w-3" />
+                                        </Button>
+                                    </div>
                                 </div>
                                 
                                 {/* Mini Todo List */}
@@ -374,7 +382,7 @@ export default function Goals() {
                                         >
                                             <div className={cn(
                                                 "mt-0.5 transition-colors",
-                                                todo.completed ? "text-[#3182F6]" : "text-[#E5E8EB] group-hover:text-[#B0B8C1]"
+                                                todo.completed ? "text-[#00BFA5]" : "text-[#E5E8EB] group-hover:text-[#B0B8C1]"
                                             )}>
                                                 {todo.completed ? <CheckCircle2 className="h-3 w-3" /> : <Circle className="h-3 w-3" />}
                                             </div>
@@ -389,11 +397,12 @@ export default function Goals() {
                                 </div>
 
                                 <div className="mt-3 pt-2 border-t border-[#F2F4F6]">
-                                    <Progress value={day.progress} className="h-1" indicatorClassName="bg-[#3182F6]" />
+                                    <Progress value={day.progress} className="h-1" indicatorClassName={isCompleted ? "bg-[#00BFA5]" : "bg-[#3182F6]"} />
                                 </div>
                             </div>
                         </Card>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         )}
