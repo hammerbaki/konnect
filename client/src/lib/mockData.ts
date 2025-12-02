@@ -6,35 +6,36 @@ export interface Todo {
 
 export interface DailyGoal {
   id: string;
-  title: string; // e.g., "Day 1: Study SQL Basics"
+  title: string; // e.g., "Day 1"
+  date?: string;
   progress: number; // calculated from todos
   todos: Todo[];
 }
 
 export interface WeeklyGoal {
   id: string;
-  title: string; // e.g., "Week 1: Python Fundamentals"
+  title: string; // e.g., "Week 1"
   progress: number; // calculated from children
   children: DailyGoal[];
 }
 
 export interface MonthlyGoal {
   id: string;
-  title: string; // e.g., "January: Data Analysis Foundation"
+  title: string; // e.g., "January"
   progress: number;
   children: WeeklyGoal[];
 }
 
 export interface HalfYearlyGoal {
   id: string;
-  title: string; // e.g., "H1: Technical Skills Acquisition"
+  title: string; // e.g., "H1"
   progress: number;
   children: MonthlyGoal[];
 }
 
 export interface YearlyGoal {
   id: string;
-  title: string; // e.g., "2025: Career Transition Year"
+  title: string; // e.g., "2025"
   progress: number;
   children: HalfYearlyGoal[];
 }
@@ -88,96 +89,99 @@ export interface UserProfile {
   };
 }
 
-// Mock Data for the Vision Tree
-export const MOCK_VISION: VisionGoal = {
-  id: "vision-1",
-  title: "CPO (Chief Product Officer)",
-  description: "유니콘 기업 규모의 제품 총괄 리더십 확보 및 글로벌 서비스 런칭 경험",
-  targetYear: 2028,
-  progress: 35,
-  children: [
-    {
-      id: "year-2025",
-      title: "2025: 시니어 PM 전환",
-      progress: 45,
-      children: [
-        {
-          id: "h1-2025",
-          title: "2025 상반기: 핵심 역량 강화",
-          progress: 60,
-          children: [
-            {
-              id: "m1-2025",
-              title: "1월: 데이터 분석 기초",
-              progress: 80,
-              children: [
-                {
-                  id: "w1-m1",
-                  title: "1주차: SQL 집중 학습",
-                  progress: 100,
-                  children: [
-                    {
-                      id: "d1-w1",
-                      title: "Day 1: SELECT/FROM",
-                      progress: 100,
-                      todos: [
-                        { id: "t1", title: "SQL 강의 1-3강 수강", completed: true },
-                        { id: "t2", title: "기초 예제 10문제 풀이", completed: true },
-                        { id: "t3", title: "학습 내용 블로그 정리", completed: true },
-                      ]
-                    },
-                    {
-                      id: "d2-w1",
-                      title: "Day 2: WHERE/GROUP BY",
-                      progress: 100,
-                      todos: [
-                        { id: "t4", title: "SQL 강의 4-6강 수강", completed: true },
-                        { id: "t5", title: "프로그래머스 Level 1 문제 풀이", completed: true },
-                        { id: "t6", title: "실습 데이터셋 쿼리 작성", completed: true },
-                      ]
-                    }
-                  ]
-                },
-                {
-                  id: "w2-m1",
-                  title: "2주차: Python 데이터 처리",
-                  progress: 60,
-                  children: [] // Simplified for brevity
-                }
-              ]
-            },
-            {
-              id: "m2-2025",
-              title: "2월: 제품 지표 설계",
-              progress: 40,
-              children: []
-            }
-          ]
-        },
-        {
-          id: "h2-2025",
-          title: "2025 하반기: 실무 리딩 경험",
-          progress: 20,
-          children: []
-        }
-      ]
-    },
-    {
-      id: "year-2026",
-      title: "2026: 헤드급 매니저 성장",
-      progress: 10,
-      children: []
-    },
-    {
-      id: "year-2027",
-      title: "2027: 사업 개발 역량 확보",
-      progress: 0,
-      children: []
-    }
-  ]
-};
+// Helper to generate tree
+function generateTree(): VisionGoal {
+    const vision: VisionGoal = {
+        id: "vision-1",
+        title: "CPO (Chief Product Officer)",
+        description: "유니콘 기업 규모의 제품 총괄 리더십 확보 및 글로벌 서비스 런칭 경험",
+        targetYear: 2028,
+        progress: 0,
+        children: []
+    };
 
-export const MOCK_GOALS: any[] = []; // Deprecated, using MOCK_VISION instead
+    // 3 Years
+    for (let y = 0; y < 3; y++) {
+        const yearVal = 2025 + y;
+        const year: YearlyGoal = {
+            id: `year-${yearVal}`,
+            title: `${yearVal}년`,
+            progress: 0,
+            children: []
+        };
+
+        // 2 Half Years per Year
+        for (let h = 1; h <= 2; h++) {
+            const half: HalfYearlyGoal = {
+                id: `h${h}-${yearVal}`,
+                title: `${yearVal}년 ${h === 1 ? "상반기" : "하반기"}`,
+                progress: 0,
+                children: []
+            };
+
+            // 6 Months per Half Year
+            for (let m = 1; m <= 6; m++) {
+                const monthNum = (h - 1) * 6 + m;
+                const month: MonthlyGoal = {
+                    id: `m${monthNum}-${yearVal}`,
+                    title: `${monthNum}월`,
+                    progress: 0,
+                    children: []
+                };
+
+                // 4 Weeks per Month
+                for (let w = 1; w <= 4; w++) {
+                    const week: WeeklyGoal = {
+                        id: `w${w}-m${monthNum}-${yearVal}`,
+                        title: `${w}주차`,
+                        progress: 0,
+                        children: []
+                    };
+
+                    // 7 Days per Week
+                    for (let d = 1; d <= 7; d++) {
+                        const day: DailyGoal = {
+                            id: `d${d}-w${w}-m${monthNum}-${yearVal}`,
+                            title: `Day ${d}`,
+                            progress: 0,
+                            todos: [
+                                { id: `t1-${d}`, title: "핵심 과제 수행", completed: false },
+                                { id: `t2-${d}`, title: "학습 내용 정리", completed: false },
+                                { id: `t3-${d}`, title: "다음 단계 계획", completed: false }
+                            ]
+                        };
+                        week.children.push(day);
+                    }
+                    month.children.push(week);
+                }
+                half.children.push(month);
+            }
+            year.children.push(half);
+        }
+        vision.children.push(year);
+    }
+    
+    // Set some initial progress for demo purposes (Year 2025 -> H1 -> M1 -> W1)
+    const demoWeek = vision.children[0].children[0].children[0].children[0];
+    if (demoWeek && demoWeek.children[0]) {
+        demoWeek.children[0].progress = 66;
+        demoWeek.children[0].todos[0].completed = true;
+        demoWeek.children[0].todos[1].completed = true;
+    }
+    
+    // Recalculate progress upwards
+    // Simplified calc for mock data
+    vision.children[0].children[0].children[0].children[0].progress = 30; 
+    vision.children[0].children[0].children[0].progress = 10;
+    vision.children[0].children[0].progress = 5;
+    vision.children[0].progress = 2;
+    vision.progress = 1;
+
+    return vision;
+}
+
+export const MOCK_VISION = generateTree();
+export const MOCK_GOALS: any[] = []; 
 
 export const MOCK_ANALYSIS: CareerAnalysis = {
   score: 85,
