@@ -34,8 +34,8 @@ export function MobileNav() {
           const Icon = item.icon;
           const isActive = location === item.href;
           
-          // Insert Special Button in the middle
-          if (index === 2) {
+          // Insert Special Button in the middle ONLY if NOT on dashboard
+          if (index === 2 && location !== "/dashboard") {
               return (
                   <React.Fragment key="special-action-wrapper">
                      <div className="relative -top-8">
