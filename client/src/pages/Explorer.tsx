@@ -104,7 +104,7 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                             <div className="w-full rounded-xl overflow-hidden bg-white mb-4 border border-[#E5E8EB] grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-1">
                                 <div className="aspect-video relative">
                                      <img 
-                                        src={`/careers/webp_images/${primaryImage}`} 
+                                        src={primaryImage} 
                                         alt={career.title}
                                         className="w-full h-full object-contain absolute inset-0"
                                         onError={() => setImageError(true)}
@@ -113,7 +113,7 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                                 {secondaryImage && (
                                     <div className="aspect-video relative">
                                         <img 
-                                            src={`/careers/webp_images/${secondaryImage}`} 
+                                            src={secondaryImage} 
                                             alt={`${career.title} alternate`}
                                             className="w-full h-full object-contain absolute inset-0"
                                         />
