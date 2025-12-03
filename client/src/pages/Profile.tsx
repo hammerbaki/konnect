@@ -13,9 +13,75 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { DateWheelPicker, SalaryWheelPicker, WheelPicker } from "@/components/ui/wheel-picker";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
+
+function ResponsiveClose({ children, asChild }: { children: React.ReactNode, asChild?: boolean }) {
+    const isMobile = useIsMobile();
+    if (isMobile) return <DrawerClose asChild={asChild}>{children}</DrawerClose>;
+    return <DialogClose asChild={asChild}>{children}</DialogClose>;
+}
+
+function ResponsiveModal({ 
+    trigger, 
+    title, 
+    description, 
+    children, 
+    open, 
+    onOpenChange 
+}: { 
+    trigger: React.ReactNode; 
+    title: string; 
+    description?: string; 
+    children: React.ReactNode; 
+    open?: boolean; 
+    onOpenChange?: (open: boolean) => void; 
+}) {
+    const isMobile = useIsMobile();
+
+    if (isMobile) {
+        return (
+            <Drawer open={open} onOpenChange={onOpenChange}>
+                <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+                <DrawerContent className="max-h-[85vh] outline-none">
+                     <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E8EB] mt-3 mb-1" />
+                    <DrawerHeader className="text-left">
+                        <DrawerTitle>{title}</DrawerTitle>
+                        {description && <CardDescription>{description}</CardDescription>}
+                    </DrawerHeader>
+                    <div className="p-4 pb-8 overflow-y-auto">
+                        {children}
+                    </div>
+                </DrawerContent>
+            </Drawer>
+        );
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogTrigger asChild>{trigger}</DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] md:max-w-xl bg-white border-none shadow-2xl rounded-[24px] p-0 overflow-hidden gap-0 [&>button]:hidden">
+                <DialogHeader className="p-6 pb-4 border-b border-[#F2F4F6] flex flex-row items-center justify-between space-y-0">
+                    <div className="space-y-1 text-left">
+                        <DialogTitle className="text-xl font-bold text-[#191F28]">{title}</DialogTitle>
+                         {description && <DialogDescription>{description}</DialogDescription>}
+                    </div>
+                    <DialogClose asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-[#F2F4F6] hover:bg-[#E5E8EB]">
+                            <X className="h-4 w-4 text-[#333D4B]" />
+                        </Button>
+                    </DialogClose>
+                </DialogHeader>
+                <div className="p-6 max-h-[70vh] overflow-y-auto">
+                    {children}
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 export default function Profile() {
   const { setAction } = useMobileAction();
@@ -222,51 +288,45 @@ export default function Profile() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label className="text-[#8B95A1] text-xs">시작일</Label>
-                                        <Drawer>
-                                            <DrawerTrigger asChild>
+                                        <ResponsiveModal
+                                            trigger={
                                                 <Button variant="outline" className="w-full h-12 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-normal text-[#191F28]">
                                                     {format(exp.startDate, 'yyyy. MM. dd')}
                                                 </Button>
-                                            </DrawerTrigger>
-                                            <DrawerContent>
-                                                <DrawerHeader>
-                                                    <DrawerTitle>시작일 선택</DrawerTitle>
-                                                </DrawerHeader>
-                                                <div className="p-4 pb-8">
-                                                    <DateWheelPicker 
-                                                        value={exp.startDate} 
-                                                        onChange={(date) => updateWorkExpDate(exp.id, 'startDate', date)}
-                                                    />
-                                                    <DrawerClose asChild>
-                                                        <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
-                                                    </DrawerClose>
-                                                </div>
-                                            </DrawerContent>
-                                        </Drawer>
+                                            }
+                                            title="시작일 선택"
+                                        >
+                                            <div className="pb-4">
+                                                <DateWheelPicker 
+                                                    value={exp.startDate} 
+                                                    onChange={(date) => updateWorkExpDate(exp.id, 'startDate', date)}
+                                                />
+                                                <ResponsiveClose asChild>
+                                                    <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
+                                                </ResponsiveClose>
+                                            </div>
+                                        </ResponsiveModal>
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-[#8B95A1] text-xs">종료일</Label>
-                                        <Drawer>
-                                            <DrawerTrigger asChild>
+                                        <ResponsiveModal
+                                            trigger={
                                                 <Button variant="outline" className="w-full h-12 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-normal text-[#191F28]">
                                                     {format(exp.endDate, 'yyyy. MM. dd')}
                                                 </Button>
-                                            </DrawerTrigger>
-                                            <DrawerContent>
-                                                <DrawerHeader>
-                                                    <DrawerTitle>종료일 선택</DrawerTitle>
-                                                </DrawerHeader>
-                                                <div className="p-4 pb-8">
-                                                    <DateWheelPicker 
-                                                        value={exp.endDate} 
-                                                        onChange={(date) => updateWorkExpDate(exp.id, 'endDate', date)}
-                                                    />
-                                                    <DrawerClose asChild>
-                                                        <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
-                                                    </DrawerClose>
-                                                </div>
-                                            </DrawerContent>
-                                        </Drawer>
+                                            }
+                                            title="종료일 선택"
+                                        >
+                                            <div className="pb-4">
+                                                <DateWheelPicker 
+                                                    value={exp.endDate} 
+                                                    onChange={(date) => updateWorkExpDate(exp.id, 'endDate', date)}
+                                                />
+                                                <ResponsiveClose asChild>
+                                                    <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
+                                                </ResponsiveClose>
+                                            </div>
+                                        </ResponsiveModal>
                                     </div>
                                 </div>
                                 
@@ -319,38 +379,32 @@ export default function Profile() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[#4E5968]">졸업년도</Label>
-                                    <Drawer>
-                                        <DrawerTrigger asChild>
+                                    <ResponsiveModal
+                                        trigger={
                                             <Button variant="outline" className="w-full h-12 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-normal text-[#191F28]">
                                                 2018
                                             </Button>
-                                        </DrawerTrigger>
-                                        <DrawerContent>
-                                            <DrawerHeader>
-                                                <DrawerTitle>졸업년도 선택</DrawerTitle>
-                                            </DrawerHeader>
-                                            <div className="p-4 pb-8">
-                                                <div className="flex justify-center">
-                                                    <div className="w-full max-w-xs">
-                                                        <div className="relative flex flex-col items-center justify-center h-48 w-full overflow-hidden cursor-grab active:cursor-grabbing touch-pan-y select-none">
-                                                             {/* We can reuse WheelPicker but need to import it or reimplement inline if it's not exported generically enough. 
-                                                                Wait, WheelPicker IS generic. Let's use it.
-                                                             */}
-                                                             <WheelPicker 
-                                                                items={Array.from({length: 50}, (_, i) => (new Date().getFullYear() - 40 + i).toString())}
-                                                                value={"2018"}
-                                                                onChange={(val) => {}} 
-                                                                label="년"
-                                                             />
-                                                        </div>
+                                        }
+                                        title="졸업년도 선택"
+                                    >
+                                        <div className="pb-4">
+                                            <div className="flex justify-center">
+                                                <div className="w-full max-w-xs">
+                                                    <div className="relative flex flex-col items-center justify-center h-48 w-full overflow-hidden cursor-grab active:cursor-grabbing touch-pan-y select-none">
+                                                         <WheelPicker 
+                                                            items={Array.from({length: 50}, (_, i) => (new Date().getFullYear() - 40 + i).toString())}
+                                                            value={"2018"}
+                                                            onChange={(val) => {}} 
+                                                            label="년"
+                                                         />
                                                     </div>
                                                 </div>
-                                                <DrawerClose asChild>
-                                                    <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
-                                                </DrawerClose>
                                             </div>
-                                        </DrawerContent>
-                                    </Drawer>
+                                            <ResponsiveClose asChild>
+                                                <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
+                                            </ResponsiveClose>
+                                        </div>
+                                    </ResponsiveModal>
                                 </div>
                             </div>
                         </div>
@@ -411,8 +465,8 @@ export default function Profile() {
                         {/* Work Environment Drawer */}
                         <div className="space-y-2">
                             <Label className="text-[#4E5968]">선호 근무 환경 (중복 선택 가능)</Label>
-                            <Drawer>
-                                <DrawerTrigger asChild>
+                            <ResponsiveModal
+                                trigger={
                                     <Button 
                                         variant="ghost" 
                                         className="w-full h-auto min-h-[56px] py-3 px-4 justify-between text-left bg-[#F2F4F6] hover:bg-[#E5E8EB] border-none rounded-xl font-medium text-[#191F28] whitespace-normal items-start"
@@ -438,71 +492,63 @@ export default function Profile() {
                                         </div>
                                         <span className="text-[#3182F6] text-sm font-bold ml-2 mt-1.5 shrink-0">선택 &gt;</span>
                                     </Button>
-                                </DrawerTrigger>
-                                <DrawerContent className="max-h-[85vh]">
-                                    <DrawerHeader>
-                                        <DrawerTitle>근무 환경 기본 설정</DrawerTitle>
-                                        <CardDescription>기피하거나 선호하는 근무 환경을 미리 설정하여 필터링합니다.</CardDescription>
-                                    </DrawerHeader>
-                                    <div className="p-4 pb-8 overflow-y-auto">
-                                        <div className="space-y-4">
-                                            {environmentOptions.map((opt) => (
-                                                <div 
-                                                    key={opt.id} 
-                                                    className="flex items-center space-x-4 p-4 rounded-xl border border-[#F2F4F6] bg-white cursor-pointer hover:bg-gray-50 transition-colors active:bg-gray-100"
-                                                    onClick={() => toggleEnvironmentPreference(opt.id)}
-                                                >
-                                                    <div className={`p-3 rounded-full ${profileData.environmentPreferences.includes(opt.id) ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
-                                                        <opt.icon className="h-6 w-6" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <label htmlFor={opt.id} className="text-base font-bold text-[#191F28] block mb-1 cursor-pointer pointer-events-none">
-                                                            {opt.label}
-                                                        </label>
-                                                        <p className="text-xs text-[#8B95A1]">{opt.desc}</p>
-                                                    </div>
-                                                    <Checkbox 
-                                                        id={opt.id} 
-                                                        checked={profileData.environmentPreferences.includes(opt.id)}
-                                                        onCheckedChange={() => toggleEnvironmentPreference(opt.id)}
-                                                        className="h-6 w-6 rounded-full pointer-events-none"
-                                                    />
-                                                </div>
-                                            ))}
+                                }
+                                title="근무 환경 기본 설정"
+                                description="기피하거나 선호하는 근무 환경을 미리 설정하여 필터링합니다."
+                            >
+                                <div className="space-y-4">
+                                    {environmentOptions.map((opt) => (
+                                        <div 
+                                            key={opt.id} 
+                                            className="flex items-center space-x-4 p-4 rounded-xl border border-[#F2F4F6] bg-white cursor-pointer hover:bg-gray-50 transition-colors active:bg-gray-100"
+                                            onClick={() => toggleEnvironmentPreference(opt.id)}
+                                        >
+                                            <div className={`p-3 rounded-full ${profileData.environmentPreferences.includes(opt.id) ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                                                <opt.icon className="h-6 w-6" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label htmlFor={opt.id} className="text-base font-bold text-[#191F28] block mb-1 cursor-pointer pointer-events-none">
+                                                    {opt.label}
+                                                </label>
+                                                <p className="text-xs text-[#8B95A1]">{opt.desc}</p>
+                                            </div>
+                                            <Checkbox 
+                                                id={opt.id} 
+                                                checked={profileData.environmentPreferences.includes(opt.id)}
+                                                onCheckedChange={() => toggleEnvironmentPreference(opt.id)}
+                                                className="h-6 w-6 rounded-full pointer-events-none"
+                                            />
                                         </div>
-                                        <DrawerClose asChild>
-                                            <Button className="w-full mt-6 rounded-xl h-14 text-lg font-bold bg-[#3182F6]">설정 완료</Button>
-                                        </DrawerClose>
-                                    </div>
-                                </DrawerContent>
-                            </Drawer>
+                                    ))}
+                                </div>
+                                <ResponsiveClose asChild>
+                                    <Button className="w-full mt-6 rounded-xl h-14 text-lg font-bold bg-[#3182F6]">설정 완료</Button>
+                                </ResponsiveClose>
+                            </ResponsiveModal>
                         </div>
 
                         {/* Salary Drawer */}
                         <div className="space-y-2">
                             <Label className="text-[#4E5968]">희망 연봉 (만원)</Label>
-                            <Drawer>
-                                <DrawerTrigger asChild>
+                            <ResponsiveModal
+                                trigger={
                                     <Button variant="outline" className="w-full h-14 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-bold text-xl text-[#191F28]">
                                         {profileData.salary.toLocaleString()} 만원
                                     </Button>
-                                </DrawerTrigger>
-                                <DrawerContent>
-                                    <DrawerHeader>
-                                        <DrawerTitle>희망 연봉 설정</DrawerTitle>
-                                        <CardDescription>4자리 숫자를 스크롤하여 설정하세요.</CardDescription>
-                                    </DrawerHeader>
-                                    <div className="p-4 pb-8">
-                                        <SalaryWheelPicker 
-                                            value={profileData.salary} 
-                                            onChange={(val) => setProfileData({...profileData, salary: val})}
-                                        />
-                                        <DrawerClose asChild>
-                                            <Button className="w-full mt-8 rounded-xl h-12 text-lg font-bold">완료</Button>
-                                        </DrawerClose>
-                                    </div>
-                                </DrawerContent>
-                            </Drawer>
+                                }
+                                title="희망 연봉 설정"
+                                description="4자리 숫자를 스크롤하여 설정하세요."
+                            >
+                                <div className="pb-4">
+                                    <SalaryWheelPicker 
+                                        value={profileData.salary} 
+                                        onChange={(val) => setProfileData({...profileData, salary: val})}
+                                    />
+                                    <ResponsiveClose asChild>
+                                        <Button className="w-full mt-8 rounded-xl h-12 text-lg font-bold">완료</Button>
+                                    </ResponsiveClose>
+                                </div>
+                            </ResponsiveModal>
                         </div>
 
                         <div className="space-y-2">

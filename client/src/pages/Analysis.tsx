@@ -180,7 +180,7 @@ function ResponsiveCareerDetail({ role, handleCreatePlan }: { role: any, handleC
                     상세 정보 보기
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-[24px] gap-0 bg-white border-none shadow-2xl">
+            <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-[24px] gap-0 bg-white border-none shadow-2xl [&>button]:hidden">
                 <DialogHeader className="p-6 pb-4 border-b border-[#F2F4F6] flex-shrink-0 flex flex-row justify-between items-center space-y-0">
                     <DialogTitle className="text-[24px] font-bold text-[#191F28]">커리어 상세 정보</DialogTitle>
                     <DialogClose asChild>
