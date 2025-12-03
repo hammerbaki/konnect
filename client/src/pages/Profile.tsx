@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save, Building, Calendar, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X } from "lucide-react";
+import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save, Building, Calendar as CalendarIcon, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X } from "lucide-react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +18,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DateWheelPicker, SalaryWheelPicker, WheelPicker } from "@/components/ui/wheel-picker";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 function ResponsiveClose({ children, asChild }: { children: React.ReactNode, asChild?: boolean }) {
     const isMobile = useIsMobile();
@@ -80,6 +82,139 @@ function ResponsiveModal({
                 </div>
             </DialogContent>
         </Dialog>
+    );
+}
+
+function ResponsiveDatePickerContent({ value, onChange }: { value: Date, onChange: (date: Date) => void }) {
+    const isMobile = useIsMobile();
+
+    if (isMobile) {
+        return (
+            <div className="pb-4">
+                <DateWheelPicker value={value} onChange={onChange} />
+                <ResponsiveClose asChild>
+                    <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
+                </ResponsiveClose>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col items-center justify-center p-2">
+            <Calendar
+                mode="single"
+                selected={value}
+                onSelect={(date) => date && onChange(date)}
+                initialFocus
+                className="rounded-md border"
+            />
+             <ResponsiveClose asChild>
+                <Button className="w-full mt-6 rounded-xl h-12 text-lg font-bold bg-[#3182F6]">선택 완료</Button>
+            </ResponsiveClose>
+        </div>
+    );
+}
+
+function ResponsiveYearPickerContent({ value, onChange }: { value: string, onChange: (val: string) => void }) {
+    const isMobile = useIsMobile();
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({length: 50}, (_, i) => (currentYear - 40 + i).toString());
+
+    if (isMobile) {
+        return (
+            <div className="pb-4">
+                 <div className="flex justify-center">
+                    <div className="w-full max-w-xs">
+                        <div className="relative flex flex-col items-center justify-center h-48 w-full overflow-hidden cursor-grab active:cursor-grabbing touch-pan-y select-none">
+                                <WheelPicker 
+                                items={years}
+                                value={value}
+                                onChange={onChange} 
+                                label="년"
+                                />
+                        </div>
+                    </div>
+                </div>
+                <ResponsiveClose asChild>
+                    <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
+                </ResponsiveClose>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col h-[400px]">
+            <ScrollArea className="flex-1 pr-4">
+                <div className="grid grid-cols-4 gap-2">
+                    {years.reverse().map((year) => (
+                        <Button
+                            key={year}
+                            variant={value === year ? "default" : "outline"}
+                            className={`h-12 rounded-xl font-medium ${value === year ? "bg-[#3182F6] hover:bg-[#2b72d7]" : "border-[#E5E8EB] hover:bg-[#F2F4F6] text-[#4E5968]"}`}
+                            onClick={() => onChange(year)}
+                        >
+                            {year}
+                        </Button>
+                    ))}
+                </div>
+            </ScrollArea>
+             <ResponsiveClose asChild>
+                <Button className="w-full mt-6 rounded-xl h-12 text-lg font-bold bg-[#3182F6]">선택 완료</Button>
+            </ResponsiveClose>
+        </div>
+    );
+}
+
+function ResponsiveSalaryInputContent({ value, onChange }: { value: number, onChange: (val: number) => void }) {
+    const isMobile = useIsMobile();
+    const [inputValue, setInputValue] = useState(value.toLocaleString());
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Remove commas and non-digit characters
+        const rawValue = e.target.value.replace(/[^0-9]/g, '');
+        const numValue = parseInt(rawValue, 10);
+        
+        if (!isNaN(numValue)) {
+            setInputValue(numValue.toLocaleString());
+            onChange(numValue);
+        } else if (rawValue === '') {
+             setInputValue('');
+             onChange(0);
+        }
+    };
+
+    if (isMobile) {
+        return (
+            <div className="pb-4">
+                <SalaryWheelPicker value={value} onChange={onChange} />
+                <ResponsiveClose asChild>
+                    <Button className="w-full mt-8 rounded-xl h-12 text-lg font-bold">완료</Button>
+                </ResponsiveClose>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col p-4 space-y-6">
+            <div className="space-y-2">
+                <Label className="text-[#4E5968]">연봉 입력 (만원)</Label>
+                <div className="relative">
+                    <Input 
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        className="h-16 text-2xl font-bold pl-4 pr-12 rounded-xl border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100 transition-all"
+                        placeholder="0"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8B95A1] font-bold text-lg">만원</span>
+                </div>
+                <p className="text-sm text-[#8B95A1]">
+                    * 성과급 및 기타 수당을 포함한 세전 연봉을 입력해주세요.
+                </p>
+            </div>
+             <ResponsiveClose asChild>
+                <Button className="w-full rounded-xl h-12 text-lg font-bold bg-[#3182F6]">입력 완료</Button>
+            </ResponsiveClose>
+        </div>
     );
 }
 
@@ -296,15 +431,10 @@ export default function Profile() {
                                             }
                                             title="시작일 선택"
                                         >
-                                            <div className="pb-4">
-                                                <DateWheelPicker 
-                                                    value={exp.startDate} 
-                                                    onChange={(date) => updateWorkExpDate(exp.id, 'startDate', date)}
-                                                />
-                                                <ResponsiveClose asChild>
-                                                    <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
-                                                </ResponsiveClose>
-                                            </div>
+                                            <ResponsiveDatePickerContent 
+                                                value={exp.startDate} 
+                                                onChange={(date) => updateWorkExpDate(exp.id, 'startDate', date)}
+                                            />
                                         </ResponsiveModal>
                                     </div>
                                     <div className="space-y-2">
@@ -317,15 +447,10 @@ export default function Profile() {
                                             }
                                             title="종료일 선택"
                                         >
-                                            <div className="pb-4">
-                                                <DateWheelPicker 
-                                                    value={exp.endDate} 
-                                                    onChange={(date) => updateWorkExpDate(exp.id, 'endDate', date)}
-                                                />
-                                                <ResponsiveClose asChild>
-                                                    <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
-                                                </ResponsiveClose>
-                                            </div>
+                                            <ResponsiveDatePickerContent 
+                                                value={exp.endDate} 
+                                                onChange={(date) => updateWorkExpDate(exp.id, 'endDate', date)}
+                                            />
                                         </ResponsiveModal>
                                     </div>
                                 </div>
@@ -387,23 +512,10 @@ export default function Profile() {
                                         }
                                         title="졸업년도 선택"
                                     >
-                                        <div className="pb-4">
-                                            <div className="flex justify-center">
-                                                <div className="w-full max-w-xs">
-                                                    <div className="relative flex flex-col items-center justify-center h-48 w-full overflow-hidden cursor-grab active:cursor-grabbing touch-pan-y select-none">
-                                                         <WheelPicker 
-                                                            items={Array.from({length: 50}, (_, i) => (new Date().getFullYear() - 40 + i).toString())}
-                                                            value={"2018"}
-                                                            onChange={(val) => {}} 
-                                                            label="년"
-                                                         />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <ResponsiveClose asChild>
-                                                <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
-                                            </ResponsiveClose>
-                                        </div>
+                                        <ResponsiveYearPickerContent 
+                                            value={"2018"}
+                                            onChange={(val) => {}} 
+                                        />
                                     </ResponsiveModal>
                                 </div>
                             </div>
@@ -539,15 +651,10 @@ export default function Profile() {
                                 title="희망 연봉 설정"
                                 description="4자리 숫자를 스크롤하여 설정하세요."
                             >
-                                <div className="pb-4">
-                                    <SalaryWheelPicker 
-                                        value={profileData.salary} 
-                                        onChange={(val) => setProfileData({...profileData, salary: val})}
-                                    />
-                                    <ResponsiveClose asChild>
-                                        <Button className="w-full mt-8 rounded-xl h-12 text-lg font-bold">완료</Button>
-                                    </ResponsiveClose>
-                                </div>
+                                <ResponsiveSalaryInputContent 
+                                    value={profileData.salary} 
+                                    onChange={(val) => setProfileData({...profileData, salary: val})}
+                                />
                             </ResponsiveModal>
                         </div>
 
