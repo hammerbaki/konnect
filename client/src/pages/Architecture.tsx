@@ -1,6 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Database, Server, Globe, Cpu, Zap, ShieldCheck, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -11,10 +10,10 @@ export default function Architecture() {
         <div className="space-y-2">
           <h2 className="text-[28px] font-bold text-[#191F28] flex items-center gap-2">
             <Layers className="h-8 w-8 text-[#3182F6]" />
-            System Architecture
+            시스템 아키텍처
           </h2>
           <p className="text-[#8B95A1] text-lg">
-            Hybrid Cloud Architecture: Replit for Agility + AWS for Power
+            하이브리드 클라우드 구조: Replit의 민첩성과 AWS의 성능 결합
           </p>
         </div>
 
@@ -35,16 +34,16 @@ export default function Architecture() {
             >
               <div className="mb-4 flex items-center gap-2">
                 <div className="bg-black text-white px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase">
-                  Replit Environment
+                  Replit 환경
                 </div>
-                <span className="text-sm text-[#6B7684] font-medium">Main Application & Orchestration</span>
+                <span className="text-sm text-[#6B7684] font-medium">메인 앱 & 오케스트레이션</span>
               </div>
               
               <Card className="flex-1 border-2 border-[#191F28] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] bg-white overflow-visible">
                 <CardHeader className="bg-[#F2F4F6] border-b border-[#E5E8EB] py-4">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Globe className="h-5 w-5 text-[#3182F6]" />
-                    Fullstack App (Monorepo)
+                    풀스택 앱 (Monorepo)
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
@@ -54,8 +53,8 @@ export default function Architecture() {
                             <span className="font-bold">TS</span>
                         </div>
                         <div>
-                            <h4 className="font-bold text-[#191F28]">React Frontend</h4>
-                            <p className="text-xs text-[#6B7684]">User Interface & State</p>
+                            <h4 className="font-bold text-[#191F28]">React 프론트엔드</h4>
+                            <p className="text-xs text-[#6B7684]">사용자 인터페이스 & 상태 관리</p>
                         </div>
                     </div>
 
@@ -66,8 +65,8 @@ export default function Architecture() {
                             <span className="font-bold">Node</span>
                         </div>
                         <div>
-                            <h4 className="font-bold text-[#191F28]">Node.js Backend</h4>
-                            <p className="text-xs text-[#6B7684]">API Gateway, Auth, DB Sync</p>
+                            <h4 className="font-bold text-[#191F28]">Node.js 백엔드</h4>
+                            <p className="text-xs text-[#6B7684]">API 게이트웨이, 인증, DB 연동</p>
                         </div>
                     </div>
 
@@ -79,7 +78,7 @@ export default function Architecture() {
                         </div>
                         <div>
                             <h4 className="font-bold text-[#191F28]">Replit Postgres</h4>
-                            <p className="text-xs text-[#6B7684]">User Data, Profiles, History</p>
+                            <p className="text-xs text-[#6B7684]">사용자 데이터, 프로필, 이력 저장</p>
                         </div>
                     </div>
                 </CardContent>
@@ -125,16 +124,16 @@ export default function Architecture() {
             >
               <div className="mb-4 flex items-center gap-2 justify-end md:justify-start">
                 <div className="bg-[#FF9900] text-white px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase">
-                  AWS Environment
+                  AWS 환경
                 </div>
-                <span className="text-sm text-[#6B7684] font-medium">Microservice (Compute)</span>
+                <span className="text-sm text-[#6B7684] font-medium">마이크로서비스 (연산 처리)</span>
               </div>
               
               <Card className="flex-1 border-2 border-[#FF9900] shadow-[8px_8px_0px_0px_rgba(255,153,0,0.2)] bg-white">
                 <CardHeader className="bg-[#FFF8F0] border-b border-[#FFE0B2] py-4">
                   <CardTitle className="flex items-center gap-2 text-lg text-[#D15B0A]">
                     <Server className="h-5 w-5" />
-                    Django Microservice
+                    Django 마이크로서비스
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
@@ -145,7 +144,7 @@ export default function Architecture() {
                         </div>
                         <div>
                             <h4 className="font-bold text-[#191F28]">Django REST API</h4>
-                            <p className="text-xs text-[#6B7684]">Receives Heavy Job Requests</p>
+                            <p className="text-xs text-[#6B7684]">고부하 작업 요청 수신</p>
                         </div>
                     </div>
 
@@ -156,8 +155,8 @@ export default function Architecture() {
                             <Cpu className="h-5 w-5" />
                         </div>
                         <div>
-                            <h4 className="font-bold text-[#191F28]">Celery Workers</h4>
-                            <p className="text-xs text-[#6B7684]">AI Inference, PDF Parsing</p>
+                            <h4 className="font-bold text-[#191F28]">Celery 워커</h4>
+                            <p className="text-xs text-[#6B7684]">AI 추론, PDF 파싱 등 무거운 작업</p>
                         </div>
                     </div>
 
@@ -169,7 +168,7 @@ export default function Architecture() {
                         </div>
                         <div>
                             <h4 className="font-bold text-[#191F28]">Redis</h4>
-                            <p className="text-xs text-[#6B7684]">Job Queue & Caching</p>
+                            <p className="text-xs text-[#6B7684]">작업 큐 & 캐싱 레이어</p>
                         </div>
                     </div>
                 </CardContent>
@@ -184,14 +183,14 @@ export default function Architecture() {
                 <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                         <ShieldCheck className="h-5 w-5 text-green-500" />
-                        Reliability
+                        안정성 (Reliability)
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-[#4E5968] text-sm leading-relaxed">
-                        The core user experience runs on Replit's managed infrastructure, ensuring 
-                        high availability for UI/UX. Heavy AI jobs are offloaded to AWS so the 
-                        app never slows down.
+                        핵심 사용자 경험은 Replit의 관리형 인프라에서 실행되어 
+                        UI/UX의 고가용성을 보장합니다. 무거운 AI 작업은 AWS로 
+                        분산 처리되어 앱 속도 저하를 방지합니다.
                     </p>
                 </CardContent>
             </Card>
@@ -200,14 +199,14 @@ export default function Architecture() {
                 <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                         <Zap className="h-5 w-5 text-yellow-500" />
-                        Velocity
+                        개발 속도 (Velocity)
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-[#4E5968] text-sm leading-relaxed">
-                        We develop the frontend and business logic rapidly on Replit (Agile), 
-                        while leveraging the existing, stable AWS backend for complex 
-                        data processing (Stability).
+                        프론트엔드와 비즈니스 로직은 Replit에서 빠르게 개발(Agile)하고, 
+                        복잡한 데이터 처리는 기존의 안정적인 AWS 백엔드를 
+                        활용(Stability)하여 효율을 극대화합니다.
                     </p>
                 </CardContent>
             </Card>
@@ -216,13 +215,14 @@ export default function Architecture() {
                 <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                         <Layers className="h-5 w-5 text-blue-500" />
-                        Scalability
+                        확장성 (Scalability)
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-[#4E5968] text-sm leading-relaxed">
-                        As user traffic grows, we can scale the AWS worker nodes independently 
-                        without affecting the main application's responsiveness.
+                        사용자 트래픽이 증가하더라도 메인 애플리케이션의 반응성에 
+                        영향을 주지 않고, AWS의 Celery 워커 노드만 독립적으로 
+                        확장하여 대응할 수 있습니다.
                     </p>
                 </CardContent>
             </Card>
