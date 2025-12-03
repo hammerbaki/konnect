@@ -382,14 +382,30 @@ export default function Profile() {
                             <Label className="text-[#4E5968]">선호 근무 환경 (중복 선택 가능)</Label>
                             <Drawer>
                                 <DrawerTrigger asChild>
-                                    <Button variant="outline" className="w-full h-14 justify-between text-left bg-[#F2F4F6] border-none rounded-xl font-medium text-[#191F28] px-4">
-                                        <span className="truncate">
+                                    <Button 
+                                        variant="ghost" 
+                                        className="w-full h-auto min-h-[56px] py-3 px-4 justify-between text-left bg-[#F2F4F6] hover:bg-[#E5E8EB] border-none rounded-xl font-medium text-[#191F28] whitespace-normal items-start"
+                                    >
+                                        <div className="flex flex-wrap gap-2 flex-1 items-center">
                                             {profileData.environmentPreferences.length > 0 
-                                                ? `${profileData.environmentPreferences.length}개 선택됨 (${profileData.environmentPreferences.join(', ')})`
-                                                : "근무 환경 선택하기"
+                                                ? profileData.environmentPreferences.map(prefId => {
+                                                    const option = environmentOptions.find(opt => opt.id === prefId);
+                                                    // Extract Korean label part only for cleaner look
+                                                    const label = option ? option.label.split('(')[0].trim() : prefId;
+                                                    return (
+                                                        <Badge 
+                                                            key={prefId} 
+                                                            variant="secondary" 
+                                                            className="bg-white text-[#333D4B] hover:bg-white px-3 py-1.5 rounded-lg text-sm font-medium border border-[#E5E8EB] shadow-sm"
+                                                        >
+                                                            {label}
+                                                        </Badge>
+                                                    );
+                                                })
+                                                : <span className="text-[#B0B8C1] py-1">근무 환경 선택하기</span>
                                             }
-                                        </span>
-                                        <span className="text-[#3182F6] text-sm font-bold">선택 &gt;</span>
+                                        </div>
+                                        <span className="text-[#3182F6] text-sm font-bold ml-2 mt-1.5 shrink-0">선택 &gt;</span>
                                     </Button>
                                 </DrawerTrigger>
                                 <DrawerContent className="max-h-[85vh]">
