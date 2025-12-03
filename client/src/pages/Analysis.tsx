@@ -212,17 +212,20 @@ export default function Analysis() {
                                         상세 정보 보기
                                     </Button>
                                 </DrawerTrigger>
-    <DrawerContent className="h-[95vh] rounded-t-[20px] flex flex-col">
-        <div className="flex justify-between items-center p-6 pb-2 border-b border-[#F2F4F6]">
-            <DrawerTitle className="text-xl font-bold text-[#191F28]">커리어 상세 정보</DrawerTitle>
+    <DrawerContent className="h-[92vh] rounded-t-[24px] flex flex-col outline-none">
+        {/* Handle Bar */}
+        <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E8EB] mt-3 mb-1" />
+        
+        <div className="flex justify-between items-center px-5 py-3 border-b border-[#F2F4F6]">
+            <DrawerTitle className="text-[18px] font-bold text-[#191F28]">커리어 상세 정보</DrawerTitle>
             <DrawerClose asChild>
-                <Button variant="ghost" size="icon" className="rounded-full hover:bg-[#F2F4F6]">
-                    <X className="h-6 w-6 text-[#333D4B]" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-[#F2F4F6] hover:bg-[#E5E8EB]">
+                    <X className="h-4 w-4 text-[#333D4B]" />
                 </Button>
             </DrawerClose>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-5">
             {/* Header Section */}
             <div className="mb-8">
                 <div className="flex items-center gap-2 mb-3">
