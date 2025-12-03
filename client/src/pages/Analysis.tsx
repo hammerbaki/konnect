@@ -50,6 +50,70 @@ function CareerDetailContent({ role, handleCreatePlan }: { role: any, handleCrea
                     </div>
                 </div>
 
+                {/* Charts Section within Detail */}
+                <div className="space-y-6 mb-8">
+                    <Card className="border border-[#E5E8EB] shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <Award className="h-4 w-4 text-[#3182F6]" /> 역량 매칭 분석
+                            </CardTitle>
+                            <CardDescription className="text-xs">나의 역량 vs 이 포지션 요구 역량</CardDescription>
+                        </CardHeader>
+                        <CardContent className="h-[250px] w-full flex justify-center items-center">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={MOCK_ANALYSIS.radarData}>
+                                <PolarGrid stroke="#E5E8EB" />
+                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#4E5968', fontSize: 11 }} />
+                                <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
+                                <Radar
+                                    name="My Skills"
+                                    dataKey="A"
+                                    stroke="#3182F6"
+                                    fill="#3182F6"
+                                    fillOpacity={0.3}
+                                />
+                                <Radar
+                                    name="Role Req"
+                                    dataKey="B"
+                                    stroke="#B0B8C1"
+                                    fill="#B0B8C1"
+                                    fillOpacity={0.1}
+                                />
+                                </RadarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border border-[#E5E8EB] shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base flex items-center gap-2">
+                                <TrendingUp className="h-4 w-4 text-[#00BFA5]" /> 연봉 예측
+                            </CardTitle>
+                            <CardDescription className="text-xs">현재 vs 이 포지션 예상 (단위: 만원)</CardDescription>
+                        </CardHeader>
+                        <CardContent className="h-[200px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={[
+                                    { name: '현재', amount: 6000 },
+                                    { name: '이 포지션', amount: 8500 },
+                                    { name: 'Top 10%', amount: 12000 },
+                                ]} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#4E5968', fontSize: 12 }} />
+                                    <Tooltip 
+                                        cursor={{ fill: 'transparent' }}
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                    />
+                                    <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
+                                        <Cell fill="#B0B8C1" />
+                                        <Cell fill="#3182F6" />
+                                        <Cell fill="#00BFA5" />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                </div>
+
                 {/* Tabs Section */}
                 <Tabs defaultValue="roadmap" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 bg-[#F2F4F6] p-1 rounded-xl mb-6 h-12">
@@ -292,66 +356,8 @@ export default function Analysis() {
             </p>
         </div>
         
-        {/* Radar Chart Section */}
-        <div className="grid md:grid-cols-2 gap-6 mb-12">
-            <Card className="toss-card">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                        <Award className="h-5 w-5 text-[#3182F6]" /> 역량 분석
-                    </CardTitle>
-                    <CardDescription>나의 현재 역량 vs 시장 요구사항</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[300px] w-full flex justify-center items-center">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={MOCK_ANALYSIS.radarData}>
-                        <PolarGrid stroke="#E5E8EB" />
-                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#4E5968', fontSize: 12 }} />
-                        <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
-                        <Radar
-                            name="My Skills"
-                            dataKey="A"
-                            stroke="#3182F6"
-                            fill="#3182F6"
-                            fillOpacity={0.3}
-                        />
-                        <Radar
-                            name="Market Req"
-                            dataKey="B"
-                            stroke="#B0B8C1"
-                            fill="#B0B8C1"
-                            fillOpacity={0.1}
-                        />
-                        </RadarChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
-
-            <Card className="toss-card">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-[#00BFA5]" /> 연봉 예측
-                    </CardTitle>
-                    <CardDescription>현재 커리어 패스의 시장 가치 (단위: 만원)</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[300px] w-full">
-                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={salaryData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#4E5968' }} />
-                            <Tooltip 
-                                cursor={{ fill: 'transparent' }}
-                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                            />
-                            <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
-                                {salaryData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={index === 2 ? '#3182F6' : index === 0 ? '#B0B8C1' : '#00BFA5'} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
-        </div>
-
+        {/* Radar Chart Section - Removed from here and moved to Detail View */}
+        
         <div className="flex items-center justify-between mb-6 px-2">
              <h3 className="text-xl font-bold text-[#191F28] flex items-center gap-2">
                 <Brain className="h-5 w-5 text-[#3182F6]" /> AI 추천 커리어
