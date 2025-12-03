@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save, Building, Calendar as CalendarIcon, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X } from "lucide-react";
+import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save, Building, Calendar as CalendarIcon, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X, TrendingUp, DollarSign, Smile, Shield } from "lucide-react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -384,6 +384,9 @@ export default function Profile() {
     name: "John Doe",
     role: "Product Manager",
     bio: "데이터 기반의 의사결정을 선호하는 PM입니다.",
+    gender: "male" as "male" | "female" | undefined,
+    birthDate: new Date(1995, 5, 15) as Date | null,
+    workValues: ["성장 가능성", "워라밸"] as string[],
     experienceYears: 5,
     salary: 6000,
     environmentPreferences: [] as string[],
@@ -462,6 +465,27 @@ export default function Profile() {
       { id: 'industrial', label: '제조/생산 현장 (Industrial)', icon: HardHat, desc: '공장, 건설 등 생산 현장 환경' },
       { id: 'challenging', label: '도전적 환경 (Challenging)', icon: AlertTriangle, desc: '위험 요소가 있거나 강도 높은 업무' },
   ];
+
+  const workValueOptions = [
+      { id: 'growth', label: '성장 가능성', icon: TrendingUp },
+      { id: 'balance', label: '워라밸', icon: Armchair },
+      { id: 'money', label: '높은 연봉', icon: DollarSign },
+      { id: 'culture', label: '수평적 문화', icon: Smile },
+      { id: 'stability', label: '고용 안정', icon: Shield },
+      { id: 'autonomy', label: '자율성', icon: Zap },
+  ];
+
+  const toggleWorkValue = (value: string) => {
+      setProfileData(prev => {
+          const exists = prev.workValues.includes(value);
+          if (exists) {
+              return { ...prev, workValues: prev.workValues.filter(v => v !== value) };
+          } else {
+              if (prev.workValues.length >= 3) return prev; // Limit to 3
+              return { ...prev, workValues: [...prev.workValues, value] };
+          }
+      });
+  };
 
   return (
     <Layout>
@@ -545,6 +569,78 @@ export default function Profile() {
                             className="bg-[#F2F4F6] border-none rounded-xl h-12" 
                         />
                     </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label className="text-[#4E5968]">성별</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={() => setProfileData({...profileData, gender: 'male'})}
+                                    className={`h-12 rounded-xl border font-medium transition-all ${
+                                        profileData.gender === 'male' 
+                                        ? 'border-[#3182F6] bg-blue-50 text-[#3182F6]' 
+                                        : 'border-[#E5E8EB] bg-white text-[#4E5968] hover:bg-[#F9FAFB]'
+                                    }`}
+                                >
+                                    남성
+                                </button>
+                                <button
+                                    onClick={() => setProfileData({...profileData, gender: 'female'})}
+                                    className={`h-12 rounded-xl border font-medium transition-all ${
+                                        profileData.gender === 'female' 
+                                        ? 'border-[#3182F6] bg-blue-50 text-[#3182F6]' 
+                                        : 'border-[#E5E8EB] bg-white text-[#4E5968] hover:bg-[#F9FAFB]'
+                                    }`}
+                                >
+                                    여성
+                                </button>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[#4E5968]">생년월일</Label>
+                            <ResponsiveModal
+                                trigger={
+                                    <Button 
+                                        variant="outline" 
+                                        className="w-full h-12 justify-start text-left font-normal rounded-xl border-none bg-[#F2F4F6] hover:bg-[#E5E8EB] text-[#191F28]"
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4 text-[#8B95A1]" />
+                                        {profileData.birthDate ? format(profileData.birthDate, "yyyy년 M월 d일") : "날짜 선택"}
+                                    </Button>
+                                }
+                                title="생년월일 선택"
+                            >
+                                <ResponsiveDatePickerContent 
+                                    value={profileData.birthDate} 
+                                    onChange={(date) => setProfileData({...profileData, birthDate: date})} 
+                                />
+                            </ResponsiveModal>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-[#4E5968]">직업 가치관 (최대 3개)</Label>
+                        <div className="flex flex-wrap gap-2">
+                            {workValueOptions.map((option) => {
+                                const isSelected = profileData.workValues.includes(option.label);
+                                const Icon = option.icon;
+                                return (
+                                    <button
+                                        key={option.id}
+                                        onClick={() => toggleWorkValue(option.label)}
+                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                                            isSelected
+                                            ? 'border-[#3182F6] bg-blue-50 text-[#3182F6]'
+                                            : 'border-[#E5E8EB] bg-white text-[#4E5968] hover:bg-[#F9FAFB]'
+                                        }`}
+                                    >
+                                        <Icon className="h-3.5 w-3.5" />
+                                        {option.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                     <div className="space-y-2">
                     <Label className="text-[#4E5968]">한줄 소개</Label>

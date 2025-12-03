@@ -88,7 +88,9 @@ export interface CareerAnalysis {
 export interface UserProfile {
   name: string;
   email: string;
-  gender?: 'male' | 'female'; // Added gender field
+  gender?: 'male' | 'female';
+  birthDate?: Date;
+  workValues?: string[];
   credits: number;
   hardConditions: {
     location: string[];
@@ -130,7 +132,9 @@ export interface UserProfile {
 export const MOCK_USER: UserProfile = {
     name: "John Doe",
     email: "john@example.com",
-    // gender: 'male', // Uncomment to test specific gender
+    gender: 'male',
+    birthDate: new Date(1995, 5, 15),
+    workValues: ["성장 가능성", "워라밸"],
     credits: 5,
     hardConditions: {
         location: ["Seoul"],
