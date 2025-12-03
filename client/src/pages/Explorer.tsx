@@ -45,11 +45,37 @@ interface ProcessedCareer {
     personality?: { name: string; score: number; desc: string }[];
 }
 
+import careerImages from "@/lib/careerImages.json";
+import { MOCK_USER } from "@/lib/mockData";
+
 // Component for Detail Content
 function CareerDetailContent({ career }: { career: ProcessedCareer }) {
     // Helper to format duties with bullet points
     const formattedDuties = career.duties?.split('\n').filter(line => line.trim().length > 0).map(line => line.replace(/^-/, '').trim()) || [];
     const [imageError, setImageError] = useState(false);
+    
+    // Determine which image(s) to show
+    const careerImagesMap = careerImages as Record<string, { male?: string, female?: string }>;
+    const images = careerImagesMap[career.id];
+    const userGender = MOCK_USER.gender;
+    
+    let primaryImage: string | null = null;
+    let secondaryImage: string | null = null;
+
+    if (images) {
+        if (userGender === 'male' && images.male) {
+            primaryImage = images.male;
+        } else if (userGender === 'female' && images.female) {
+            primaryImage = images.female;
+        } else {
+            // If gender not set or image for gender missing, prioritize existing ones
+            if (images.male) primaryImage = images.male;
+            if (images.female) {
+                if (primaryImage) secondaryImage = images.female;
+                else primaryImage = images.female;
+            }
+        }
+    }
 
     return (
         <div className="flex-1 overflow-y-auto p-0">
@@ -73,15 +99,26 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
 
                 <div className="p-5 pb-10">
                     <TabsContent value="overview" className="mt-0 space-y-6">
-                        {/* Career Image */}
-                        {!imageError && (
-                            <div className="w-full aspect-video rounded-xl overflow-hidden bg-gray-100 mb-4 border border-[#E5E8EB]">
-                                <img 
-                                    src={`/careers/webp_images/${career.id}.webp`} 
-                                    alt={career.title}
-                                    className="w-full h-full object-cover"
-                                    onError={() => setImageError(true)}
-                                />
+                        {/* Career Images */}
+                        {!imageError && primaryImage && (
+                            <div className="w-full rounded-xl overflow-hidden bg-gray-100 mb-4 border border-[#E5E8EB] grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-1">
+                                <div className="aspect-video relative">
+                                     <img 
+                                        src={`/careers/webp_images/${primaryImage}`} 
+                                        alt={career.title}
+                                        className="w-full h-full object-cover absolute inset-0"
+                                        onError={() => setImageError(true)}
+                                    />
+                                </div>
+                                {secondaryImage && (
+                                    <div className="aspect-video relative">
+                                        <img 
+                                            src={`/careers/webp_images/${secondaryImage}`} 
+                                            alt={`${career.title} alternate`}
+                                            className="w-full h-full object-cover absolute inset-0"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         )}
 

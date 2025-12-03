@@ -88,6 +88,7 @@ export interface CareerAnalysis {
 export interface UserProfile {
   name: string;
   email: string;
+  gender?: 'male' | 'female'; // Added gender field
   credits: number;
   hardConditions: {
     location: string[];
@@ -125,6 +126,27 @@ export interface UserProfile {
     url: string;
   }[];
 }
+
+export const MOCK_USER: UserProfile = {
+    name: "John Doe",
+    email: "john@example.com",
+    // gender: 'male', // Uncomment to test specific gender
+    credits: 5,
+    hardConditions: {
+        location: ["Seoul"],
+        salaryMin: 50000000,
+        excludedIndustries: []
+    },
+    softConditions: {
+        interests: ["AI", "Data"],
+        personalityType: "ENTJ"
+    },
+    education: [],
+    workExperience: [],
+    languages: [],
+    certifications: [],
+    links: []
+};
 
 export function generateTree(idSuffix: string, title: string, targetYear: number, startYear: number = new Date().getFullYear()): VisionGoal {
     const vision: VisionGoal = {
