@@ -139,8 +139,11 @@ function ResponsiveDatePickerContent({ value, onChange }: { value: Date, onChang
                         day_disabled: "text-muted-foreground opacity-50",
                         day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
                         day_hidden: "invisible",
-                        caption_label: "hidden", // Hide default caption label when using dropdowns
-                        caption_dropdowns: "flex gap-2", // Ensure dropdowns are laid out correctly
+                        caption_dropdowns: "flex gap-2 justify-center items-center",
+                        caption_label: "hidden",
+                        dropdown: "opacity-100 relative bg-transparent cursor-pointer p-1 border rounded-md hover:bg-accent font-medium text-sm appearance-auto",
+                        dropdown_root: "relative inline-flex items-center",
+                        vhidden: "hidden" // Hide screen reader only text that might appear visually
                     }}
                 />
             </div>
