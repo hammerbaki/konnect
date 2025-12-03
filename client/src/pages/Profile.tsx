@@ -106,8 +106,8 @@ function ResponsiveDatePickerContent({
     useEffect(() => {
         if (value) {
             setYear(format(value, 'yyyy'));
-            setMonth(format(value, 'MM'));
-            setDay(format(value, 'dd'));
+            setMonth(format(value, 'M')); // changed from MM to M to remove leading zeros
+            setDay(format(value, 'd'));   // changed from dd to d to remove leading zeros
             setIsCurrent(false);
         } else if (isEndDate && value === null) {
             setIsCurrent(true);
@@ -118,6 +118,7 @@ function ResponsiveDatePickerContent({
     }, [value, isEndDate]); 
 
     const updateDate = (y: string, m: string, d: string) => {
+        // Allow partial inputs to be typed, but only update parent when valid
         if (y.length === 4 && m.length > 0 && d.length > 0) {
             const yearNum = parseInt(y);
             const monthNum = parseInt(m) - 1;
@@ -126,11 +127,10 @@ function ResponsiveDatePickerContent({
             const newDate = new Date(yearNum, monthNum, dayNum);
             const currentYear = new Date().getFullYear();
             
-            // Validation
-            if (yearNum > currentYear) return; // Year cannot be in future
-            if (parseInt(m) > 12 || parseInt(m) < 1) return; // Month 1-12
+            // Validation for parent update
+            if (yearNum > currentYear) return; 
+            if (parseInt(m) > 12 || parseInt(m) < 1) return;
             
-            // Check valid days for month
             const daysInMonth = new Date(yearNum, parseInt(m), 0).getDate();
             if (dayNum > daysInMonth || dayNum < 1) return;
 
@@ -144,6 +144,7 @@ function ResponsiveDatePickerContent({
     const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
         const currentYear = new Date().getFullYear();
+        // Only limit year if it's fully typed and exceeds current year
         if (val.length === 4 && parseInt(val) > currentYear) {
             val = currentYear.toString();
         }
@@ -152,15 +153,15 @@ function ResponsiveDatePickerContent({
     };
 
     const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Remove auto-clamping to allow easier editing
         let val = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
-        if (parseInt(val) > 12) val = '12';
         setMonth(val);
         updateDate(year, val, day);
     };
 
     const handleDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Remove auto-clamping to allow easier editing
         let val = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
-        if (parseInt(val) > 31) val = '31';
         setDay(val);
         updateDate(year, month, val);
     };
