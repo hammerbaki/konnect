@@ -88,7 +88,33 @@ function ResponsiveModal({
 
 function ResponsiveDatePickerContent({ value, onChange }: { value: Date, onChange: (date: Date) => void }) {
     const isMobile = useIsMobile();
-    const currentYear = new Date().getFullYear();
+    const [inputValue, setInputValue] = useState('');
+
+    // Initialize with correctly formatted date
+    useEffect(() => {
+        if (value) {
+            setInputValue(format(value, 'yyyy. MM. dd'));
+        }
+    }, []); // Run once on mount to set initial value, allow user to type freely afterwards without fighting updates
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setInputValue(val);
+
+        // Try to parse standard format yyyy. MM. dd or yyyyMMdd
+        const digits = val.replace(/\D/g, '');
+        if (digits.length === 8) {
+            const year = parseInt(digits.substring(0, 4));
+            const month = parseInt(digits.substring(4, 6)) - 1;
+            const day = parseInt(digits.substring(6, 8));
+            
+            const newDate = new Date(year, month, day);
+            // Validate date is real (e.g. not 2024.13.01)
+            if (!isNaN(newDate.getTime()) && newDate.getMonth() === month) {
+                onChange(newDate);
+            }
+        }
+    };
 
     if (isMobile) {
         return (
@@ -102,53 +128,22 @@ function ResponsiveDatePickerContent({ value, onChange }: { value: Date, onChang
     }
 
     return (
-        <div className="flex flex-col items-center justify-center p-4 w-full">
-            {/* Fixed height container to prevent jumping between 4/5/6 week months */}
-            <div className="h-[380px] w-full flex items-center justify-center">
-                <Calendar
-                    mode="single"
-                    selected={value}
-                    onSelect={(date) => date && onChange(date)}
-                    initialFocus
-                    locale={ko}
-                    className="p-3 border rounded-xl shadow-sm"
-                    captionLayout="dropdown-buttons"
-                    fromYear={1980}
-                    toYear={currentYear + 5}
-                    formatters={{
-                        formatMonthCaption: (month, options) => {
-                            return format(month, 'MM월', { locale: ko });
-                        },
-                        formatYearCaption: (year, options) => {
-                            return format(year, 'yyyy년', { locale: ko });
-                        },
-                        formatMonthDropdown: (month) => {
-                            return format(month, 'M월', { locale: ko });
-                        },
-                        formatYearDropdown: (year) => {
-                            return format(year, 'yyyy년', { locale: ko });
-                        }
-                    }}
-                    classNames={{
-                        head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-                        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                        day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-gray-100 rounded-md transition-colors",
-                        day_selected: "bg-[#3182F6] text-white hover:bg-[#3182F6] hover:text-white focus:bg-[#3182F6] focus:text-white",
-                        day_today: "bg-accent text-accent-foreground",
-                        day_outside: "text-muted-foreground opacity-50",
-                        day_disabled: "text-muted-foreground opacity-50",
-                        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-                        day_hidden: "invisible",
-                        caption_dropdowns: "flex gap-2 justify-center items-center",
-                        caption_label: "hidden",
-                        dropdown: "opacity-100 relative bg-transparent cursor-pointer p-1 border rounded-md hover:bg-accent font-medium text-sm appearance-auto",
-                        dropdown_root: "relative inline-flex items-center",
-                        vhidden: "hidden" // Hide screen reader only text that might appear visually
-                    }}
+        <div className="flex flex-col items-center justify-center p-6 w-full space-y-6">
+             <div className="space-y-3 w-full">
+                <Label className="text-[#4E5968] font-medium">날짜를 입력해주세요</Label>
+                <Input 
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    className="h-14 text-xl font-medium rounded-xl border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100 transition-all text-center tracking-wide"
+                    placeholder="YYYY. MM. DD"
+                    maxLength={14} 
                 />
+                 <p className="text-sm text-[#8B95A1]">
+                    예시: 2024. 03. 01
+                </p>
             </div>
-             <ResponsiveClose asChild>
-                <Button className="w-full mt-2 rounded-xl h-12 text-lg font-bold bg-[#3182F6]">선택 완료</Button>
+            <ResponsiveClose asChild>
+                <Button className="w-full rounded-xl h-12 text-lg font-bold bg-[#3182F6]">입력 완료</Button>
             </ResponsiveClose>
         </div>
     );
