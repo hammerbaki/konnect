@@ -121,6 +121,12 @@ function ResponsiveDatePickerContent({ value, onChange }: { value: Date, onChang
                         },
                         formatYearCaption: (year, options) => {
                             return format(year, 'yyyy년', { locale: ko });
+                        },
+                        formatMonthDropdown: (month) => {
+                            return format(month, 'M월', { locale: ko });
+                        },
+                        formatYearDropdown: (year) => {
+                            return format(year, 'yyyy년', { locale: ko });
                         }
                     }}
                     classNames={{
