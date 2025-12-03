@@ -386,7 +386,6 @@ export default function Analysis() {
                         
                         <div className="flex flex-col sm:flex-row gap-3">
                              <ResponsiveCareerDetail role={role} handleCreatePlan={handleCreatePlan} />
-                        </div>
 
                             <Button 
                                 onClick={handleCreatePlan}
