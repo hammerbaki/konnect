@@ -584,6 +584,7 @@ export default function KompassDetail() {
                                             <Input 
                                                 value={todo.title} 
                                                 onChange={(e) => updateTodoText(day.id, todo.id, e.target.value)}
+                                                readOnly={todo.completed}
                                                 className={cn(
                                                     "flex-1 bg-transparent border-transparent px-0 h-auto py-1 text-sm focus-visible:ring-0 focus-visible:border-b focus-visible:border-[#3182F6] rounded-none placeholder:text-[#B0B8C1] shadow-none",
                                                     todo.completed ? "text-[#B0B8C1] line-through" : "text-[#333D4B]"
