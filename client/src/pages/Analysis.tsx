@@ -124,8 +124,8 @@ function CareerDetailContent({ role, handleCreatePlan }: { role: any, handleCrea
                     <TabsContent value="roadmap" className="space-y-6 animate-in fade-in-50">
                         <div className="space-y-0 relative pl-4 border-l-2 border-[#F2F4F6] ml-3">
                             {/* Step 1 */}
-                            <div className="pb-10 relative">
-                                <div className="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-[#E8F3FF] border-4 border-white flex items-center justify-center text-[#3182F6] font-bold text-sm shadow-sm">1</div>
+                            <div className="pb-10 relative pl-4">
+                                <div className="absolute -left-[35px] top-0 w-8 h-8 rounded-full bg-[#E8F3FF] border-4 border-white flex items-center justify-center text-[#3182F6] font-bold text-sm shadow-sm">1</div>
                                 <h4 className="font-bold text-[#191F28] text-lg mb-1">단기 목표 (1-3개월)</h4>
                                 <p className="text-sm text-[#6B7684] mb-4 font-medium">필수 자격증 취득 및 기초 역량 강화</p>
                                 <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 shadow-sm space-y-3">
@@ -147,8 +147,8 @@ function CareerDetailContent({ role, handleCreatePlan }: { role: any, handleCrea
                             </div>
                             
                             {/* Step 2 */}
-                            <div className="pb-10 relative">
-                                <div className="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-[#F2F4F6] border-4 border-white flex items-center justify-center text-[#8B95A1] font-bold text-sm">2</div>
+                            <div className="pb-10 relative pl-4">
+                                <div className="absolute -left-[35px] top-0 w-8 h-8 rounded-full bg-[#F2F4F6] border-4 border-white flex items-center justify-center text-[#8B95A1] font-bold text-sm">2</div>
                                 <h4 className="font-bold text-[#191F28] text-lg mb-1">중기 목표 (3-6개월)</h4>
                                 <p className="text-sm text-[#6B7684] mb-4 font-medium">실무 프로젝트 경험 및 네트워킹</p>
                                 <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 shadow-sm">
@@ -163,8 +163,8 @@ function CareerDetailContent({ role, handleCreatePlan }: { role: any, handleCrea
                             </div>
 
                             {/* Step 3 */}
-                            <div className="relative">
-                                <div className="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-[#F2F4F6] border-4 border-white flex items-center justify-center text-[#8B95A1] font-bold text-sm">3</div>
+                            <div className="relative pl-4">
+                                <div className="absolute -left-[35px] top-0 w-8 h-8 rounded-full bg-[#F2F4F6] border-4 border-white flex items-center justify-center text-[#8B95A1] font-bold text-sm">3</div>
                                 <h4 className="font-bold text-[#191F28] text-lg mb-1">장기 목표 (1년)</h4>
                                 <p className="text-sm text-[#6B7684] mb-4 font-medium">시니어 포지션 이직 성공</p>
                                 <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 shadow-sm">
