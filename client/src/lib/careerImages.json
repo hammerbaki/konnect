@@ -1,298 +1,2125 @@
 {
+  "K000000821": {
+    "female": "/careers/webp_images/K000000821_제관원(제관기조작원)_female.webp",
+    "male": "/careers/webp_images/K000000821_제관원(제관기조작원)_male.webp"
+  },
+  "K000000822": {
+    "female": "/careers/webp_images/K000000822_항공기정비원_female.webp",
+    "male": "/careers/webp_images/K000000822_항공기정비원_male.webp"
+  },
+  "K000000823": {
+    "female": "/careers/webp_images/K000000823_판금원(판금기조작원)_female.webp",
+    "male": "/careers/webp_images/K000000823_판금원(판금기조작원)_male.webp"
+  },
+  "K000000824": {
+    "female": "/careers/webp_images/K000000824_번역가_female.webp",
+    "male": "/careers/webp_images/K000000824_번역가_male.webp"
+  },
+  "K000000825": {
+    "female": "/careers/webp_images/K000000825_자연과학시험원_female.webp",
+    "male": "/careers/webp_images/K000000825_자연과학시험원_male.webp"
+  },
+  "K000000826": {
+    "female": "/careers/webp_images/K000000826_전기기기·제품개발기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000000826_전기기기·제품개발기술자 및 연구원_male.webp"
+  },
+  "K000000827": {
+    "female": "/careers/webp_images/K000000827_노점 및 이동판매원_female.webp",
+    "male": "/careers/webp_images/K000000827_노점 및 이동판매원_male.webp"
+  },
+  "K000000828": {
+    "female": "/careers/webp_images/K000000828_시멘트·광물제품생산기계조작원_female.webp",
+    "male": "/careers/webp_images/K000000828_시멘트·광물제품생산기계조작원_male.webp"
+  },
+  "K000000829": {
+    "female": "/careers/webp_images/K000000829_토목안전·환경기술자 및 토목품질기술자_female.webp",
+    "male": "/careers/webp_images/K000000829_토목안전·환경기술자 및 토목품질기술자_male.webp"
+  },
+  "K000000830": {
+    "female": "/careers/webp_images/K000000830_치과위생사_female.webp",
+    "male": "/careers/webp_images/K000000830_치과위생사_male.webp"
+  },
+  "K000000831": {
+    "female": "/careers/webp_images/K000000831_도장원(도장기조작원)_female.webp",
+    "male": "/careers/webp_images/K000000831_도장원(도장기조작원)_male.webp"
+  },
+  "K000000832": {
+    "female": "/careers/webp_images/K000000832_정보보안전문가_female.webp",
+    "male": "/careers/webp_images/K000000832_정보보안전문가_male.webp"
+  },
+  "K000000833": {
+    "female": "/careers/webp_images/K000000833_사회복지관리자_female.webp",
+    "male": "/careers/webp_images/K000000833_사회복지관리자_male.webp"
+  },
+  "K000000834": {
+    "female": "/careers/webp_images/K000000834_정치학연구원_female.webp",
+    "male": "/careers/webp_images/K000000834_정치학연구원_male.webp"
+  },
+  "K000000835": {
+    "female": "/careers/webp_images/K000000835_산업안전원 및 위험관리원_female.webp",
+    "male": "/careers/webp_images/K000000835_산업안전원 및 위험관리원_male.webp"
+  },
+  "K000000836": {
+    "female": "/careers/webp_images/K000000836_농학연구원_female.webp",
+    "male": "/careers/webp_images/K000000836_농학연구원_male.webp"
+  },
+  "K000000837": {
+    "female": "/careers/webp_images/K000000837_외국어강사_female.webp",
+    "male": "/careers/webp_images/K000000837_외국어강사_male.webp"
+  },
+  "K000000838": {
+    "female": "/careers/webp_images/K000000838_초등학교 교장 및 교감_female.webp",
+    "male": "/careers/webp_images/K000000838_초등학교 교장 및 교감_male.webp"
+  },
   "K000000839": {
-    "male": "K000000839_표백·염색기조작원_male.webp"
+    "female": "/careers/webp_images/K000000839_표백·염색기조작원_female.webp",
+    "male": "/careers/webp_images/K000000839_표백·염색기조작원_male.webp"
+  },
+  "K000000840": {
+    "female": "/careers/webp_images/K000000840_송·배전설비기술자_female.webp",
+    "male": "/careers/webp_images/K000000840_송·배전설비기술자_male.webp"
+  },
+  "K000000841": {
+    "female": "/careers/webp_images/K000000841_김치·밑반찬 제조종사원_female.webp",
+    "male": "/careers/webp_images/K000000841_김치·밑반찬 제조종사원_male.webp"
+  },
+  "K000000842": {
+    "female": "/careers/webp_images/K000000842_육묘 및 화훼작물재배자_female.webp",
+    "male": "/careers/webp_images/K000000842_육묘 및 화훼작물재배자_male.webp"
   },
   "K000000843": {
-    "male": "K000000843_자재·구매사무원_male.webp"
+    "female": "/careers/webp_images/K000000843_자재·구매사무원_female.webp",
+    "male": "/careers/webp_images/K000000843_자재·구매사무원_male.webp"
+  },
+  "K000000844": {
+    "female": "/careers/webp_images/K000000844_비뇨기과의사_female.webp",
+    "male": "/careers/webp_images/K000000844_비뇨기과의사_male.webp"
+  },
+  "K000000845": {
+    "female": "/careers/webp_images/K000000845_스포츠트레이너_female.webp",
+    "male": "/careers/webp_images/K000000845_스포츠트레이너_male.webp"
+  },
+  "K000000846": {
+    "female": "/careers/webp_images/K000000846_장례지도사 및 장례상담원_female.webp",
+    "male": "/careers/webp_images/K000000846_장례지도사 및 장례상담원_male.webp"
+  },
+  "K000000847": {
+    "female": "/careers/webp_images/K000000847_기업고위임원_female.webp",
+    "male": "/careers/webp_images/K000000847_기업고위임원_male.webp"
+  },
+  "K000000848": {
+    "female": "/careers/webp_images/K000000848_재봉사_female.webp",
+    "male": "/careers/webp_images/K000000848_재봉사_male.webp"
+  },
+  "K000000849": {
+    "female": "/careers/webp_images/K000000849_보조교사_female.webp",
+    "male": "/careers/webp_images/K000000849_보조교사_male.webp"
   },
   "K000000850": {
-    "female": "K000000850_요양보호사 및 간병인_female.webp"
+    "female": "/careers/webp_images/K000000850_요양보호사 및 간병인_female.webp",
+    "male": "/careers/webp_images/K000000850_요양보호사 및 간병인_male.webp"
+  },
+  "K000000851": {
+    "female": "/careers/webp_images/K000000851_지휘자_female.webp",
+    "male": "/careers/webp_images/K000000851_지휘자_male.webp"
+  },
+  "K000000852": {
+    "female": "/careers/webp_images/K000000852_생명과학시험원_female.webp",
+    "male": "/careers/webp_images/K000000852_생명과학시험원_male.webp"
+  },
+  "K000000853": {
+    "female": "/careers/webp_images/K000000853_시스템소프트웨어개발자_female.webp",
+    "male": "/careers/webp_images/K000000853_시스템소프트웨어개발자_male.webp"
+  },
+  "K000000854": {
+    "female": "/careers/webp_images/K000000854_주차관리·안내원_female.webp",
+    "male": "/careers/webp_images/K000000854_주차관리·안내원_male.webp"
+  },
+  "K000000855": {
+    "female": "/careers/webp_images/K000000855_물류사무원_female.webp",
+    "male": "/careers/webp_images/K000000855_물류사무원_male.webp"
   },
   "K000000856": {
-    "male": "K000000856_컴퓨터시스템설계 및 분석가_male.webp"
+    "female": "/careers/webp_images/K000000856_컴퓨터시스템설계 및 분석가_female.webp",
+    "male": "/careers/webp_images/K000000856_컴퓨터시스템설계 및 분석가_male.webp"
+  },
+  "K000000857": {
+    "female": "/careers/webp_images/K000000857_사회복지사_female.webp",
+    "male": "/careers/webp_images/K000000857_사회복지사_male.webp"
+  },
+  "K000000858": {
+    "female": "/careers/webp_images/K000000858_자동차부품조립·검사원_female.webp",
+    "male": "/careers/webp_images/K000000858_자동차부품조립·검사원_male.webp"
+  },
+  "K000000859": {
+    "female": "/careers/webp_images/K000000859_경기심판 및 경기기록원_female.webp",
+    "male": "/careers/webp_images/K000000859_경기심판 및 경기기록원_male.webp"
+  },
+  "K000000860": {
+    "female": "/careers/webp_images/K000000860_로봇공학기술자_female.webp",
+    "male": "/careers/webp_images/K000000860_로봇공학기술자_male.webp"
+  },
+  "K000000861": {
+    "female": "/careers/webp_images/K000000861_제과·제빵원_female.webp",
+    "male": "/careers/webp_images/K000000861_제과·제빵원_male.webp"
+  },
+  "K000000862": {
+    "female": "/careers/webp_images/K000000862_안과의사_female.webp",
+    "male": "/careers/webp_images/K000000862_안과의사_male.webp"
+  },
+  "K000000863": {
+    "female": "/careers/webp_images/K000000863_원자력공학기술자_female.webp",
+    "male": "/careers/webp_images/K000000863_원자력공학기술자_male.webp"
   },
   "K000000864": {
-    "female": "K000000864_재활공학기사_female.webp"
+    "female": "/careers/webp_images/K000000864_재활공학기사_female.webp",
+    "male": "/careers/webp_images/K000000864_재활공학기사_male.webp"
+  },
+  "K000000865": {
+    "female": "/careers/webp_images/K000000865_석유화학공학기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000000865_석유화학공학기술자 및 연구원_male.webp"
   },
   "K000000866": {
-    "male": "K000000866_출판·자료편집사무원_male.webp"
+    "female": "/careers/webp_images/K000000866_출판·자료편집사무원_female.webp",
+    "male": "/careers/webp_images/K000000866_출판·자료편집사무원_male.webp"
   },
   "K000000867": {
-    "female": "K000000867_직업운동선수_female.webp"
+    "female": "/careers/webp_images/K000000867_직업운동선수_female.webp",
+    "male": "/careers/webp_images/K000000867_직업운동선수_male.webp"
+  },
+  "K000000868": {
+    "female": "/careers/webp_images/K000000868_건설 및 채굴기계운전원_female.webp",
+    "male": "/careers/webp_images/K000000868_건설 및 채굴기계운전원_male.webp"
+  },
+  "K000000870": {
+    "female": "/careers/webp_images/K000000870_플랜트기계공학기술자_female.webp",
+    "male": "/careers/webp_images/K000000870_플랜트기계공학기술자_male.webp"
+  },
+  "K000000871": {
+    "female": "/careers/webp_images/K000000871_일반기계조립원_female.webp",
+    "male": "/careers/webp_images/K000000871_일반기계조립원_male.webp"
+  },
+  "K000000872": {
+    "female": "/careers/webp_images/K000000872_광고·홍보·마케팅전문가_female.webp",
+    "male": "/careers/webp_images/K000000872_광고·홍보·마케팅전문가_male.webp"
+  },
+  "K000000873": {
+    "female": "/careers/webp_images/K000000873_음향·녹음기사_female.webp",
+    "male": "/careers/webp_images/K000000873_음향·녹음기사_male.webp"
+  },
+  "K000000874": {
+    "female": "/careers/webp_images/K000000874_주유원_female.webp",
+    "male": "/careers/webp_images/K000000874_주유원_male.webp"
+  },
+  "K000000875": {
+    "female": "/careers/webp_images/K000000875_인적자원전문가_female.webp",
+    "male": "/careers/webp_images/K000000875_인적자원전문가_male.webp"
+  },
+  "K000000876": {
+    "female": "/careers/webp_images/K000000876_전기감리기술자_female.webp",
+    "male": "/careers/webp_images/K000000876_전기감리기술자_male.webp"
+  },
+  "K000000877": {
+    "female": "/careers/webp_images/K000000877_항공공학기술자_female.webp",
+    "male": "/careers/webp_images/K000000877_항공공학기술자_male.webp"
+  },
+  "K000000878": {
+    "female": "/careers/webp_images/K000000878_도시계획·설계가_female.webp",
+    "male": "/careers/webp_images/K000000878_도시계획·설계가_male.webp"
+  },
+  "K000000879": {
+    "female": "/careers/webp_images/K000000879_디스플레이연구 및 개발자_female.webp",
+    "male": "/careers/webp_images/K000000879_디스플레이연구 및 개발자_male.webp"
+  },
+  "K000000880": {
+    "female": "/careers/webp_images/K000000880_사진인화·현상기조작원(사진수정 포함)_female.webp",
+    "male": "/careers/webp_images/K000000880_사진인화·현상기조작원(사진수정 포함)_male.webp"
+  },
+  "K000000881": {
+    "female": "/careers/webp_images/K000000881_공연·영화 및 음반기획자_female.webp",
+    "male": "/careers/webp_images/K000000881_공연·영화 및 음반기획자_male.webp"
+  },
+  "K000000882": {
+    "female": "/careers/webp_images/K000000882_귀금속·보석세공원_female.webp",
+    "male": "/careers/webp_images/K000000882_귀금속·보석세공원_male.webp"
+  },
+  "K000000883": {
+    "female": "/careers/webp_images/K000000883_학습지·교육교구방문강사_female.webp",
+    "male": "/careers/webp_images/K000000883_학습지·교육교구방문강사_male.webp"
   },
   "K000000884": {
-    "female": "K000000884_선박갑판원_female.webp"
+    "female": "/careers/webp_images/K000000884_선박갑판원_female.webp",
+    "male": "/careers/webp_images/K000000884_선박갑판원_male.webp"
+  },
+  "K000000885": {
+    "female": "/careers/webp_images/K000000885_승강기설치·정비원_female.webp",
+    "male": "/careers/webp_images/K000000885_승강기설치·정비원_male.webp"
+  },
+  "K000000886": {
+    "female": "/careers/webp_images/K000000886_냉동·냉장·공조기설치·정비원_female.webp",
+    "male": "/careers/webp_images/K000000886_냉동·냉장·공조기설치·정비원_male.webp"
+  },
+  "K000000887": {
+    "female": "/careers/webp_images/K000000887_수질환경기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000000887_수질환경기술자 및 연구원_male.webp"
+  },
+  "K000000888": {
+    "female": "/careers/webp_images/K000000888_지적 및 측량기술자_female.webp",
+    "male": "/careers/webp_images/K000000888_지적 및 측량기술자_male.webp"
+  },
+  "K000000889": {
+    "female": "/careers/webp_images/K000000889_외과의사_female.webp",
+    "male": "/careers/webp_images/K000000889_외과의사_male.webp"
+  },
+  "K000000890": {
+    "female": "/careers/webp_images/K000000890_UX·UI디자이너_female.webp",
+    "male": "/careers/webp_images/K000000890_UX·UI디자이너_male.webp"
+  },
+  "K000000891": {
+    "female": "/careers/webp_images/K000000891_교통계획·설계가_female.webp",
+    "male": "/careers/webp_images/K000000891_교통계획·설계가_male.webp"
+  },
+  "K000000892": {
+    "female": "/careers/webp_images/K000000892_성형외과의사_female.webp",
+    "male": "/careers/webp_images/K000000892_성형외과의사_male.webp"
+  },
+  "K000000893": {
+    "female": "/careers/webp_images/K000000893_음료조리사_female.webp",
+    "male": "/careers/webp_images/K000000893_음료조리사_male.webp"
+  },
+  "K000000894": {
+    "female": "/careers/webp_images/K000000894_악기제조원 및 조율사_female.webp",
+    "male": "/careers/webp_images/K000000894_악기제조원 및 조율사_male.webp"
+  },
+  "K000000895": {
+    "female": "/careers/webp_images/K000000895_건설·채굴관리자_female.webp",
+    "male": "/careers/webp_images/K000000895_건설·채굴관리자_male.webp"
   },
   "K000000896": {
-    "female": "K000000896_점화·발파·화약관리원_female.webp"
+    "female": "/careers/webp_images/K000000896_점화·발파·화약관리원_female.webp",
+    "male": "/careers/webp_images/K000000896_점화·발파·화약관리원_male.webp"
+  },
+  "K000000897": {
+    "female": "/careers/webp_images/K000000897_철골공(강구조물건립원)_female.webp",
+    "male": "/careers/webp_images/K000000897_철골공(강구조물건립원)_male.webp"
+  },
+  "K000000898": {
+    "female": "/careers/webp_images/K000000898_경제학연구원_female.webp",
+    "male": "/careers/webp_images/K000000898_경제학연구원_male.webp"
+  },
+  "K000000899": {
+    "female": "/careers/webp_images/K000000899_영화배우 및 탤런트_female.webp",
+    "male": "/careers/webp_images/K000000899_영화배우 및 탤런트_male.webp"
+  },
+  "K000000900": {
+    "female": "/careers/webp_images/K000000900_통신망운영기술자_female.webp",
+    "male": "/careers/webp_images/K000000900_통신망운영기술자_male.webp"
+  },
+  "K000000901": {
+    "female": "/careers/webp_images/K000000901_연극 및 뮤지컬배우_female.webp",
+    "male": "/careers/webp_images/K000000901_연극 및 뮤지컬배우_male.webp"
+  },
+  "K000000903": {
+    "female": "/careers/webp_images/K000000903_천문 및 기상학연구원_female.webp",
+    "male": "/careers/webp_images/K000000903_천문 및 기상학연구원_male.webp"
+  },
+  "K000000904": {
+    "female": "/careers/webp_images/K000000904_숙박시설서비스원_female.webp",
+    "male": "/careers/webp_images/K000000904_숙박시설서비스원_male.webp"
+  },
+  "K000000905": {
+    "female": "/careers/webp_images/K000000905_음료제조기계조작원_female.webp",
+    "male": "/careers/webp_images/K000000905_음료제조기계조작원_male.webp"
+  },
+  "K000000906": {
+    "female": "/careers/webp_images/K000000906_대학교수_female.webp",
+    "male": "/careers/webp_images/K000000906_대학교수_male.webp"
+  },
+  "K000000907": {
+    "female": "/careers/webp_images/K000000907_채소·특용작물재배원_female.webp",
+    "male": "/careers/webp_images/K000000907_채소·특용작물재배원_male.webp"
+  },
+  "K000000908": {
+    "female": "/careers/webp_images/K000000908_보험인수심사원(언더라이터)_female.webp",
+    "male": "/careers/webp_images/K000000908_보험인수심사원(언더라이터)_male.webp"
+  },
+  "K000000909": {
+    "female": "/careers/webp_images/K000000909_선박조립원_female.webp",
+    "male": "/careers/webp_images/K000000909_선박조립원_male.webp"
   },
   "K000000910": {
-    "male": "K000000910_경찰·소방·교도관리자_male.webp"
+    "female": "/careers/webp_images/K000000910_경찰·소방·교도관리자_female.webp",
+    "male": "/careers/webp_images/K000000910_경찰·소방·교도관리자_male.webp"
+  },
+  "K000000911": {
+    "female": "/careers/webp_images/K000000911_예능강사_female.webp",
+    "male": "/careers/webp_images/K000000911_예능강사_male.webp"
+  },
+  "K000000912": {
+    "female": "/careers/webp_images/K000000912_중고등학교 교장 및 교감_female.webp",
+    "male": "/careers/webp_images/K000000912_중고등학교 교장 및 교감_male.webp"
   },
   "K000000913": {
-    "female": "K000000913_홀서빙원_female.webp"
+    "female": "/careers/webp_images/K000000913_홀서빙원_female.webp",
+    "male": "/careers/webp_images/K000000913_홀서빙원_male.webp"
+  },
+  "K000000914": {
+    "female": "/careers/webp_images/K000000914_헬리콥터정비원_female.webp",
+    "male": "/careers/webp_images/K000000914_헬리콥터정비원_male.webp"
+  },
+  "K000000915": {
+    "female": "/careers/webp_images/K000000915_건축감리기술자_female.webp",
+    "male": "/careers/webp_images/K000000915_건축감리기술자_male.webp"
+  },
+  "K000000916": {
+    "female": "/careers/webp_images/K000000916_상·하수도처리장치조작원_female.webp",
+    "male": "/careers/webp_images/K000000916_상·하수도처리장치조작원_male.webp"
+  },
+  "K000000917": {
+    "female": "/careers/webp_images/K000000917_전자부품·제품생산기계조작원_female.webp",
+    "male": "/careers/webp_images/K000000917_전자부품·제품생산기계조작원_male.webp"
+  },
+  "K000000918": {
+    "female": "/careers/webp_images/K000000918_무역사무원_female.webp",
+    "male": "/careers/webp_images/K000000918_무역사무원_male.webp"
+  },
+  "K000000919": {
+    "female": "/careers/webp_images/K000000919_마케팅·광고·홍보관리자_female.webp",
+    "male": "/careers/webp_images/K000000919_마케팅·광고·홍보관리자_male.webp"
+  },
+  "K000000920": {
+    "female": "/careers/webp_images/K000000920_토양환경기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000000920_토양환경기술자 및 연구원_male.webp"
   },
   "K000000921": {
-    "female": "K000000921_선박교통관제사_female.webp"
+    "female": "/careers/webp_images/K000000921_선박교통관제사_female.webp",
+    "male": "/careers/webp_images/K000000921_선박교통관제사_male.webp"
   },
   "K000000922": {
-    "male": "K000000922_건축설비기술자_male.webp"
+    "female": "/careers/webp_images/K000000922_건축설비기술자_female.webp",
+    "male": "/careers/webp_images/K000000922_건축설비기술자_male.webp"
+  },
+  "K000000923": {
+    "female": "/careers/webp_images/K000000923_단열공_female.webp",
+    "male": "/careers/webp_images/K000000923_단열공_male.webp"
+  },
+  "K000000924": {
+    "female": "/careers/webp_images/K000000924_통신기기·장비기술자_female.webp",
+    "male": "/careers/webp_images/K000000924_통신기기·장비기술자_male.webp"
+  },
+  "K000000925": {
+    "female": "/careers/webp_images/K000000925_정부·공공행정전문가_female.webp",
+    "male": "/careers/webp_images/K000000925_정부·공공행정전문가_male.webp"
+  },
+  "K000000927": {
+    "female": "/careers/webp_images/K000000927_전기부품·제품생산기계조작원_female.webp",
+    "male": "/careers/webp_images/K000000927_전기부품·제품생산기계조작원_male.webp"
+  },
+  "K000000928": {
+    "female": "/careers/webp_images/K000000928_정신과의사_female.webp",
+    "male": "/careers/webp_images/K000000928_정신과의사_male.webp"
+  },
+  "K000000929": {
+    "female": "/careers/webp_images/K000000929_수상운송사무원_female.webp",
+    "male": "/careers/webp_images/K000000929_수상운송사무원_male.webp"
+  },
+  "K000000930": {
+    "female": "/careers/webp_images/K000000930_제품광고영업원_female.webp",
+    "male": "/careers/webp_images/K000000930_제품광고영업원_male.webp"
+  },
+  "K000000931": {
+    "female": "/careers/webp_images/K000000931_보건·의료관리자_female.webp",
+    "male": "/careers/webp_images/K000000931_보건·의료관리자_male.webp"
   },
   "K000000932": {
-    "male": "K000000932_유리부착원_male.webp"
+    "female": "/careers/webp_images/K000000932_유리부착원_female.webp",
+    "male": "/careers/webp_images/K000000932_유리부착원_male.webp"
   },
   "K000000933": {
-    "male": "K000000933_행정부고위공무원_male.webp"
+    "female": "/careers/webp_images/K000000933_행정부고위공무원_female.webp",
+    "male": "/careers/webp_images/K000000933_행정부고위공무원_male.webp"
+  },
+  "K000000934": {
+    "female": "/careers/webp_images/K000000934_화학공학시험원_female.webp",
+    "male": "/careers/webp_images/K000000934_화학공학시험원_male.webp"
   },
   "K000000936": {
-    "female": "K000000936_통신기술개발자_female.webp"
+    "female": "/careers/webp_images/K000000936_통신기술개발자_female.webp",
+    "male": "/careers/webp_images/K000000936_통신기술개발자_male.webp"
   },
   "K000000937": {
-    "male": "K000000937_신문기자_male.webp"
+    "female": "/careers/webp_images/K000000937_신문기자_female.webp",
+    "male": "/careers/webp_images/K000000937_신문기자_male.webp"
+  },
+  "K000000938": {
+    "female": "/careers/webp_images/K000000938_대기환경기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000000938_대기환경기술자 및 연구원_male.webp"
   },
   "K000000939": {
-    "female": "K000000939_가정의학과의사_female.webp"
+    "female": "/careers/webp_images/K000000939_가정의학과의사_female.webp",
+    "male": "/careers/webp_images/K000000939_가정의학과의사_male.webp"
+  },
+  "K000000940": {
+    "female": "/careers/webp_images/K000000940_건축시공기술자 및 견적원_female.webp",
+    "male": "/careers/webp_images/K000000940_건축시공기술자 및 견적원_male.webp"
   },
   "K000000941": {
-    "male": "K000000941_철도·전동차기관사_male.webp"
+    "female": "/careers/webp_images/K000000941_철도·전동차기관사_female.webp",
+    "male": "/careers/webp_images/K000000941_철도·전동차기관사_male.webp"
+  },
+  "K000000942": {
+    "female": "/careers/webp_images/K000000942_재료(금속)공학기술자_female.webp",
+    "male": "/careers/webp_images/K000000942_재료(금속)공학기술자_male.webp"
+  },
+  "K000000943": {
+    "female": "/careers/webp_images/K000000943_종이제품생산기계조작원_female.webp",
+    "male": "/careers/webp_images/K000000943_종이제품생산기계조작원_male.webp"
+  },
+  "K000000944": {
+    "female": "/careers/webp_images/K000000944_경영·진단전문가_female.webp",
+    "male": "/careers/webp_images/K000000944_경영·진단전문가_male.webp"
+  },
+  "K000000945": {
+    "female": "/careers/webp_images/K000000945_금속가공기계조작원_female.webp",
+    "male": "/careers/webp_images/K000000945_금속가공기계조작원_male.webp"
+  },
+  "K000000946": {
+    "female": "/careers/webp_images/K000000946_도료 및 농약품화학공학기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000000946_도료 및 농약품화학공학기술자 및 연구원_male.webp"
+  },
+  "K000000947": {
+    "female": "/careers/webp_images/K000000947_문리학원강사_female.webp",
+    "male": "/careers/webp_images/K000000947_문리학원강사_male.webp"
   },
   "K000000948": {
-    "female": "K000000948_소아청소년과의사_female.webp"
+    "female": "/careers/webp_images/K000000948_소아청소년과의사_female.webp",
+    "male": "/careers/webp_images/K000000948_소아청소년과의사_male.webp"
+  },
+  "K000000949": {
+    "female": "/careers/webp_images/K000000949_철학연구원_female.webp",
+    "male": "/careers/webp_images/K000000949_철학연구원_male.webp"
+  },
+  "K000000950": {
+    "female": "/careers/webp_images/K000000950_음식서비스관리자_female.webp",
+    "male": "/careers/webp_images/K000000950_음식서비스관리자_male.webp"
+  },
+  "K000000951": {
+    "female": "/careers/webp_images/K000000951_모델_female.webp",
+    "male": "/careers/webp_images/K000000951_모델_male.webp"
+  },
+  "K000000952": {
+    "female": "/careers/webp_images/K000000952_매장계산원 및 요금정산원_female.webp",
+    "male": "/careers/webp_images/K000000952_매장계산원 및 요금정산원_male.webp"
+  },
+  "K000000953": {
+    "female": "/careers/webp_images/K000000953_소방공학기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000000953_소방공학기술자 및 연구원_male.webp"
+  },
+  "K000000954": {
+    "female": "/careers/webp_images/K000000954_하역·적재종사원_female.webp",
+    "male": "/careers/webp_images/K000000954_하역·적재종사원_male.webp"
+  },
+  "K000000955": {
+    "female": "/careers/webp_images/K000000955_행사기획자_female.webp",
+    "male": "/careers/webp_images/K000000955_행사기획자_male.webp"
+  },
+  "K000000956": {
+    "female": "/careers/webp_images/K000000956_건축구조기술자_female.webp",
+    "male": "/careers/webp_images/K000000956_건축구조기술자_male.webp"
+  },
+  "K000000957": {
+    "female": "/careers/webp_images/K000000957_스포츠강사_female.webp",
+    "male": "/careers/webp_images/K000000957_스포츠강사_male.webp"
+  },
+  "K000000958": {
+    "female": "/careers/webp_images/K000000958_방송장비설치·수리원_female.webp",
+    "male": "/careers/webp_images/K000000958_방송장비설치·수리원_male.webp"
   },
   "K000000959": {
-    "male": "K000000959_축산학 및 수의학연구원_male.webp"
+    "female": "/careers/webp_images/K000000959_축산학 및 수의학연구원_female.webp",
+    "male": "/careers/webp_images/K000000959_축산학 및 수의학연구원_male.webp"
+  },
+  "K000000960": {
+    "female": "/careers/webp_images/K000000960_화학연구원_female.webp",
+    "male": "/careers/webp_images/K000000960_화학연구원_male.webp"
+  },
+  "K000000961": {
+    "female": "/careers/webp_images/K000000961_사무용 전자기기설치·수리원_female.webp",
+    "male": "/careers/webp_images/K000000961_사무용 전자기기설치·수리원_male.webp"
+  },
+  "K000000962": {
+    "female": "/careers/webp_images/K000000962_도금·금속분무기조작원_female.webp",
+    "male": "/careers/webp_images/K000000962_도금·금속분무기조작원_male.webp"
   },
   "K000000963": {
-    "male": "K000000963_컴퓨터설치·수리원_male.webp"
+    "female": "/careers/webp_images/K000000963_컴퓨터설치·수리원_female.webp",
+    "male": "/careers/webp_images/K000000963_컴퓨터설치·수리원_male.webp"
   },
   "K000000964": {
-    "female": "K000000964_건설배관공_female.webp"
+    "female": "/careers/webp_images/K000000964_건설배관공_female.webp",
+    "male": "/careers/webp_images/K000000964_건설배관공_male.webp"
+  },
+  "K000000965": {
+    "female": "/careers/webp_images/K000000965_의복·가죽·모피수선원_female.webp",
+    "male": "/careers/webp_images/K000000965_의복·가죽·모피수선원_male.webp"
   },
   "K000000966": {
-    "male": "K000000966_잡지기자_male.webp"
+    "female": "/careers/webp_images/K000000966_잡지기자_female.webp",
+    "male": "/careers/webp_images/K000000966_잡지기자_male.webp"
+  },
+  "K000000967": {
+    "female": "/careers/webp_images/K000000967_기술·기능계강사_female.webp",
+    "male": "/careers/webp_images/K000000967_기술·기능계강사_male.webp"
+  },
+  "K000000968": {
+    "female": "/careers/webp_images/K000000968_네트워크시스템개발자_female.webp",
+    "male": "/careers/webp_images/K000000968_네트워크시스템개발자_male.webp"
+  },
+  "K000000969": {
+    "female": "/careers/webp_images/K000000969_예술·디자인·방송관리자_female.webp",
+    "male": "/careers/webp_images/K000000969_예술·디자인·방송관리자_male.webp"
+  },
+  "K000000970": {
+    "female": "/careers/webp_images/K000000970_식품공학시험원_female.webp",
+    "male": "/careers/webp_images/K000000970_식품공학시험원_male.webp"
   },
   "K000000971": {
-    "male": "K000000971_가구조립원_male.webp"
+    "female": "/careers/webp_images/K000000971_가구조립원_female.webp",
+    "male": "/careers/webp_images/K000000971_가구조립원_male.webp"
   },
   "K000000972": {
-    "male": "K000000972_네일아티스트_male.webp"
+    "female": "/careers/webp_images/K000000972_네일아티스트_female.webp",
+    "male": "/careers/webp_images/K000000972_네일아티스트_male.webp"
+  },
+  "K000000973": {
+    "female": "/careers/webp_images/K000000973_임학 및 산림학연구원_female.webp",
+    "male": "/careers/webp_images/K000000973_임학 및 산림학연구원_male.webp"
+  },
+  "K000000974": {
+    "female": "/careers/webp_images/K000000974_선장 및 항해사_female.webp",
+    "male": "/careers/webp_images/K000000974_선장 및 항해사_male.webp"
+  },
+  "K000000975": {
+    "female": "/careers/webp_images/K000000975_발전설비기술자_female.webp",
+    "male": "/careers/webp_images/K000000975_발전설비기술자_male.webp"
+  },
+  "K000000976": {
+    "female": "/careers/webp_images/K000000976_선박정비원_female.webp",
+    "male": "/careers/webp_images/K000000976_선박정비원_male.webp"
+  },
+  "K000000977": {
+    "female": "/careers/webp_images/K000000977_보험대리인 및 중개인_female.webp",
+    "male": "/careers/webp_images/K000000977_보험대리인 및 중개인_male.webp"
+  },
+  "K000000978": {
+    "female": "/careers/webp_images/K000000978_IT기술지원전문가_female.webp",
+    "male": "/careers/webp_images/K000000978_IT기술지원전문가_male.webp"
   },
   "K000000979": {
-    "male": "K000000979_오락시설서비스원_male.webp"
+    "female": "/careers/webp_images/K000000979_오락시설서비스원_female.webp",
+    "male": "/careers/webp_images/K000000979_오락시설서비스원_male.webp"
+  },
+  "K000000981": {
+    "female": "/careers/webp_images/K000000981_레크리에이션전문가_female.webp",
+    "male": "/careers/webp_images/K000000981_레크리에이션전문가_male.webp"
+  },
+  "K000000982": {
+    "female": "/careers/webp_images/K000000982_패스트푸드준비원_female.webp",
+    "male": "/careers/webp_images/K000000982_패스트푸드준비원_male.webp"
   },
   "K000000983": {
-    "female": "K000000983_잠수기능원_female.webp"
+    "female": "/careers/webp_images/K000000983_잠수기능원_female.webp",
+    "male": "/careers/webp_images/K000000983_잠수기능원_male.webp"
   },
   "K000000984": {
-    "female": "K000000984_전자제품 및 부품 개발기술자_female.webp"
+    "female": "/careers/webp_images/K000000984_전자제품 및 부품 개발기술자_female.webp",
+    "male": "/careers/webp_images/K000000984_전자제품 및 부품 개발기술자_male.webp"
+  },
+  "K000000985": {
+    "female": "/careers/webp_images/K000000985_조경기술자_female.webp",
+    "male": "/careers/webp_images/K000000985_조경기술자_male.webp"
+  },
+  "K000000986": {
+    "female": "/careers/webp_images/K000000986_화학제품생산기계조작원(고무·플라스틱 제외)_female.webp",
+    "male": "/careers/webp_images/K000000986_화학제품생산기계조작원(고무·플라스틱 제외)_male.webp"
+  },
+  "K000000987": {
+    "female": "/careers/webp_images/K000000987_자산운용가_female.webp",
+    "male": "/careers/webp_images/K000000987_자산운용가_male.webp"
+  },
+  "K000000988": {
+    "female": "/careers/webp_images/K000000988_인쇄기계조작원_female.webp",
+    "male": "/careers/webp_images/K000000988_인쇄기계조작원_male.webp"
+  },
+  "K000000989": {
+    "female": "/careers/webp_images/K000000989_경비·청소관리자_female.webp",
+    "male": "/careers/webp_images/K000000989_경비·청소관리자_male.webp"
   },
   "K000000990": {
-    "female": "K000000990_대학교 총장 및 대학학장_female.webp"
+    "female": "/careers/webp_images/K000000990_대학교 총장 및 대학학장_female.webp",
+    "male": "/careers/webp_images/K000000990_대학교 총장 및 대학학장_male.webp"
+  },
+  "K000000991": {
+    "female": "/careers/webp_images/K000000991_여행·호텔관리자_female.webp",
+    "male": "/careers/webp_images/K000000991_여행·호텔관리자_male.webp"
+  },
+  "K000000992": {
+    "female": "/careers/webp_images/K000000992_토목구조설계기술자_female.webp",
+    "male": "/careers/webp_images/K000000992_토목구조설계기술자_male.webp"
+  },
+  "K000000993": {
+    "female": "/careers/webp_images/K000000993_약사_female.webp",
+    "male": "/careers/webp_images/K000000993_약사_male.webp"
+  },
+  "K000000994": {
+    "female": "/careers/webp_images/K000000994_컴퓨터하드웨어기술자_female.webp",
+    "male": "/careers/webp_images/K000000994_컴퓨터하드웨어기술자_male.webp"
   },
   "K000000995": {
-    "male": "K000000995_일반행정공무원_male.webp"
+    "female": "/careers/webp_images/K000000995_일반행정공무원_female.webp",
+    "male": "/careers/webp_images/K000000995_일반행정공무원_male.webp"
+  },
+  "K000000996": {
+    "female": "/careers/webp_images/K000000996_가구제조·수리원_female.webp",
+    "male": "/careers/webp_images/K000000996_가구제조·수리원_male.webp"
+  },
+  "K000000997": {
+    "female": "/careers/webp_images/K000000997_상품기획자_female.webp",
+    "male": "/careers/webp_images/K000000997_상품기획자_male.webp"
+  },
+  "K000000998": {
+    "female": "/careers/webp_images/K000000998_의약품공학기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000000998_의약품공학기술자 및 연구원_male.webp"
+  },
+  "K000000999": {
+    "female": "/careers/webp_images/K000000999_세탁원(다림질원)_female.webp",
+    "male": "/careers/webp_images/K000000999_세탁원(다림질원)_male.webp"
+  },
+  "K000001000": {
+    "female": "/careers/webp_images/K000001000_제품디자이너_female.webp",
+    "male": "/careers/webp_images/K000001000_제품디자이너_male.webp"
+  },
+  "K000001001": {
+    "female": "/careers/webp_images/K000001001_생산관리사무원_female.webp",
+    "male": "/careers/webp_images/K000001001_생산관리사무원_male.webp"
+  },
+  "K000001002": {
+    "female": "/careers/webp_images/K000001002_항공운송사무원_female.webp",
+    "male": "/careers/webp_images/K000001002_항공운송사무원_male.webp"
   },
   "K000001003": {
-    "female": "K000001003_재활용 처리장치·소각로조작원_female.webp"
+    "female": "/careers/webp_images/K000001003_재활용 처리장치·소각로조작원_female.webp",
+    "male": "/careers/webp_images/K000001003_재활용 처리장치·소각로조작원_male.webp"
   },
   "K000001004": {
-    "male": "K000001004_기술영업원_male.webp"
+    "female": "/careers/webp_images/K000001004_기술영업원_female.webp",
+    "male": "/careers/webp_images/K000001004_기술영업원_male.webp"
   },
   "K000001005": {
-    "male": "K000001005_주입·포장·상표부착기계조작원_male.webp"
+    "female": "/careers/webp_images/K000001005_주입·포장·상표부착기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001005_주입·포장·상표부착기계조작원_male.webp"
+  },
+  "K000001006": {
+    "female": "/careers/webp_images/K000001006_주조원(주조기조작원)_female.webp",
+    "male": "/careers/webp_images/K000001006_주조원(주조기조작원)_male.webp"
   },
   "K000001007": {
-    "male": "K000001007_사진작가 및 사진사_male.webp"
+    "female": "/careers/webp_images/K000001007_사진작가 및 사진사_female.webp",
+    "male": "/careers/webp_images/K000001007_사진작가 및 사진사_male.webp"
+  },
+  "K000001008": {
+    "female": "/careers/webp_images/K000001008_패션소품디자이너_female.webp",
+    "male": "/careers/webp_images/K000001008_패션소품디자이너_male.webp"
   },
   "K000001009": {
-    "female": "K000001009_석유·천연가스제조제어장치조작원_female.webp"
+    "female": "/careers/webp_images/K000001009_석유·천연가스제조제어장치조작원_female.webp",
+    "male": "/careers/webp_images/K000001009_석유·천연가스제조제어장치조작원_male.webp"
+  },
+  "K000001010": {
+    "female": "/careers/webp_images/K000001010_도로운송사무원_female.webp",
+    "male": "/careers/webp_images/K000001010_도로운송사무원_male.webp"
+  },
+  "K000001011": {
+    "female": "/careers/webp_images/K000001011_수의사_female.webp",
+    "male": "/careers/webp_images/K000001011_수의사_male.webp"
+  },
+  "K000001012": {
+    "female": "/careers/webp_images/K000001012_수산학연구원_female.webp",
+    "male": "/careers/webp_images/K000001012_수산학연구원_male.webp"
+  },
+  "K000001013": {
+    "female": "/careers/webp_images/K000001013_냉·난방설비조작원_female.webp",
+    "male": "/careers/webp_images/K000001013_냉·난방설비조작원_male.webp"
+  },
+  "K000001014": {
+    "female": "/careers/webp_images/K000001014_건축가(건축설계사)_female.webp",
+    "male": "/careers/webp_images/K000001014_건축가(건축설계사)_male.webp"
+  },
+  "K000001015": {
+    "female": "/careers/webp_images/K000001015_신발제조기계조작원 및 조립원_female.webp",
+    "male": "/careers/webp_images/K000001015_신발제조기계조작원 및 조립원_male.webp"
+  },
+  "K000001016": {
+    "female": "/careers/webp_images/K000001016_곡물가공제품기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001016_곡물가공제품기계조작원_male.webp"
+  },
+  "K000001017": {
+    "female": "/careers/webp_images/K000001017_방사선사_female.webp",
+    "male": "/careers/webp_images/K000001017_방사선사_male.webp"
+  },
+  "K000001018": {
+    "female": "/careers/webp_images/K000001018_전기·가스·수도관리자_female.webp",
+    "male": "/careers/webp_images/K000001018_전기·가스·수도관리자_male.webp"
+  },
+  "K000001019": {
+    "female": "/careers/webp_images/K000001019_학예사_female.webp",
+    "male": "/careers/webp_images/K000001019_학예사_male.webp"
   },
   "K000001020": {
-    "male": "K000001020_간판제작·설치원_male.webp"
+    "female": "/careers/webp_images/K000001020_간판제작·설치원_female.webp",
+    "male": "/careers/webp_images/K000001020_간판제작·설치원_male.webp"
+  },
+  "K000001021": {
+    "female": "/careers/webp_images/K000001021_지리정보시스템전문가_female.webp",
+    "male": "/careers/webp_images/K000001021_지리정보시스템전문가_male.webp"
+  },
+  "K000001022": {
+    "female": "/careers/webp_images/K000001022_품질관리사무원_female.webp",
+    "male": "/careers/webp_images/K000001022_품질관리사무원_male.webp"
   },
   "K000001023": {
-    "female": "K000001023_공업기계설치 및 정비원_female.webp",
-    "male": "K000001023_공업기계설치 및 정비원_male.webp"
+    "female": "/careers/webp_images/K000001023_공업기계설치 및 정비원_female.webp",
+    "male": "/careers/webp_images/K000001023_공업기계설치 및 정비원_male.webp"
   },
   "K000001024": {
-    "male": "K000001024_제분·도정기계조작원_male.webp"
+    "female": "/careers/webp_images/K000001024_제분·도정기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001024_제분·도정기계조작원_male.webp"
+  },
+  "K000001025": {
+    "female": "/careers/webp_images/K000001025_미디어콘텐츠창작자(크리에이터)_female.webp",
+    "male": "/careers/webp_images/K000001025_미디어콘텐츠창작자(크리에이터)_male.webp"
+  },
+  "K000001026": {
+    "female": "/careers/webp_images/K000001026_소음진동기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000001026_소음진동기술자 및 연구원_male.webp"
+  },
+  "K000001027": {
+    "female": "/careers/webp_images/K000001027_스포츠감독 및 코치_female.webp",
+    "male": "/careers/webp_images/K000001027_스포츠감독 및 코치_male.webp"
+  },
+  "K000001028": {
+    "female": "/careers/webp_images/K000001028_영업·판매관리자_female.webp",
+    "male": "/careers/webp_images/K000001028_영업·판매관리자_male.webp"
+  },
+  "K000001029": {
+    "female": "/careers/webp_images/K000001029_영화시나리오작가_female.webp",
+    "male": "/careers/webp_images/K000001029_영화시나리오작가_male.webp"
+  },
+  "K000001030": {
+    "female": "/careers/webp_images/K000001030_철도기관차·전동차정비원_female.webp",
+    "male": "/careers/webp_images/K000001030_철도기관차·전동차정비원_male.webp"
+  },
+  "K000001031": {
+    "female": "/careers/webp_images/K000001031_보일러설치·정비원_female.webp",
+    "male": "/careers/webp_images/K000001031_보일러설치·정비원_male.webp"
+  },
+  "K000001032": {
+    "female": "/careers/webp_images/K000001032_정보통신관리자_female.webp",
+    "male": "/careers/webp_images/K000001032_정보통신관리자_male.webp"
+  },
+  "K000001033": {
+    "female": "/careers/webp_images/K000001033_제화원_female.webp",
+    "male": "/careers/webp_images/K000001033_제화원_male.webp"
+  },
+  "K000001034": {
+    "female": "/careers/webp_images/K000001034_섀시조립·설치원_female.webp",
+    "male": "/careers/webp_images/K000001034_섀시조립·설치원_male.webp"
+  },
+  "K000001035": {
+    "female": "/careers/webp_images/K000001035_조경원_female.webp",
+    "male": "/careers/webp_images/K000001035_조경원_male.webp"
   },
   "K000001036": {
-    "female": "K000001036_가스·에너지시험원 및 진단전문가_female.webp"
+    "female": "/careers/webp_images/K000001036_가스·에너지시험원 및 진단전문가_female.webp",
+    "male": "/careers/webp_images/K000001036_가스·에너지시험원 및 진단전문가_male.webp"
+  },
+  "K000001037": {
+    "female": "/careers/webp_images/K000001037_유리·유리제품생산기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001037_유리·유리제품생산기계조작원_male.webp"
+  },
+  "K000001038": {
+    "female": "/careers/webp_images/K000001038_방수공_female.webp",
+    "male": "/careers/webp_images/K000001038_방수공_male.webp"
+  },
+  "K000001039": {
+    "female": "/careers/webp_images/K000001039_통신장비설치·수리원_female.webp",
+    "male": "/careers/webp_images/K000001039_통신장비설치·수리원_male.webp"
+  },
+  "K000001040": {
+    "female": "/careers/webp_images/K000001040_관세행정사무원_female.webp",
+    "male": "/careers/webp_images/K000001040_관세행정사무원_male.webp"
   },
   "K000001041": {
-    "female": "K000001041_방송송출장비기사_female.webp"
+    "female": "/careers/webp_images/K000001041_방송송출장비기사_female.webp",
+    "male": "/careers/webp_images/K000001041_방송송출장비기사_male.webp"
+  },
+  "K000001042": {
+    "female": "/careers/webp_images/K000001042_모바일앱개발자_female.webp",
+    "male": "/careers/webp_images/K000001042_모바일앱개발자_male.webp"
   },
   "K000001043": {
-    "male": "K000001043_농업용 및 기타기계장비설치 및 정비원_male.webp"
+    "female": "/careers/webp_images/K000001043_농업용 및 기타기계장비설치 및 정비원_female.webp",
+    "male": "/careers/webp_images/K000001043_농업용 및 기타기계장비설치 및 정비원_male.webp"
+  },
+  "K000001044": {
+    "female": "/careers/webp_images/K000001044_바텐터_female.webp",
+    "male": "/careers/webp_images/K000001044_바텐터_male.webp"
+  },
+  "K000001045": {
+    "female": "/careers/webp_images/K000001045_과실·채소기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001045_과실·채소기계조작원_male.webp"
+  },
+  "K000001046": {
+    "female": "/careers/webp_images/K000001046_전통건축기능원_female.webp",
+    "male": "/careers/webp_images/K000001046_전통건축기능원_male.webp"
+  },
+  "K000001047": {
+    "female": "/careers/webp_images/K000001047_고무·플라스틱 제품 조립원_female.webp",
+    "male": "/careers/webp_images/K000001047_고무·플라스틱 제품 조립원_male.webp"
+  },
+  "K000001048": {
+    "female": "/careers/webp_images/K000001048_생물학연구원_female.webp",
+    "male": "/careers/webp_images/K000001048_생물학연구원_male.webp"
+  },
+  "K000001049": {
+    "female": "/careers/webp_images/K000001049_심리상담전문가_female.webp",
+    "male": "/careers/webp_images/K000001049_심리상담전문가_male.webp"
+  },
+  "K000001050": {
+    "female": "/careers/webp_images/K000001050_상품대여원_female.webp",
+    "male": "/careers/webp_images/K000001050_상품대여원_male.webp"
   },
   "K000001051": {
-    "female": "K000001051_통역가_female.webp"
+    "female": "/careers/webp_images/K000001051_통역가_female.webp",
+    "male": "/careers/webp_images/K000001051_통역가_male.webp"
+  },
+  "K000001052": {
+    "female": "/careers/webp_images/K000001052_사회학연구원_female.webp",
+    "male": "/careers/webp_images/K000001052_사회학연구원_male.webp"
   },
   "K000001053": {
-    "female": "K000001053_타일·대리석시공원_female.webp"
+    "female": "/careers/webp_images/K000001053_타일·대리석시공원_female.webp",
+    "male": "/careers/webp_images/K000001053_타일·대리석시공원_male.webp"
+  },
+  "K000001054": {
+    "female": "/careers/webp_images/K000001054_화학물가공장치조작원_female.webp",
+    "male": "/careers/webp_images/K000001054_화학물가공장치조작원_male.webp"
+  },
+  "K000001055": {
+    "female": "/careers/webp_images/K000001055_용접원(용접기조작원)_female.webp",
+    "male": "/careers/webp_images/K000001055_용접원(용접기조작원)_male.webp"
+  },
+  "K000001057": {
+    "female": "/careers/webp_images/K000001057_세탁기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001057_세탁기계조작원_male.webp"
+  },
+  "K000001058": {
+    "female": "/careers/webp_images/K000001058_자연 및 문화해설사_female.webp",
+    "male": "/careers/webp_images/K000001058_자연 및 문화해설사_male.webp"
+  },
+  "K000001059": {
+    "female": "/careers/webp_images/K000001059_경영지원관리자_female.webp",
+    "male": "/careers/webp_images/K000001059_경영지원관리자_male.webp"
+  },
+  "K000001060": {
+    "female": "/careers/webp_images/K000001060_시각디자이너_female.webp",
+    "male": "/careers/webp_images/K000001060_시각디자이너_male.webp"
+  },
+  "K000001061": {
+    "female": "/careers/webp_images/K000001061_웹운영자_female.webp",
+    "male": "/careers/webp_images/K000001061_웹운영자_male.webp"
+  },
+  "K000001062": {
+    "female": "/careers/webp_images/K000001062_철로설치·보수원_female.webp",
+    "male": "/careers/webp_images/K000001062_철로설치·보수원_male.webp"
   },
   "K000001063": {
-    "female": "K000001063_식품공학기술자 및 연구원_female.webp"
+    "female": "/careers/webp_images/K000001063_식품공학기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000001063_식품공학기술자 및 연구원_male.webp"
   },
   "K000001064": {
-    "male": "K000001064_보건위생·환경검사원_male.webp"
+    "female": "/careers/webp_images/K000001064_보건위생·환경검사원_female.webp",
+    "male": "/careers/webp_images/K000001064_보건위생·환경검사원_male.webp"
+  },
+  "K000001065": {
+    "female": "/careers/webp_images/K000001065_중·고등학교교사_female.webp",
+    "male": "/careers/webp_images/K000001065_중·고등학교교사_male.webp"
   },
   "K000001066": {
-    "male": "K000001066_청소원_male.webp"
+    "female": "/careers/webp_images/K000001066_청소원_female.webp",
+    "male": "/careers/webp_images/K000001066_청소원_male.webp"
   },
   "K000001067": {
-    "female": "K000001067_토목감리기술자_female.webp"
+    "female": "/careers/webp_images/K000001067_토목감리기술자_female.webp",
+    "male": "/careers/webp_images/K000001067_토목감리기술자_male.webp"
+  },
+  "K000001068": {
+    "female": "/careers/webp_images/K000001068_피부과의사_female.webp",
+    "male": "/careers/webp_images/K000001068_피부과의사_male.webp"
+  },
+  "K000001069": {
+    "female": "/careers/webp_images/K000001069_광고·홍보·마케팅사무원_female.webp",
+    "male": "/careers/webp_images/K000001069_광고·홍보·마케팅사무원_male.webp"
+  },
+  "K000001070": {
+    "female": "/careers/webp_images/K000001070_자동차정비원_female.webp",
+    "male": "/careers/webp_images/K000001070_자동차정비원_male.webp"
+  },
+  "K000001071": {
+    "female": "/careers/webp_images/K000001071_방사선과의사_female.webp",
+    "male": "/careers/webp_images/K000001071_방사선과의사_male.webp"
+  },
+  "K000001072": {
+    "female": "/careers/webp_images/K000001072_섬유제조기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001072_섬유제조기계조작원_male.webp"
+  },
+  "K000001073": {
+    "female": "/careers/webp_images/K000001073_토목시공기술자 및 견적원_female.webp",
+    "male": "/careers/webp_images/K000001073_토목시공기술자 및 견적원_male.webp"
   },
   "K000001074": {
-    "female": "K000001074_통신장비기사_female.webp"
+    "female": "/careers/webp_images/K000001074_통신장비기사_female.webp",
+    "male": "/careers/webp_images/K000001074_통신장비기사_male.webp"
+  },
+  "K000001075": {
+    "female": "/careers/webp_images/K000001075_방송·통신·인터넷케이블 설치·수리원_female.webp",
+    "male": "/careers/webp_images/K000001075_방송·통신·인터넷케이블 설치·수리원_male.webp"
+  },
+  "K000001076": {
+    "female": "/careers/webp_images/K000001076_자동조립라인·산업용 로봇조작원_female.webp",
+    "male": "/careers/webp_images/K000001076_자동조립라인·산업용 로봇조작원_male.webp"
+  },
+  "K000001077": {
+    "female": "/careers/webp_images/K000001077_공예원_female.webp",
+    "male": "/careers/webp_images/K000001077_공예원_male.webp"
+  },
+  "K000001078": {
+    "female": "/careers/webp_images/K000001078_목재가공기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001078_목재가공기계조작원_male.webp"
+  },
+  "K000001079": {
+    "female": "/careers/webp_images/K000001079_경영기획사무원_female.webp",
+    "male": "/careers/webp_images/K000001079_경영기획사무원_male.webp"
+  },
+  "K000001080": {
+    "female": "/careers/webp_images/K000001080_데이터분석가(빅데이터분석가)_female.webp",
+    "male": "/careers/webp_images/K000001080_데이터분석가(빅데이터분석가)_male.webp"
   },
   "K000001081": {
-    "male": "K000001081_정부행정관리자_male.webp"
+    "female": "/careers/webp_images/K000001081_정부행정관리자_female.webp",
+    "male": "/careers/webp_images/K000001081_정부행정관리자_male.webp"
+  },
+  "K000001082": {
+    "female": "/careers/webp_images/K000001082_기계_로봇공학시험원_female.webp",
+    "male": "/careers/webp_images/K000001082_기계_로봇공학시험원_male.webp"
+  },
+  "K000001083": {
+    "female": "/careers/webp_images/K000001083_외선전기공_female.webp",
+    "male": "/careers/webp_images/K000001083_외선전기공_male.webp"
+  },
+  "K000001084": {
+    "female": "/careers/webp_images/K000001084_태양광발전연구 및 개발자_female.webp",
+    "male": "/careers/webp_images/K000001084_태양광발전연구 및 개발자_male.webp"
+  },
+  "K000001085": {
+    "female": "/careers/webp_images/K000001085_정보통신컨설턴트 및 감리원_female.webp",
+    "male": "/careers/webp_images/K000001085_정보통신컨설턴트 및 감리원_male.webp"
+  },
+  "K000001086": {
+    "female": "/careers/webp_images/K000001086_헬리콥터조종사_female.webp",
+    "male": "/careers/webp_images/K000001086_헬리콥터조종사_male.webp"
+  },
+  "K000001087": {
+    "female": "/careers/webp_images/K000001087_발전·배전장치조작원_female.webp",
+    "male": "/careers/webp_images/K000001087_발전·배전장치조작원_male.webp"
+  },
+  "K000001088": {
+    "female": "/careers/webp_images/K000001088_언어치료사_female.webp",
+    "male": "/careers/webp_images/K000001088_언어치료사_male.webp"
+  },
+  "K000001089": {
+    "female": "/careers/webp_images/K000001089_가수_female.webp",
+    "male": "/careers/webp_images/K000001089_가수_male.webp"
   },
   "K000001090": {
-    "male": "K000001090_제도사(캐드원)_male.webp"
+    "female": "/careers/webp_images/K000001090_제도사(캐드원)_female.webp",
+    "male": "/careers/webp_images/K000001090_제도사(캐드원)_male.webp"
+  },
+  "K000001091": {
+    "female": "/careers/webp_images/K000001091_피부 및 체형관리사_female.webp",
+    "male": "/careers/webp_images/K000001091_피부 및 체형관리사_male.webp"
+  },
+  "K000001092": {
+    "female": "/careers/webp_images/K000001092_매표원 및 복권판매원_female.webp",
+    "male": "/careers/webp_images/K000001092_매표원 및 복권판매원_male.webp"
   },
   "K000001093": {
-    "male": "K000001093_여행상품개발자_male.webp"
+    "female": "/careers/webp_images/K000001093_여행상품개발자_female.webp",
+    "male": "/careers/webp_images/K000001093_여행상품개발자_male.webp"
+  },
+  "K000001094": {
+    "female": "/careers/webp_images/K000001094_운송관리자_female.webp",
+    "male": "/careers/webp_images/K000001094_운송관리자_male.webp"
   },
   "K000001095": {
-    "male": "K000001095_내선전기공_male.webp"
+    "female": "/careers/webp_images/K000001095_내선전기공_female.webp",
+    "male": "/careers/webp_images/K000001095_내선전기공_male.webp"
+  },
+  "K000001096": {
+    "female": "/careers/webp_images/K000001096_건설·채굴단순종사원_female.webp",
+    "male": "/careers/webp_images/K000001096_건설·채굴단순종사원_male.webp"
+  },
+  "K000001097": {
+    "female": "/careers/webp_images/K000001097_환경시험원_female.webp",
+    "male": "/careers/webp_images/K000001097_환경시험원_male.webp"
   },
   "K000001098": {
-    "male": "K000001098_가전제품설치·수리원_male.webp"
+    "female": "/careers/webp_images/K000001098_가전제품설치·수리원_female.webp",
+    "male": "/careers/webp_images/K000001098_가전제품설치·수리원_male.webp"
+  },
+  "K000001099": {
+    "female": "/careers/webp_images/K000001099_영상·녹화 및 편집기사_female.webp",
+    "male": "/careers/webp_images/K000001099_영상·녹화 및 편집기사_male.webp"
+  },
+  "K000001100": {
+    "female": "/careers/webp_images/K000001100_기록물관리사_female.webp",
+    "male": "/careers/webp_images/K000001100_기록물관리사_male.webp"
+  },
+  "K000001101": {
+    "female": "/careers/webp_images/K000001101_조선·해양공학기술자_female.webp",
+    "male": "/careers/webp_images/K000001101_조선·해양공학기술자_male.webp"
+  },
+  "K000001102": {
+    "female": "/careers/webp_images/K000001102_미장공_female.webp",
+    "male": "/careers/webp_images/K000001102_미장공_male.webp"
+  },
+  "K000001103": {
+    "female": "/careers/webp_images/K000001103_건설기계공학기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000001103_건설기계공학기술자 및 연구원_male.webp"
+  },
+  "K000001104": {
+    "female": "/careers/webp_images/K000001104_신용추심원_female.webp",
+    "male": "/careers/webp_images/K000001104_신용추심원_male.webp"
+  },
+  "K000001105": {
+    "female": "/careers/webp_images/K000001105_식품·담배등급원_female.webp",
+    "male": "/careers/webp_images/K000001105_식품·담배등급원_male.webp"
   },
   "K000001106": {
-    "male": "K000001106_웹개발자_male.webp"
+    "female": "/careers/webp_images/K000001106_웹개발자_female.webp",
+    "male": "/careers/webp_images/K000001106_웹개발자_male.webp"
+  },
+  "K000001107": {
+    "female": "/careers/webp_images/K000001107_크레인 및 지게차설치 및 정비원_female.webp",
+    "male": "/careers/webp_images/K000001107_크레인 및 지게차설치 및 정비원_male.webp"
   },
   "K000001108": {
-    "female": "K000001108_이비인후과의사_female.webp"
+    "female": "/careers/webp_images/K000001108_이비인후과의사_female.webp",
+    "male": "/careers/webp_images/K000001108_이비인후과의사_male.webp"
+  },
+  "K000001109": {
+    "female": "/careers/webp_images/K000001109_통신기기·서비스판매원_female.webp",
+    "male": "/careers/webp_images/K000001109_통신기기·서비스판매원_male.webp"
+  },
+  "K000001110": {
+    "female": "/careers/webp_images/K000001110_국악인_female.webp",
+    "male": "/careers/webp_images/K000001110_국악인_male.webp"
+  },
+  "K000001111": {
+    "female": "/careers/webp_images/K000001111_광원·채석원 및 석재절단원_female.webp",
+    "male": "/careers/webp_images/K000001111_광원·채석원 및 석재절단원_male.webp"
+  },
+  "K000001112": {
+    "female": "/careers/webp_images/K000001112_금속공작기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001112_금속공작기계조작원_male.webp"
+  },
+  "K000001113": {
+    "female": "/careers/webp_images/K000001113_특수교육교사_female.webp",
+    "male": "/careers/webp_images/K000001113_특수교육교사_male.webp"
+  },
+  "K000001114": {
+    "female": "/careers/webp_images/K000001114_증권사무원_female.webp",
+    "male": "/careers/webp_images/K000001114_증권사무원_male.webp"
+  },
+  "K000001115": {
+    "female": "/careers/webp_images/K000001115_양장·양복제조원_female.webp",
+    "male": "/careers/webp_images/K000001115_양장·양복제조원_male.webp"
+  },
+  "K000001116": {
+    "female": "/careers/webp_images/K000001116_만화영화작가(애니메이터)_female.webp",
+    "male": "/careers/webp_images/K000001116_만화영화작가(애니메이터)_male.webp"
   },
   "K000001117": {
-    "female": "K000001117_건축목공_female.webp"
+    "female": "/careers/webp_images/K000001117_건축목공_female.webp",
+    "male": "/careers/webp_images/K000001117_건축목공_male.webp"
+  },
+  "K000001118": {
+    "female": "/careers/webp_images/K000001118_전기·전자설비조작원_female.webp",
+    "male": "/careers/webp_images/K000001118_전기·전자설비조작원_male.webp"
   },
   "K000001119": {
-    "female": "K000001119_문화재보존원_female.webp"
+    "female": "/careers/webp_images/K000001119_문화재보존원_female.webp",
+    "male": "/careers/webp_images/K000001119_문화재보존원_male.webp"
+  },
+  "K000001120": {
+    "female": "/careers/webp_images/K000001120_교통영향평가원_female.webp",
+    "male": "/careers/webp_images/K000001120_교통영향평가원_male.webp"
   },
   "K000001121": {
-    "female": "K000001121_이동전화기수리원_female.webp",
-    "male": "K000001121_이동전화기수리원_male.webp"
+    "female": "/careers/webp_images/K000001121_이동전화기수리원_female.webp",
+    "male": "/careers/webp_images/K000001121_이동전화기수리원_male.webp"
   },
   "K000001122": {
-    "male": "K000001122_재단사_male.webp"
+    "female": "/careers/webp_images/K000001122_재단사_female.webp",
+    "male": "/careers/webp_images/K000001122_재단사_male.webp"
+  },
+  "K000001123": {
+    "female": "/careers/webp_images/K000001123_섬유공학기술자_female.webp",
+    "male": "/careers/webp_images/K000001123_섬유공학기술자_male.webp"
+  },
+  "K000001124": {
+    "female": "/careers/webp_images/K000001124_플라스틱제품생산기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001124_플라스틱제품생산기계조작원_male.webp"
+  },
+  "K000001125": {
+    "female": "/careers/webp_images/K000001125_수학 및 통계연구원_female.webp",
+    "male": "/careers/webp_images/K000001125_수학 및 통계연구원_male.webp"
+  },
+  "K000001126": {
+    "female": "/careers/webp_images/K000001126_개그맨 및 코미디언_female.webp",
+    "male": "/careers/webp_images/K000001126_개그맨 및 코미디언_male.webp"
+  },
+  "K000001127": {
+    "female": "/careers/webp_images/K000001127_의료코디네이터_female.webp",
+    "male": "/careers/webp_images/K000001127_의료코디네이터_male.webp"
+  },
+  "K000001128": {
+    "female": "/careers/webp_images/K000001128_상점판매원_female.webp",
+    "male": "/careers/webp_images/K000001128_상점판매원_male.webp"
+  },
+  "K000001129": {
+    "female": "/careers/webp_images/K000001129_마취병리과의사_female.webp",
+    "male": "/careers/webp_images/K000001129_마취병리과의사_male.webp"
+  },
+  "K000001130": {
+    "female": "/careers/webp_images/K000001130_열차객실승무원_female.webp",
+    "male": "/careers/webp_images/K000001130_열차객실승무원_male.webp"
+  },
+  "K000001131": {
+    "female": "/careers/webp_images/K000001131_출납창구사무원_female.webp",
+    "male": "/careers/webp_images/K000001131_출납창구사무원_male.webp"
+  },
+  "K000001132": {
+    "female": "/careers/webp_images/K000001132_정보시스템운영자_female.webp",
+    "male": "/careers/webp_images/K000001132_정보시스템운영자_male.webp"
   },
   "K000001133": {
-    "male": "K000001133_내과의사_male.webp"
+    "female": "/careers/webp_images/K000001133_내과의사_female.webp",
+    "male": "/careers/webp_images/K000001133_내과의사_male.webp"
+  },
+  "K000001134": {
+    "female": "/careers/webp_images/K000001134_데이터베이스운영·관리자_female.webp",
+    "male": "/careers/webp_images/K000001134_데이터베이스운영·관리자_male.webp"
+  },
+  "K000001135": {
+    "female": "/careers/webp_images/K000001135_전기·전자부품·제품조립원_female.webp",
+    "male": "/careers/webp_images/K000001135_전기·전자부품·제품조립원_male.webp"
+  },
+  "K000001136": {
+    "female": "/careers/webp_images/K000001136_은행사무원_female.webp",
+    "male": "/careers/webp_images/K000001136_은행사무원_male.webp"
+  },
+  "K000001137": {
+    "female": "/careers/webp_images/K000001137_신호원 및 수송원_female.webp",
+    "male": "/careers/webp_images/K000001137_신호원 및 수송원_male.webp"
+  },
+  "K000001138": {
+    "female": "/careers/webp_images/K000001138_방송연출가_female.webp",
+    "male": "/careers/webp_images/K000001138_방송연출가_male.webp"
+  },
+  "K000001139": {
+    "female": "/careers/webp_images/K000001139_조사전문가_female.webp",
+    "male": "/careers/webp_images/K000001139_조사전문가_male.webp"
+  },
+  "K000001140": {
+    "female": "/careers/webp_images/K000001140_의학연구원_female.webp",
+    "male": "/careers/webp_images/K000001140_의학연구원_male.webp"
   },
   "K000001141": {
-    "male": "K000001141_비누 및 화장품화학공학기술자 및 연구원_male.webp"
+    "female": "/careers/webp_images/K000001141_비누 및 화장품화학공학기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000001141_비누 및 화장품화학공학기술자 및 연구원_male.webp"
+  },
+  "K000001142": {
+    "female": "/careers/webp_images/K000001142_건축안전·환경기술자 및 건축품질기술자_female.webp",
+    "male": "/careers/webp_images/K000001142_건축안전·환경기술자 및 건축품질기술자_male.webp"
+  },
+  "K000001143": {
+    "female": "/careers/webp_images/K000001143_소규모판매점장_female.webp",
+    "male": "/careers/webp_images/K000001143_소규모판매점장_male.webp"
+  },
+  "K000001144": {
+    "female": "/careers/webp_images/K000001144_영양사_female.webp",
+    "male": "/careers/webp_images/K000001144_영양사_male.webp"
+  },
+  "K000001145": {
+    "female": "/careers/webp_images/K000001145_직조기 및 편직기조작원_female.webp",
+    "male": "/careers/webp_images/K000001145_직조기 및 편직기조작원_male.webp"
+  },
+  "K000001146": {
+    "female": "/careers/webp_images/K000001146_산부인과의사_female.webp",
+    "male": "/careers/webp_images/K000001146_산부인과의사_male.webp"
+  },
+  "K000001147": {
+    "female": "/careers/webp_images/K000001147_위험관리원_female.webp",
+    "male": "/careers/webp_images/K000001147_위험관리원_male.webp"
+  },
+  "K000001148": {
+    "female": "/careers/webp_images/K000001148_단조원(단조기조작원)_female.webp",
+    "male": "/careers/webp_images/K000001148_단조원(단조기조작원)_male.webp"
+  },
+  "K000001149": {
+    "female": "/careers/webp_images/K000001149_교재·교구 및 이러닝교육전문가_female.webp",
+    "male": "/careers/webp_images/K000001149_교재·교구 및 이러닝교육전문가_male.webp"
+  },
+  "K000001150": {
+    "female": "/careers/webp_images/K000001150_시설·특수경비원_female.webp",
+    "male": "/careers/webp_images/K000001150_시설·특수경비원_male.webp"
+  },
+  "K000001151": {
+    "female": "/careers/webp_images/K000001151_섬유공학시험원_female.webp",
+    "male": "/careers/webp_images/K000001151_섬유공학시험원_male.webp"
+  },
+  "K000001152": {
+    "female": "/careers/webp_images/K000001152_타이어·고무제품생산기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001152_타이어·고무제품생산기계조작원_male.webp"
+  },
+  "K000001153": {
+    "female": "/careers/webp_images/K000001153_IT테스터 및 IT QA전문가_female.webp",
+    "male": "/careers/webp_images/K000001153_IT테스터 및 IT QA전문가_male.webp"
+  },
+  "K000001154": {
+    "female": "/careers/webp_images/K000001154_온라인판매원_female.webp",
+    "male": "/careers/webp_images/K000001154_온라인판매원_male.webp"
+  },
+  "K000001155": {
+    "female": "/careers/webp_images/K000001155_철도·지하철운송사무원_female.webp",
+    "male": "/careers/webp_images/K000001155_철도·지하철운송사무원_male.webp"
   },
   "K000001156": {
-    "male": "K000001156_환경미화원 및 재활용품수거원_male.webp"
+    "female": "/careers/webp_images/K000001156_환경미화원 및 재활용품수거원_female.webp",
+    "male": "/careers/webp_images/K000001156_환경미화원 및 재활용품수거원_male.webp"
   },
   "K000001157": {
-    "female": "K000001157_농림어업시험원_female.webp"
+    "female": "/careers/webp_images/K000001157_농림어업시험원_female.webp",
+    "male": "/careers/webp_images/K000001157_농림어업시험원_male.webp"
+  },
+  "K000001158": {
+    "female": "/careers/webp_images/K000001158_산업전기공_female.webp",
+    "male": "/careers/webp_images/K000001158_산업전기공_male.webp"
+  },
+  "K000001159": {
+    "female": "/careers/webp_images/K000001159_풍력발전연구 및 개발자_female.webp",
+    "male": "/careers/webp_images/K000001159_풍력발전연구 및 개발자_male.webp"
+  },
+  "K000001160": {
+    "female": "/careers/webp_images/K000001160_연극영화방송기술감독_female.webp",
+    "male": "/careers/webp_images/K000001160_연극영화방송기술감독_male.webp"
+  },
+  "K000001161": {
+    "female": "/careers/webp_images/K000001161_아나운서_female.webp",
+    "male": "/careers/webp_images/K000001161_아나운서_male.webp"
+  },
+  "K000001162": {
+    "female": "/careers/webp_images/K000001162_보험보상사무원_female.webp",
+    "male": "/careers/webp_images/K000001162_보험보상사무원_male.webp"
   },
   "K000001163": {
-    "female": "K000001163_금융상품개발자_female.webp"
+    "female": "/careers/webp_images/K000001163_금융상품개발자_female.webp",
+    "male": "/careers/webp_images/K000001163_금융상품개발자_male.webp"
+  },
+  "K000001164": {
+    "female": "/careers/webp_images/K000001164_화물차·특수차운전원_female.webp",
+    "male": "/careers/webp_images/K000001164_화물차·특수차운전원_male.webp"
+  },
+  "K000001165": {
+    "female": "/careers/webp_images/K000001165_금속가공제어장치조작원_female.webp",
+    "male": "/careers/webp_images/K000001165_금속가공제어장치조작원_male.webp"
+  },
+  "K000001166": {
+    "female": "/careers/webp_images/K000001166_육류·어패류·낙농품가공기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001166_육류·어패류·낙농품가공기계조작원_male.webp"
+  },
+  "K000001167": {
+    "female": "/careers/webp_images/K000001167_혼례종사원_female.webp",
+    "male": "/careers/webp_images/K000001167_혼례종사원_male.webp"
   },
   "K000001168": {
-    "female": "K000001168_증권·외환딜러_female.webp"
+    "female": "/careers/webp_images/K000001168_증권·외환딜러_female.webp",
+    "male": "/careers/webp_images/K000001168_증권·외환딜러_male.webp"
+  },
+  "K000001169": {
+    "female": "/careers/webp_images/K000001169_방송작가_female.webp",
+    "male": "/careers/webp_images/K000001169_방송작가_male.webp"
+  },
+  "K000001170": {
+    "female": "/careers/webp_images/K000001170_안내 및 접수사무원_female.webp",
+    "male": "/careers/webp_images/K000001170_안내 및 접수사무원_male.webp"
+  },
+  "K000001171": {
+    "female": "/careers/webp_images/K000001171_유치원 원장 및 원감_female.webp",
+    "male": "/careers/webp_images/K000001171_유치원 원장 및 원감_male.webp"
+  },
+  "K000001172": {
+    "female": "/careers/webp_images/K000001172_웹기획자_female.webp",
+    "male": "/careers/webp_images/K000001172_웹기획자_male.webp"
+  },
+  "K000001173": {
+    "female": "/careers/webp_images/K000001173_제조·생산관리자_female.webp",
+    "male": "/careers/webp_images/K000001173_제조·생산관리자_male.webp"
+  },
+  "K000001174": {
+    "female": "/careers/webp_images/K000001174_점토제품생산기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001174_점토제품생산기계조작원_male.webp"
+  },
+  "K000001175": {
+    "female": "/careers/webp_images/K000001175_위관급 장교_female.webp",
+    "male": "/careers/webp_images/K000001175_위관급 장교_male.webp"
+  },
+  "K000001176": {
+    "female": "/careers/webp_images/K000001176_응용소프트웨어개발자_female.webp",
+    "male": "/careers/webp_images/K000001176_응용소프트웨어개발자_male.webp"
+  },
+  "K000001177": {
+    "female": "/careers/webp_images/K000001177_건설자재시험원_female.webp",
+    "male": "/careers/webp_images/K000001177_건설자재시험원_male.webp"
+  },
+  "K000001178": {
+    "female": "/careers/webp_images/K000001178_메이크업아티스트 및 뷰티매니저_female.webp",
+    "male": "/careers/webp_images/K000001178_메이크업아티스트 및 뷰티매니저_male.webp"
+  },
+  "K000001179": {
+    "female": "/careers/webp_images/K000001179_투자분석가_female.webp",
+    "male": "/careers/webp_images/K000001179_투자분석가_male.webp"
   },
   "K000001180": {
-    "male": "K000001180_법률사무원_male.webp"
+    "female": "/careers/webp_images/K000001180_법률사무원_female.webp",
+    "male": "/careers/webp_images/K000001180_법률사무원_male.webp"
+  },
+  "K000001181": {
+    "female": "/careers/webp_images/K000001181_연주가_female.webp",
+    "male": "/careers/webp_images/K000001181_연주가_male.webp"
+  },
+  "K000001182": {
+    "female": "/careers/webp_images/K000001182_패턴사_female.webp",
+    "male": "/careers/webp_images/K000001182_패턴사_male.webp"
+  },
+  "K000001183": {
+    "female": "/careers/webp_images/K000001183_속기사_female.webp",
+    "male": "/careers/webp_images/K000001183_속기사_male.webp"
+  },
+  "K000001184": {
+    "female": "/careers/webp_images/K000001184_반도체공학기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000001184_반도체공학기술자 및 연구원_male.webp"
+  },
+  "K000001185": {
+    "female": "/careers/webp_images/K000001185_자동차공학기술자_female.webp",
+    "male": "/careers/webp_images/K000001185_자동차공학기술자_male.webp"
+  },
+  "K000001186": {
+    "female": "/careers/webp_images/K000001186_청능사_female.webp",
+    "male": "/careers/webp_images/K000001186_청능사_male.webp"
   },
   "K000001187": {
-    "female": "K000001187_여행사무원_female.webp"
+    "female": "/careers/webp_images/K000001187_여행사무원_female.webp",
+    "male": "/careers/webp_images/K000001187_여행사무원_male.webp"
+  },
+  "K000001188": {
+    "female": "/careers/webp_images/K000001188_도배공_female.webp",
+    "male": "/careers/webp_images/K000001188_도배공_male.webp"
   },
   "K000001189": {
-    "male": "K000001189_금속·재료공학시험원_male.webp"
+    "female": "/careers/webp_images/K000001189_금속·재료공학시험원_female.webp",
+    "male": "/careers/webp_images/K000001189_금속·재료공학시험원_male.webp"
+  },
+  "K000001190": {
+    "female": "/careers/webp_images/K000001190_연구관리자_female.webp",
+    "male": "/careers/webp_images/K000001190_연구관리자_male.webp"
+  },
+  "K000001191": {
+    "female": "/careers/webp_images/K000001191_전자계측제어기술자_female.webp",
+    "male": "/careers/webp_images/K000001191_전자계측제어기술자_male.webp"
+  },
+  "K000001192": {
+    "female": "/careers/webp_images/K000001192_주방보조원_female.webp",
+    "male": "/careers/webp_images/K000001192_주방보조원_male.webp"
+  },
+  "K000001193": {
+    "female": "/careers/webp_images/K000001193_고무 및 플라스틱화학공학기술자 및 연구원_female.webp",
+    "male": "/careers/webp_images/K000001193_고무 및 플라스틱화학공학기술자 및 연구원_male.webp"
+  },
+  "K000001194": {
+    "female": "/careers/webp_images/K000001194_고객상담원_female.webp",
+    "male": "/careers/webp_images/K000001194_고객상담원_male.webp"
   },
   "K000001195": {
-    "male": "K000001195_상품중개인 및 경매사_male.webp"
+    "female": "/careers/webp_images/K000001195_상품중개인 및 경매사_female.webp",
+    "male": "/careers/webp_images/K000001195_상품중개인 및 경매사_male.webp"
+  },
+  "K000001196": {
+    "female": "/careers/webp_images/K000001196_인사·교육·훈련사무원_female.webp",
+    "male": "/careers/webp_images/K000001196_인사·교육·훈련사무원_male.webp"
+  },
+  "K000001197": {
+    "female": "/careers/webp_images/K000001197_광석·석제품생산기계조작원_female.webp",
+    "male": "/careers/webp_images/K000001197_광석·석제품생산기계조작원_male.webp"
+  },
+  "K000001198": {
+    "female": "/careers/webp_images/K000001198_출판물기획자_female.webp",
+    "male": "/careers/webp_images/K000001198_출판물기획자_male.webp"
+  },
+  "K000001199": {
+    "female": "/careers/webp_images/K000001199_펄프·종이제조장치조작원_female.webp",
+    "male": "/careers/webp_images/K000001199_펄프·종이제조장치조작원_male.webp"
   },
   "K000001200": {
-    "female": "K000001200_영업기획·관리·지원사무원_female.webp"
+    "female": "/careers/webp_images/K000001200_영업기획·관리·지원사무원_female.webp",
+    "male": "/careers/webp_images/K000001200_영업기획·관리·지원사무원_male.webp"
+  },
+  "K000001201": {
+    "female": "/careers/webp_images/K000001201_법원공무원_female.webp",
+    "male": "/careers/webp_images/K000001201_법원공무원_male.webp"
+  },
+  "K000001202": {
+    "female": "/careers/webp_images/K000001202_전기계측제어기술자_female.webp",
+    "male": "/careers/webp_images/K000001202_전기계측제어기술자_male.webp"
+  },
+  "K000001203": {
+    "female": "/careers/webp_images/K000001203_여행안내원_female.webp",
+    "male": "/careers/webp_images/K000001203_여행안내원_male.webp"
   },
   "K000001204": {
-    "female": "K000001204_계기검침원 및 가스점검원_female.webp"
+    "female": "/careers/webp_images/K000001204_계기검침원 및 가스점검원_female.webp",
+    "male": "/careers/webp_images/K000001204_계기검침원 및 가스점검원_male.webp"
+  },
+  "K000001205": {
+    "female": "/careers/webp_images/K000001205_전기·전자공학시험원_female.webp",
+    "male": "/careers/webp_images/K000001205_전기·전자공학시험원_male.webp"
+  },
+  "K000001206": {
+    "female": "/careers/webp_images/K000001206_보험모집인_female.webp",
+    "male": "/careers/webp_images/K000001206_보험모집인_male.webp"
+  },
+  "K000001207": {
+    "female": "/careers/webp_images/K000001207_리포터_female.webp",
+    "male": "/careers/webp_images/K000001207_리포터_male.webp"
+  },
+  "K000001208": {
+    "female": "/careers/webp_images/K000001208_조적원_female.webp",
+    "male": "/careers/webp_images/K000001208_조적원_male.webp"
+  },
+  "K000001209": {
+    "female": "/careers/webp_images/K000001209_정육원 및 도축원_female.webp",
+    "male": "/careers/webp_images/K000001209_정육원 및 도축원_male.webp"
+  },
+  "K000001210": {
+    "female": "/careers/webp_images/K000001210_금융관리자_female.webp",
+    "male": "/careers/webp_images/K000001210_금융관리자_male.webp"
+  },
+  "K000001211": {
+    "female": "/careers/webp_images/K000001211_건설·광업기계설치·정비원_female.webp",
+    "male": "/careers/webp_images/K000001211_건설·광업기계설치·정비원_male.webp"
+  },
+  "K000001212": {
+    "female": "/careers/webp_images/K000001212_청원경찰_female.webp",
+    "male": "/careers/webp_images/K000001212_청원경찰_male.webp"
   },
   "K000001213": {
-    "female": "K000001213_크레인·호이스트운전원_female.webp"
+    "female": "/careers/webp_images/K000001213_크레인·호이스트운전원_female.webp",
+    "male": "/careers/webp_images/K000001213_크레인·호이스트운전원_male.webp"
+  },
+  "K000001214": {
+    "female": "/careers/webp_images/K000001214_자전거판매 및 정비원_female.webp",
+    "male": "/careers/webp_images/K000001214_자전거판매 및 정비원_male.webp"
+  },
+  "K000001215": {
+    "female": "/careers/webp_images/K000001215_신용분석가_female.webp",
+    "male": "/careers/webp_images/K000001215_신용분석가_male.webp"
+  },
+  "K000001216": {
+    "female": "/careers/webp_images/K000001216_예술치료사_female.webp",
+    "male": "/careers/webp_images/K000001216_예술치료사_male.webp"
+  },
+  "K000001217": {
+    "female": "/careers/webp_images/K000001217_오토바이정비원_female.webp",
+    "male": "/careers/webp_images/K000001217_오토바이정비원_male.webp"
+  },
+  "K000001218": {
+    "female": "/careers/webp_images/K000001218_홍보도우미 및 판촉원_female.webp",
+    "male": "/careers/webp_images/K000001218_홍보도우미 및 판촉원_male.webp"
+  },
+  "K000001219": {
+    "female": "/careers/webp_images/K000001219_전산자료입력원 및 사무보조원_female.webp",
+    "male": "/careers/webp_images/K000001219_전산자료입력원 및 사무보조원_male.webp"
+  },
+  "K000001220": {
+    "female": "/careers/webp_images/K000001220_대학시간강사_female.webp",
+    "male": "/careers/webp_images/K000001220_대학시간강사_male.webp"
+  },
+  "K000001221": {
+    "female": "/careers/webp_images/K000001221_법무사 및 집행관_female.webp",
+    "male": "/careers/webp_images/K000001221_법무사 및 집행관_male.webp"
+  },
+  "K000001222": {
+    "female": "/careers/webp_images/K000001222_방송기자_female.webp",
+    "male": "/careers/webp_images/K000001222_방송기자_male.webp"
+  },
+  "K000001223": {
+    "female": "/careers/webp_images/K000001223_금형원_female.webp",
+    "male": "/careers/webp_images/K000001223_금형원_male.webp"
+  },
+  "K000007449": {
+    "female": "/careers/webp_images/K000007449_회계사_female.webp",
+    "male": "/careers/webp_images/K000007449_회계사_male.webp"
   },
   "K000007450": {
-    "female": "K000007450_중식조리사_female.webp"
+    "female": "/careers/webp_images/K000007450_중식조리사_female.webp",
+    "male": "/careers/webp_images/K000007450_중식조리사_male.webp"
+  },
+  "K000007451": {
+    "female": "/careers/webp_images/K000007451_텔레마케터_female.webp",
+    "male": "/careers/webp_images/K000007451_텔레마케터_male.webp"
   },
   "K000007452": {
-    "male": "K000007452_가상현실전문가_male.webp"
+    "female": "/careers/webp_images/K000007452_가상현실전문가_female.webp",
+    "male": "/careers/webp_images/K000007452_가상현실전문가_male.webp"
+  },
+  "K000007453": {
+    "female": "/careers/webp_images/K000007453_취업알선원_female.webp",
+    "male": "/careers/webp_images/K000007453_취업알선원_male.webp"
+  },
+  "K000007454": {
+    "female": "/careers/webp_images/K000007454_의상디자이너_female.webp",
+    "male": "/careers/webp_images/K000007454_의상디자이너_male.webp"
   },
   "K000007455": {
-    "female": "K000007455_집배원_female.webp"
+    "female": "/careers/webp_images/K000007455_집배원_female.webp",
+    "male": "/careers/webp_images/K000007455_집배원_male.webp"
+  },
+  "K000007456": {
+    "female": "/careers/webp_images/K000007456_병무행정사무원_female.webp",
+    "male": "/careers/webp_images/K000007456_병무행정사무원_male.webp"
+  },
+  "K000007457": {
+    "female": "/careers/webp_images/K000007457_한복제조원_female.webp",
+    "male": "/careers/webp_images/K000007457_한복제조원_male.webp"
+  },
+  "K000007458": {
+    "female": "/careers/webp_images/K000007458_영화감독_female.webp",
+    "male": "/careers/webp_images/K000007458_영화감독_male.webp"
+  },
+  "K000007459": {
+    "female": "/careers/webp_images/K000007459_영상그래픽디자이너_female.webp",
+    "male": "/careers/webp_images/K000007459_영상그래픽디자이너_male.webp"
+  },
+  "K000007460": {
+    "female": "/careers/webp_images/K000007460_광고영상감독_female.webp",
+    "male": "/careers/webp_images/K000007460_광고영상감독_male.webp"
+  },
+  "K000007461": {
+    "female": "/careers/webp_images/K000007461_응급구조사_female.webp",
+    "male": "/careers/webp_images/K000007461_응급구조사_male.webp"
   },
   "K000007462": {
-    "male": "K000007462_지게차운전원_male.webp"
+    "female": "/careers/webp_images/K000007462_지게차운전원_female.webp",
+    "male": "/careers/webp_images/K000007462_지게차운전원_male.webp"
   },
   "K000007463": {
-    "male": "K000007463_웹디자이너_male.webp"
+    "female": "/careers/webp_images/K000007463_웹디자이너_female.webp",
+    "male": "/careers/webp_images/K000007463_웹디자이너_male.webp"
   },
   "K000007464": {
-    "male": "K000007464_자동차영업원_male.webp"
+    "female": "/careers/webp_images/K000007464_자동차영업원_female.webp",
+    "male": "/careers/webp_images/K000007464_자동차영업원_male.webp"
+  },
+  "K000007465": {
+    "female": "/careers/webp_images/K000007465_택시운전원_female.webp",
+    "male": "/careers/webp_images/K000007465_택시운전원_male.webp"
+  },
+  "K000007466": {
+    "female": "/careers/webp_images/K000007466_경리사무원_female.webp",
+    "male": "/careers/webp_images/K000007466_경리사무원_male.webp"
+  },
+  "K000007467": {
+    "female": "/careers/webp_images/K000007467_콘크리트공_female.webp",
+    "male": "/careers/webp_images/K000007467_콘크리트공_male.webp"
   },
   "K000007468": {
-    "female": "K000007468_버스운전원_female.webp"
+    "female": "/careers/webp_images/K000007468_버스운전원_female.webp",
+    "male": "/careers/webp_images/K000007468_버스운전원_male.webp"
+  },
+  "K000007469": {
+    "female": "/careers/webp_images/K000007469_선박기관사_female.webp",
+    "male": "/careers/webp_images/K000007469_선박기관사_male.webp"
   },
   "K000007470": {
-    "female": "K000007470_변리사_female.webp"
+    "female": "/careers/webp_images/K000007470_변리사_female.webp",
+    "male": "/careers/webp_images/K000007470_변리사_male.webp"
+  },
+  "K000007471": {
+    "female": "/careers/webp_images/K000007471_보험관리자_female.webp",
+    "male": "/careers/webp_images/K000007471_보험관리자_male.webp"
+  },
+  "K000007472": {
+    "female": "/careers/webp_images/K000007472_치과의사_female.webp",
+    "male": "/careers/webp_images/K000007472_치과의사_male.webp"
+  },
+  "K000007473": {
+    "female": "/careers/webp_images/K000007473_조명기사_female.webp",
+    "male": "/careers/webp_images/K000007473_조명기사_male.webp"
+  },
+  "K000007474": {
+    "female": "/careers/webp_images/K000007474_한약사_female.webp",
+    "male": "/careers/webp_images/K000007474_한약사_male.webp"
+  },
+  "K000007475": {
+    "female": "/careers/webp_images/K000007475_건축석공_female.webp",
+    "male": "/careers/webp_images/K000007475_건축석공_male.webp"
+  },
+  "K000007476": {
+    "female": "/careers/webp_images/K000007476_성우_female.webp",
+    "male": "/careers/webp_images/K000007476_성우_male.webp"
   },
   "K000007477": {
-    "male": "K000007477_반려동물미용사_male.webp"
+    "female": "/careers/webp_images/K000007477_반려동물미용사_female.webp",
+    "male": "/careers/webp_images/K000007477_반려동물미용사_male.webp"
   },
   "K000007478": {
-    "female": "K000007478_비서_female.webp"
+    "female": "/careers/webp_images/K000007478_비서_female.webp",
+    "male": "/careers/webp_images/K000007478_비서_male.webp"
+  },
+  "K000007479": {
+    "female": "/careers/webp_images/K000007479_안무가_female.webp",
+    "male": "/careers/webp_images/K000007479_안무가_male.webp"
+  },
+  "K000007480": {
+    "female": "/careers/webp_images/K000007480_건물도장공_female.webp",
+    "male": "/careers/webp_images/K000007480_건물도장공_male.webp"
+  },
+  "K000007481": {
+    "female": "/careers/webp_images/K000007481_미용사_female.webp",
+    "male": "/careers/webp_images/K000007481_미용사_male.webp"
+  },
+  "K000007482": {
+    "female": "/careers/webp_images/K000007482_변호사_female.webp",
+    "male": "/careers/webp_images/K000007482_변호사_male.webp"
+  },
+  "K000007483": {
+    "female": "/careers/webp_images/K000007483_웨딩플래너_female.webp",
+    "male": "/careers/webp_images/K000007483_웨딩플래너_male.webp"
   },
   "K000007484": {
-    "male": "K000007484_곡식작물재배원_male.webp"
+    "male": "/careers/webp_images/K000007484_곡식작물재배원_male.webp"
+  },
+  "K000007485": {
+    "female": "/careers/webp_images/K000007485_사회단체활동가_female.webp",
+    "male": "/careers/webp_images/K000007485_사회단체활동가_male.webp"
+  },
+  "K000007487": {
+    "female": "/careers/webp_images/K000007487_회계사무원_female.webp",
+    "male": "/careers/webp_images/K000007487_회계사무원_male.webp"
+  },
+  "K000007488": {
+    "female": "/careers/webp_images/K000007488_경량철골공_female.webp",
+    "male": "/careers/webp_images/K000007488_경량철골공_male.webp"
+  },
+  "K000007489": {
+    "female": "/careers/webp_images/K000007489_항공교통관제사_female.webp",
+    "male": "/careers/webp_images/K000007489_항공교통관제사_male.webp"
+  },
+  "K000007490": {
+    "female": "/careers/webp_images/K000007490_보건교사_female.webp",
+    "male": "/careers/webp_images/K000007490_보건교사_male.webp"
   },
   "K000007491": {
-    "male": "K000007491_전기안전기술자_male.webp"
+    "female": "/careers/webp_images/K000007491_전기안전기술자_female.webp",
+    "male": "/careers/webp_images/K000007491_전기안전기술자_male.webp"
+  },
+  "K000007492": {
+    "female": "/careers/webp_images/K000007492_보건의료정보관리사_female.webp",
+    "male": "/careers/webp_images/K000007492_보건의료정보관리사_male.webp"
+  },
+  "K000007493": {
+    "female": "/careers/webp_images/K000007493_역사학연구원_female.webp",
+    "male": "/careers/webp_images/K000007493_역사학연구원_male.webp"
+  },
+  "K000007494": {
+    "female": "/careers/webp_images/K000007494_간호사_female.webp",
+    "male": "/careers/webp_images/K000007494_간호사_male.webp"
   },
   "K000007495": {
-    "male": "K000007495_소방관_male.webp"
+    "female": "/careers/webp_images/K000007495_소방관_female.webp",
+    "male": "/careers/webp_images/K000007495_소방관_male.webp"
   },
   "K000007496": {
-    "female": "K000007496_공업배관공_female.webp"
+    "female": "/careers/webp_images/K000007496_공업배관공_female.webp",
+    "male": "/careers/webp_images/K000007496_공업배관공_male.webp"
+  },
+  "K000007497": {
+    "female": "/careers/webp_images/K000007497_수의사보조원_female.webp",
+    "male": "/careers/webp_images/K000007497_수의사보조원_male.webp"
+  },
+  "K000007498": {
+    "female": "/careers/webp_images/K000007498_실내장식디자이너_female.webp",
+    "male": "/careers/webp_images/K000007498_실내장식디자이너_male.webp"
+  },
+  "K000007499": {
+    "female": "/careers/webp_images/K000007499_네트워크관리자_female.webp",
+    "male": "/careers/webp_images/K000007499_네트워크관리자_male.webp"
+  },
+  "K000007500": {
+    "female": "/careers/webp_images/K000007500_관세사_female.webp",
+    "male": "/careers/webp_images/K000007500_관세사_male.webp"
+  },
+  "K000007501": {
+    "female": "/careers/webp_images/K000007501_물리치료사_female.webp",
+    "male": "/careers/webp_images/K000007501_물리치료사_male.webp"
+  },
+  "K000007502": {
+    "female": "/careers/webp_images/K000007502_보육교사_female.webp",
+    "male": "/careers/webp_images/K000007502_보육교사_male.webp"
+  },
+  "K000007503": {
+    "female": "/careers/webp_images/K000007503_연극연출가_female.webp",
+    "male": "/careers/webp_images/K000007503_연극연출가_male.webp"
+  },
+  "K000007504": {
+    "female": "/careers/webp_images/K000007504_일반의사_female.webp",
+    "male": "/careers/webp_images/K000007504_일반의사_male.webp"
+  },
+  "K000007505": {
+    "female": "/careers/webp_images/K000007505_성악가_female.webp",
+    "male": "/careers/webp_images/K000007505_성악가_male.webp"
+  },
+  "K000007506": {
+    "female": "/careers/webp_images/K000007506_항공기객실승무원_female.webp",
+    "male": "/careers/webp_images/K000007506_항공기객실승무원_male.webp"
+  },
+  "K000007507": {
+    "female": "/careers/webp_images/K000007507_프로게이머_female.webp",
+    "male": "/careers/webp_images/K000007507_프로게이머_male.webp"
   },
   "K000007508": {
-    "male": "K000007508_부사관_male.webp"
+    "female": "/careers/webp_images/K000007508_부사관_female.webp",
+    "male": "/careers/webp_images/K000007508_부사관_male.webp"
+  },
+  "K000007509": {
+    "female": "/careers/webp_images/K000007509_안경사_female.webp",
+    "male": "/careers/webp_images/K000007509_안경사_male.webp"
+  },
+  "K000007510": {
+    "female": "/careers/webp_images/K000007510_떡제조원_female.webp",
+    "male": "/careers/webp_images/K000007510_떡제조원_male.webp"
+  },
+  "K000007511": {
+    "female": "/careers/webp_images/K000007511_대중무용수_female.webp",
+    "male": "/careers/webp_images/K000007511_대중무용수_male.webp"
   },
   "K000007512": {
-    "male": "K000007512_언어학연구원_male.webp"
+    "female": "/careers/webp_images/K000007512_언어학연구원_female.webp",
+    "male": "/careers/webp_images/K000007512_언어학연구원_male.webp"
   },
   "K000007513": {
-    "male": "K000007513_방문판매원_male.webp"
+    "female": "/careers/webp_images/K000007513_방문판매원_female.webp",
+    "male": "/careers/webp_images/K000007513_방문판매원_male.webp"
   },
   "K000007514": {
-    "male": "K000007514_감정평가사_male.webp"
+    "female": "/careers/webp_images/K000007514_감정평가사_female.webp",
+    "male": "/careers/webp_images/K000007514_감정평가사_male.webp"
+  },
+  "K000007515": {
+    "female": "/careers/webp_images/K000007515_철도교통관제사_female.webp",
+    "male": "/careers/webp_images/K000007515_철도교통관제사_male.webp"
+  },
+  "K000007516": {
+    "female": "/careers/webp_images/K000007516_조세행정사무원_female.webp",
+    "male": "/careers/webp_images/K000007516_조세행정사무원_male.webp"
+  },
+  "K000007517": {
+    "female": "/careers/webp_images/K000007517_총무사무원_female.webp",
+    "male": "/careers/webp_images/K000007517_총무사무원_male.webp"
+  },
+  "K000007518": {
+    "female": "/careers/webp_images/K000007518_만화가_female.webp",
+    "male": "/careers/webp_images/K000007518_만화가_male.webp"
+  },
+  "K000007519": {
+    "female": "/careers/webp_images/K000007519_보험상품개발자_female.webp",
+    "male": "/careers/webp_images/K000007519_보험상품개발자_male.webp"
+  },
+  "K000007520": {
+    "female": "/careers/webp_images/K000007520_육아도우미_female.webp",
+    "male": "/careers/webp_images/K000007520_육아도우미_male.webp"
+  },
+  "K000007521": {
+    "female": "/careers/webp_images/K000007521_경찰관_female.webp",
+    "male": "/careers/webp_images/K000007521_경찰관_male.webp"
+  },
+  "K000007522": {
+    "female": "/careers/webp_images/K000007522_교육학연구원_female.webp",
+    "male": "/careers/webp_images/K000007522_교육학연구원_male.webp"
+  },
+  "K000007523": {
+    "female": "/careers/webp_images/K000007523_검표원_female.webp",
+    "male": "/careers/webp_images/K000007523_검표원_male.webp"
+  },
+  "K000007524": {
+    "female": "/careers/webp_images/K000007524_행정사_female.webp",
+    "male": "/careers/webp_images/K000007524_행정사_male.webp"
+  },
+  "K000007525": {
+    "female": "/careers/webp_images/K000007525_세무사_female.webp",
+    "male": "/careers/webp_images/K000007525_세무사_male.webp"
+  },
+  "K000007526": {
+    "female": "/careers/webp_images/K000007526_청소년지도사_female.webp",
+    "male": "/careers/webp_images/K000007526_청소년지도사_male.webp"
+  },
+  "K000007527": {
+    "female": "/careers/webp_images/K000007527_판사_female.webp",
+    "male": "/careers/webp_images/K000007527_판사_male.webp"
+  },
+  "K000007528": {
+    "female": "/careers/webp_images/K000007528_분장사_female.webp",
+    "male": "/careers/webp_images/K000007528_분장사_male.webp"
+  },
+  "K000007529": {
+    "female": "/careers/webp_images/K000007529_임상심리사_female.webp",
+    "male": "/careers/webp_images/K000007529_임상심리사_male.webp"
+  },
+  "K000007530": {
+    "female": "/careers/webp_images/K000007530_유치원교사_female.webp",
+    "male": "/careers/webp_images/K000007530_유치원교사_male.webp"
+  },
+  "K000007531": {
+    "female": "/careers/webp_images/K000007531_지질학연구원_female.webp",
+    "male": "/careers/webp_images/K000007531_지질학연구원_male.webp"
+  },
+  "K000007532": {
+    "female": "/careers/webp_images/K000007532_사서_female.webp",
+    "male": "/careers/webp_images/K000007532_사서_male.webp"
+  },
+  "K000007533": {
+    "female": "/careers/webp_images/K000007533_철근공_female.webp",
+    "male": "/careers/webp_images/K000007533_철근공_male.webp"
   },
   "K000007534": {
-    "male": "K000007534_음식배달원_male.webp"
+    "female": "/careers/webp_images/K000007534_음식배달원_female.webp",
+    "male": "/careers/webp_images/K000007534_음식배달원_male.webp"
+  },
+  "K000007535": {
+    "female": "/careers/webp_images/K000007535_약학연구원_female.webp",
+    "male": "/careers/webp_images/K000007535_약학연구원_male.webp"
+  },
+  "K000007536": {
+    "female": "/careers/webp_images/K000007536_부동산중개인_female.webp",
+    "male": "/careers/webp_images/K000007536_부동산중개인_male.webp"
   },
   "K000007537": {
-    "male": "K000007537_작업치료사_male.webp"
+    "female": "/careers/webp_images/K000007537_작업치료사_female.webp",
+    "male": "/careers/webp_images/K000007537_작업치료사_male.webp"
   },
   "K000007538": {
-    "male": "K000007538_한식조리사_male.webp"
+    "female": "/careers/webp_images/K000007538_한식조리사_female.webp",
+    "male": "/careers/webp_images/K000007538_한식조리사_male.webp"
+  },
+  "K000007539": {
+    "female": "/careers/webp_images/K000007539_컴퓨터강사_female.webp",
+    "male": "/careers/webp_images/K000007539_컴퓨터강사_male.webp"
+  },
+  "K000007540": {
+    "female": "/careers/webp_images/K000007540_해양경찰관_female.webp",
+    "male": "/careers/webp_images/K000007540_해양경찰관_male.webp"
+  },
+  "K000007541": {
+    "female": "/careers/webp_images/K000007541_생활지도원_female.webp",
+    "male": "/careers/webp_images/K000007541_생활지도원_male.webp"
+  },
+  "K000007542": {
+    "female": "/careers/webp_images/K000007542_한의사_female.webp",
+    "male": "/careers/webp_images/K000007542_한의사_male.webp"
+  },
+  "K000007543": {
+    "female": "/careers/webp_images/K000007543_촬영기사_female.webp",
+    "male": "/careers/webp_images/K000007543_촬영기사_male.webp"
   },
   "K000007544": {
-    "male": "K000007544_임상병리사_male.webp"
+    "female": "/careers/webp_images/K000007544_임상병리사_female.webp",
+    "male": "/careers/webp_images/K000007544_임상병리사_male.webp"
+  },
+  "K000007545": {
+    "female": "/careers/webp_images/K000007545_비파괴검사원_female.webp",
+    "male": "/careers/webp_images/K000007545_비파괴검사원_male.webp"
+  },
+  "K000007546": {
+    "female": "/careers/webp_images/K000007546_무용가_female.webp",
+    "male": "/careers/webp_images/K000007546_무용가_male.webp"
+  },
+  "K000007547": {
+    "female": "/careers/webp_images/K000007547_안마사_female.webp",
+    "male": "/careers/webp_images/K000007547_안마사_male.webp"
+  },
+  "K000007548": {
+    "female": "/careers/webp_images/K000007548_자동차조립원_female.webp",
+    "male": "/careers/webp_images/K000007548_자동차조립원_male.webp"
+  },
+  "K000007549": {
+    "female": "/careers/webp_images/K000007549_경호원_female.webp",
+    "male": "/careers/webp_images/K000007549_경호원_male.webp"
+  },
+  "K000007550": {
+    "female": "/careers/webp_images/K000007550_통계사무원_female.webp",
+    "male": "/careers/webp_images/K000007550_통계사무원_male.webp"
+  },
+  "K000007551": {
+    "female": "/careers/webp_images/K000007551_화가_female.webp",
+    "male": "/careers/webp_images/K000007551_화가_male.webp"
+  },
+  "K000007552": {
+    "female": "/careers/webp_images/K000007552_항공기조종사_female.webp",
+    "male": "/careers/webp_images/K000007552_항공기조종사_male.webp"
   },
   "K000007553": {
-    "female": "K000007553_감사사무원_female.webp"
+    "female": "/careers/webp_images/K000007553_감사사무원_female.webp",
+    "male": "/careers/webp_images/K000007553_감사사무원_male.webp"
+  },
+  "K000007554": {
+    "female": "/careers/webp_images/K000007554_폐기물처리기술자_female.webp",
+    "male": "/careers/webp_images/K000007554_폐기물처리기술자_male.webp"
+  },
+  "K000007555": {
+    "female": "/careers/webp_images/K000007555_양식조리사_female.webp",
+    "male": "/careers/webp_images/K000007555_양식조리사_male.webp"
+  },
+  "K000007556": {
+    "female": "/careers/webp_images/K000007556_주방장_female.webp",
+    "male": "/careers/webp_images/K000007556_주방장_male.webp"
+  },
+  "K000007557": {
+    "female": "/careers/webp_images/K000007557_택배원_female.webp",
+    "male": "/careers/webp_images/K000007557_택배원_male.webp"
+  },
+  "K000007558": {
+    "female": "/careers/webp_images/K000007558_초등학교교사_female.webp",
+    "male": "/careers/webp_images/K000007558_초등학교교사_male.webp"
+  },
+  "K000007559": {
+    "female": "/careers/webp_images/K000007559_심리학연구원_female.webp",
+    "male": "/careers/webp_images/K000007559_심리학연구원_male.webp"
+  },
+  "K000007560": {
+    "female": "/careers/webp_images/K000007560_해외영업원_female.webp",
+    "male": "/careers/webp_images/K000007560_해외영업원_male.webp"
+  },
+  "K000007561": {
+    "female": "/careers/webp_images/K000007561_손해사정사_female.webp",
+    "male": "/careers/webp_images/K000007561_손해사정사_male.webp"
+  },
+  "K000007562": {
+    "female": "/careers/webp_images/K000007562_노무사_female.webp",
+    "male": "/careers/webp_images/K000007562_노무사_male.webp"
+  },
+  "K000007563": {
+    "female": "/careers/webp_images/K000007563_방역원_female.webp",
+    "male": "/careers/webp_images/K000007563_방역원_male.webp"
+  },
+  "K000007564": {
+    "female": "/careers/webp_images/K000007564_놀이치료사_female.webp",
+    "male": "/careers/webp_images/K000007564_놀이치료사_male.webp"
+  },
+  "K000007565": {
+    "female": "/careers/webp_images/K000007565_직업상담사_female.webp",
+    "male": "/careers/webp_images/K000007565_직업상담사_male.webp"
+  },
+  "K000007566": {
+    "female": "/careers/webp_images/K000007566_가사관리사_female.webp",
+    "male": "/careers/webp_images/K000007566_가사관리사_male.webp"
+  },
+  "K000007567": {
+    "female": "/careers/webp_images/K000007567_게임그래픽디자이너_female.webp",
+    "male": "/careers/webp_images/K000007567_게임그래픽디자이너_male.webp"
+  },
+  "K000007568": {
+    "female": "/careers/webp_images/K000007568_물리학연구원_female.webp",
+    "male": "/careers/webp_images/K000007568_물리학연구원_male.webp"
   },
   "K000007569": {
-    "male": "K000007569_이용사_male.webp"
+    "female": "/careers/webp_images/K000007569_이용사_female.webp",
+    "male": "/careers/webp_images/K000007569_이용사_male.webp"
+  },
+  "K000007570": {
+    "female": "/careers/webp_images/K000007570_교도관_female.webp",
+    "male": "/careers/webp_images/K000007570_교도관_male.webp"
+  },
+  "K000007571": {
+    "female": "/careers/webp_images/K000007571_조각가_female.webp",
+    "male": "/careers/webp_images/K000007571_조각가_male.webp"
+  },
+  "K000007572": {
+    "female": "/careers/webp_images/K000007572_소설가_female.webp",
+    "male": "/careers/webp_images/K000007572_소설가_male.webp"
+  },
+  "K000007573": {
+    "female": "/careers/webp_images/K000007573_검사_female.webp",
+    "male": "/careers/webp_images/K000007573_검사_male.webp"
+  },
+  "K000007574": {
+    "female": "/careers/webp_images/K000007574_연예인매니저_female.webp",
+    "male": "/careers/webp_images/K000007574_연예인매니저_male.webp"
+  },
+  "K000007575": {
+    "female": "/careers/webp_images/K000007575_경비원_female.webp",
+    "male": "/careers/webp_images/K000007575_경비원_male.webp"
+  },
+  "K000007576": {
+    "female": "/careers/webp_images/K000007576_간호조무사_female.webp",
+    "male": "/careers/webp_images/K000007576_간호조무사_male.webp"
+  },
+  "K000007577": {
+    "female": "/careers/webp_images/K000007577_치과기공사_female.webp",
+    "male": "/careers/webp_images/K000007577_치과기공사_male.webp"
   },
   "K000007578": {
-    "male": "K000007578_선박객실승무원_male.webp"
+    "female": "/careers/webp_images/K000007578_선박객실승무원_female.webp",
+    "male": "/careers/webp_images/K000007578_선박객실승무원_male.webp"
+  },
+  "K000007579": {
+    "female": "/careers/webp_images/K000007579_일식조리사_female.webp",
+    "male": "/careers/webp_images/K000007579_일식조리사_male.webp"
+  },
+  "K000007580": {
+    "female": "/careers/webp_images/K000007580_게임프로그래머_female.webp",
+    "male": "/careers/webp_images/K000007580_게임프로그래머_male.webp"
+  },
+  "K000007581": {
+    "female": "/careers/webp_images/K000007581_3D프린팅모델러_female.webp",
+    "male": "/careers/webp_images/K000007581_3D프린팅모델러_male.webp"
+  },
+  "K000007582": {
+    "female": "/careers/webp_images/K000007582_환경영향평가원_female.webp",
+    "male": "/careers/webp_images/K000007582_환경영향평가원_male.webp"
+  },
+  "K000007583": {
+    "female": "/careers/webp_images/K000007583_작곡가_female.webp",
+    "male": "/careers/webp_images/K000007583_작곡가_male.webp"
   }
 }

@@ -4,6 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["unzip"]
 
 [deployment]
 deploymentTarget = "static"
@@ -19,7 +20,7 @@ localPort = 5001
 externalPort = 3001
 
 [[ports]]
-localPort = 34421
+localPort = 46011
 externalPort = 3002
 
 [[ports]]
