@@ -14,6 +14,7 @@ import KompassDetail from "./pages/KompassDetail";
 import Profile from "./pages/Profile";
 import PersonalStatement from "./pages/PersonalStatement";
 import Report from "./pages/Report";
+import Architecture from "./pages/Architecture";
 
 // Temporary placeholders until we create the files
 const PlaceholderAnalysis = () => <div>Analysis Page Placeholder</div>;
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/personal-statement" component={PersonalStatement} />
       <Route path="/report" component={Report} />
+      <Route path="/architecture" component={Architecture} />
       <Route component={NotFound} />
     </Switch>
   );

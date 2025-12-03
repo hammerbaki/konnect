@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, PieChart, Target, User, Plus, FileText } from "lucide-react";
+import { LayoutDashboard, PieChart, Target, User, Plus, FileText, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ export function MobileNav() {
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "홈" },
-    { href: "/personal-statement", icon: FileText, label: "자소서" },
+    { href: "/architecture", icon: Layers, label: "구조" },
     { href: "/analysis", icon: PieChart, label: "분석" },
     { href: "/goals", icon: Target, label: "목표" },
   ];

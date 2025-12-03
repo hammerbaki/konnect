@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, PieChart, Target, LogOut, User, FileText } from "lucide-react";
+import { LayoutDashboard, PieChart, Target, LogOut, User, FileText, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Sidebar() {
@@ -11,6 +11,7 @@ export function Sidebar() {
     { href: "/personal-statement", icon: FileText, label: "자기소개서" },
     { href: "/analysis", icon: PieChart, label: "커리어 분석" },
     { href: "/goals", icon: Target, label: "목표 관리" },
+    { href: "/architecture", icon: Layers, label: "시스템 구조" },
   ];
 
   return (
