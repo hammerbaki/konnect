@@ -101,12 +101,12 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                     <TabsContent value="overview" className="mt-0 space-y-6">
                         {/* Career Images */}
                         {!imageError && primaryImage && (
-                            <div className="w-full rounded-xl overflow-hidden bg-gray-100 mb-4 border border-[#E5E8EB] grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-1">
+                            <div className="w-full rounded-xl overflow-hidden bg-white mb-4 border border-[#E5E8EB] grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-1">
                                 <div className="aspect-video relative">
                                      <img 
                                         src={`/careers/webp_images/${primaryImage}`} 
                                         alt={career.title}
-                                        className="w-full h-full object-cover absolute inset-0"
+                                        className="w-full h-full object-contain absolute inset-0"
                                         onError={() => setImageError(true)}
                                     />
                                 </div>
@@ -115,7 +115,7 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                                         <img 
                                             src={`/careers/webp_images/${secondaryImage}`} 
                                             alt={`${career.title} alternate`}
-                                            className="w-full h-full object-cover absolute inset-0"
+                                            className="w-full h-full object-contain absolute inset-0"
                                         />
                                     </div>
                                 )}
