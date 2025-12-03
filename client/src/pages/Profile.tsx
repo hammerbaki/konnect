@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DateWheelPicker, SalaryWheelPicker, WheelPicker } from "@/components/ui/wheel-picker";
 import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -100,13 +101,25 @@ function ResponsiveDatePickerContent({ value, onChange }: { value: Date, onChang
     }
 
     return (
-        <div className="flex flex-col items-center justify-center p-2">
+        <div className="flex flex-col items-center justify-center p-4">
             <Calendar
                 mode="single"
                 selected={value}
                 onSelect={(date) => date && onChange(date)}
                 initialFocus
-                className="rounded-md border"
+                locale={ko}
+                className="p-0"
+                classNames={{
+                    head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+                    cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                    day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-gray-100 rounded-md transition-colors",
+                    day_selected: "bg-[#3182F6] text-white hover:bg-[#3182F6] hover:text-white focus:bg-[#3182F6] focus:text-white",
+                    day_today: "bg-accent text-accent-foreground",
+                    day_outside: "text-muted-foreground opacity-50",
+                    day_disabled: "text-muted-foreground opacity-50",
+                    day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                    day_hidden: "invisible",
+                }}
             />
              <ResponsiveClose asChild>
                 <Button className="w-full mt-6 rounded-xl h-12 text-lg font-bold bg-[#3182F6]">선택 완료</Button>
