@@ -146,7 +146,7 @@ export default function Explorer() {
                 </div>
 
                 {/* Smart Filter Section */}
-                <div className="bg-white border border-[#E5E8EB] rounded-2xl p-5 shadow-sm mb-8 sticky top-4 z-20">
+                <div className="bg-white border border-[#E5E8EB] rounded-2xl p-5 shadow-sm mb-8 z-20">
                     <div className="flex flex-col md:flex-row gap-4">
                         {/* 1. Search Input */}
                         <div className="relative flex-1">
