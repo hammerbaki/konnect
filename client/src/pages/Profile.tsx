@@ -389,7 +389,9 @@ export default function Profile() {
     workValues: ["성장 가능성", "워라밸"] as string[],
     experienceYears: 5,
     salary: 6000,
+    salaryNoPreference: false,
     environmentPreferences: [] as string[],
+    environmentNoPreference: false,
     workExperience: [
         {
             id: 1,
@@ -438,6 +440,7 @@ export default function Profile() {
   };
 
   const toggleEnvironmentPreference = (pref: string) => {
+      if (profileData.environmentNoPreference) return;
       setProfileData(prev => {
           const exists = prev.environmentPreferences.includes(pref);
           if (exists) {
@@ -446,6 +449,22 @@ export default function Profile() {
               return { ...prev, environmentPreferences: [...prev.environmentPreferences, pref] };
           }
       });
+  };
+
+  const toggleEnvironmentNoPreference = (checked: boolean) => {
+        setProfileData(prev => ({
+            ...prev,
+            environmentNoPreference: checked,
+            environmentPreferences: checked ? [] : prev.environmentPreferences
+        }));
+  };
+
+  const toggleSalaryNoPreference = (checked: boolean) => {
+        setProfileData(prev => ({
+            ...prev,
+            salaryNoPreference: checked,
+            salary: checked ? 0 : prev.salary
+        }));
   };
 
   // Update work experience date
@@ -838,17 +857,36 @@ export default function Profile() {
                         {/* Work Environment Drawer */}
                         <div className="space-y-2">
                             <Label className="text-[#4E5968]">선호 근무 환경 (중복 선택 가능)</Label>
+                            
+                            <div className="flex items-center space-x-2 mb-2">
+                                <Checkbox 
+                                    id="env-no-pref" 
+                                    checked={profileData.environmentNoPreference}
+                                    onCheckedChange={toggleEnvironmentNoPreference}
+                                    className="border-[#D1D6DB] data-[state=checked]:bg-[#3182F6] data-[state=checked]:border-[#3182F6]"
+                                />
+                                <label
+                                    htmlFor="env-no-pref"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-[#4E5968]"
+                                >
+                                    상관 없음
+                                </label>
+                            </div>
+
                             <ResponsiveModal
                                 trigger={
                                     <Button 
                                         variant="ghost" 
-                                        className="w-full h-auto min-h-[56px] py-3 px-4 justify-between text-left bg-[#F2F4F6] hover:bg-[#E5E8EB] border-none rounded-xl font-medium text-[#191F28] whitespace-normal items-start"
+                                        disabled={profileData.environmentNoPreference}
+                                        className="w-full h-auto min-h-[56px] py-3 px-4 justify-between text-left bg-[#F2F4F6] hover:bg-[#E5E8EB] border-none rounded-xl font-medium text-[#191F28] whitespace-normal items-start disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <div className="flex flex-wrap gap-2 flex-1 items-center">
-                                            {profileData.environmentPreferences.length > 0 
+                                            {profileData.environmentNoPreference ? (
+                                                <span className="text-[#8B95A1]">선호하는 근무 환경이 없습니다.</span>
+                                            ) : (
+                                                profileData.environmentPreferences.length > 0 
                                                 ? profileData.environmentPreferences.map(prefId => {
                                                     const option = environmentOptions.find(opt => opt.id === prefId);
-                                                    // Extract Korean label part only for cleaner look
                                                     const label = option ? option.label.split('(')[0].trim() : prefId;
                                                     return (
                                                         <Badge 
@@ -903,10 +941,30 @@ export default function Profile() {
                         {/* Salary Drawer */}
                         <div className="space-y-2">
                             <Label className="text-[#4E5968]">희망 연봉 (만원)</Label>
+                            
+                            <div className="flex items-center space-x-2 mb-2">
+                                <Checkbox 
+                                    id="salary-no-pref" 
+                                    checked={profileData.salaryNoPreference}
+                                    onCheckedChange={toggleSalaryNoPreference}
+                                    className="border-[#D1D6DB] data-[state=checked]:bg-[#3182F6] data-[state=checked]:border-[#3182F6]"
+                                />
+                                <label
+                                    htmlFor="salary-no-pref"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-[#4E5968]"
+                                >
+                                    상관 없음
+                                </label>
+                            </div>
+
                             <ResponsiveModal
                                 trigger={
-                                    <Button variant="outline" className="w-full h-14 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-bold text-xl text-[#191F28]">
-                                        {profileData.salary.toLocaleString()} 만원
+                                    <Button 
+                                        variant="outline" 
+                                        disabled={profileData.salaryNoPreference}
+                                        className="w-full h-14 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-bold text-xl text-[#191F28] disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {profileData.salaryNoPreference ? "상관 없음" : `${profileData.salary.toLocaleString()} 만원`}
                                     </Button>
                                 }
                                 title="희망 연봉 설정"
