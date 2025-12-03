@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Sparkles, Loader2, ArrowRight, CheckCircle2, Settings, History, RefreshCcw, Briefcase, ChevronRight, FileText, ListTodo, Award, User } from "lucide-react";
+import { Brain, Sparkles, Loader2, ArrowRight, CheckCircle2, Settings, History, RefreshCcw, Briefcase, ChevronRight, FileText, ListTodo, Award, User, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTokens } from "@/lib/TokenContext";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,7 @@ import { Link, useLocation } from "wouter";
 import { MOCK_ANALYSIS } from "@/lib/mockData";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 
 export default function Analysis() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -25,6 +26,12 @@ export default function Analysis() {
 
   // Check for past reports (Mock logic: assume true for demo if not first visit)
   const hasPastReports = true; 
+  
+  const salaryData = [
+      { name: '현재', amount: 6000 },
+      { name: '업계평균', amount: 8500 },
+      { name: '상위10%', amount: 12000 },
+  ];
 
   useEffect(() => {
     const action = analysisState === 'results' ? {
@@ -87,10 +94,6 @@ export default function Analysis() {
       );
   }
 
-  // Common content for both initial (past report) and results view
-  // In a real app, initial view might show last saved report vs new results
-  // For this mockup, we'll show the same structure but maybe with different data context
-  
   return (
     <Layout>
       <div className="max-w-4xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-6">
@@ -107,6 +110,66 @@ export default function Analysis() {
             <p className="text-[#4E5968] text-lg max-w-2xl mx-auto bg-[#F2F4F6] py-4 px-6 rounded-2xl leading-relaxed">
                 "현재 보유하신 <span className="font-bold text-[#191F28]">Product Strategy</span>와 <span className="font-bold text-[#191F28]">User Research</span> 역량은 시장에서 매우 높은 가치로 평가받고 있습니다. John님의 강점을 살려 도전해볼 수 있는 최고의 커리어 패스를 추천해드립니다."
             </p>
+        </div>
+        
+        {/* Radar Chart Section */}
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
+            <Card className="toss-card">
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        <Award className="h-5 w-5 text-[#3182F6]" /> 역량 분석
+                    </CardTitle>
+                    <CardDescription>나의 현재 역량 vs 시장 요구사항</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px] w-full flex justify-center items-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={MOCK_ANALYSIS.radarData}>
+                        <PolarGrid stroke="#E5E8EB" />
+                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#4E5968', fontSize: 12 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
+                        <Radar
+                            name="My Skills"
+                            dataKey="A"
+                            stroke="#3182F6"
+                            fill="#3182F6"
+                            fillOpacity={0.3}
+                        />
+                        <Radar
+                            name="Market Req"
+                            dataKey="B"
+                            stroke="#B0B8C1"
+                            fill="#B0B8C1"
+                            fillOpacity={0.1}
+                        />
+                        </RadarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+
+            <Card className="toss-card">
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-[#00BFA5]" /> 연봉 예측
+                    </CardTitle>
+                    <CardDescription>현재 커리어 패스의 시장 가치 (단위: 만원)</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px] w-full">
+                     <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={salaryData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#4E5968' }} />
+                            <Tooltip 
+                                cursor={{ fill: 'transparent' }}
+                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                            />
+                            <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
+                                {salaryData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={index === 2 ? '#3182F6' : index === 0 ? '#B0B8C1' : '#00BFA5'} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
         </div>
 
         <div className="flex items-center justify-between mb-6 px-2">

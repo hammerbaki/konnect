@@ -70,6 +70,12 @@ export interface CareerAnalysis {
   marketTrend: "상승세" | "안정적" | "하락세";
   skillsGap: string[];
   strengths: string[];
+  radarData: {
+    subject: string;
+    A: number; // User
+    B: number; // Role Requirement
+    fullMark: number;
+  }[];
   recommendedRoles: {
     title: string;
     matchScore: number;
@@ -94,9 +100,30 @@ export interface UserProfile {
   };
   education: {
     degree: string;
-    gpa: number;
+    school: string;
+    major: string;
     graduationYear: number;
-  };
+  }[];
+  workExperience: {
+    company: string;
+    role: string;
+    startDate: string;
+    endDate: string;
+    description: string;
+  }[];
+  languages: {
+    language: string;
+    level: string;
+  }[];
+  certifications: {
+    name: string;
+    issuer: string;
+    date: string;
+  }[];
+  links: {
+    type: string;
+    url: string;
+  }[];
 }
 
 export function generateTree(idSuffix: string, title: string, targetYear: number, startYear: number = new Date().getFullYear()): VisionGoal {
@@ -255,6 +282,14 @@ export const MOCK_ANALYSIS: CareerAnalysis = {
   marketTrend: "상승세",
   skillsGap: ["고급 SQL 활용 능력", "팀 리더십", "전략적 기획"],
   strengths: ["제품 생애주기 관리", "사용자 리서치", "이해관계자 관리"],
+  radarData: [
+    { subject: '전략적 사고', A: 120, B: 110, fullMark: 150 },
+    { subject: '데이터 분석', A: 98, B: 130, fullMark: 150 },
+    { subject: '커뮤니케이션', A: 86, B: 130, fullMark: 150 },
+    { subject: '기술 이해도', A: 99, B: 100, fullMark: 150 },
+    { subject: 'UX 리서치', A: 85, B: 90, fullMark: 150 },
+    { subject: '프로젝트 관리', A: 65, B: 85, fullMark: 150 },
+  ],
   recommendedRoles: [
     {
       title: "시니어 프로덕트 매니저",

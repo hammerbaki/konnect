@@ -7,10 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save } from "lucide-react";
+import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save, Building, Calendar, Award, Link as LinkIcon, Trash2 } from "lucide-react";
 import { useMobileAction } from "@/lib/MobileActionContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 export default function Profile() {
   const { setAction } = useMobileAction();
@@ -115,39 +116,137 @@ export default function Profile() {
                 </Card>
             </section>
 
-            {/* 2. Experience & Education */}
+            {/* 2. Work Experience (Expanded) */}
             <section className="space-y-4">
-                <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                    <GraduationCap className="h-5 w-5 text-[#3182F6]" /> 경력 및 학력
-                </h3>
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                        <Briefcase className="h-5 w-5 text-[#3182F6]" /> 경력 사항
+                    </h3>
+                    <Button variant="ghost" size="sm" className="text-[#3182F6] hover:bg-blue-50">
+                        <Plus className="h-4 w-4 mr-1" /> 추가
+                    </Button>
+                </div>
+                
+                <Card className="toss-card">
+                    <CardContent className="p-6 space-y-6">
+                        {/* Item 1 */}
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-[#191F28] text-lg">Senior Product Manager</h4>
+                                    <p className="text-[#4E5968] font-medium">Tech Corp Inc.</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-red-500">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[#8B95A1] text-xs">시작일</Label>
+                                    <Input type="month" defaultValue="2021-03" className="bg-[#F2F4F6] border-none rounded-xl" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[#8B95A1] text-xs">종료일</Label>
+                                    <Input type="month" defaultValue="2023-12" className="bg-[#F2F4F6] border-none rounded-xl" />
+                                </div>
+                            </div>
+                            
+                            <Textarea 
+                                className="bg-[#F2F4F6] border-none rounded-xl min-h-[80px] resize-none text-sm" 
+                                defaultValue="- B2B SaaS 제품 기획 및 런칭 주도&#10;- 3분기 연속 매출 목표 120% 달성"
+                            />
+                        </div>
+
+                        <Separator className="bg-[#F2F4F6]" />
+
+                        {/* Item 2 */}
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-[#191F28] text-lg">Product Owner</h4>
+                                    <p className="text-[#4E5968] font-medium">Startup X</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-red-500">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[#8B95A1] text-xs">시작일</Label>
+                                    <Input type="month" defaultValue="2019-01" className="bg-[#F2F4F6] border-none rounded-xl" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[#8B95A1] text-xs">종료일</Label>
+                                    <Input type="month" defaultValue="2021-02" className="bg-[#F2F4F6] border-none rounded-xl" />
+                                </div>
+                            </div>
+                            
+                            <Textarea 
+                                className="bg-[#F2F4F6] border-none rounded-xl min-h-[80px] resize-none text-sm" 
+                                defaultValue="- 모바일 앱 2.0 리뉴얼 프로젝트 PM&#10;- DAU 300% 성장 견인"
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+            </section>
+
+            {/* 3. Education (Expanded) */}
+            <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                        <GraduationCap className="h-5 w-5 text-[#3182F6]" /> 학력
+                    </h3>
+                    <Button variant="ghost" size="sm" className="text-[#3182F6] hover:bg-blue-50">
+                        <Plus className="h-4 w-4 mr-1" /> 추가
+                    </Button>
+                </div>
                 <Card className="toss-card">
                     <CardContent className="p-6 space-y-6">
                         <div className="space-y-4">
-                            <Label className="text-[#4E5968] font-bold">최종 학력</Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[#4E5968]">학교명</Label>
+                                    <Input defaultValue="한국대학교" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[#4E5968]">전공</Label>
+                                    <Input defaultValue="경영학과" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
+                                </div>
+                            </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <Select defaultValue="bachelors">
-                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="bachelors">학사 (대졸)</SelectItem>
-                                        <SelectItem value="masters">석사</SelectItem>
-                                        <SelectItem value="phd">박사</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <Input placeholder="학교명" defaultValue="한국대학교" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
+                                <div className="space-y-2">
+                                    <Label className="text-[#4E5968]">학위</Label>
+                                    <Select defaultValue="bachelors">
+                                        <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="bachelors">학사 (대졸)</SelectItem>
+                                            <SelectItem value="masters">석사</SelectItem>
+                                            <SelectItem value="phd">박사</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[#4E5968]">졸업년도</Label>
+                                    <Input type="number" defaultValue="2018" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
+                                </div>
                             </div>
                         </div>
+                    </CardContent>
+                </Card>
+            </section>
 
-                        <div className="space-y-4 pt-4 border-t border-[#F2F4F6]">
-                            <div className="flex justify-between items-center">
-                                <Label className="text-[#4E5968] font-bold">총 경력 연수</Label>
-                                <span className="text-[#3182F6] font-bold text-lg">5년</span>
-                            </div>
-                            <Slider defaultValue={[5]} max={20} step={1} className="py-2" />
-                        </div>
-
-                        <div className="space-y-4 pt-4 border-t border-[#F2F4F6]">
+             {/* 4. Skills & Languages */}
+             <section className="space-y-4">
+                <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                    <Award className="h-5 w-5 text-[#3182F6]" /> 스킬 및 어학
+                </h3>
+                <Card className="toss-card">
+                    <CardContent className="p-6 space-y-6">
+                        <div className="space-y-3">
                              <Label className="text-[#4E5968] font-bold">보유 스킬</Label>
                              <div className="flex flex-wrap gap-2">
                                 {["Product Strategy", "User Research", "Data Analysis", "SQL", "Figma"].map((skill) => (
@@ -160,11 +259,48 @@ export default function Profile() {
                                 </Button>
                             </div>
                         </div>
+                        
+                        <Separator className="bg-[#F2F4F6]" />
+
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                                <Label className="text-[#4E5968] font-bold">어학 능력</Label>
+                                <Button variant="ghost" size="sm" className="text-[#3182F6] text-xs h-auto p-0 hover:bg-transparent">
+                                    + 추가
+                                </Button>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl">
+                                <div className="flex items-center gap-2">
+                                    <Globe className="h-4 w-4 text-[#B0B8C1]" />
+                                    <span className="font-bold text-[#333D4B]">영어 (English)</span>
+                                </div>
+                                <span className="text-sm text-[#4E5968] bg-white px-2 py-1 rounded border border-[#E5E8EB]">Business Level</span>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
             </section>
 
-            {/* 3. Preferences (Conditions) */}
+             {/* 5. Links & Portfolio */}
+             <section className="space-y-4">
+                <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                    <LinkIcon className="h-5 w-5 text-[#3182F6]" /> 링크 및 포트폴리오
+                </h3>
+                <Card className="toss-card">
+                    <CardContent className="p-6 space-y-4">
+                        <div className="space-y-2">
+                            <Label className="text-[#4E5968]">LinkedIn</Label>
+                            <Input placeholder="https://linkedin.com/in/..." className="bg-[#F2F4F6] border-none rounded-xl h-12" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[#4E5968]">Portfolio / Website</Label>
+                            <Input placeholder="https://..." className="bg-[#F2F4F6] border-none rounded-xl h-12" />
+                        </div>
+                    </CardContent>
+                </Card>
+            </section>
+
+            {/* 6. Preferences (Conditions) */}
             <section className="space-y-4">
                 <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-[#FFB300]" /> 선호 근무 조건
