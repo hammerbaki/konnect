@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Plus, Flag, Bell, Target } from "lucide-react";
+import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar as CalendarIcon } from "lucide-react";
 import { MOCK_VISIONS, VisionGoal, DailyGoal } from "@/lib/mockData";
 import { useState, useEffect, useRef } from "react";
 import { useMobileAction } from "@/lib/MobileActionContext";
@@ -129,7 +129,7 @@ export default function KompassDetail() {
 
   useEffect(() => {
     setAction({
-      icon: Target,
+      icon: CalendarIcon,
       label: "Today",
       onClick: handleGoToToday
     });
@@ -344,6 +344,7 @@ export default function KompassDetail() {
                                         <h3 className={cn("font-bold text-sm", selectedYearId === year.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
                                             {year.title}
                                         </h3>
+                                        <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md">{year.dateDisplay}</span>
                                     </div>
                                     {year.description && (
                                         <p className="text-xs text-[#8B95A1] mb-3 line-clamp-2">{year.description}</p>
@@ -397,6 +398,7 @@ export default function KompassDetail() {
                                         <h4 className={cn("font-bold text-sm", selectedHalfYearId === half.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
                                             {half.title}
                                         </h4>
+                                        <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md">{half.dateDisplay}</span>
                                     </div>
                                     {half.description && (
                                         <p className="text-xs text-[#8B95A1] mb-3 line-clamp-2">{half.description}</p>
@@ -447,10 +449,11 @@ export default function KompassDetail() {
                         >
                             <CardContent className="p-3 text-center flex flex-col h-full justify-between">
                                 <div>
-                                    <div className="flex justify-center items-center gap-1 mb-1">
+                                    <div className="flex flex-col items-center gap-1 mb-1">
                                         <h5 className={cn("font-bold text-xs truncate", selectedMonthId === month.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
                                             {month.title}
                                         </h5>
+                                        <span className="text-[9px] text-[#8B95A1] bg-[#F2F4F6] px-1 py-0.5 rounded-sm">{month.dateDisplay}</span>
                                     </div>
                                     {month.description && (
                                         <p className="text-[10px] text-[#8B95A1] mb-2 line-clamp-2 leading-tight">{month.description}</p>
@@ -499,10 +502,11 @@ export default function KompassDetail() {
                         >
                             <CardContent className="p-3 text-center flex flex-col h-full justify-between">
                                 <div>
-                                    <div className="flex justify-center items-center gap-1 mb-1">
+                                    <div className="flex flex-col items-center gap-1 mb-1">
                                         <h5 className={cn("font-bold text-xs truncate", selectedWeekId === week.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
                                             {week.title}
                                         </h5>
+                                        <span className="text-[9px] text-[#8B95A1] bg-[#F2F4F6] px-1 py-0.5 rounded-sm">{week.dateDisplay}</span>
                                     </div>
                                     {week.description && (
                                         <p className="text-[10px] text-[#8B95A1] mb-2 line-clamp-2 leading-tight">{week.description}</p>
@@ -551,8 +555,11 @@ export default function KompassDetail() {
                                 className="p-4 flex-1 flex flex-col relative"
                                 ref={(el) => { dailyCardRefs.current[day.id] = el; }}
                             >
-                                <div className="flex justify-between items-start mb-4 pr-6">
-                                    <span className="text-lg font-bold text-[#191F28]">{day.title}</span>
+                                <div className="flex justify-between items-start mb-2 pr-6">
+                                    <div className="flex flex-col">
+                                        <span className="text-lg font-bold text-[#191F28]">{day.title}</span>
+                                        <span className="text-xs text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md inline-block mt-1 w-fit">{day.dateDisplay}</span>
+                                    </div>
                                 </div>
                                 <div className="absolute top-4 right-4">
                                     <CheckCircle2 className={cn("w-5 h-5", isCompleted ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />

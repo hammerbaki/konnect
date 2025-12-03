@@ -9,6 +9,7 @@ export interface DailyGoal {
   id: string;
   title: string; // e.g., "Day 1"
   date?: string;
+  dateDisplay?: string; // YYYY.MM.DD
   progress: number; // calculated from todos
   todos: Todo[];
 }
@@ -17,6 +18,7 @@ export interface WeeklyGoal {
   id: string;
   title: string; // e.g., "Week 1"
   description?: string;
+  dateDisplay?: string; // MM.DD-MM.DD
   progress: number; // calculated from children
   children: DailyGoal[];
 }
@@ -25,6 +27,7 @@ export interface MonthlyGoal {
   id: string;
   title: string; // e.g., "January"
   description?: string;
+  dateDisplay?: string; // MM
   progress: number;
   children: WeeklyGoal[];
 }
@@ -33,6 +36,7 @@ export interface HalfYearlyGoal {
   id: string;
   title: string; // e.g., "H1"
   description?: string;
+  dateDisplay?: string; // MM-MM
   progress: number;
   children: MonthlyGoal[];
 }
@@ -41,6 +45,7 @@ export interface YearlyGoal {
   id: string;
   title: string; // e.g., "2025"
   description?: string;
+  dateDisplay?: string; // YYYY
   progress: number;
   children: HalfYearlyGoal[];
 }
@@ -119,16 +124,20 @@ export function generateTree(idSuffix: string, title: string, targetYear: number
             id: `year-${yearVal}-${idSuffix}`,
             title: `${yearVal}년`,
             description: yearlyDescriptions[y] || "커리어 성장 목표 달성",
+            dateDisplay: `${yearVal}`,
             progress: 0,
             children: []
         };
 
         // 2 Half Years per Year
         for (let h = 1; h <= 2; h++) {
+            const halfStartMonth = h === 1 ? 1 : 7;
+            const halfEndMonth = h === 1 ? 6 : 12;
             const half: HalfYearlyGoal = {
                 id: `h${h}-${yearVal}-${idSuffix}`,
                 title: `${yearVal}년 ${h === 1 ? "상반기" : "하반기"}`,
                 description: halfYearlyDescriptions[h-1] || "반기별 핵심 성과 달성",
+                dateDisplay: `${String(halfStartMonth).padStart(2, '0')}-${String(halfEndMonth).padStart(2, '0')}`,
                 progress: 0,
                 children: []
             };
@@ -140,25 +149,32 @@ export function generateTree(idSuffix: string, title: string, targetYear: number
                     id: `m${monthNum}-${yearVal}-${idSuffix}`,
                     title: `${monthNum}월`,
                     description: monthlyDescriptions[(m-1) % monthlyDescriptions.length],
+                    dateDisplay: `${String(monthNum).padStart(2, '0')}`,
                     progress: 0,
                     children: []
                 };
 
                 // 4 Weeks per Month
                 for (let w = 1; w <= 4; w++) {
+                    const weekStartDay = (w - 1) * 7 + 1;
+                    const weekEndDay = w * 7;
+                    
                     const week: WeeklyGoal = {
                         id: `w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
                         title: `${w}주차`,
                         description: weeklyDescriptions[(w-1) % weeklyDescriptions.length],
+                        dateDisplay: `${String(monthNum).padStart(2, '0')}.${String(weekStartDay).padStart(2, '0')}-${String(monthNum).padStart(2, '0')}.${String(weekEndDay).padStart(2, '0')}`,
                         progress: 0,
                         children: []
                     };
 
                     // 7 Days per Week
                     for (let d = 1; d <= 7; d++) {
+                        const dayNum = (w - 1) * 7 + d;
                         const day: DailyGoal = {
                             id: `d${d}-w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
                             title: `Day ${d}`,
+                            dateDisplay: `${yearVal}.${String(monthNum).padStart(2, '0')}.${String(dayNum).padStart(2, '0')}`,
                             progress: 0,
                             todos: [
                                 { id: `t1-${d}-${idSuffix}`, title: "핵심 과제 수행", completed: false },
