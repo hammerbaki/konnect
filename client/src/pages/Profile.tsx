@@ -88,48 +88,53 @@ function ResponsiveModal({
 
 function ResponsiveDatePickerContent({ value, onChange }: { value: Date, onChange: (date: Date) => void }) {
     const isMobile = useIsMobile();
-    const [inputValue, setInputValue] = useState('');
+    
+    const [year, setYear] = useState('');
+    const [month, setMonth] = useState('');
+    const [day, setDay] = useState('');
 
     // Initialize with correctly formatted date
     useEffect(() => {
         if (value) {
-            setInputValue(format(value, 'yyyy. MM. dd'));
+            setYear(format(value, 'yyyy'));
+            setMonth(format(value, 'MM'));
+            setDay(format(value, 'dd'));
         }
-    }, []); // Run once on mount to set initial value, allow user to type freely afterwards without fighting updates
+    }, []); 
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Allow only numbers
-        const rawValue = e.target.value.replace(/[^0-9]/g, '');
-        
-        // Limit to 8 digits (YYYYMMDD)
-        const truncatedValue = rawValue.slice(0, 8);
-        
-        // Format as YYYY. MM. DD
-        let formattedValue = truncatedValue;
-        if (truncatedValue.length > 4) {
-            formattedValue = `${truncatedValue.slice(0, 4)}. ${truncatedValue.slice(4)}`;
-        }
-        if (truncatedValue.length > 6) {
-            formattedValue = `${truncatedValue.slice(0, 4)}. ${truncatedValue.slice(4, 6)}. ${truncatedValue.slice(6)}`;
-        }
-
-        setInputValue(formattedValue);
-
-        // Only update parent state if we have a complete date
-        if (truncatedValue.length === 8) {
-            const year = parseInt(truncatedValue.substring(0, 4));
-            const month = parseInt(truncatedValue.substring(4, 6)) - 1;
-            const day = parseInt(truncatedValue.substring(6, 8));
+    const updateDate = (y: string, m: string, d: string) => {
+        if (y.length === 4 && m.length > 0 && d.length > 0) {
+            const yearNum = parseInt(y);
+            const monthNum = parseInt(m) - 1;
+            const dayNum = parseInt(d);
             
-            const newDate = new Date(year, month, day);
-            // Validate date is real and within reasonable bounds
+            const newDate = new Date(yearNum, monthNum, dayNum);
+            
             if (!isNaN(newDate.getTime()) && 
-                newDate.getMonth() === month && 
-                year >= 1900 && 
-                year <= 2100) {
+                newDate.getMonth() === monthNum && 
+                yearNum >= 1900 && 
+                yearNum <= 2100) {
                 onChange(newDate);
             }
         }
+    };
+
+    const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+        setYear(val);
+        updateDate(val, month, day);
+    };
+
+    const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
+        setMonth(val);
+        updateDate(year, val, day);
+    };
+
+    const handleDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
+        setDay(val);
+        updateDate(year, month, val);
     };
 
     if (isMobile) {
@@ -147,16 +152,38 @@ function ResponsiveDatePickerContent({ value, onChange }: { value: Date, onChang
         <div className="flex flex-col items-center justify-center p-6 w-full space-y-6">
              <div className="space-y-3 w-full">
                 <Label className="text-[#4E5968] font-medium">날짜를 입력해주세요</Label>
-                <Input 
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    className="h-14 text-xl font-medium rounded-xl border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100 transition-all text-center tracking-wide"
-                    placeholder="YYYY. MM. DD"
-                    maxLength={14} 
-                />
-                 <p className="text-sm text-[#8B95A1]">
-                    예시: 2024. 03. 01
-                </p>
+                <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                        <Input 
+                            value={year}
+                            onChange={handleYearChange}
+                            className="h-14 text-xl font-medium rounded-xl border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100 transition-all text-center"
+                            placeholder="YYYY"
+                            maxLength={4}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B95A1] text-sm font-medium">년</span>
+                    </div>
+                    <div className="relative w-[28%]">
+                        <Input 
+                            value={month}
+                            onChange={handleMonthChange}
+                            className="h-14 text-xl font-medium rounded-xl border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100 transition-all text-center"
+                            placeholder="MM"
+                            maxLength={2}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B95A1] text-sm font-medium">월</span>
+                    </div>
+                    <div className="relative w-[28%]">
+                        <Input 
+                            value={day}
+                            onChange={handleDayChange}
+                            className="h-14 text-xl font-medium rounded-xl border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100 transition-all text-center"
+                            placeholder="DD"
+                            maxLength={2}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B95A1] text-sm font-medium">일</span>
+                    </div>
+                </div>
             </div>
             <ResponsiveClose asChild>
                 <Button className="w-full rounded-xl h-12 text-lg font-bold bg-[#3182F6]">입력 완료</Button>
