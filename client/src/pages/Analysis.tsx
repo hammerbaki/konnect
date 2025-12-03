@@ -12,9 +12,188 @@ import { useMobileAction } from "@/lib/MobileActionContext";
 import { Link, useLocation } from "wouter";
 import { MOCK_ANALYSIS } from "@/lib/mockData";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+
+function CareerDetailContent({ role, handleCreatePlan }: { role: any, handleCreatePlan: () => void }) {
+    return (
+        <>
+            <div className="flex-1 overflow-y-auto p-5">
+                {/* Header Section */}
+                <div className="mb-8">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Badge variant="secondary" className="bg-blue-50 text-[#3182F6] hover:bg-blue-50 border-none px-3 py-1.5 text-sm font-bold">
+                            추천 커리어
+                        </Badge>
+                        <span className="text-[#8B95A1] text-sm font-medium">매칭 점수 {role.matchScore}%</span>
+                    </div>
+                    <h2 className="text-[28px] font-bold text-[#191F28] leading-tight mb-3">{role.title}</h2>
+                    <p className="text-[#4E5968] text-lg leading-relaxed">
+                        {role.description}
+                    </p>
+                </div>
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F2F4F6]">
+                        <p className="text-sm text-[#8B95A1] mb-1">예상 연봉</p>
+                        <p className="text-lg font-bold text-[#191F28]">{role.salary}</p>
+                    </div>
+                    <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F2F4F6]">
+                        <p className="text-sm text-[#8B95A1] mb-1">시장 수요</p>
+                        <div className="flex items-center gap-1 text-lg font-bold text-[#E86D66]">
+                            <TrendingUp className="h-4 w-4" /> 매우 높음
+                        </div>
+                    </div>
+                </div>
+
+                {/* Tabs Section */}
+                <Tabs defaultValue="roadmap" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 bg-[#F2F4F6] p-1 rounded-xl mb-6 h-12">
+                        <TabsTrigger value="roadmap" className="rounded-lg font-bold text-base h-10 data-[state=active]:bg-white data-[state=active]:text-[#191F28] data-[state=active]:shadow-sm">실행 로드맵</TabsTrigger>
+                        <TabsTrigger value="requirements" className="rounded-lg font-bold text-base h-10 data-[state=active]:bg-white data-[state=active]:text-[#191F28] data-[state=active]:shadow-sm">자격 요건</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="roadmap" className="space-y-6 animate-in fade-in-50">
+                        <div className="space-y-0 relative pl-4 border-l-2 border-[#F2F4F6] ml-3">
+                            {/* Step 1 */}
+                            <div className="pb-10 relative">
+                                <div className="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-[#E8F3FF] border-4 border-white flex items-center justify-center text-[#3182F6] font-bold text-sm shadow-sm">1</div>
+                                <h4 className="font-bold text-[#191F28] text-lg mb-1">단기 목표 (1-3개월)</h4>
+                                <p className="text-sm text-[#6B7684] mb-4 font-medium">필수 자격증 취득 및 기초 역량 강화</p>
+                                <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 shadow-sm space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <CheckCircle2 className="h-5 w-5 text-[#3182F6] shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-bold text-[#333D4B] text-sm">SQLD 자격증 취득</p>
+                                            <p className="text-xs text-[#8B95A1] mt-0.5">데이터 분석 기초 증명</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <CheckCircle2 className="h-5 w-5 text-[#3182F6] shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-bold text-[#333D4B] text-sm">포트폴리오 1건 제작</p>
+                                            <p className="text-xs text-[#8B95A1] mt-0.5">실제 데이터셋 활용 분석 프로젝트</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Step 2 */}
+                            <div className="pb-10 relative">
+                                <div className="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-[#F2F4F6] border-4 border-white flex items-center justify-center text-[#8B95A1] font-bold text-sm">2</div>
+                                <h4 className="font-bold text-[#191F28] text-lg mb-1">중기 목표 (3-6개월)</h4>
+                                <p className="text-sm text-[#6B7684] mb-4 font-medium">실무 프로젝트 경험 및 네트워킹</p>
+                                <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 shadow-sm">
+                                    <div className="flex items-start gap-3">
+                                        <CheckCircle2 className="h-5 w-5 text-[#B0B8C1] shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-bold text-[#333D4B] text-sm">사이드 프로젝트 리딩</p>
+                                            <p className="text-xs text-[#8B95A1] mt-0.5">PM/PO 역할 수행 경험 확보</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Step 3 */}
+                            <div className="relative">
+                                <div className="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-[#F2F4F6] border-4 border-white flex items-center justify-center text-[#8B95A1] font-bold text-sm">3</div>
+                                <h4 className="font-bold text-[#191F28] text-lg mb-1">장기 목표 (1년)</h4>
+                                <p className="text-sm text-[#6B7684] mb-4 font-medium">시니어 포지션 이직 성공</p>
+                                <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 shadow-sm">
+                                    <div className="flex items-start gap-3">
+                                        <Briefcase className="h-5 w-5 text-[#B0B8C1] shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-bold text-[#333D4B] text-sm">Target 기업 지원</p>
+                                            <p className="text-xs text-[#8B95A1] mt-0.5">시리즈 B 이상 스타트업 PO</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="requirements" className="space-y-4 animate-in fade-in-50">
+                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-2">
+                            <p className="text-[#3182F6] text-sm font-bold flex items-center gap-2 mb-1">
+                                <Sparkles className="h-4 w-4" /> AI 분석 Insight
+                            </p>
+                            <p className="text-[#4E5968] text-sm leading-relaxed">
+                                "회원님의 현재 경력과 스킬셋은 이 포지션 요구사항의 <span className="font-bold text-[#333D4B]">85%</span>를 충족합니다. 부족한 SQL 역량만 보완하면 즉시 지원 가능합니다."
+                            </p>
+                        </div>
+                        {role.requirements.map((req: string, i: number) => (
+                            <div key={i} className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#E5E8EB] shadow-sm">
+                                <div className="h-6 w-6 rounded-full bg-[#E8F3FF] flex items-center justify-center text-[#3182F6] text-xs font-bold shrink-0 mt-0.5">
+                                    {i + 1}
+                                </div>
+                                <p className="font-medium text-[#333D4B] text-base leading-snug">{req}</p>
+                            </div>
+                        ))}
+                    </TabsContent>
+                </Tabs>
+            </div>
+
+            <div className="p-6 border-t border-[#F2F4F6] bg-white pb-10">
+                <Button onClick={handleCreatePlan} className="w-full h-14 text-lg font-bold rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98]">
+                    <ListTodo className="mr-2 h-5 w-5" /> 이 커리어로 실행 계획 생성하기
+                </Button>
+            </div>
+        </>
+    );
+}
+
+function ResponsiveCareerDetail({ role, handleCreatePlan }: { role: any, handleCreatePlan: () => void }) {
+    const isMobile = useIsMobile();
+
+    if (isMobile) {
+        return (
+            <Drawer>
+                <DrawerTrigger asChild>
+                    <Button variant="outline" className="flex-1 h-14 rounded-xl font-bold text-base border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6]">
+                        상세 정보 보기
+                    </Button>
+                </DrawerTrigger>
+                <DrawerContent className="h-[92vh] rounded-t-[24px] flex flex-col outline-none">
+                    <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E8EB] mt-3 mb-1" />
+                    <div className="flex justify-between items-center px-5 py-3 border-b border-[#F2F4F6]">
+                        <DrawerTitle className="text-[18px] font-bold text-[#191F28]">커리어 상세 정보</DrawerTitle>
+                        <DrawerClose asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-[#F2F4F6] hover:bg-[#E5E8EB]">
+                                <X className="h-4 w-4 text-[#333D4B]" />
+                            </Button>
+                        </DrawerClose>
+                    </div>
+                    <CareerDetailContent role={role} handleCreatePlan={handleCreatePlan} />
+                </DrawerContent>
+            </Drawer>
+        );
+    }
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline" className="flex-1 h-14 rounded-xl font-bold text-base border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6]">
+                    상세 정보 보기
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-[24px] gap-0 bg-white border-none shadow-2xl">
+                <DialogHeader className="p-6 pb-4 border-b border-[#F2F4F6] flex-shrink-0 flex flex-row justify-between items-center space-y-0">
+                    <DialogTitle className="text-[24px] font-bold text-[#191F28]">커리어 상세 정보</DialogTitle>
+                    <DialogClose asChild>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-[#F2F4F6]">
+                            <X className="h-5 w-5 text-[#333D4B]" />
+                        </Button>
+                    </DialogClose>
+                </DialogHeader>
+                <CareerDetailContent role={role} handleCreatePlan={handleCreatePlan} />
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 export default function Analysis() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -206,148 +385,8 @@ export default function Analysis() {
                         </p>
                         
                         <div className="flex flex-col sm:flex-row gap-3">
-                             <Drawer>
-                                <DrawerTrigger asChild>
-                                    <Button variant="outline" className="flex-1 h-14 rounded-xl font-bold text-base border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6]">
-                                        상세 정보 보기
-                                    </Button>
-                                </DrawerTrigger>
-    <DrawerContent className="h-[92vh] rounded-t-[24px] flex flex-col outline-none">
-        {/* Handle Bar */}
-        <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E8EB] mt-3 mb-1" />
-        
-        <div className="flex justify-between items-center px-5 py-3 border-b border-[#F2F4F6]">
-            <DrawerTitle className="text-[18px] font-bold text-[#191F28]">커리어 상세 정보</DrawerTitle>
-            <DrawerClose asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-[#F2F4F6] hover:bg-[#E5E8EB]">
-                    <X className="h-4 w-4 text-[#333D4B]" />
-                </Button>
-            </DrawerClose>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-5">
-            {/* Header Section */}
-            <div className="mb-8">
-                <div className="flex items-center gap-2 mb-3">
-                    <Badge variant="secondary" className="bg-blue-50 text-[#3182F6] hover:bg-blue-50 border-none px-3 py-1.5 text-sm font-bold">
-                        추천 커리어
-                    </Badge>
-                    <span className="text-[#8B95A1] text-sm font-medium">매칭 점수 {role.matchScore}%</span>
-                </div>
-                <h2 className="text-[28px] font-bold text-[#191F28] leading-tight mb-3">{role.title}</h2>
-                <p className="text-[#4E5968] text-lg leading-relaxed">
-                    {role.description}
-                </p>
-            </div>
-
-            {/* Info Grid */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F2F4F6]">
-                    <p className="text-sm text-[#8B95A1] mb-1">예상 연봉</p>
-                    <p className="text-lg font-bold text-[#191F28]">{role.salary}</p>
-                </div>
-                <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F2F4F6]">
-                    <p className="text-sm text-[#8B95A1] mb-1">시장 수요</p>
-                    <div className="flex items-center gap-1 text-lg font-bold text-[#E86D66]">
-                        <TrendingUp className="h-4 w-4" /> 매우 높음
-                    </div>
-                </div>
-            </div>
-
-            {/* Tabs Section */}
-            <Tabs defaultValue="roadmap" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-[#F2F4F6] p-1 rounded-xl mb-6 h-12">
-                    <TabsTrigger value="roadmap" className="rounded-lg font-bold text-base h-10 data-[state=active]:bg-white data-[state=active]:text-[#191F28] data-[state=active]:shadow-sm">실행 로드맵</TabsTrigger>
-                    <TabsTrigger value="requirements" className="rounded-lg font-bold text-base h-10 data-[state=active]:bg-white data-[state=active]:text-[#191F28] data-[state=active]:shadow-sm">자격 요건</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="roadmap" className="space-y-6 animate-in fade-in-50">
-                    <div className="space-y-0 relative pl-4 border-l-2 border-[#F2F4F6] ml-3">
-                        {/* Step 1 */}
-                        <div className="pb-10 relative">
-                            <div className="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-[#E8F3FF] border-4 border-white flex items-center justify-center text-[#3182F6] font-bold text-sm shadow-sm">1</div>
-                            <h4 className="font-bold text-[#191F28] text-lg mb-1">단기 목표 (1-3개월)</h4>
-                            <p className="text-sm text-[#6B7684] mb-4 font-medium">필수 자격증 취득 및 기초 역량 강화</p>
-                            <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 shadow-sm space-y-3">
-                                <div className="flex items-start gap-3">
-                                    <CheckCircle2 className="h-5 w-5 text-[#3182F6] shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-bold text-[#333D4B] text-sm">SQLD 자격증 취득</p>
-                                        <p className="text-xs text-[#8B95A1] mt-0.5">데이터 분석 기초 증명</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <CheckCircle2 className="h-5 w-5 text-[#3182F6] shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-bold text-[#333D4B] text-sm">포트폴리오 1건 제작</p>
-                                        <p className="text-xs text-[#8B95A1] mt-0.5">실제 데이터셋 활용 분석 프로젝트</p>
-                                    </div>
-                                </div>
-                            </div>
+                             <ResponsiveCareerDetail role={role} handleCreatePlan={handleCreatePlan} />
                         </div>
-                        
-                        {/* Step 2 */}
-                        <div className="pb-10 relative">
-                            <div className="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-[#F2F4F6] border-4 border-white flex items-center justify-center text-[#8B95A1] font-bold text-sm">2</div>
-                            <h4 className="font-bold text-[#191F28] text-lg mb-1">중기 목표 (3-6개월)</h4>
-                            <p className="text-sm text-[#6B7684] mb-4 font-medium">실무 프로젝트 경험 및 네트워킹</p>
-                            <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 shadow-sm">
-                                <div className="flex items-start gap-3">
-                                    <CheckCircle2 className="h-5 w-5 text-[#B0B8C1] shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-bold text-[#333D4B] text-sm">사이드 프로젝트 리딩</p>
-                                        <p className="text-xs text-[#8B95A1] mt-0.5">PM/PO 역할 수행 경험 확보</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Step 3 */}
-                        <div className="relative">
-                            <div className="absolute -left-[25px] top-0 w-8 h-8 rounded-full bg-[#F2F4F6] border-4 border-white flex items-center justify-center text-[#8B95A1] font-bold text-sm">3</div>
-                            <h4 className="font-bold text-[#191F28] text-lg mb-1">장기 목표 (1년)</h4>
-                            <p className="text-sm text-[#6B7684] mb-4 font-medium">시니어 포지션 이직 성공</p>
-                            <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 shadow-sm">
-                                <div className="flex items-start gap-3">
-                                    <Briefcase className="h-5 w-5 text-[#B0B8C1] shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-bold text-[#333D4B] text-sm">Target 기업 지원</p>
-                                        <p className="text-xs text-[#8B95A1] mt-0.5">시리즈 B 이상 스타트업 PO</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </TabsContent>
-                
-                <TabsContent value="requirements" className="space-y-4 animate-in fade-in-50">
-                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-2">
-                        <p className="text-[#3182F6] text-sm font-bold flex items-center gap-2 mb-1">
-                            <Sparkles className="h-4 w-4" /> AI 분석 Insight
-                        </p>
-                        <p className="text-[#4E5968] text-sm leading-relaxed">
-                            "회원님의 현재 경력과 스킬셋은 이 포지션 요구사항의 <span className="font-bold text-[#333D4B]">85%</span>를 충족합니다. 부족한 SQL 역량만 보완하면 즉시 지원 가능합니다."
-                        </p>
-                    </div>
-                    {role.requirements.map((req: string, i: number) => (
-                        <div key={i} className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#E5E8EB] shadow-sm">
-                            <div className="h-6 w-6 rounded-full bg-[#E8F3FF] flex items-center justify-center text-[#3182F6] text-xs font-bold shrink-0 mt-0.5">
-                                {i + 1}
-                            </div>
-                            <p className="font-medium text-[#333D4B] text-base leading-snug">{req}</p>
-                        </div>
-                    ))}
-                </TabsContent>
-            </Tabs>
-        </div>
-
-        <div className="p-6 border-t border-[#F2F4F6] bg-white pb-10">
-            <Button onClick={handleCreatePlan} className="w-full h-14 text-lg font-bold rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98]">
-                <ListTodo className="mr-2 h-5 w-5" /> 이 커리어로 실행 계획 생성하기
-            </Button>
-        </div>
-    </DrawerContent>
-</Drawer>
 
                             <Button 
                                 onClick={handleCreatePlan}
