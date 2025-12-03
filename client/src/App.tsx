@@ -12,6 +12,7 @@ import Analysis from "./pages/Analysis";
 import Goals from "./pages/Goals";
 import KompassDetail from "./pages/KompassDetail";
 import Profile from "./pages/Profile";
+import PersonalStatement from "./pages/PersonalStatement";
 import Report from "./pages/Report";
 
 // Temporary placeholders until we create the files
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/goals" component={Goals} />
       <Route path="/goals/:id" component={KompassDetail} />
       <Route path="/profile" component={Profile} />
+      <Route path="/personal-statement" component={PersonalStatement} />
       <Route path="/report" component={Report} />
       <Route component={NotFound} />
     </Switch>
