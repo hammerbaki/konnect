@@ -40,7 +40,6 @@ interface Message {
 interface TopicAgent {
     id: TopicId;
     label: string;
-    icon: string;
     color: string;
     prompt: string;
 }
@@ -48,29 +47,25 @@ interface TopicAgent {
 const AGENTS: TopicAgent[] = [
     { 
         id: "growth", 
-        label: "성장과정", 
-        icon: "🌱", 
+        label: "성장과정 분석 에이전트", 
         color: "bg-green-100 text-green-700",
         prompt: "사용자의 과거 경험과 가치관 형성을 중심으로 성장과정을 작성해줘." 
     },
     { 
         id: "personality", 
-        label: "성격 장단점", 
-        icon: "🦁", 
+        label: "성격/장단점 분석 에이전트", 
         color: "bg-orange-100 text-orange-700",
         prompt: "직무 수행에 강점이 되는 성격과 보완 노력에 대해 작성해줘." 
     },
     { 
         id: "motivation", 
-        label: "지원동기", 
-        icon: "🚀", 
+        label: "지원동기 분석 에이전트", 
         color: "bg-blue-100 text-blue-700",
         prompt: "이 직무를 선택한 이유와 본인의 적합성을 연결하여 작성해줘." 
     },
     { 
         id: "aspiration", 
-        label: "입사 후 포부", 
-        icon: "🎯", 
+        label: "커리어 비전 에이전트", 
         color: "bg-purple-100 text-purple-700",
         prompt: "입사 후 구체적인 목표와 기여 방안을 작성해줘." 
     },
@@ -118,7 +113,7 @@ export default function PersonalStatement() {
             id: Date.now().toString(),
             sender: "ai",
             type: "text",
-            content: `${topic.icon} [${topic.label}] 모드로 전환되었습니다. 프로필을 분석하여 초안을 작성하겠습니다.`,
+            content: `[${topic.label}] 모드로 전환되었습니다. 프로필을 분석하여 초안을 작성하겠습니다.`,
             timestamp: new Date()
         };
         setMessages(prev => [...prev, switchMsg]);
@@ -347,13 +342,12 @@ export default function PersonalStatement() {
                                     onClick={() => handleTopicSelect(agent)}
                                     disabled={isGenerating}
                                     className={cn(
-                                        "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap border",
+                                        "flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap border shadow-sm",
                                         activeTopic === agent.id
-                                            ? "bg-[#3182F6] text-white border-[#3182F6] shadow-md shadow-blue-500/20"
+                                            ? "bg-[#191F28] text-white border-[#191F28] shadow-md"
                                             : "bg-white text-[#4E5968] border-[#E5E8EB] hover:bg-[#F9FAFB] hover:border-[#D1D6DB]"
                                     )}
                                 >
-                                    <span className="text-base">{agent.icon}</span>
                                     {agent.label}
                                 </button>
                             ))}
@@ -361,14 +355,14 @@ export default function PersonalStatement() {
 
                         {/* Input Box */}
                         <div className="relative flex items-end gap-2">
-                            <div className="relative flex-1 bg-[#F2F4F6] rounded-[24px] px-4 py-3 focus-within:ring-2 focus-within:ring-[#3182F6] focus-within:bg-white transition-all border border-transparent focus-within:border-[#3182F6]">
+                            <div className="relative flex-1 bg-[#F2F4F6] rounded-[24px] px-4 py-3 focus-within:bg-white transition-all border border-transparent focus-within:border-[#3182F6] focus-within:shadow-[0_0_0_2px_rgba(49,130,246,0.1)]">
                                 <Textarea
                                     ref={textareaRef}
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={handleKeyDown}
                                     placeholder={activeTopic ? "수정하고 싶은 내용을 자유롭게 적어주세요..." : "먼저 위에서 주제를 선택해주세요!"}
-                                    className="min-h-[24px] max-h-[150px] w-full bg-transparent border-none p-0 resize-none focus-visible:ring-0 placeholder:text-[#B0B8C1] text-[15px] leading-relaxed"
+                                    className="min-h-[24px] max-h-[150px] w-full bg-transparent border-none p-0 resize-none focus-visible:ring-0 placeholder:text-[#B0B8C1] text-[15px] leading-relaxed shadow-none focus:ring-0 focus:outline-none"
                                     disabled={isGenerating}
                                 />
                             </div>
