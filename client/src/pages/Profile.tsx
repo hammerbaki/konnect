@@ -98,19 +98,35 @@ function ResponsiveDatePickerContent({ value, onChange }: { value: Date, onChang
     }, []); // Run once on mount to set initial value, allow user to type freely afterwards without fighting updates
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        setInputValue(val);
+        // Allow only numbers
+        const rawValue = e.target.value.replace(/[^0-9]/g, '');
+        
+        // Limit to 8 digits (YYYYMMDD)
+        const truncatedValue = rawValue.slice(0, 8);
+        
+        // Format as YYYY. MM. DD
+        let formattedValue = truncatedValue;
+        if (truncatedValue.length > 4) {
+            formattedValue = `${truncatedValue.slice(0, 4)}. ${truncatedValue.slice(4)}`;
+        }
+        if (truncatedValue.length > 6) {
+            formattedValue = `${truncatedValue.slice(0, 4)}. ${truncatedValue.slice(4, 6)}. ${truncatedValue.slice(6)}`;
+        }
 
-        // Try to parse standard format yyyy. MM. dd or yyyyMMdd
-        const digits = val.replace(/\D/g, '');
-        if (digits.length === 8) {
-            const year = parseInt(digits.substring(0, 4));
-            const month = parseInt(digits.substring(4, 6)) - 1;
-            const day = parseInt(digits.substring(6, 8));
+        setInputValue(formattedValue);
+
+        // Only update parent state if we have a complete date
+        if (truncatedValue.length === 8) {
+            const year = parseInt(truncatedValue.substring(0, 4));
+            const month = parseInt(truncatedValue.substring(4, 6)) - 1;
+            const day = parseInt(truncatedValue.substring(6, 8));
             
             const newDate = new Date(year, month, day);
-            // Validate date is real (e.g. not 2024.13.01)
-            if (!isNaN(newDate.getTime()) && newDate.getMonth() === month) {
+            // Validate date is real and within reasonable bounds
+            if (!isNaN(newDate.getTime()) && 
+                newDate.getMonth() === month && 
+                year >= 1900 && 
+                year <= 2100) {
                 onChange(newDate);
             }
         }
