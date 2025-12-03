@@ -77,7 +77,7 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                         {!imageError && (
                             <div className="w-full aspect-video rounded-xl overflow-hidden bg-gray-100 mb-4 border border-[#E5E8EB]">
                                 <img 
-                                    src={`/careers/${career.id}.jpg`} 
+                                    src={`/careers/webp_images/${career.id}.webp`} 
                                     alt={career.title}
                                     className="w-full h-full object-cover"
                                     onError={() => setImageError(true)}
