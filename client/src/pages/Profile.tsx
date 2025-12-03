@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
-import { DateWheelPicker, SalaryWheelPicker } from "@/components/ui/wheel-picker";
+import { DateWheelPicker, SalaryWheelPicker, WheelPicker } from "@/components/ui/wheel-picker";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -319,7 +319,38 @@ export default function Profile() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[#4E5968]">졸업년도</Label>
-                                    <Input type="number" defaultValue="2018" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
+                                    <Drawer>
+                                        <DrawerTrigger asChild>
+                                            <Button variant="outline" className="w-full h-12 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-normal text-[#191F28]">
+                                                2018
+                                            </Button>
+                                        </DrawerTrigger>
+                                        <DrawerContent>
+                                            <DrawerHeader>
+                                                <DrawerTitle>졸업년도 선택</DrawerTitle>
+                                            </DrawerHeader>
+                                            <div className="p-4 pb-8">
+                                                <div className="flex justify-center">
+                                                    <div className="w-full max-w-xs">
+                                                        <div className="relative flex flex-col items-center justify-center h-48 w-full overflow-hidden cursor-grab active:cursor-grabbing touch-pan-y select-none">
+                                                             {/* We can reuse WheelPicker but need to import it or reimplement inline if it's not exported generically enough. 
+                                                                Wait, WheelPicker IS generic. Let's use it.
+                                                             */}
+                                                             <WheelPicker 
+                                                                items={Array.from({length: 50}, (_, i) => (new Date().getFullYear() - 40 + i).toString())}
+                                                                value={"2018"}
+                                                                onChange={(val) => {}} 
+                                                                label="년"
+                                                             />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <DrawerClose asChild>
+                                                    <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
+                                                </DrawerClose>
+                                            </div>
+                                        </DrawerContent>
+                                    </Drawer>
                                 </div>
                             </div>
                         </div>
@@ -416,12 +447,16 @@ export default function Profile() {
                                     <div className="p-4 pb-8 overflow-y-auto">
                                         <div className="space-y-4">
                                             {environmentOptions.map((opt) => (
-                                                <div key={opt.id} className="flex items-center space-x-4 p-4 rounded-xl border border-[#F2F4F6] bg-white">
+                                                <div 
+                                                    key={opt.id} 
+                                                    className="flex items-center space-x-4 p-4 rounded-xl border border-[#F2F4F6] bg-white cursor-pointer hover:bg-gray-50 transition-colors active:bg-gray-100"
+                                                    onClick={() => toggleEnvironmentPreference(opt.id)}
+                                                >
                                                     <div className={`p-3 rounded-full ${profileData.environmentPreferences.includes(opt.id) ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
                                                         <opt.icon className="h-6 w-6" />
                                                     </div>
                                                     <div className="flex-1">
-                                                        <label htmlFor={opt.id} className="text-base font-bold text-[#191F28] block mb-1 cursor-pointer">
+                                                        <label htmlFor={opt.id} className="text-base font-bold text-[#191F28] block mb-1 cursor-pointer pointer-events-none">
                                                             {opt.label}
                                                         </label>
                                                         <p className="text-xs text-[#8B95A1]">{opt.desc}</p>
@@ -430,7 +465,7 @@ export default function Profile() {
                                                         id={opt.id} 
                                                         checked={profileData.environmentPreferences.includes(opt.id)}
                                                         onCheckedChange={() => toggleEnvironmentPreference(opt.id)}
-                                                        className="h-6 w-6 rounded-full"
+                                                        className="h-6 w-6 rounded-full pointer-events-none"
                                                     />
                                                 </div>
                                             ))}
