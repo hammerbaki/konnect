@@ -49,6 +49,7 @@ interface ProcessedCareer {
 function CareerDetailContent({ career }: { career: ProcessedCareer }) {
     // Helper to format duties with bullet points
     const formattedDuties = career.duties?.split('\n').filter(line => line.trim().length > 0).map(line => line.replace(/^-/, '').trim()) || [];
+    const [imageError, setImageError] = useState(false);
 
     return (
         <div className="flex-1 overflow-y-auto p-0">
@@ -72,6 +73,18 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
 
                 <div className="p-5 pb-10">
                     <TabsContent value="overview" className="mt-0 space-y-6">
+                        {/* Career Image */}
+                        {!imageError && (
+                            <div className="w-full aspect-video rounded-xl overflow-hidden bg-gray-100 mb-4 border border-[#E5E8EB]">
+                                <img 
+                                    src={`/careers/${career.id}.jpg`} 
+                                    alt={career.title}
+                                    className="w-full h-full object-cover"
+                                    onError={() => setImageError(true)}
+                                />
+                            </div>
+                        )}
+
                         {/* Header Info */}
                         <div>
                             <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -80,6 +93,9 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                                 </Badge>
                                 <Badge variant="secondary" className="bg-blue-50 text-[#3182F6] hover:bg-blue-50 border-none">
                                     {career.mediumClass}
+                                </Badge>
+                                <Badge variant="outline" className="text-[#8B95A1] border-[#E5E8EB] font-normal text-xs">
+                                    ID: {career.id}
                                 </Badge>
                             </div>
                             <h2 className="text-[24px] font-bold text-[#191F28] leading-tight mb-3">{career.title}</h2>
