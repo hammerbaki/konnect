@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, Filter, ArrowRight, Building2, Briefcase, X } from "lucide-react";
+import { Search, Filter, ArrowRight, Building2, Briefcase, X, DollarSign } from "lucide-react";
 import { useState, useMemo } from "react";
 import {
   Select,
@@ -13,6 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import rawData from "@/lib/careerData.json";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Type definition for the raw JSON data
 interface RawCareerItem {
@@ -34,11 +37,113 @@ interface ProcessedCareer {
     salary?: string;
 }
 
+// Component for Detail Content
+function CareerDetailContent({ career }: { career: ProcessedCareer }) {
+    return (
+        <div className="flex-1 overflow-y-auto p-5">
+            {/* Header Section */}
+            <div className="mb-6">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <Badge variant="outline" className="bg-[#F9FAFB] text-[#4E5968] border-[#E5E8EB] font-normal">
+                        {career.largeClass}
+                    </Badge>
+                    <Badge variant="secondary" className="bg-blue-50 text-[#3182F6] hover:bg-blue-50 border-none">
+                        {career.mediumClass}
+                    </Badge>
+                </div>
+                <h2 className="text-[24px] font-bold text-[#191F28] leading-tight mb-3">{career.title}</h2>
+                <p className="text-[#4E5968] text-lg leading-relaxed">
+                    {career.description}
+                </p>
+            </div>
+
+            {/* Salary Info */}
+            <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F2F4F6] mb-6">
+                <p className="text-sm text-[#8B95A1] mb-1">평균 연봉</p>
+                <div className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-[#333D4B]" />
+                    <p className="text-xl font-bold text-[#191F28]">{career.salary}</p>
+                </div>
+            </div>
+
+            {/* Tags */}
+            <div>
+                <h4 className="font-bold text-[#191F28] mb-3 flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-[#3182F6]" /> 관련 직무 / 키워드
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                    {career.tags.length > 0 ? (
+                        career.tags.map((tag) => (
+                            <span key={tag} className="px-3 py-1.5 rounded-lg bg-[#F2F4F6] text-[#4E5968] text-sm font-medium">
+                                #{tag}
+                            </span>
+                        ))
+                    ) : (
+                        <p className="text-[#8B95A1] text-sm">등록된 키워드가 없습니다.</p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Responsive Modal Wrapper
+function ResponsiveCareerDetail({ career, open, onOpenChange }: { career: ProcessedCareer | null, open: boolean, onOpenChange: (open: boolean) => void }) {
+    const isMobile = useIsMobile();
+
+    if (!career) return null;
+
+    if (isMobile) {
+        return (
+            <Drawer open={open} onOpenChange={onOpenChange}>
+                <DrawerContent className="h-[85vh] rounded-t-[24px] flex flex-col outline-none">
+                    <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E8EB] mt-3 mb-1" />
+                    <div className="flex justify-between items-center px-5 py-3 border-b border-[#F2F4F6]">
+                        <DrawerTitle className="text-[18px] font-bold text-[#191F28]">직업 상세 정보</DrawerTitle>
+                        <DrawerClose asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-[#F2F4F6] hover:bg-[#E5E8EB]">
+                                <X className="h-4 w-4 text-[#333D4B]" />
+                            </Button>
+                        </DrawerClose>
+                    </div>
+                    <CareerDetailContent career={career} />
+                </DrawerContent>
+            </Drawer>
+        );
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-[24px] gap-0 bg-white border-none shadow-2xl [&>button]:hidden">
+                <DialogHeader className="p-6 pb-4 border-b border-[#F2F4F6] flex-shrink-0 flex flex-row justify-between items-center space-y-0">
+                    <DialogTitle className="text-[24px] font-bold text-[#191F28]">직업 상세 정보</DialogTitle>
+                    <DialogClose asChild>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-[#F2F4F6]">
+                            <X className="h-5 w-5 text-[#333D4B]" />
+                        </Button>
+                    </DialogClose>
+                </DialogHeader>
+                <CareerDetailContent career={career} />
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export default function Explorer() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedLargeClass, setSelectedLargeClass] = useState<string>("all");
     const [selectedMediumClass, setSelectedMediumClass] = useState<string>("all");
     const [visibleCount, setVisibleCount] = useState(20);
+    
+    // Modal State
+    const [selectedCareer, setSelectedCareer] = useState<ProcessedCareer | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleCardClick = (career: ProcessedCareer) => {
+        setSelectedCareer(career);
+        setIsModalOpen(true);
+    };
+
 
     // Process and memoize the data
     const { careers, hierarchy } = useMemo(() => {
@@ -255,7 +360,11 @@ export default function Explorer() {
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {visibleCareers.map((career) => (
-                        <Card key={career.id} className="border-[#E5E8EB] shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-[#3182F6] group bg-white flex flex-col">
+                        <Card 
+                            key={career.id} 
+                            onClick={() => handleCardClick(career)}
+                            className="border-[#E5E8EB] shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-[#3182F6] group bg-white flex flex-col"
+                        >
                             <CardHeader className="pb-3 flex-1">
                                 <div className="flex flex-wrap gap-2 mb-3">
                                     <Badge variant="outline" className="bg-[#F9FAFB] text-[#4E5968] border-[#E5E8EB] font-normal">
@@ -289,6 +398,12 @@ export default function Explorer() {
                         </Card>
                     ))}
                 </div>
+
+                <ResponsiveCareerDetail 
+                    career={selectedCareer} 
+                    open={isModalOpen} 
+                    onOpenChange={setIsModalOpen} 
+                />
 
                 {/* Empty State */}
                 {filteredCareers.length === 0 && (
