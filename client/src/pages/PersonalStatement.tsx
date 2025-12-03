@@ -291,14 +291,6 @@ export default function PersonalStatement() {
                                                         복사
                                                     </Button>
                                                 </div>
-                                                <div className="flex gap-1">
-                                                    <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full hover:bg-gray-200 disabled:opacity-30">
-                                                        <ChevronLeft className="h-4 w-4 text-[#8B95A1]" />
-                                                    </Button>
-                                                    <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full hover:bg-gray-200 disabled:opacity-30">
-                                                        <ChevronRight className="h-4 w-4 text-[#8B95A1]" />
-                                                    </Button>
-                                                </div>
                                             </div>
                                         </Card>
                                     </div>
