@@ -1,176 +1,231 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Database, Server, Globe, Cpu, Zap, ShieldCheck, Layers, ArrowDown } from "lucide-react";
+import { ArrowRight, Database, Server, Globe, Cpu, Zap, ShieldCheck, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Architecture() {
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto space-y-8 pb-20">
+      <div className="max-w-5xl mx-auto space-y-8 pb-20">
         <div className="space-y-2">
           <h2 className="text-[28px] font-bold text-[#191F28] flex items-center gap-2">
             <Layers className="h-8 w-8 text-[#3182F6]" />
-            시스템 구조도 (System Architecture)
+            시스템 아키텍처
           </h2>
           <p className="text-[#8B95A1] text-lg">
-            현재의 하이브리드 운영 모델: Replit (Frontend/BFF) + AWS (Heavy Compute)
+            하이브리드 클라우드 구조: Replit의 민첩성과 AWS의 성능 결합
           </p>
         </div>
 
-        {/* Whiteboard Area */}
-        <div className="relative w-full bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 md:p-12 overflow-hidden">
+        {/* Architecture Diagram Area */}
+        <div className="relative w-full bg-[#F9FAFB] rounded-3xl border border-[#E5E8EB] p-8 md:p-12 overflow-hidden">
           
-          {/* Dot Grid Background for Engineering look */}
-          <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] opacity-50" />
+          {/* Background Grid */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-[0.3]" />
 
-          <div className="relative z-10 flex flex-col gap-12">
+          <div className="relative flex flex-col md:flex-row items-stretch justify-between gap-8 md:gap-16 z-10">
             
-            {/* Top Level: The Strategy */}
-            <div className="flex justify-center">
-                <div className="bg-yellow-50 border-2 border-yellow-200 text-yellow-800 px-4 py-2 rounded-lg text-sm font-medium rotate-1 shadow-sm">
-                    💡 핵심 전략: "가벼운 건 Replit에서 빠르게, 무거운 건 AWS에서 확실하게"
+            {/* 1. REPLIT ZONE */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex-1 flex flex-col"
+            >
+              <div className="mb-4 flex items-center gap-2">
+                <div className="bg-black text-white px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase">
+                  Replit 환경
                 </div>
-            </div>
+                <span className="text-sm text-[#6B7684] font-medium">메인 앱 & 오케스트레이션</span>
+              </div>
+              
+              <Card className="flex-1 border-2 border-[#191F28] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] bg-white overflow-visible">
+                <CardHeader className="bg-[#F2F4F6] border-b border-[#E5E8EB] py-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Globe className="h-5 w-5 text-[#3182F6]" />
+                    풀스택 앱 (Monorepo)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                    {/* Frontend Node */}
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center gap-4">
+                        <div className="h-10 w-10 bg-[#3182F6] rounded-lg flex items-center justify-center text-white shadow-md">
+                            <span className="font-bold">TS</span>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-[#191F28]">React 프론트엔드</h4>
+                            <p className="text-xs text-[#6B7684]">사용자 인터페이스 & 상태 관리</p>
+                        </div>
+                    </div>
 
-            <div className="flex flex-col md:flex-row items-stretch justify-center gap-8 md:gap-20">
+                    {/* Backend Node */}
+                    <div className="bg-green-50 border border-green-100 rounded-xl p-4 flex items-center gap-4 relative">
+                        <div className="absolute left-1/2 -top-6 h-6 w-0.5 bg-[#E5E8EB]" /> {/* Connector */}
+                        <div className="h-10 w-10 bg-[#00BFA5] rounded-lg flex items-center justify-center text-white shadow-md">
+                            <span className="font-bold">Node</span>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-[#191F28]">Node.js 백엔드</h4>
+                            <p className="text-xs text-[#6B7684]">API 게이트웨이, 인증, DB 연동</p>
+                        </div>
+                    </div>
+
+                    {/* Database Node */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex items-center gap-4 relative">
+                         <div className="absolute left-1/2 -top-6 h-6 w-0.5 bg-[#E5E8EB]" /> {/* Connector */}
+                        <div className="h-10 w-10 bg-[#4E5968] rounded-lg flex items-center justify-center text-white shadow-md">
+                            <Database className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-[#191F28]">Replit Postgres</h4>
+                            <p className="text-xs text-[#6B7684]">사용자 데이터, 프로필, 이력 저장</p>
+                        </div>
+                    </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+
+            {/* CONNECTION ARROWS */}
+            <div className="flex flex-col items-center justify-center gap-2 md:pt-20">
+                <motion.div 
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: "100%", opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.5 }}
+                    className="hidden md:flex items-center gap-2"
+                >
+                    <div className="h-[2px] w-16 bg-gradient-to-r from-[#3182F6] to-[#FF6B00] animate-pulse" />
+                    <div className="bg-white border border-[#E5E8EB] px-3 py-1.5 rounded-full text-[10px] font-bold text-[#6B7684] shadow-sm whitespace-nowrap z-20">
+                        REST API (JSON)
+                    </div>
+                    <div className="h-[2px] w-16 bg-gradient-to-r from-[#3182F6] to-[#FF6B00] animate-pulse" />
+                    <ArrowRight className="text-[#FF6B00]" />
+                </motion.div>
                 
-                {/* LEFT: REPLIT (Blue Team) */}
-                <div className="flex-1 max-w-md flex flex-col gap-4">
-                    <div className="text-center mb-2">
-                        <span className="inline-block bg-[#E8F3FF] text-[#3182F6] border-2 border-[#3182F6] px-3 py-1 rounded-md font-bold text-sm">
-                            Replit (메인 서버)
-                        </span>
-                        <p className="text-xs text-gray-500 mt-1">빠른 배포 & UI/UX 호스팅</p>
-                    </div>
-
-                    <div className="bg-white border-2 border-gray-800 rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 flex flex-col gap-6 relative">
-                        {/* React */}
-                        <div className="border border-gray-300 rounded p-3 bg-gray-50">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Globe className="h-4 w-4 text-blue-600" />
-                                <span className="font-bold text-sm">React Client</span>
-                            </div>
-                            <div className="text-xs text-gray-600 pl-6">
-                                • 사용자 인터페이스 (UI)<br/>
-                                • 실시간 상호작용<br/>
-                                • 상태 관리 (State)
-                            </div>
-                        </div>
-
-                        {/* Arrow Down */}
-                        <div className="absolute left-1/2 top-[88px] -translate-x-1/2 text-gray-400">
-                            <ArrowDown className="h-5 w-5" />
-                        </div>
-
-                        {/* Node.js */}
-                        <div className="border border-gray-300 rounded p-3 bg-gray-50">
-                            <div className="flex items-center gap-2 mb-2">
-                                <div className="h-4 w-4 bg-green-600 rounded-full text-[10px] text-white flex items-center justify-center">N</div>
-                                <span className="font-bold text-sm">Node.js (BFF)</span>
-                            </div>
-                            <div className="text-xs text-gray-600 pl-6">
-                                • API Gateway 역할<br/>
-                                • 인증/세션 관리<br/>
-                                • 간단한 CRUD 처리
-                            </div>
-                        </div>
-
-                        {/* DB Connection */}
-                        <div className="border-t-2 border-dashed border-gray-300 my-1"></div>
-
-                        {/* Postgres */}
-                        <div className="flex items-center gap-3 p-2 bg-[#F1F4F8] rounded border border-gray-200">
-                            <Database className="h-5 w-5 text-gray-600" />
-                            <div>
-                                <div className="font-bold text-sm">Postgres DB</div>
-                                <div className="text-[10px] text-gray-500">사용자/프로필 데이터 저장</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* CENTER: The Bridge */}
-                <div className="flex flex-col justify-center items-center gap-2 text-xs font-mono text-gray-500 py-4 md:py-0">
-                    <div className="hidden md:block w-24 border-t-2 border-dashed border-gray-400 relative top-3"></div>
-                    <div className="bg-white border border-gray-300 px-2 py-1 rounded shadow-sm z-20 whitespace-nowrap">
-                        HTTP / REST API
-                    </div>
-                    <div className="hidden md:block w-24 border-t-2 border-dashed border-gray-400 relative -top-3"></div>
-                    <div className="md:hidden h-12 border-l-2 border-dashed border-gray-400"></div>
-                </div>
-
-                {/* RIGHT: AWS (Orange Team) */}
-                <div className="flex-1 max-w-md flex flex-col gap-4">
-                     <div className="text-center mb-2">
-                        <span className="inline-block bg-[#FFF4E5] text-[#D15B0A] border-2 border-[#D15B0A] px-3 py-1 rounded-md font-bold text-sm">
-                            AWS (작업 서버)
-                        </span>
-                        <p className="text-xs text-gray-500 mt-1">고성능 연산 & AI 처리</p>
-                    </div>
-
-                    <div className="bg-white border-2 border-gray-800 rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 flex flex-col gap-6 relative">
-                        
-                        {/* Django */}
-                        <div className="border border-gray-300 rounded p-3 bg-gray-50">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Server className="h-4 w-4 text-orange-600" />
-                                <span className="font-bold text-sm">Django API</span>
-                            </div>
-                            <div className="text-xs text-gray-600 pl-6">
-                                • 무거운 요청 수신<br/>
-                                • 작업 큐(Queue) 등록
-                            </div>
-                        </div>
-
-                         {/* Arrow Down */}
-                         <div className="absolute left-1/2 top-[88px] -translate-x-1/2 text-gray-400">
-                            <ArrowDown className="h-5 w-5" />
-                        </div>
-
-                        {/* Celery & Redis */}
-                        <div className="flex gap-2">
-                            <div className="flex-1 border border-gray-300 rounded p-3 bg-gray-50">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Zap className="h-3 w-3 text-red-500" />
-                                    <span className="font-bold text-xs">Redis</span>
-                                </div>
-                                <div className="text-[10px] text-gray-500">Message Queue</div>
-                            </div>
-                            <div className="flex-1 border border-gray-300 rounded p-3 bg-gray-50">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Cpu className="h-3 w-3 text-purple-600" />
-                                    <span className="font-bold text-xs">Celery</span>
-                                </div>
-                                <div className="text-[10px] text-gray-500">Worker Nodes</div>
-                            </div>
-                        </div>
-
-                        {/* AI Processing */}
-                        <div className="border-2 border-gray-200 rounded p-3 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center text-center">
-                            <div>
-                                <div className="text-sm font-bold text-gray-700">AI Engine</div>
-                                <div className="text-[10px] text-gray-500">LLM Inference / Analysis</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {/* Mobile Vertical Arrow */}
+                <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 80, opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.5 }}
+                    className="md:hidden flex flex-col items-center gap-2 py-4"
+                >
+                     <div className="w-[2px] h-full bg-gradient-to-b from-[#3182F6] to-[#FF6B00]" />
+                     <ArrowRight className="text-[#FF6B00] rotate-90" />
+                </motion.div>
             </div>
 
-            {/* Footnote */}
-            <div className="mt-8 border-t border-dashed border-gray-300 pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                    <div className="flex gap-3">
-                        <span className="font-bold min-w-[60px]">Why?</span>
-                        <span>Replit은 UI 개발과 배포 속도가 빠르지만, 긴 실행 시간이 필요한 AI 작업에는 AWS EC2가 비용/성능 면에서 유리함.</span>
-                    </div>
-                    <div className="flex gap-3">
-                        <span className="font-bold min-w-[60px]">How?</span>
-                        <span>사용자는 Replit 웹사이트만 보게 되며, 뒷단의 AWS 통신은 내부적으로 처리되어 사용자 경험(UX)을 해치지 않음.</span>
-                    </div>
-                </div>
-            </div>
 
+            {/* 2. AWS ZONE */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="flex-1 flex flex-col"
+            >
+              <div className="mb-4 flex items-center gap-2 justify-end md:justify-start">
+                <div className="bg-[#FF9900] text-white px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase">
+                  AWS 환경
+                </div>
+                <span className="text-sm text-[#6B7684] font-medium">마이크로서비스 (연산 처리)</span>
+              </div>
+              
+              <Card className="flex-1 border-2 border-[#FF9900] shadow-[8px_8px_0px_0px_rgba(255,153,0,0.2)] bg-white">
+                <CardHeader className="bg-[#FFF8F0] border-b border-[#FFE0B2] py-4">
+                  <CardTitle className="flex items-center gap-2 text-lg text-[#D15B0A]">
+                    <Server className="h-5 w-5" />
+                    Django 마이크로서비스
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                    {/* API Node */}
+                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-center gap-4">
+                        <div className="h-10 w-10 bg-[#FF9900] rounded-lg flex items-center justify-center text-white shadow-md">
+                            <span className="font-bold">Py</span>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-[#191F28]">Django REST API</h4>
+                            <p className="text-xs text-[#6B7684]">고부하 작업 요청 수신</p>
+                        </div>
+                    </div>
+
+                    {/* Worker Node */}
+                    <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 flex items-center gap-4 relative">
+                        <div className="absolute left-1/2 -top-6 h-6 w-0.5 bg-[#E5E8EB]" /> {/* Connector */}
+                        <div className="h-10 w-10 bg-[#9333EA] rounded-lg flex items-center justify-center text-white shadow-md">
+                            <Cpu className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-[#191F28]">Celery 워커</h4>
+                            <p className="text-xs text-[#6B7684]">AI 추론, PDF 파싱 등 무거운 작업</p>
+                        </div>
+                    </div>
+
+                    {/* Cache Node */}
+                    <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center gap-4 relative">
+                         <div className="absolute left-1/2 -top-6 h-6 w-0.5 bg-[#E5E8EB]" /> {/* Connector */}
+                        <div className="h-10 w-10 bg-[#DC2626] rounded-lg flex items-center justify-center text-white shadow-md">
+                            <Zap className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-[#191F28]">Redis</h4>
+                            <p className="text-xs text-[#6B7684]">작업 큐 & 캐싱 레이어</p>
+                        </div>
+                    </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
+        </div>
+
+        {/* Explanation Cards */}
+        <div className="grid md:grid-cols-3 gap-6">
+            <Card className="toss-card">
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        <ShieldCheck className="h-5 w-5 text-green-500" />
+                        안정성 (Reliability)
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-[#4E5968] text-sm leading-relaxed">
+                        핵심 사용자 경험은 Replit의 관리형 인프라에서 실행되어 
+                        UI/UX의 고가용성을 보장합니다. 무거운 AI 작업은 AWS로 
+                        분산 처리되어 앱 속도 저하를 방지합니다.
+                    </p>
+                </CardContent>
+            </Card>
+
+            <Card className="toss-card">
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        <Zap className="h-5 w-5 text-yellow-500" />
+                        개발 속도 (Velocity)
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-[#4E5968] text-sm leading-relaxed">
+                        프론트엔드와 비즈니스 로직은 Replit에서 빠르게 개발(Agile)하고, 
+                        복잡한 데이터 처리는 기존의 안정적인 AWS 백엔드를 
+                        활용(Stability)하여 효율을 극대화합니다.
+                    </p>
+                </CardContent>
+            </Card>
+
+            <Card className="toss-card">
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        <Layers className="h-5 w-5 text-blue-500" />
+                        확장성 (Scalability)
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-[#4E5968] text-sm leading-relaxed">
+                        사용자 트래픽이 증가하더라도 메인 애플리케이션의 반응성에 
+                        영향을 주지 않고, AWS의 Celery 워커 노드만 독립적으로 
+                        확장하여 대응할 수 있습니다.
+                    </p>
+                </CardContent>
+            </Card>
         </div>
       </div>
     </Layout>
