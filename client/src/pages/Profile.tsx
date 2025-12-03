@@ -7,15 +7,47 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save, Building, Calendar, Award, Link as LinkIcon, Trash2 } from "lucide-react";
+import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save, Building, Calendar, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle } from "lucide-react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
+import { DateWheelPicker, SalaryWheelPicker } from "@/components/ui/wheel-picker";
+import { format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Profile() {
   const { setAction } = useMobileAction();
   const { toast } = useToast();
+
+  // State Management
+  const [profileData, setProfileData] = useState({
+    name: "John Doe",
+    role: "Product Manager",
+    bio: "데이터 기반의 의사결정을 선호하는 PM입니다.",
+    experienceYears: 5,
+    salary: 6000,
+    environmentPreferences: [] as string[],
+    workExperience: [
+        {
+            id: 1,
+            role: "Senior Product Manager",
+            company: "Tech Corp Inc.",
+            startDate: new Date(2021, 2, 1), // March 2021
+            endDate: new Date(2023, 11, 1), // Dec 2023
+            description: "- B2B SaaS 제품 기획 및 런칭 주도\n- 3분기 연속 매출 목표 120% 달성"
+        },
+        {
+            id: 2,
+            role: "Product Owner",
+            company: "Startup X",
+            startDate: new Date(2019, 0, 1), // Jan 2019
+            endDate: new Date(2021, 1, 1), // Feb 2021
+            description: "- 모바일 앱 2.0 리뉴얼 프로젝트 PM\n- DAU 300% 성장 견인"
+        }
+    ]
+  });
 
   const handleSave = () => {
     toast({
@@ -32,6 +64,39 @@ export default function Profile() {
     });
     return () => setAction(null);
   }, []);
+
+  const handleExperienceChange = (val: number[]) => {
+      setProfileData(prev => ({ ...prev, experienceYears: val[0] }));
+  };
+
+  const toggleEnvironmentPreference = (pref: string) => {
+      setProfileData(prev => {
+          const exists = prev.environmentPreferences.includes(pref);
+          if (exists) {
+              return { ...prev, environmentPreferences: prev.environmentPreferences.filter(p => p !== pref) };
+          } else {
+              return { ...prev, environmentPreferences: [...prev.environmentPreferences, pref] };
+          }
+      });
+  };
+
+  // Update work experience date
+  const updateWorkExpDate = (id: number, field: 'startDate' | 'endDate', date: Date) => {
+      setProfileData(prev => ({
+          ...prev,
+          workExperience: prev.workExperience.map(exp => 
+              exp.id === id ? { ...exp, [field]: date } : exp
+          )
+      }));
+  };
+
+  const environmentOptions = [
+      { id: 'brain', label: '지식 집약적 업무 (Brain Using)', icon: BrainCircuit, desc: '육체적 노동보다는 정신적 노동 중심' },
+      { id: 'sedentary', label: '좌식 근무 (Sitting)', icon: Armchair, desc: '주로 앉아서 하는 사무직 환경' },
+      { id: 'active', label: '활동적 근무 (Active)', icon: Zap, desc: '이동이 많거나 현장 활동이 포함됨' },
+      { id: 'industrial', label: '제조/생산 현장 (Industrial)', icon: HardHat, desc: '공장, 건설 등 생산 현장 환경' },
+      { id: 'challenging', label: '도전적 환경 (Challenging)', icon: AlertTriangle, desc: '위험 요소가 있거나 강도 높은 업무' },
+  ];
 
   return (
     <Layout>
@@ -57,8 +122,8 @@ export default function Profile() {
                   </div>
                   <div className="absolute bottom-0 right-0 h-6 w-6 bg-[#00BFA5] rounded-full border-2 border-white" />
                 </div>
-                <h3 className="text-xl font-bold text-[#191F28]">John Doe</h3>
-                <p className="text-[#8B95A1] font-medium">Product Manager</p>
+                <h3 className="text-xl font-bold text-[#191F28]">{profileData.name}</h3>
+                <p className="text-[#8B95A1] font-medium">{profileData.role}</p>
                 
                 <div className="mt-6 w-full space-y-3 text-left">
                   <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB]">
@@ -71,7 +136,7 @@ export default function Profile() {
                   </div>
                   <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB]">
                     <Briefcase className="h-4 w-4 text-[#B0B8C1]" />
-                    5년차
+                    {profileData.experienceYears}년차
                   </div>
                 </div>
 
@@ -101,22 +166,34 @@ export default function Profile() {
                     <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label className="text-[#4E5968]">이름</Label>
-                        <Input defaultValue="John Doe" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
+                        <Input 
+                            value={profileData.name} 
+                            onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                            className="bg-[#F2F4F6] border-none rounded-xl h-12" 
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label className="text-[#4E5968]">현재 직무</Label>
-                        <Input defaultValue="Product Manager" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
+                        <Input 
+                            value={profileData.role} 
+                            onChange={(e) => setProfileData({...profileData, role: e.target.value})}
+                            className="bg-[#F2F4F6] border-none rounded-xl h-12" 
+                        />
                     </div>
                     </div>
                     <div className="space-y-2">
                     <Label className="text-[#4E5968]">한줄 소개</Label>
-                    <Input defaultValue="데이터 기반의 의사결정을 선호하는 PM입니다." className="bg-[#F2F4F6] border-none rounded-xl h-12" />
+                    <Input 
+                        value={profileData.bio} 
+                        onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                        className="bg-[#F2F4F6] border-none rounded-xl h-12" 
+                    />
                     </div>
                 </CardContent>
                 </Card>
             </section>
 
-            {/* 2. Work Experience (Expanded) */}
+            {/* 2. Work Experience (Expanded) with Date Picker Drawers */}
             <section className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
@@ -129,65 +206,76 @@ export default function Profile() {
                 
                 <Card className="toss-card">
                     <CardContent className="p-6 space-y-6">
-                        {/* Item 1 */}
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-start">
-                                <div className="space-y-1">
-                                    <h4 className="font-bold text-[#191F28] text-lg">Senior Product Manager</h4>
-                                    <p className="text-[#4E5968] font-medium">Tech Corp Inc.</p>
+                        {profileData.workExperience.map((exp, index) => (
+                            <div key={exp.id} className="space-y-4">
+                                {index > 0 && <Separator className="bg-[#F2F4F6] my-6" />}
+                                <div className="flex justify-between items-start">
+                                    <div className="space-y-1">
+                                        <h4 className="font-bold text-[#191F28] text-lg">{exp.role}</h4>
+                                        <p className="text-[#4E5968] font-medium">{exp.company}</p>
+                                    </div>
+                                    <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-red-500">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 </div>
-                                <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-red-500">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label className="text-[#8B95A1] text-xs">시작일</Label>
+                                        <Drawer>
+                                            <DrawerTrigger asChild>
+                                                <Button variant="outline" className="w-full h-12 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-normal text-[#191F28]">
+                                                    {format(exp.startDate, 'yyyy. MM. dd')}
+                                                </Button>
+                                            </DrawerTrigger>
+                                            <DrawerContent>
+                                                <DrawerHeader>
+                                                    <DrawerTitle>시작일 선택</DrawerTitle>
+                                                </DrawerHeader>
+                                                <div className="p-4 pb-8">
+                                                    <DateWheelPicker 
+                                                        value={exp.startDate} 
+                                                        onChange={(date) => updateWorkExpDate(exp.id, 'startDate', date)}
+                                                    />
+                                                    <DrawerClose asChild>
+                                                        <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
+                                                    </DrawerClose>
+                                                </div>
+                                            </DrawerContent>
+                                        </Drawer>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[#8B95A1] text-xs">종료일</Label>
+                                        <Drawer>
+                                            <DrawerTrigger asChild>
+                                                <Button variant="outline" className="w-full h-12 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-normal text-[#191F28]">
+                                                    {format(exp.endDate, 'yyyy. MM. dd')}
+                                                </Button>
+                                            </DrawerTrigger>
+                                            <DrawerContent>
+                                                <DrawerHeader>
+                                                    <DrawerTitle>종료일 선택</DrawerTitle>
+                                                </DrawerHeader>
+                                                <div className="p-4 pb-8">
+                                                    <DateWheelPicker 
+                                                        value={exp.endDate} 
+                                                        onChange={(date) => updateWorkExpDate(exp.id, 'endDate', date)}
+                                                    />
+                                                    <DrawerClose asChild>
+                                                        <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
+                                                    </DrawerClose>
+                                                </div>
+                                            </DrawerContent>
+                                        </Drawer>
+                                    </div>
+                                </div>
+                                
+                                <Textarea 
+                                    className="bg-[#F2F4F6] border-none rounded-xl min-h-[80px] resize-none text-sm" 
+                                    defaultValue={exp.description}
+                                />
                             </div>
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-[#8B95A1] text-xs">시작일</Label>
-                                    <Input type="month" defaultValue="2021-03" className="bg-[#F2F4F6] border-none rounded-xl" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[#8B95A1] text-xs">종료일</Label>
-                                    <Input type="month" defaultValue="2023-12" className="bg-[#F2F4F6] border-none rounded-xl" />
-                                </div>
-                            </div>
-                            
-                            <Textarea 
-                                className="bg-[#F2F4F6] border-none rounded-xl min-h-[80px] resize-none text-sm" 
-                                defaultValue="- B2B SaaS 제품 기획 및 런칭 주도&#10;- 3분기 연속 매출 목표 120% 달성"
-                            />
-                        </div>
-
-                        <Separator className="bg-[#F2F4F6]" />
-
-                        {/* Item 2 */}
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-start">
-                                <div className="space-y-1">
-                                    <h4 className="font-bold text-[#191F28] text-lg">Product Owner</h4>
-                                    <p className="text-[#4E5968] font-medium">Startup X</p>
-                                </div>
-                                <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-red-500">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-[#8B95A1] text-xs">시작일</Label>
-                                    <Input type="month" defaultValue="2019-01" className="bg-[#F2F4F6] border-none rounded-xl" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[#8B95A1] text-xs">종료일</Label>
-                                    <Input type="month" defaultValue="2021-02" className="bg-[#F2F4F6] border-none rounded-xl" />
-                                </div>
-                            </div>
-                            
-                            <Textarea 
-                                className="bg-[#F2F4F6] border-none rounded-xl min-h-[80px] resize-none text-sm" 
-                                defaultValue="- 모바일 앱 2.0 리뉴얼 프로젝트 PM&#10;- DAU 300% 성장 견인"
-                            />
-                        </div>
+                        ))}
                     </CardContent>
                 </Card>
             </section>
@@ -239,13 +327,31 @@ export default function Profile() {
                 </Card>
             </section>
 
-             {/* 4. Skills & Languages */}
+             {/* 4. Skills & Experience Years Slider */}
              <section className="space-y-4">
                 <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                    <Award className="h-5 w-5 text-[#3182F6]" /> 스킬 및 어학
+                    <Award className="h-5 w-5 text-[#3182F6]" /> 스킬 및 경력
                 </h3>
                 <Card className="toss-card">
                     <CardContent className="p-6 space-y-6">
+                        
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <Label className="text-[#4E5968] font-bold">총 경력 연수 (자동 계산)</Label>
+                                <span className="text-[#3182F6] font-bold text-lg">{profileData.experienceYears}년</span>
+                            </div>
+                            <Slider 
+                                value={[profileData.experienceYears]} 
+                                onValueChange={handleExperienceChange}
+                                max={20} 
+                                step={1} 
+                                className="py-2" 
+                            />
+                            <p className="text-xs text-[#8B95A1]">상단의 프로필 카드에도 반영됩니다.</p>
+                        </div>
+
+                        <Separator className="bg-[#F2F4F6]" />
+
                         <div className="space-y-3">
                              <Label className="text-[#4E5968] font-bold">보유 스킬</Label>
                              <div className="flex flex-wrap gap-2">
@@ -259,64 +365,95 @@ export default function Profile() {
                                 </Button>
                             </div>
                         </div>
-                        
-                        <Separator className="bg-[#F2F4F6]" />
-
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                                <Label className="text-[#4E5968] font-bold">어학 능력</Label>
-                                <Button variant="ghost" size="sm" className="text-[#3182F6] text-xs h-auto p-0 hover:bg-transparent">
-                                    + 추가
-                                </Button>
-                            </div>
-                            <div className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl">
-                                <div className="flex items-center gap-2">
-                                    <Globe className="h-4 w-4 text-[#B0B8C1]" />
-                                    <span className="font-bold text-[#333D4B]">영어 (English)</span>
-                                </div>
-                                <span className="text-sm text-[#4E5968] bg-white px-2 py-1 rounded border border-[#E5E8EB]">Business Level</span>
-                            </div>
-                        </div>
                     </CardContent>
                 </Card>
             </section>
 
-             {/* 5. Links & Portfolio */}
-             <section className="space-y-4">
-                <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                    <LinkIcon className="h-5 w-5 text-[#3182F6]" /> 링크 및 포트폴리오
-                </h3>
-                <Card className="toss-card">
-                    <CardContent className="p-6 space-y-4">
-                        <div className="space-y-2">
-                            <Label className="text-[#4E5968]">LinkedIn</Label>
-                            <Input placeholder="https://linkedin.com/in/..." className="bg-[#F2F4F6] border-none rounded-xl h-12" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-[#4E5968]">Portfolio / Website</Label>
-                            <Input placeholder="https://..." className="bg-[#F2F4F6] border-none rounded-xl h-12" />
-                        </div>
-                    </CardContent>
-                </Card>
-            </section>
-
-            {/* 6. Preferences (Conditions) */}
+            {/* 5. Work Environment & Conditions */}
             <section className="space-y-4">
                 <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-[#FFB300]" /> 선호 근무 조건
+                    <Sparkles className="h-5 w-5 text-[#FFB300]" /> 근무 환경 및 조건
                 </h3>
                 <Card className="toss-card">
                     <CardContent className="p-6 space-y-6">
-                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label className="text-[#4E5968]">희망 근무지</Label>
-                                <Input defaultValue="서울 강남구" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-[#4E5968]">희망 연봉 (만원)</Label>
-                                <Input type="number" defaultValue="6000" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
-                            </div>
+                         
+                        {/* Work Environment Drawer */}
+                        <div className="space-y-2">
+                            <Label className="text-[#4E5968]">선호 근무 환경 (중복 선택 가능)</Label>
+                            <Drawer>
+                                <DrawerTrigger asChild>
+                                    <Button variant="outline" className="w-full h-14 justify-between text-left bg-[#F2F4F6] border-none rounded-xl font-medium text-[#191F28] px-4">
+                                        <span className="truncate">
+                                            {profileData.environmentPreferences.length > 0 
+                                                ? `${profileData.environmentPreferences.length}개 선택됨 (${profileData.environmentPreferences.join(', ')})`
+                                                : "근무 환경 선택하기"
+                                            }
+                                        </span>
+                                        <span className="text-[#3182F6] text-sm font-bold">선택 &gt;</span>
+                                    </Button>
+                                </DrawerTrigger>
+                                <DrawerContent className="max-h-[85vh]">
+                                    <DrawerHeader>
+                                        <DrawerTitle>근무 환경 기본 설정</DrawerTitle>
+                                        <CardDescription>기피하거나 선호하는 근무 환경을 미리 설정하여 필터링합니다.</CardDescription>
+                                    </DrawerHeader>
+                                    <div className="p-4 pb-8 overflow-y-auto">
+                                        <div className="space-y-4">
+                                            {environmentOptions.map((opt) => (
+                                                <div key={opt.id} className="flex items-center space-x-4 p-4 rounded-xl border border-[#F2F4F6] bg-white">
+                                                    <div className={`p-3 rounded-full ${profileData.environmentPreferences.includes(opt.id) ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                                                        <opt.icon className="h-6 w-6" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <label htmlFor={opt.id} className="text-base font-bold text-[#191F28] block mb-1 cursor-pointer">
+                                                            {opt.label}
+                                                        </label>
+                                                        <p className="text-xs text-[#8B95A1]">{opt.desc}</p>
+                                                    </div>
+                                                    <Checkbox 
+                                                        id={opt.id} 
+                                                        checked={profileData.environmentPreferences.includes(opt.id)}
+                                                        onCheckedChange={() => toggleEnvironmentPreference(opt.id)}
+                                                        className="h-6 w-6 rounded-full"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <DrawerClose asChild>
+                                            <Button className="w-full mt-6 rounded-xl h-14 text-lg font-bold bg-[#3182F6]">설정 완료</Button>
+                                        </DrawerClose>
+                                    </div>
+                                </DrawerContent>
+                            </Drawer>
                         </div>
+
+                        {/* Salary Drawer */}
+                        <div className="space-y-2">
+                            <Label className="text-[#4E5968]">희망 연봉 (만원)</Label>
+                            <Drawer>
+                                <DrawerTrigger asChild>
+                                    <Button variant="outline" className="w-full h-14 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-bold text-xl text-[#191F28]">
+                                        {profileData.salary.toLocaleString()} 만원
+                                    </Button>
+                                </DrawerTrigger>
+                                <DrawerContent>
+                                    <DrawerHeader>
+                                        <DrawerTitle>희망 연봉 설정</DrawerTitle>
+                                        <CardDescription>4자리 숫자를 스크롤하여 설정하세요.</CardDescription>
+                                    </DrawerHeader>
+                                    <div className="p-4 pb-8">
+                                        <SalaryWheelPicker 
+                                            value={profileData.salary} 
+                                            onChange={(val) => setProfileData({...profileData, salary: val})}
+                                        />
+                                        <DrawerClose asChild>
+                                            <Button className="w-full mt-8 rounded-xl h-12 text-lg font-bold">완료</Button>
+                                        </DrawerClose>
+                                    </div>
+                                </DrawerContent>
+                            </Drawer>
+                        </div>
+
                         <div className="space-y-2">
                              <Label className="text-[#4E5968]">직업적 관심사</Label>
                              <Textarea 
