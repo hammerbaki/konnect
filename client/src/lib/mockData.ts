@@ -154,10 +154,17 @@ export function generateTree(idSuffix: string, title: string, targetYear: number
                     children: []
                 };
 
-                // 4 Weeks per Month
-                for (let w = 1; w <= 4; w++) {
+                const daysInMonth = new Date(yearVal, monthNum, 0).getDate();
+                
+                // Calculate number of weeks (7-day chunks)
+                // 1-7, 8-14, 15-21, 22-28 (4 weeks)
+                // 29-31 (5th week if exists)
+                const numberOfWeeks = Math.ceil(daysInMonth / 7);
+
+                // Dynamic Weeks per Month
+                for (let w = 1; w <= numberOfWeeks; w++) {
                     const weekStartDay = (w - 1) * 7 + 1;
-                    const weekEndDay = w * 7;
+                    const weekEndDay = Math.min(w * 7, daysInMonth);
                     
                     const week: WeeklyGoal = {
                         id: `w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
@@ -168,13 +175,33 @@ export function generateTree(idSuffix: string, title: string, targetYear: number
                         children: []
                     };
 
-                    // 7 Days per Week
-                    for (let d = 1; d <= 7; d++) {
-                        const dayNum = (w - 1) * 7 + d;
+                    // Days per Week
+                    for (let d = weekStartDay; d <= weekEndDay; d++) {
+                        // We need day index within the week (1-7) or just strict date?
+                        // The UI shows "Day X". Let's use the actual date number or Day 1..7?
+                        // Previous code: title: `Day ${d}` (where d was 1-7). 
+                        // Now d is date (1-31). 
+                        // If we want Day 1..7 relative to week: (d - weekStartDay + 1)
+                        // If we want Day 1..31 relative to month: d
+                        // User said "match the calendar dates". "Day 29" is clear. "Day 1" of Week 5 is confusing if it's actually 29th.
+                        // Let's use "Day {date}" e.g. "Day 1", "Day 15". 
+                        // Or better, keep "Day X" as relative 1-7 for consistency with "Weekly" view?
+                        // But Week 5 only has 1-3 days. 
+                        // Let's use "Day {d}" where d is the day of the month? No, the previous UI was "Day 1..7".
+                        // Let's use the actual date for title: "Day {d}" -> "Day 1", "Day 2" ... "Day 31".
+                        // This aligns perfectly with "match calendar dates".
+                        // Wait, in the "Daily" view, it's shown under a selected Week.
+                        // If I click Week 1, I expect Day 1..7.
+                        // If I click Week 5, I expect Day 29..31.
+                        // So title "Day {d}" (1..31) is good.
+                        
+                        // However, the previous code used d=1..7 loop.
+                        // Let's stick to "Day {d}" (1..31) for clarity.
+                        
                         const day: DailyGoal = {
                             id: `d${d}-w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
-                            title: `Day ${d}`,
-                            dateDisplay: `${yearVal}.${String(monthNum).padStart(2, '0')}.${String(dayNum).padStart(2, '0')}`,
+                            title: `Day ${d}`, 
+                            dateDisplay: `${yearVal}.${String(monthNum).padStart(2, '0')}.${String(d).padStart(2, '0')}`,
                             progress: 0,
                             todos: [
                                 { id: `t1-${d}-${idSuffix}`, title: "핵심 과제 수행", completed: false },
