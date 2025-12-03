@@ -16,6 +16,9 @@ import PersonalStatement from "./pages/PersonalStatement";
 import Report from "./pages/Report";
 import Explorer from "./pages/Explorer";
 
+import Settings from "./pages/Settings";
+import TokenRecharge from "./pages/TokenRecharge";
+
 // Temporary placeholders until we create the files
 const PlaceholderAnalysis = () => <div>Analysis Page Placeholder</div>;
 const PlaceholderGoals = () => <div>Goals Page Placeholder</div>;
@@ -32,6 +35,8 @@ function Router() {
       <Route path="/personal-statement" component={PersonalStatement} />
       <Route path="/report" component={Report} />
       <Route path="/explorer" component={Explorer} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/recharge" component={TokenRecharge} />
       <Route component={NotFound} />
     </Switch>
   );

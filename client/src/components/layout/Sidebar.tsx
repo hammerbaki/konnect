@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, PieChart, Target, LogOut, User, FileText, Layers, Search } from "lucide-react";
+import { LayoutDashboard, PieChart, Target, LogOut, User, FileText, Layers, Search, Settings, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Sidebar() {
@@ -14,13 +14,18 @@ export function Sidebar() {
     { href: "/explorer", icon: Search, label: "직업 탐색" },
   ];
 
+  const bottomItems = [
+      { href: "/recharge", icon: Coins, label: "토큰 충전" },
+      { href: "/settings", icon: Settings, label: "설정" },
+  ];
+
   return (
     <div className="h-full flex flex-col bg-white border-r border-[#E5E8EB]">
       <div className="flex h-16 items-center px-6 mb-6">
         <img src="/logo.png" alt="Konnect Logo" className="h-8 w-auto" />
       </div>
 
-      <div className="flex-1 px-4">
+      <div className="flex-1 px-4 flex flex-col">
         <nav className="space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -42,9 +47,31 @@ export function Sidebar() {
             );
           })}
         </nav>
+        
+        <div className="mt-auto pt-4 border-t border-[#F2F4F6] space-y-2 mb-2">
+             {bottomItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.href;
+                return (
+                <Link key={item.href} href={item.href}>
+                    <a
+                    className={cn(
+                        "flex items-center gap-4 rounded-xl px-5 py-3 text-sm font-medium transition-all duration-200",
+                        isActive
+                        ? "bg-blue-50 text-[#3182F6]"
+                        : "text-[#8B95A1] hover:bg-gray-50 hover:text-[#4E5968]"
+                    )}
+                    >
+                    <Icon className={cn("h-4 w-4", isActive ? "text-[#3182F6]" : "text-[#B0B8C1]")} />
+                    {item.label}
+                    </a>
+                </Link>
+                );
+            })}
+        </div>
       </div>
 
-      <div className="mt-auto p-4">
+      <div className="p-4 pt-0">
         <Link href="/">
           <a className="flex w-full items-center gap-3 rounded-xl px-5 py-3 text-sm font-medium text-[#8B95A1] hover:bg-red-50 hover:text-[#E44E48] transition-colors">
             <LogOut className="h-4 w-4" />
