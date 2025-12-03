@@ -14,7 +14,6 @@ import KompassDetail from "./pages/KompassDetail";
 import Profile from "./pages/Profile";
 import PersonalStatement from "./pages/PersonalStatement";
 import Report from "./pages/Report";
-import Architecture from "./pages/Architecture";
 import Explorer from "./pages/Explorer";
 
 // Temporary placeholders until we create the files
@@ -32,7 +31,6 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/personal-statement" component={PersonalStatement} />
       <Route path="/report" component={Report} />
-      <Route path="/architecture" component={Architecture} />
       <Route path="/explorer" component={Explorer} />
       <Route component={NotFound} />
     </Switch>

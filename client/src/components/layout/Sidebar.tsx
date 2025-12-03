@@ -7,12 +7,11 @@ export function Sidebar() {
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "홈" },
-    { href: "/explorer", icon: Search, label: "직업 탐색" },
     { href: "/profile", icon: User, label: "내 프로필" },
     { href: "/analysis", icon: PieChart, label: "커리어 분석" },
     { href: "/goals", icon: Target, label: "목표 관리" },
     { href: "/personal-statement", icon: FileText, label: "자기소개서" },
-    { href: "/architecture", icon: Layers, label: "시스템 구조" },
+    { href: "/explorer", icon: Search, label: "직업 탐색" },
   ];
 
   return (
