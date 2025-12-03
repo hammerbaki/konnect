@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save, Building, Calendar, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle } from "lucide-react";
+import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save, Building, Calendar, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X } from "lucide-react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
