@@ -899,7 +899,7 @@ export default function Profile() {
                                                     );
                                                 })
                                                 : <span className="text-[#B0B8C1] py-1">근무 환경 선택하기</span>
-                                            }
+                                            )}
                                         </div>
                                         <span className="text-[#3182F6] text-sm font-bold ml-2 mt-1.5 shrink-0">선택 &gt;</span>
                                     </Button>
