@@ -206,16 +206,12 @@ export default function Analysis() {
                         </p>
                         
                         <div className="flex flex-col sm:flex-row gap-3">
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
-import { X } from "lucide-react";
-
-// ... inside the map loop ...
-<Drawer>
-    <DrawerTrigger asChild>
-        <Button variant="outline" className="flex-1 h-14 rounded-xl font-bold text-base border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6]">
-            상세 정보 보기
-        </Button>
-    </DrawerTrigger>
+                             <Drawer>
+                                <DrawerTrigger asChild>
+                                    <Button variant="outline" className="flex-1 h-14 rounded-xl font-bold text-base border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6]">
+                                        상세 정보 보기
+                                    </Button>
+                                </DrawerTrigger>
     <DrawerContent className="h-[95vh] rounded-t-[20px] flex flex-col">
         <div className="flex justify-between items-center p-6 pb-2 border-b border-[#F2F4F6]">
             <DrawerTitle className="text-xl font-bold text-[#191F28]">커리어 상세 정보</DrawerTitle>
