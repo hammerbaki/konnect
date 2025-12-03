@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, Filter, ArrowRight, Building2, Briefcase, X, DollarSign } from "lucide-react";
+import { Search, Filter, ArrowRight, Building2, Briefcase, X, DollarSign, GraduationCap, TrendingUp, Smile, Activity, Star } from "lucide-react";
 import { useState, useMemo } from "react";
 import {
   Select,
@@ -16,6 +16,8 @@ import rawData from "@/lib/careerData.json";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 
 // Type definition for the raw JSON data
 interface RawCareerItem {
@@ -32,57 +34,180 @@ interface ProcessedCareer {
     title: string;
     largeClass: string; // 대분류
     mediumClass: string; // 중분류
-    description: string;
+    description: string; // Summary
     tags: string[];
     salary?: string;
+    duties?: string;
+    education?: string;
+    satisfaction?: number;
+    prospect?: string;
+    abilities?: { name: string; score: number; desc: string }[];
+    personality?: { name: string; score: number; desc: string }[];
 }
 
 // Component for Detail Content
 function CareerDetailContent({ career }: { career: ProcessedCareer }) {
+    // Helper to format duties with bullet points
+    const formattedDuties = career.duties?.split('\n').filter(line => line.trim().length > 0).map(line => line.replace(/^-/, '').trim()) || [];
+
     return (
-        <div className="flex-1 overflow-y-auto p-5">
-            {/* Header Section */}
-            <div className="mb-6">
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <Badge variant="outline" className="bg-[#F9FAFB] text-[#4E5968] border-[#E5E8EB] font-normal">
-                        {career.largeClass}
-                    </Badge>
-                    <Badge variant="secondary" className="bg-blue-50 text-[#3182F6] hover:bg-blue-50 border-none">
-                        {career.mediumClass}
-                    </Badge>
+        <div className="flex-1 overflow-y-auto p-0">
+            <Tabs defaultValue="overview" className="w-full">
+                <div className="sticky top-0 z-10 bg-white border-b border-[#F2F4F6] px-5 pt-2">
+                    <TabsList className="w-full justify-start h-12 p-0 bg-transparent space-x-6">
+                        <TabsTrigger value="overview" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#3182F6] data-[state=active]:text-[#3182F6] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
+                            개요
+                        </TabsTrigger>
+                        <TabsTrigger value="duties" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#3182F6] data-[state=active]:text-[#3182F6] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
+                            하는 일
+                        </TabsTrigger>
+                        <TabsTrigger value="preparation" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#3182F6] data-[state=active]:text-[#3182F6] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
+                            준비 방법
+                        </TabsTrigger>
+                        <TabsTrigger value="fit" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#3182F6] data-[state=active]:text-[#3182F6] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
+                            적성 및 흥미
+                        </TabsTrigger>
+                    </TabsList>
                 </div>
-                <h2 className="text-[24px] font-bold text-[#191F28] leading-tight mb-3">{career.title}</h2>
-                <p className="text-[#4E5968] text-lg leading-relaxed">
-                    {career.description}
-                </p>
-            </div>
 
-            {/* Salary Info */}
-            <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F2F4F6] mb-6">
-                <p className="text-sm text-[#8B95A1] mb-1">평균 연봉</p>
-                <div className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-[#333D4B]" />
-                    <p className="text-xl font-bold text-[#191F28]">{career.salary}</p>
-                </div>
-            </div>
+                <div className="p-5 pb-10">
+                    <TabsContent value="overview" className="mt-0 space-y-6">
+                        {/* Header Info */}
+                        <div>
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                                <Badge variant="outline" className="bg-[#F9FAFB] text-[#4E5968] border-[#E5E8EB] font-normal">
+                                    {career.largeClass}
+                                </Badge>
+                                <Badge variant="secondary" className="bg-blue-50 text-[#3182F6] hover:bg-blue-50 border-none">
+                                    {career.mediumClass}
+                                </Badge>
+                            </div>
+                            <h2 className="text-[24px] font-bold text-[#191F28] leading-tight mb-3">{career.title}</h2>
+                            <p className="text-[#4E5968] text-lg leading-relaxed">
+                                {career.description}
+                            </p>
+                        </div>
 
-            {/* Tags */}
-            <div>
-                <h4 className="font-bold text-[#191F28] mb-3 flex items-center gap-2">
-                    <Briefcase className="h-4 w-4 text-[#3182F6]" /> 관련 직무 / 키워드
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                    {career.tags.length > 0 ? (
-                        career.tags.map((tag) => (
-                            <span key={tag} className="px-3 py-1.5 rounded-lg bg-[#F2F4F6] text-[#4E5968] text-sm font-medium">
-                                #{tag}
-                            </span>
-                        ))
-                    ) : (
-                        <p className="text-[#8B95A1] text-sm">등록된 키워드가 없습니다.</p>
-                    )}
+                        {/* Key Stats Grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F2F4F6]">
+                                <div className="flex items-center gap-2 text-[#8B95A1] mb-1.5">
+                                    <DollarSign className="h-4 w-4" />
+                                    <span className="text-xs font-bold">평균 연봉</span>
+                                </div>
+                                <p className="text-lg font-bold text-[#191F28]">{career.salary || "정보 없음"}</p>
+                            </div>
+                            <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F2F4F6]">
+                                <div className="flex items-center gap-2 text-[#8B95A1] mb-1.5">
+                                    <Smile className="h-4 w-4" />
+                                    <span className="text-xs font-bold">직업 만족도</span>
+                                </div>
+                                <div className="flex items-end gap-1">
+                                    <p className="text-lg font-bold text-[#191F28]">{career.satisfaction || 0}%</p>
+                                    {career.satisfaction && career.satisfaction > 70 && (
+                                        <span className="text-xs font-medium text-[#3182F6] mb-1">높음</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Prospect */}
+                        {career.prospect && (
+                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+                                <h4 className="text-[#3182F6] text-sm font-bold flex items-center gap-2 mb-2">
+                                    <TrendingUp className="h-4 w-4" /> 향후 전망
+                                </h4>
+                                <p className="text-[#4E5968] text-sm leading-relaxed">
+                                    {career.prospect}
+                                </p>
+                            </div>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="duties" className="mt-0">
+                        <div className="space-y-4">
+                            <h3 className="font-bold text-[#191F28] text-lg flex items-center gap-2">
+                                <Activity className="h-5 w-5 text-[#3182F6]" /> 주요 업무
+                            </h3>
+                            <div className="space-y-3">
+                                {formattedDuties.map((duty, i) => (
+                                    <div key={i} className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#E5E8EB] shadow-sm">
+                                        <div className="h-1.5 w-1.5 rounded-full bg-[#3182F6] shrink-0 mt-2" />
+                                        <p className="font-medium text-[#333D4B] text-base leading-snug">{duty}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="preparation" className="mt-0">
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="font-bold text-[#191F28] text-lg flex items-center gap-2 mb-4">
+                                    <GraduationCap className="h-5 w-5 text-[#3182F6]" /> 교육 및 자격
+                                </h3>
+                                <div className="prose prose-sm text-[#4E5968] bg-[#F9FAFB] p-5 rounded-xl border border-[#F2F4F6] leading-relaxed whitespace-pre-line">
+                                    {career.education || "관련 정보가 없습니다."}
+                                </div>
+                            </div>
+                            
+                            {career.tags.length > 0 && (
+                                <div>
+                                    <h4 className="font-bold text-[#191F28] mb-3">관련 키워드</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {career.tags.map((tag) => (
+                                            <span key={tag} className="px-3 py-1.5 rounded-lg bg-[#F2F4F6] text-[#4E5968] text-sm font-medium">
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="fit" className="mt-0 space-y-8">
+                        {career.abilities && career.abilities.length > 0 && (
+                            <div>
+                                <h3 className="font-bold text-[#191F28] text-lg flex items-center gap-2 mb-4">
+                                    <Star className="h-5 w-5 text-[#3182F6]" /> 핵심 역량
+                                </h3>
+                                <div className="space-y-4">
+                                    {career.abilities.map((abil, i) => (
+                                        <div key={i} className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm font-bold text-[#333D4B]">{abil.name}</span>
+                                                <span className="text-xs font-medium text-[#8B95A1]">{abil.score}점</span>
+                                            </div>
+                                            <Progress value={(abil.score / 5) * 100} className="h-2 bg-[#F2F4F6]" />
+                                            <p className="text-xs text-[#6B7684]">{abil.desc}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {career.personality && career.personality.length > 0 && (
+                            <div>
+                                <h3 className="font-bold text-[#191F28] text-lg flex items-center gap-2 mb-4">
+                                    <Smile className="h-5 w-5 text-[#3182F6]" /> 성격 및 가치관
+                                </h3>
+                                <div className="grid gap-3">
+                                    {career.personality.map((pers, i) => (
+                                        <div key={i} className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F2F4F6]">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="font-bold text-[#333D4B]">{pers.name}</span>
+                                                <span className="text-xs font-bold text-[#3182F6] bg-blue-50 px-2 py-0.5 rounded-full">{pers.score}점</span>
+                                            </div>
+                                            <p className="text-sm text-[#6B7684] leading-snug">{pers.desc}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </TabsContent>
                 </div>
-            </div>
+            </Tabs>
         </div>
     );
 }
@@ -154,21 +279,78 @@ export default function Explorer() {
             let mediumClass = "기타";
             let tags: string[] = [];
             let salary = "정보 없음";
+            let duties = "";
+            let education = "";
+            let satisfaction = 0;
+            let prospect = "";
+            let abilities: { name: string; score: number; desc: string }[] = [];
+            let personality: { name: string; score: number; desc: string }[] = [];
             
             try {
                 const detail = JSON.parse(item.detail_data);
+                
+                // Tab 1: Summary
                 const jobSum = detail?.tabs?.['1']?.data?.jobSum;
-                const salaryData = detail?.tabs?.['2']?.data?.wageInfo?.avg_pay;
-
                 if (jobSum) {
                     if (jobSum.jobLrclNm) largeClass = jobSum.jobLrclNm;
                     if (jobSum.jobMdclNm) mediumClass = jobSum.jobMdclNm;
-                    
                     if (jobSum.jobSmclNm && jobSum.jobSmclNm !== item.name) tags.push(jobSum.jobSmclNm);
                 }
-                
-                if (salaryData) {
-                   salary = `${Math.round(salaryData)}만원`;
+
+                // Tab 2: Doing (Duties)
+                const jobsDo = detail?.tabs?.['2']?.data?.jobsDo;
+                if (jobsDo && jobsDo.execJob) {
+                    duties = jobsDo.execJob;
+                }
+
+                // Tab 3: Education/Training
+                const eduData = detail?.tabs?.['3']?.data?.way;
+                if (eduData && eduData.technKnow) {
+                    education = eduData.technKnow;
+                }
+
+                // Tab 4: Salary & Prospect
+                const salData = detail?.tabs?.['4']?.data?.salProspect;
+                if (salData) {
+                    if (salData.sal) {
+                        // Extract average salary: "평균(50%) 13000만원" -> "1억 3,000만원"
+                        // Simple regex to find the number after 50%
+                        const match = salData.sal.match(/평균\(50%\)\s*(\d+)/);
+                        if (match && match[1]) {
+                            const amount = parseInt(match[1]);
+                            salary = amount >= 10000 
+                                ? `${(amount/10000).toFixed(1)}억원` 
+                                : `${amount.toLocaleString()}만원`;
+                        } else {
+                            salary = salData.sal;
+                        }
+                    }
+                    if (salData.jobSatis) {
+                        satisfaction = parseFloat(salData.jobSatis);
+                    }
+                    if (salData.jobProspect) {
+                        prospect = salData.jobProspect;
+                    }
+                }
+
+                // Tab 5: Abilities
+                const abilData = detail?.tabs?.['5']?.data?.ablKnwEnv;
+                if (abilData && Array.isArray(abilData.jobAbilCmpr)) {
+                    abilities = abilData.jobAbilCmpr.slice(0, 5).map((a: any) => ({
+                        name: a.jobAblNmCmpr,
+                        score: parseFloat(a.jobAblStatusCmpr),
+                        desc: a.jobAblContCmpr
+                    }));
+                }
+
+                // Tab 6: Personality
+                const persData = detail?.tabs?.['6']?.data?.chrIntrVals;
+                if (persData && Array.isArray(persData.jobChrCmpr)) {
+                    personality = persData.jobChrCmpr.slice(0, 3).map((p: any) => ({
+                        name: p.jobChrNmCmpr,
+                        score: parseFloat(p.jobChrStatusCmpr),
+                        desc: p.jobChrContCmpr
+                    }));
                 }
 
             } catch (e) {
@@ -188,7 +370,13 @@ export default function Explorer() {
                 mediumClass,
                 description: item.description,
                 tags: tags.slice(0, 3),
-                salary
+                salary,
+                duties,
+                education,
+                satisfaction,
+                prospect,
+                abilities,
+                personality
             };
         });
 
