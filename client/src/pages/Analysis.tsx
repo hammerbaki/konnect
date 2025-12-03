@@ -362,7 +362,7 @@ export default function Analysis() {
              <h3 className="text-xl font-bold text-[#191F28] flex items-center gap-2">
                 <Brain className="h-5 w-5 text-[#3182F6]" /> AI 추천 커리어
              </h3>
-             <Button onClick={handleAnalyze} variant="ghost" className="text-[#8B95A1] hover:text-[#3182F6]">
+             <Button onClick={handleAnalyze} variant="outline" className="border-[#3182F6] text-[#3182F6] hover:bg-blue-50 font-bold">
                 <RefreshCcw className="h-4 w-4 mr-1" /> 다시 분석하기
              </Button>
         </div>
