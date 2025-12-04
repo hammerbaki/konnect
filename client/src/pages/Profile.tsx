@@ -438,12 +438,7 @@ export default function Profile() {
     univ_skillsToDevelop: [] as string[], // Selection of skills
 
     // General (Worker) Specific
-    gen_workValues: ["성장 가능성", "워라밸"] as string[],
-    gen_experienceYears: 5,
-    gen_salary: 6000,
-    gen_salaryNoPreference: false,
-    gen_environmentPreferences: [] as string[],
-    gen_environmentNoPreference: false,
+    gen_currentStatus: "", // employed, unemployed, freelance, student
     gen_workExperience: [
         {
             id: 1,
@@ -454,6 +449,17 @@ export default function Profile() {
             description: "- B2B SaaS 제품 기획 및 런칭 주도\n- 3분기 연속 매출 목표 120% 달성"
         }
     ] as any[],
+    gen_skills: [] as string[], // 보유 스킬
+    gen_prevJobSatisfaction: "", // 1-5
+    gen_reasonForChange: "", // 이직/구직 사유 (복수 선택 가능하지만 simple string for now or array)
+    gen_desiredIndustry: "", // 희망 산업
+    gen_desiredRole: "", // 희망 직무
+    gen_workStyle: "", // 선호하는 업무 스타일
+    gen_workValues: ["성장 가능성", "워라밸"] as string[],
+    gen_salary: 6000,
+    gen_salaryNoPreference: false,
+    gen_environmentPreferences: [] as string[],
+    gen_environmentNoPreference: false,
     gen_concerns: "", // 커리어 고민
   });
 
@@ -1561,40 +1567,183 @@ export default function Profile() {
         default:
             return (
                 <div className="space-y-6 animate-in fade-in">
+                    {/* Current Status & Satisfaction */}
                     <Card className="toss-card">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-lg">
-                                <Briefcase className="h-5 w-5 text-[#3182F6]" /> 경력 및 직무 정보
+                                <Briefcase className="h-5 w-5 text-[#3182F6]" /> 현재 상태 및 이직/구직 의도
+                            </CardTitle>
+                            <CardDescription>현재 상황과 새로운 기회를 찾는 이유를 알려주세요.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>현재 구직 상태</Label>
+                                <Select 
+                                    value={profileData.gen_currentStatus} 
+                                    onValueChange={(val) => setProfileData({...profileData, gen_currentStatus: val})}
+                                >
+                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                        <SelectValue placeholder="현재 상태 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="employed">재직 중 (이직 준비)</SelectItem>
+                                        <SelectItem value="unemployed">구직 중 (미취업/퇴사)</SelectItem>
+                                        <SelectItem value="freelance">프리랜서 / 계약직</SelectItem>
+                                        <SelectItem value="student">취업 준비생 (졸업 예정/유예)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>이전(또는 현재) 직무 만족도</Label>
+                                <Select 
+                                    value={profileData.gen_prevJobSatisfaction} 
+                                    onValueChange={(val) => setProfileData({...profileData, gen_prevJobSatisfaction: val})}
+                                >
+                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                        <SelectValue placeholder="만족도 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="5">매우 만족 (5점)</SelectItem>
+                                        <SelectItem value="4">만족하는 편 (4점)</SelectItem>
+                                        <SelectItem value="3">보통 (3점)</SelectItem>
+                                        <SelectItem value="2">불만족 (2점)</SelectItem>
+                                        <SelectItem value="1">매우 불만족 (1점)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>새로운 일을 찾는 주된 이유</Label>
+                                <Select 
+                                    value={profileData.gen_reasonForChange} 
+                                    onValueChange={(val) => setProfileData({...profileData, gen_reasonForChange: val})}
+                                >
+                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                        <SelectValue placeholder="가장 큰 이유 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="growth">성장 기회 부족 (더 배우고 싶어서)</SelectItem>
+                                        <SelectItem value="compensation">연봉 및 보상 불만족</SelectItem>
+                                        <SelectItem value="culture">조직 문화 및 인간관계</SelectItem>
+                                        <SelectItem value="aptitude">적성에 맞지 않는 업무</SelectItem>
+                                        <SelectItem value="stability">고용 불안정</SelectItem>
+                                        <SelectItem value="burnout">업무 과다 및 번아웃</SelectItem>
+                                        <SelectItem value="new_challenge">새로운 분야 도전</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Skills & Experience */}
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <BrainCircuit className="h-5 w-5 text-[#00BFA5]" /> 보유 역량 및 경력
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                              {/* Work Experience List */}
-                             {profileData.gen_workExperience.map((exp) => (
-                                <div key={exp.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-3 relative group">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h4 className="font-bold text-[#191F28] text-lg">{exp.role}</h4>
-                                            <p className="text-[#4E5968] font-medium">{exp.company}</p>
+                             <div className="space-y-3 mb-6">
+                                <Label>주요 경력 사항</Label>
+                                {profileData.gen_workExperience.map((exp) => (
+                                    <div key={exp.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-3 relative group">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className="font-bold text-[#191F28] text-lg">{exp.role}</h4>
+                                                <p className="text-[#4E5968] font-medium">{exp.company}</p>
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50">
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
-                                        <CalendarIcon className="h-4 w-4" />
-                                        <span>{format(exp.startDate, 'yyyy.MM')} - {exp.endDate ? format(exp.endDate, 'yyyy.MM') : '현재'}</span>
-                                    </div>
+                                        
+                                        <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
+                                            <CalendarIcon className="h-4 w-4" />
+                                            <span>{format(exp.startDate, 'yyyy.MM')} - {exp.endDate ? format(exp.endDate, 'yyyy.MM') : '현재'}</span>
+                                        </div>
 
-                                    <p className="text-sm text-[#4E5968] whitespace-pre-line pl-3 border-l-2 border-[#E5E8EB]">
-                                        {exp.description}
-                                    </p>
+                                        <p className="text-sm text-[#4E5968] whitespace-pre-line pl-3 border-l-2 border-[#E5E8EB]">
+                                            {exp.description}
+                                        </p>
+                                    </div>
+                                ))}
+
+                                <Button variant="outline" className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold">
+                                    <Plus className="h-5 w-5 mr-2" /> 경력 추가하기
+                                </Button>
+                            </div>
+
+                            <div className="space-y-3">
+                                <Label>보유 핵심 스킬 (Transferable Skills)</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {["프로젝트 관리", "데이터 분석", "커뮤니케이션", "영업/협상", "마케팅", "디자인", "개발/코딩", "문서 작성", "외국어"].map((skill) => (
+                                        <div key={skill} className="flex items-center space-x-2">
+                                            <Checkbox 
+                                                id={`skill-${skill}`} 
+                                                checked={profileData.gen_skills.includes(skill)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setProfileData({...profileData, gen_skills: [...profileData.gen_skills, skill]});
+                                                    } else {
+                                                        setProfileData({...profileData, gen_skills: profileData.gen_skills.filter(s => s !== skill)});
+                                                    }
+                                                }}
+                                            />
+                                            <label htmlFor={`skill-${skill}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                {skill}
+                                            </label>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                            <Button variant="outline" className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold">
-                                <Plus className="h-5 w-5 mr-2" /> 경력 추가하기
-                            </Button>
+                    {/* Desired Direction */}
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <TrendingUp className="h-5 w-5 text-[#FFB300]" /> 희망 커리어 방향
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>희망 산업 분야</Label>
+                                <Input 
+                                    placeholder="예: IT/플랫폼, 금융, 헬스케어" 
+                                    value={profileData.gen_desiredIndustry}
+                                    onChange={(e) => setProfileData({...profileData, gen_desiredIndustry: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>희망 직무</Label>
+                                <Input 
+                                    placeholder="예: 서비스 기획자, 마케터" 
+                                    value={profileData.gen_desiredRole}
+                                    onChange={(e) => setProfileData({...profileData, gen_desiredRole: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>선호하는 업무 스타일</Label>
+                                <Select 
+                                    value={profileData.gen_workStyle} 
+                                    onValueChange={(val) => setProfileData({...profileData, gen_workStyle: val})}
+                                >
+                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                        <SelectValue placeholder="업무 스타일 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="independent">독립적으로 일하는 것 선호</SelectItem>
+                                        <SelectItem value="team">팀과 협업하며 일하는 것 선호</SelectItem>
+                                        <SelectItem value="leadership">리더십을 발휘하는 역할 선호</SelectItem>
+                                        <SelectItem value="support">안정적으로 지원하는 역할 선호</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </CardContent>
                     </Card>
 
@@ -1709,7 +1858,7 @@ export default function Profile() {
                                                     ? `${profileData.gen_environmentPreferences.length}개 선택됨` 
                                                     : "근무 환경 선택"}
                                             </span>
-                                            <span className="text-[#8B95A1] text-sm font-normal">선택</span>
+                                            <span className="text-[#8B95A1] text-2xl font-light leading-none mb-1">›</span>
                                         </Button>
                                     }
                                     title="선호 근무 환경"
