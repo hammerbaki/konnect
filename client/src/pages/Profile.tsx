@@ -1,11 +1,11 @@
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Mail, MapPin, Briefcase, School, Save, Building, Calendar as CalendarIcon, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X, TrendingUp, DollarSign, Smile, Shield, BookOpen, GraduationCap, PenTool, Star, Plus, Sparkles, CheckCircle2 } from "lucide-react";
+import { User, Mail, MapPin, Briefcase, School, Save, Building, Calendar as CalendarIcon, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X, TrendingUp, DollarSign, Smile, Shield, BookOpen, GraduationCap, PenTool, Star, Plus, Sparkles, CheckCircle2, Edit2 } from "lucide-react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -330,6 +330,8 @@ export default function Profile() {
     type: "general" as "elementary" | "middle" | "high" | "university" | "general",
     name: "John Doe",
     role: "Product Manager",
+    email: "john.doe@example.com",
+    location: "Seoul, South Korea",
     bio: "데이터 기반의 의사결정을 선호하는 PM입니다.",
     gender: "male" as "male" | "female" | undefined,
     birthDate: new Date(1995, 5, 15) as Date | null,
@@ -891,28 +893,95 @@ export default function Profile() {
           <div className="space-y-6">
             <Card className="toss-card">
               <CardContent className="pt-8 flex flex-col items-center text-center">
-                <div className="relative mb-4">
-                  <div className="h-24 w-24 rounded-full bg-[#F2F4F6] flex items-center justify-center text-2xl font-bold text-[#3182F6] border-4 border-white shadow-lg">
+                <div className="relative mb-4 group cursor-pointer">
+                  <div className="h-24 w-24 rounded-full bg-[#F2F4F6] flex items-center justify-center text-2xl font-bold text-[#3182F6] border-4 border-white shadow-lg group-hover:scale-105 transition-transform">
                     JD
                   </div>
-                  <div className="absolute bottom-0 right-0 h-6 w-6 bg-[#00BFA5] rounded-full border-2 border-white" />
+                  <div className="absolute bottom-0 right-0 h-8 w-8 bg-white rounded-full border shadow-sm flex items-center justify-center">
+                      <Edit2 className="h-4 w-4 text-[#8B95A1]" />
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-[#191F28]">{profileData.name}</h3>
-                <p className="text-[#8B95A1] font-medium">{profileData.role}</p>
                 
-                <div className="mt-6 w-full space-y-3 text-left">
-                  <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB]">
-                    <Mail className="h-4 w-4 text-[#B0B8C1]" />
-                    john.doe@example.com
+                {/* Editable Name & Role */}
+                <div className="w-full space-y-2 mb-6">
+                    <Input 
+                        value={profileData.name}
+                        onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                        className="text-center text-xl font-bold border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 hover:bg-[#F2F4F6] rounded-lg transition-colors"
+                    />
+                    <Input 
+                        value={profileData.role}
+                        onChange={(e) => setProfileData({...profileData, role: e.target.value})}
+                        className="text-center text-[#8B95A1] font-medium border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 hover:bg-[#F2F4F6] rounded-lg transition-colors"
+                        placeholder="직책 또는 한 줄 소개 입력"
+                    />
+                </div>
+                
+                <div className="mt-2 w-full space-y-3 text-left">
+                  <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB] group focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                    <Mail className="h-4 w-4 text-[#B0B8C1] shrink-0" />
+                    <Input 
+                        value={profileData.email}
+                        onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                        className="border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 text-sm text-[#4E5968]"
+                    />
                   </div>
-                  <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB]">
-                    <MapPin className="h-4 w-4 text-[#B0B8C1]" />
-                    Seoul, South Korea
+                  <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB] group focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                    <MapPin className="h-4 w-4 text-[#B0B8C1] shrink-0" />
+                    <Input 
+                        value={profileData.location}
+                        onChange={(e) => setProfileData({...profileData, location: e.target.value})}
+                        className="border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 text-sm text-[#4E5968]"
+                    />
                   </div>
-                  <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB]">
-                    <User className="h-4 w-4 text-[#B0B8C1]" />
-                    {profileData.gender === 'male' ? '남성' : profileData.gender === 'female' ? '여성' : '성별 미입력'} / {profileData.birthDate ? format(profileData.birthDate, 'yyyy.MM.dd') : '생년월일 미입력'}
-                  </div>
+                  
+                  {/* Gender / Birthdate - Clickable Trigger */}
+                  <ResponsiveModal
+                        trigger={
+                            <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB] hover:bg-[#E8F3FF] hover:text-[#3182F6] cursor-pointer transition-colors">
+                                <User className="h-4 w-4 text-[#B0B8C1]" />
+                                <span>
+                                    {profileData.gender === 'male' ? '남성' : profileData.gender === 'female' ? '여성' : '성별'} 
+                                    {' / '} 
+                                    {profileData.birthDate ? format(profileData.birthDate, 'yyyy.MM.dd') : '생년월일'}
+                                </span>
+                            </div>
+                        }
+                        title="기본 정보 수정"
+                    >
+                        <div className="space-y-6 p-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs text-[#8B95A1]">성별</Label>
+                                <div className="flex gap-2">
+                                    <Button 
+                                        variant="outline" 
+                                        className={`flex-1 h-12 rounded-xl border-[#E5E8EB] ${profileData.gender === 'male' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
+                                        onClick={() => setProfileData({...profileData, gender: 'male'})}
+                                    >
+                                        남성
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        className={`flex-1 h-12 rounded-xl border-[#E5E8EB] ${profileData.gender === 'female' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
+                                        onClick={() => setProfileData({...profileData, gender: 'female'})}
+                                    >
+                                        여성
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-xs text-[#8B95A1]">생년월일</Label>
+                                <ResponsiveDatePickerContent 
+                                    value={profileData.birthDate} 
+                                    onChange={(date) => setProfileData(prev => ({ ...prev, birthDate: date }))} 
+                                />
+                            </div>
+                            <ResponsiveClose asChild>
+                                <Button className="w-full rounded-xl h-12 text-lg font-bold bg-[#3182F6]">완료</Button>
+                            </ResponsiveClose>
+                        </div>
+                    </ResponsiveModal>
                 </div>
 
                 <Separator className="my-6 bg-[#E5E8EB]" />
@@ -922,59 +991,11 @@ export default function Profile() {
                     <Textarea 
                         value={profileData.bio}
                         onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
-                        className="bg-[#F9FAFB] border-none rounded-xl min-h-[80px] text-sm resize-none"
+                        className="bg-[#F9FAFB] border-none rounded-xl min-h-[80px] text-sm resize-none focus-visible:ring-2 focus-visible:ring-blue-100 transition-all"
                     />
                 </div>
               </CardContent>
             </Card>
-
-             <Card className="toss-card">
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-bold text-[#191F28]">기본 정보 수정</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <div className="space-y-2">
-                        <Label className="text-xs text-[#8B95A1]">성별</Label>
-                        <div className="flex gap-2">
-                            <Button 
-                                variant="outline" 
-                                className={`flex-1 h-10 rounded-xl border-[#E5E8EB] ${profileData.gender === 'male' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
-                                onClick={() => setProfileData({...profileData, gender: 'male'})}
-                            >
-                                남성
-                            </Button>
-                            <Button 
-                                variant="outline" 
-                                className={`flex-1 h-10 rounded-xl border-[#E5E8EB] ${profileData.gender === 'female' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
-                                onClick={() => setProfileData({...profileData, gender: 'female'})}
-                            >
-                                여성
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label className="text-xs text-[#8B95A1]">생년월일</Label>
-                        <ResponsiveModal 
-                            trigger={
-                                <Button 
-                                    variant="outline" 
-                                    className="w-full justify-start text-left font-normal h-12 rounded-xl border-[#E5E8EB] hover:bg-[#F9FAFB]"
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4 text-[#B0B8C1]" />
-                                    {profileData.birthDate ? format(profileData.birthDate, "yyyy년 MM월 dd일", { locale: ko }) : <span>날짜 선택</span>}
-                                </Button>
-                            }
-                            title="생년월일 선택"
-                        >
-                            <ResponsiveDatePickerContent 
-                                value={profileData.birthDate} 
-                                onChange={(date) => setProfileData(prev => ({ ...prev, birthDate: date }))} 
-                            />
-                        </ResponsiveModal>
-                    </div>
-                </CardContent>
-             </Card>
           </div>
 
           {/* Main Form Area - Dynamic based on Type */}
