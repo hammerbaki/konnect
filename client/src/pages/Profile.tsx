@@ -401,6 +401,31 @@ export default function Profile() {
     univ_certificates: "",
     univ_concerns: "", // 진로/취업 고민
 
+    // New Fields for University Profile (Research-based)
+    // 1. Well-being, Stress & Workload
+    univ_academicStress: "", // 1-5
+    univ_financialStress: "", // 1-5
+    univ_sleepHours: "", // number
+    univ_mentalWellbeing: "", // Thriving / Managing / Struggling / In crisis
+    univ_workloadWorkHours: "", // Hours of paid work per week
+    univ_workloadStudyHours: "", // Hours of study per week
+
+    // 2. Sense of Belonging & Inclusion
+    univ_belongingScore: "", // 1-5
+    univ_hasSupportPerson: false, // Yes/No
+    univ_facultyRespect: "", // 1-5
+    univ_classComfort: "", // 1-5
+
+    // 3. Use of Support Services & Barriers
+    univ_servicesUsed: [] as string[],
+    univ_serviceBarriers: "", // barrier selection
+
+    // 4. Career Readiness & Graduate Outcomes
+    univ_careerReadiness: "", // 1-5 (Preparedness)
+    univ_careerGoalClear: "", // 1-5
+    univ_internshipStatus: "", // None / Planning / In Progress / Completed
+    univ_skillsToDevelop: [] as string[], // Selection of skills
+
     // General (Worker) Specific
     gen_workValues: ["성장 가능성", "워라밸"] as string[],
     gen_experienceYears: 5,
@@ -1065,19 +1090,271 @@ export default function Profile() {
                         </CardContent>
                     </Card>
 
-                     <Card className="toss-card">
+                    <Card className="toss-card">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-lg">
-                                <Briefcase className="h-5 w-5 text-[#00BFA5]" /> 인턴 및 실무 경험
+                                <Briefcase className="h-5 w-5 text-[#00BFA5]" /> 경력 준비 및 역량
                             </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-center py-8 text-[#8B95A1] bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E8EB]">
-                                <p>아직 등록된 인턴십 경험이 없습니다.</p>
-                                <Button variant="link" className="text-[#3182F6] font-bold mt-2">
-                                    + 경험 추가하기
-                                </Button>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <Label>취업 준비도 (자신감)</Label>
+                                <Select 
+                                    value={profileData.univ_careerReadiness} 
+                                    onValueChange={(val) => setProfileData({...profileData, univ_careerReadiness: val})}
+                                >
+                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                        <SelectValue placeholder="선택해주세요" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="5">매우 준비됨 (자신있음)</SelectItem>
+                                        <SelectItem value="4">어느 정도 준비됨</SelectItem>
+                                        <SelectItem value="3">보통</SelectItem>
+                                        <SelectItem value="2">아직 부족함</SelectItem>
+                                        <SelectItem value="1">전혀 준비되지 않음</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
+
+                            <div className="space-y-2">
+                                <Label>진로 목표 명확성</Label>
+                                <Select 
+                                    value={profileData.univ_careerGoalClear} 
+                                    onValueChange={(val) => setProfileData({...profileData, univ_careerGoalClear: val})}
+                                >
+                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                        <SelectValue placeholder="선택해주세요" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="5">매우 명확함</SelectItem>
+                                        <SelectItem value="4">비교적 명확함</SelectItem>
+                                        <SelectItem value="3">고민 중임</SelectItem>
+                                        <SelectItem value="2">잘 모르겠음</SelectItem>
+                                        <SelectItem value="1">전혀 없음</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>인턴십/현장실습 경험</Label>
+                                <Select 
+                                    value={profileData.univ_internshipStatus} 
+                                    onValueChange={(val) => setProfileData({...profileData, univ_internshipStatus: val})}
+                                >
+                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                        <SelectValue placeholder="경험 여부 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="completed">완료함 (경험 있음)</SelectItem>
+                                        <SelectItem value="in_progress">현재 진행 중</SelectItem>
+                                        <SelectItem value="planning">계획 중임</SelectItem>
+                                        <SelectItem value="none">없음 / 계획 없음</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-3">
+                                <Label>개발하고 싶은 핵심 역량 (중복 선택)</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {["의사소통", "리더십", "팀워크", "문제해결", "데이터분석", "외국어", "IT/SW역량", "직무전문성"].map((skill) => (
+                                        <div key={skill} className="flex items-center space-x-2">
+                                            <Checkbox 
+                                                id={`skill-${skill}`} 
+                                                checked={profileData.univ_skillsToDevelop.includes(skill)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setProfileData({...profileData, univ_skillsToDevelop: [...profileData.univ_skillsToDevelop, skill]});
+                                                    } else {
+                                                        setProfileData({...profileData, univ_skillsToDevelop: profileData.univ_skillsToDevelop.filter(s => s !== skill)});
+                                                    }
+                                                }}
+                                            />
+                                            <label htmlFor={`skill-${skill}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                {skill}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <Smile className="h-5 w-5 text-[#FFB300]" /> 웰빙 & 학교 생활 만족도
+                            </CardTitle>
+                            <CardDescription>학생의 건강한 학교 생활을 위해 익명성이 보장되는 설문입니다.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-4">
+                                <h4 className="font-bold text-sm text-[#4E5968]">스트레스 및 건강</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>학업 스트레스</Label>
+                                        <Select 
+                                            value={profileData.univ_academicStress} 
+                                            onValueChange={(val) => setProfileData({...profileData, univ_academicStress: val})}
+                                        >
+                                            <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                                <SelectValue placeholder="1 (낮음) - 5 (높음)" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {[1, 2, 3, 4, 5].map(n => <SelectItem key={n} value={n.toString()}>{n}점 ({n===1?'낮음':n===5?'높음':''})</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>경제적 부담감</Label>
+                                        <Select 
+                                            value={profileData.univ_financialStress} 
+                                            onValueChange={(val) => setProfileData({...profileData, univ_financialStress: val})}
+                                        >
+                                            <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                                <SelectValue placeholder="1 (낮음) - 5 (높음)" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {[1, 2, 3, 4, 5].map(n => <SelectItem key={n} value={n.toString()}>{n}점 ({n===1?'낮음':n===5?'높음':''})</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>평균 수면 시간 (일)</Label>
+                                        <Input 
+                                            type="number"
+                                            placeholder="시간 입력 (예: 6)" 
+                                            value={profileData.univ_sleepHours}
+                                            onChange={(e) => setProfileData({...profileData, univ_sleepHours: e.target.value})}
+                                            className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>전반적인 마음 건강 상태</Label>
+                                        <Select 
+                                            value={profileData.univ_mentalWellbeing} 
+                                            onValueChange={(val) => setProfileData({...profileData, univ_mentalWellbeing: val})}
+                                        >
+                                            <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                                <SelectValue placeholder="상태 선택" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Thriving">매우 좋음 (Thriving)</SelectItem>
+                                                <SelectItem value="Managing">보통/관리 중 (Managing)</SelectItem>
+                                                <SelectItem value="Struggling">힘듦 (Struggling)</SelectItem>
+                                                <SelectItem value="In crisis">위기/도움 필요 (In crisis)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-4">
+                                <h4 className="font-bold text-sm text-[#4E5968]">생활 균형 (주간 평균 시간)</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>아르바이트/근로</Label>
+                                        <div className="relative">
+                                            <Input 
+                                                type="number"
+                                                placeholder="0" 
+                                                value={profileData.univ_workloadWorkHours}
+                                                onChange={(e) => setProfileData({...profileData, univ_workloadWorkHours: e.target.value})}
+                                                className="h-12 rounded-xl bg-[#F2F4F6] border-none pr-10"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#8B95A1]">시간</span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>학업/공부</Label>
+                                        <div className="relative">
+                                            <Input 
+                                                type="number"
+                                                placeholder="0" 
+                                                value={profileData.univ_workloadStudyHours}
+                                                onChange={(e) => setProfileData({...profileData, univ_workloadStudyHours: e.target.value})}
+                                                className="h-12 rounded-xl bg-[#F2F4F6] border-none pr-10"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#8B95A1]">시간</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-4">
+                                <h4 className="font-bold text-sm text-[#4E5968]">학교 소속감 및 관계</h4>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label>학교에 대한 소속감</Label>
+                                        <Select 
+                                            value={profileData.univ_belongingScore} 
+                                            onValueChange={(val) => setProfileData({...profileData, univ_belongingScore: val})}
+                                        >
+                                            <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                                <SelectValue placeholder="1 (전혀 없음) - 5 (매우 높음)" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {[1, 2, 3, 4, 5].map(n => <SelectItem key={n} value={n.toString()}>{n}점</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    
+                                    <div className="flex items-center justify-between py-2">
+                                        <Label className="flex-1">캠퍼스 내에 마음을 터놓을 수 있는 친구나 멘토가 있나요?</Label>
+                                        <div className="flex gap-4">
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox 
+                                                    id="support-yes" 
+                                                    checked={profileData.univ_hasSupportPerson}
+                                                    onCheckedChange={(c) => setProfileData({...profileData, univ_hasSupportPerson: true})}
+                                                />
+                                                <label htmlFor="support-yes">네</label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox 
+                                                    id="support-no" 
+                                                    checked={!profileData.univ_hasSupportPerson}
+                                                    onCheckedChange={(c) => setProfileData({...profileData, univ_hasSupportPerson: false})}
+                                                />
+                                                <label htmlFor="support-no">아니오</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <Separator />
+
+                            <div className="space-y-4">
+                                <h4 className="font-bold text-sm text-[#4E5968]">지원 서비스 활용</h4>
+                                <div className="space-y-3">
+                                    <Label>이번 학기 이용한 교내 서비스 (중복 선택)</Label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {["학업상담/튜터링", "심리상담센터", "진로/취업센터", "글쓰기센터", "장학/복지팀", "보건실", "도서관 프로그램"].map((service) => (
+                                            <div key={service} className="flex items-center space-x-2">
+                                                <Checkbox 
+                                                    id={`service-${service}`} 
+                                                    checked={profileData.univ_servicesUsed.includes(service)}
+                                                    onCheckedChange={(checked) => {
+                                                        if (checked) {
+                                                            setProfileData({...profileData, univ_servicesUsed: [...profileData.univ_servicesUsed, service]});
+                                                        } else {
+                                                            setProfileData({...profileData, univ_servicesUsed: profileData.univ_servicesUsed.filter(s => s !== service)});
+                                                        }
+                                                    }}
+                                                />
+                                                <label htmlFor={`service-${service}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                    {service}
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
                         </CardContent>
                     </Card>
 

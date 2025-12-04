@@ -1,0 +1,145 @@
+4. Well-being, Stress & Workload
+
+Recent research and national reports emphasize mental health and broader student well-being as core to student success. Surveys and dashboards often track academic, financial, physical, and psychological well-being as separate dimensions. 
+Student Minds Hub
++4
+unistudentwellbeing.edu.au
++4
+ScienceDirect
++4
+
+Dashboard views
+
+% of students above certain thresholds for:
+
+Academic stress / burnout
+
+Financial stress
+
+Sleep & physical health
+
+Psychological distress (e.g. anxiety, depression symptoms)
+
+Workload vs capacity:
+
+“Hours of paid work per week” vs “hours of study”
+
+% who report workload is “too heavy”
+
+Change over time:
+
+Well-being scores at start, mid-semester, end
+
+Survey items
+
+“In the past 2 weeks, how often have you felt overwhelmed by your academic workload?” (1–5)
+
+“How often do you feel you can balance study, work, and personal life?” (1–5)
+
+“How concerned are you about your financial situation?” (1–5)
+
+“On average, how many hours of sleep do you get per night?”
+
+“How would you rate your overall mental wellbeing?” (Thriving / Managing / Struggling / In crisis)
+
+You don’t need clinical questions – keep it screening-level, then show aggregate data only.
+
+5. Sense of Belonging, Inclusion & Campus Climate
+
+Many universities measure sense of belonging, social integration, and perceived inclusion as key drivers of retention and success. 
+York University
++1
+
+Dashboard views
+
+Sense of belonging score by:
+
+Year level, major, international vs domestic, gender, etc.
+
+% of students who feel respected / included
+
+% who experience discrimination or harassment (anonymous, aggregated)
+
+Survey items
+
+“I feel like I belong at this university.” (1–5)
+
+“I have at least one close friend / support person on campus.” (Yes/No)
+
+“Faculty and staff treat me with respect.” (1–5)
+
+“I feel comfortable participating in class discussions.” (1–5)
+
+“Have you experienced discrimination or harassment at the university this year?” (Yes/No + optional categories)
+
+6. Use of Support Services & Barriers
+
+Student success dashboards increasingly track use (and non-use) of support services to identify gaps. 
+mywtcs.wtcsystem.edu
++1
+
+Dashboard views
+
+Awareness and usage of:
+
+Academic advising
+
+Counseling / mental health services
+
+Writing center, tutoring, language support
+
+Financial aid office, career center
+
+Main barriers students report: time, stigma, not knowing they exist, etc.
+
+Survey items
+
+“Which of the following services have you used this semester?” (multi-select)
+
+“How helpful was each service you used?” (1–5 per service)
+
+“If you did not use any services, why not?” (I didn’t know about them / No time / Don’t think they’d help / Hard to access / Other)
+
+“How easy is it to get help when you need it?” (1–5)
+
+7. Career Readiness & Graduate Outcomes (Perception-level)
+
+Official Graduate Outcomes Surveys typically collect employment, further study, salary, and skills utilization 4–15 months after graduation. 
+universitiesuk.ac.uk
++4
+QILT
++4
+hesa.ac.uk
++4
+
+You can’t get salary from current students, but you can measure career readiness and confidence:
+
+Dashboard views
+
+% of students who:
+
+Feel prepared for the job market
+
+Have done internships or part-time work related to their field
+
+Have a clear career goal
+
+By major / year level: career confidence trends
+
+Survey items
+
+“I understand what career paths are available with my major.” (1–5)
+
+“I feel prepared to apply for jobs or internships.” (1–5)
+
+“Have you completed any of the following?”
+
+Internship / Co-op
+
+Part-time job related to my field
+
+Career counseling session
+
+Career fair or employer info session
+
+“Which skills do you most want to develop?” (e.g., communication, coding, research, teamwork, leadership, etc.)
