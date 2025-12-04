@@ -368,6 +368,25 @@ export default function Profile() {
     high_majorTrack: "", // 계열 (문과/이과/etc)
     high_interests: "", // 관심분야/동아리
     high_concerns: "", // 진로 고민
+    
+    // High School Academic Performance (Detailed)
+    high_gpa_trend: {
+        "1-1": "", "1-2": "", "2-1": "", "2-2": "", "3-1": ""
+    },
+    high_subject_scores: {
+        korean: "", math: "", english: "", social: "", science: "", history: "", second_lang: ""
+    },
+    high_mock_scores: {
+        korean: "", math: "", english: "", social: "", science: ""
+    },
+    // For balance/radar chart
+    high_balance: {
+        academic: 50, // 학업 충실도
+        activity: 50, // 교내 활동
+        reading: 50,  // 독서 활동
+        volunteer: 50, // 봉사 활동
+        career: 50    // 진로 탐색
+    },
 
     // University Specific
     univ_schoolName: "",
@@ -684,7 +703,87 @@ export default function Profile() {
                                 </Select>
                             </div>
 
-                            <div className="space-y-2">
+                            {/* Detailed Academic Performance */}
+                            <div className="pt-4 pb-2">
+                                <Label className="text-base font-bold text-[#191F28] mb-4 block">학기별 내신 성적 (등급)</Label>
+                                <div className="grid grid-cols-5 gap-2">
+                                    {Object.keys(profileData.high_gpa_trend).map((sem) => (
+                                        <div key={sem} className="space-y-1 text-center">
+                                            <Label className="text-xs text-[#8B95A1]">{sem}</Label>
+                                            <Input 
+                                                value={profileData.high_gpa_trend[sem as keyof typeof profileData.high_gpa_trend]}
+                                                onChange={(e) => setProfileData({
+                                                    ...profileData, 
+                                                    high_gpa_trend: { ...profileData.high_gpa_trend, [sem]: e.target.value }
+                                                })}
+                                                className="h-10 text-center bg-[#F2F4F6] border-none rounded-lg"
+                                                placeholder="-"
+                                                maxLength={3}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="pt-2">
+                                <Label className="text-base font-bold text-[#191F28] mb-4 block">주요 과목 성적 (최근 학기 등급)</Label>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {[
+                                        { id: 'korean', label: '국어' },
+                                        { id: 'math', label: '수학' },
+                                        { id: 'english', label: '영어' },
+                                        { id: 'social', label: '사회' },
+                                        { id: 'science', label: '과학' },
+                                        { id: 'history', label: '한국사' },
+                                    ].map((subj) => (
+                                        <div key={subj.id} className="space-y-1">
+                                            <Label className="text-xs text-[#8B95A1]">{subj.label}</Label>
+                                            <Select 
+                                                value={profileData.high_subject_scores[subj.id as keyof typeof profileData.high_subject_scores]} 
+                                                onValueChange={(val) => setProfileData({
+                                                    ...profileData,
+                                                    high_subject_scores: { ...profileData.high_subject_scores, [subj.id]: val }
+                                                })}
+                                            >
+                                                <SelectTrigger className="h-10 bg-[#F2F4F6] border-none rounded-lg">
+                                                    <SelectValue placeholder="선택" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(s => (
+                                                        <SelectItem key={s} value={s.toString()}>{s}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <div className="pt-2">
+                                <Label className="text-base font-bold text-[#191F28] mb-4 block">최근 모의고사 성적 (등급/백분위)</Label>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {[
+                                        { id: 'korean', label: '국어' },
+                                        { id: 'math', label: '수학' },
+                                        { id: 'english', label: '영어' },
+                                    ].map((subj) => (
+                                        <div key={subj.id} className="space-y-1">
+                                            <Label className="text-xs text-[#8B95A1]">{subj.label}</Label>
+                                            <Input 
+                                                value={profileData.high_mock_scores[subj.id as keyof typeof profileData.high_mock_scores]}
+                                                onChange={(e) => setProfileData({
+                                                    ...profileData, 
+                                                    high_mock_scores: { ...profileData.high_mock_scores, [subj.id]: e.target.value }
+                                                })}
+                                                className="h-10 bg-[#F2F4F6] border-none rounded-lg"
+                                                placeholder="등급 입력"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 pt-4">
                                 <Label>관심 분야 / 동아리 활동</Label>
                                 <Textarea 
                                     value={profileData.high_interests}
