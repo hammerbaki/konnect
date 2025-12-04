@@ -35,6 +35,15 @@ const PROFILES = [
             label3: '이직 성공률', val3: '85%',
         },
         summary: "현재 보유하신 Product Strategy 역량은 시장에서 매우 높은 가치로 평가받고 있습니다.",
+        chartData: {
+            radar: [
+                { subject: 'Product Strategy', A: 140, fullMark: 150 },
+                { subject: 'User Research', A: 130, fullMark: 150 },
+                { subject: 'Data Analysis', A: 90, fullMark: 150 },
+                { subject: 'Leadership', A: 110, fullMark: 150 },
+                { subject: 'Communication', A: 120, fullMark: 150 },
+            ]
+        },
         recommendations: MOCK_ANALYSIS.recommendedRoles
     },
     {
@@ -50,6 +59,15 @@ const PROFILES = [
             label3: '인턴 합격률', val3: '60%',
         },
         summary: "전공 학점은 우수하나, 실무 프로젝트 경험 보완이 필요합니다. 방학 중 인턴십을 추천합니다.",
+        chartData: {
+            radar: [
+                { subject: 'CS 지식', A: 130, fullMark: 150 },
+                { subject: '알고리즘', A: 120, fullMark: 150 },
+                { subject: '프로젝트 경험', A: 60, fullMark: 150 },
+                { subject: '영어 점수', A: 90, fullMark: 150 },
+                { subject: '자격증', A: 70, fullMark: 150 },
+            ]
+        },
         recommendations: [
             { title: "백엔드 개발자 인턴", matchScore: 92, salary: "월 250만", description: "서버 API 개발 및 DB 설계 실무 경험" },
             { title: "데이터 분석가 인턴", matchScore: 88, salary: "월 230만", description: "Python 활용 데이터 전처리 및 시각화" }
@@ -68,6 +86,15 @@ const PROFILES = [
             label3: '수능 최저', val3: '충족',
         },
         summary: "수학/과학 교과 성적이 우수하여 AI 학과 진학 시 유리합니다. 관련 동아리 활동을 더 강화해보세요.",
+        chartData: {
+            radar: [
+                { subject: '수학 역량', A: 140, fullMark: 150 },
+                { subject: '과학 탐구', A: 135, fullMark: 150 },
+                { subject: '영어', A: 110, fullMark: 150 },
+                { subject: '국어', A: 100, fullMark: 150 },
+                { subject: '리더십', A: 90, fullMark: 150 },
+            ]
+        },
         recommendations: [
             { title: "서울대 컴퓨터공학부", matchScore: 85, salary: "수시 학종", description: "수학/과학 심화 역량 강조 필요" },
             { title: "카이스트 전기및전자", matchScore: 82, salary: "특기자", description: "탐구 활동 보고서 보완 필요" }
@@ -229,7 +256,7 @@ export default function Analysis() {
                         </CardHeader>
                         <CardContent className="h-[250px] flex items-center justify-center">
                             <ResponsiveContainer width="100%" height="100%">
-                                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={MOCK_ANALYSIS.radarData}>
+                                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={activeProfile.chartData?.radar || MOCK_ANALYSIS.radarData}>
                                     <PolarGrid stroke="#E5E8EB" />
                                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#4E5968', fontSize: 11 }} />
                                     <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
