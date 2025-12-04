@@ -381,6 +381,7 @@ export default function Profile() {
 
   // State Management
   const [profileData, setProfileData] = useState({
+    type: "general" as "elementary" | "middle" | "high" | "university" | "general",
     name: "John Doe",
     role: "Product Manager",
     bio: "데이터 기반의 의사결정을 선호하는 PM입니다.",
@@ -517,6 +518,32 @@ export default function Profile() {
           <Button onClick={handleSave} className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base hidden md:flex">
             <Save className="h-5 w-5" /> 저장하기
           </Button>
+        </div>
+
+        {/* Profile Type Selector */}
+        <div className="mb-8">
+            <Label className="text-[#4E5968] font-bold mb-3 block">프로필 유형 선택</Label>
+            <div className="flex flex-wrap gap-2">
+                {[
+                    { id: 'general', label: '일반 (직장인)' },
+                    { id: 'university', label: '대학생' },
+                    { id: 'high', label: '고등학생' },
+                    { id: 'middle', label: '중학생' },
+                    { id: 'elementary', label: '초등학생' },
+                ].map((type) => (
+                    <button
+                        key={type.id}
+                        onClick={() => setProfileData(prev => ({ ...prev, type: type.id as any }))}
+                        className={`px-4 py-2.5 rounded-full text-sm font-bold transition-all ${
+                            profileData.type === type.id
+                                ? "bg-[#3182F6] text-white shadow-md shadow-blue-500/30 ring-2 ring-blue-100"
+                                : "bg-white text-[#8B95A1] border border-[#E5E8EB] hover:bg-[#F2F4F6]"
+                        }`}
+                    >
+                        {type.label}
+                    </button>
+                ))}
+            </div>
         </div>
 
         <div className="grid gap-8 md:grid-cols-[320px_1fr]">

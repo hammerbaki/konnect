@@ -267,6 +267,7 @@ export default function Analysis() {
   const { setAction } = useMobileAction();
   const [, setLocation] = useLocation();
   const [selectedRole, setSelectedRole] = useState<any>(null);
+  const [targetProfile, setTargetProfile] = useState<string>("general");
 
   // Check for past reports (Mock logic: assume true for demo if not first visit)
   const hasPastReports = true; 
@@ -359,9 +360,22 @@ export default function Analysis() {
         {/* Radar Chart Section - Removed from here and moved to Detail View */}
         
         <div className="flex items-center justify-between mb-6 px-2">
-             <h3 className="text-xl font-bold text-[#191F28] flex items-center gap-2">
-                <Brain className="h-5 w-5 text-[#3182F6]" /> AI 추천 커리어
-             </h3>
+             <div className="flex items-center gap-4">
+                 <h3 className="text-xl font-bold text-[#191F28] flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-[#3182F6]" /> AI 추천 커리어
+                 </h3>
+                 <select 
+                    value={targetProfile}
+                    onChange={(e) => setTargetProfile(e.target.value)}
+                    className="h-9 rounded-lg border-[#E5E8EB] text-sm font-medium text-[#4E5968] focus:ring-[#3182F6] focus:border-[#3182F6]"
+                 >
+                    <option value="general">일반 (직장인) 프로필 분석</option>
+                    <option value="university">대학생 프로필 분석</option>
+                    <option value="high">고등학생 프로필 분석</option>
+                    <option value="middle">중학생 프로필 분석</option>
+                    <option value="elementary">초등학생 프로필 분석</option>
+                 </select>
+             </div>
              <Button onClick={handleAnalyze} variant="outline" className="border-[#3182F6] text-[#3182F6] hover:bg-blue-50 font-bold">
                 <RefreshCcw className="h-4 w-4 mr-1" /> 다시 분석하기
              </Button>
