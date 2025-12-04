@@ -254,7 +254,37 @@ export default function KompassDetail() {
       v.progress = Math.round(totalYear / (v.children.length || 1));
   };
 
-  if (!vision) return <Layout><div>Loading...</div></Layout>;
+    // --- Generic Update Helper ---
+    const updateGoalContent = (nodeId: string, field: 'title' | 'description', value: string) => {
+        if (!vision) return;
+        const newVision = JSON.parse(JSON.stringify(vision)) as VisionGoal;
+
+        // Helper to traverse and find node
+        const findAndUpdate = (nodes: any[]): boolean => {
+            for (const node of nodes) {
+                if (node.id === nodeId) {
+                    node[field] = value;
+                    return true;
+                }
+                if (node.children && findAndUpdate(node.children)) return true;
+            }
+            return false;
+        };
+
+        // Check Vision root first
+        if (newVision.id === nodeId) {
+            newVision[field] = value;
+            setVision(newVision);
+            return;
+        }
+
+        // Traverse children
+        if (findAndUpdate(newVision.children)) {
+            setVision(newVision);
+        }
+    };
+
+    if (!vision) return <Layout><div>Loading...</div></Layout>;
 
   return (
     <Layout>
@@ -312,8 +342,16 @@ export default function KompassDetail() {
                 <Card className="toss-card border-2 border-[#191F28] shadow-xl bg-[#F9FAFB]">
                     <CardContent className="p-6 text-center">
                         <Flag className="h-8 w-8 mx-auto text-[#191F28] mb-3" />
-                        <h1 className="text-2xl font-bold text-[#191F28] mb-2">{vision.title}</h1>
-                        <p className="text-[#4E5968] text-sm mb-4">{vision.description}</p>
+                        <Input 
+                            value={vision.title} 
+                            onChange={(e) => updateGoalContent(vision.id, 'title', e.target.value)}
+                            className="text-2xl font-bold text-[#191F28] mb-2 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto"
+                        />
+                        <Input 
+                            value={vision.description} 
+                            onChange={(e) => updateGoalContent(vision.id, 'description', e.target.value)}
+                            className="text-[#4E5968] text-sm mb-4 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto"
+                        />
                         <Progress value={vision.progress} className="h-2" indicatorClassName="bg-[#191F28]" />
                         <p className="text-right text-xs font-bold text-[#191F28] mt-1">{vision.progress}% 달성</p>
                     </CardContent>
@@ -342,13 +380,22 @@ export default function KompassDetail() {
                             <CardContent className="p-4 text-center flex flex-col h-full justify-between">
                                 <div>
                                     <div className="flex justify-center items-center gap-2 mb-2">
-                                        <h3 className={cn("font-bold text-sm", selectedYearId === year.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                            {year.title}
-                                        </h3>
+                                        <Input 
+                                            value={year.title}
+                                            onChange={(e) => updateGoalContent(year.id, 'title', e.target.value)}
+                                            className={cn(
+                                                "font-bold text-sm text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto w-16", 
+                                                selectedYearId === year.id ? "text-[#3182F6]" : "text-[#333D4B]"
+                                            )}
+                                        />
                                         <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md">{year.dateDisplay}</span>
                                     </div>
                                     {year.description && (
-                                        <p className="text-xs text-[#8B95A1] mb-3 line-clamp-2">{year.description}</p>
+                                        <Input 
+                                            value={year.description}
+                                            onChange={(e) => updateGoalContent(year.id, 'description', e.target.value)}
+                                            className="text-xs text-[#8B95A1] mb-3 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
+                                        />
                                     )}
                                 </div>
                                 <div>
@@ -397,13 +444,22 @@ export default function KompassDetail() {
                             <CardContent className="p-4 text-center flex flex-col h-full justify-between">
                                 <div>
                                     <div className="flex justify-center items-center gap-2 mb-2">
-                                        <h4 className={cn("font-bold text-sm", selectedHalfYearId === half.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                            {half.title}
-                                        </h4>
+                                        <Input 
+                                            value={half.title}
+                                            onChange={(e) => updateGoalContent(half.id, 'title', e.target.value)}
+                                            className={cn(
+                                                "font-bold text-sm text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto w-24", 
+                                                selectedHalfYearId === half.id ? "text-[#3182F6]" : "text-[#333D4B]"
+                                            )}
+                                        />
                                         <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md">{half.dateDisplay}</span>
                                     </div>
                                     {half.description && (
-                                        <p className="text-xs text-[#8B95A1] mb-3 line-clamp-2">{half.description}</p>
+                                        <Input 
+                                            value={half.description}
+                                            onChange={(e) => updateGoalContent(half.id, 'description', e.target.value)}
+                                            className="text-xs text-[#8B95A1] mb-3 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
+                                        />
                                     )}
                                 </div>
                                 <div>
@@ -452,14 +508,23 @@ export default function KompassDetail() {
                         >
                             <CardContent className="p-3 text-center flex flex-col h-full justify-between">
                                 <div>
-                                    <div className="flex flex-col items-center gap-1 mb-1">
-                                        <h5 className={cn("font-bold text-xs truncate", selectedMonthId === month.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                            {month.title}
-                                        </h5>
+                                    <div className="flex flex-col items-center gap-1 mb-1 w-full">
+                                        <Input 
+                                            value={month.title}
+                                            onChange={(e) => updateGoalContent(month.id, 'title', e.target.value)}
+                                            className={cn(
+                                                "font-bold text-xs text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto w-full", 
+                                                selectedMonthId === month.id ? "text-[#3182F6]" : "text-[#333D4B]"
+                                            )}
+                                        />
                                         <span className="text-[9px] text-[#8B95A1] bg-[#F2F4F6] px-1 py-0.5 rounded-sm">{month.dateDisplay}</span>
                                     </div>
                                     {month.description && (
-                                        <p className="text-[10px] text-[#8B95A1] mb-2 line-clamp-2 leading-tight">{month.description}</p>
+                                        <Input 
+                                            value={month.description}
+                                            onChange={(e) => updateGoalContent(month.id, 'description', e.target.value)}
+                                            className="text-[10px] text-[#8B95A1] mb-2 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
+                                        />
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -506,14 +571,23 @@ export default function KompassDetail() {
                         >
                             <CardContent className="p-3 text-center flex flex-col h-full justify-between">
                                 <div>
-                                    <div className="flex flex-col items-center gap-1 mb-1">
-                                        <h5 className={cn("font-bold text-xs truncate", selectedWeekId === week.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                            {week.title}
-                                        </h5>
+                                    <div className="flex flex-col items-center gap-1 mb-1 w-full">
+                                        <Input 
+                                            value={week.title}
+                                            onChange={(e) => updateGoalContent(week.id, 'title', e.target.value)}
+                                            className={cn(
+                                                "font-bold text-xs text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto w-full", 
+                                                selectedWeekId === week.id ? "text-[#3182F6]" : "text-[#333D4B]"
+                                            )}
+                                        />
                                         <span className="text-[9px] text-[#8B95A1] bg-[#F2F4F6] px-1 py-0.5 rounded-sm">{week.dateDisplay}</span>
                                     </div>
                                     {week.description && (
-                                        <p className="text-[10px] text-[#8B95A1] mb-2 line-clamp-2 leading-tight">{week.description}</p>
+                                        <Input 
+                                            value={week.description}
+                                            onChange={(e) => updateGoalContent(week.id, 'description', e.target.value)}
+                                            className="text-[10px] text-[#8B95A1] mb-2 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
+                                        />
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
