@@ -889,7 +889,7 @@ export default function Profile() {
         <div className="grid gap-8 md:grid-cols-[320px_1fr]">
           {/* Profile Overview Card - Sticky */}
           <div className="space-y-6">
-            <Card className="toss-card sticky top-24">
+            <Card className="toss-card">
               <CardContent className="pt-8 flex flex-col items-center text-center">
                 <div className="relative mb-4">
                   <div className="h-24 w-24 rounded-full bg-[#F2F4F6] flex items-center justify-center text-2xl font-bold text-[#3182F6] border-4 border-white shadow-lg">
