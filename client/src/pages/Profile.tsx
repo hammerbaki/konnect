@@ -1182,16 +1182,16 @@ export default function Profile() {
                     <Card className="toss-card">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-lg">
-                                <Smile className="h-5 w-5 text-[#FFB300]" /> 웰빙 & 학교 생활 만족도
+                                <Smile className="h-5 w-5 text-[#FFB300]" /> 커리어 준비 환경 및 리소스 점검
                             </CardTitle>
-                            <CardDescription>학생의 건강한 학교 생활을 위해 익명성이 보장되는 설문입니다.</CardDescription>
+                            <CardDescription>성공적인 커리어 로드맵 설계를 위해 현재 준비 환경을 점검합니다.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="space-y-4">
-                                <h4 className="font-bold text-sm text-[#4E5968]">스트레스 및 건강</h4>
+                                <h4 className="font-bold text-sm text-[#4E5968]">준비 집중도 및 컨디션</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>학업 스트레스</Label>
+                                        <Label>학업/취업 준비 스트레스</Label>
                                         <Select 
                                             value={profileData.univ_academicStress} 
                                             onValueChange={(val) => setProfileData({...profileData, univ_academicStress: val})}
@@ -1205,7 +1205,7 @@ export default function Profile() {
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>경제적 부담감</Label>
+                                        <Label>경제적 고민 수준</Label>
                                         <Select 
                                             value={profileData.univ_financialStress} 
                                             onValueChange={(val) => setProfileData({...profileData, univ_financialStress: val})}
@@ -1219,7 +1219,7 @@ export default function Profile() {
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>평균 수면 시간 (일)</Label>
+                                        <Label>일 평균 수면 시간 (컨디션 관리)</Label>
                                         <Input 
                                             type="number"
                                             placeholder="시간 입력 (예: 6)" 
@@ -1229,7 +1229,7 @@ export default function Profile() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>전반적인 마음 건강 상태</Label>
+                                        <Label>현재 심리적 에너지 수준</Label>
                                         <Select 
                                             value={profileData.univ_mentalWellbeing} 
                                             onValueChange={(val) => setProfileData({...profileData, univ_mentalWellbeing: val})}
@@ -1240,8 +1240,8 @@ export default function Profile() {
                                             <SelectContent>
                                                 <SelectItem value="Thriving">매우 좋음 (Thriving)</SelectItem>
                                                 <SelectItem value="Managing">보통/관리 중 (Managing)</SelectItem>
-                                                <SelectItem value="Struggling">힘듦 (Struggling)</SelectItem>
-                                                <SelectItem value="In crisis">위기/도움 필요 (In crisis)</SelectItem>
+                                                <SelectItem value="Struggling">다소 지침 (Struggling)</SelectItem>
+                                                <SelectItem value="In crisis">번아웃/충전 필요 (In crisis)</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -1251,10 +1251,10 @@ export default function Profile() {
                             <Separator />
 
                             <div className="space-y-4">
-                                <h4 className="font-bold text-sm text-[#4E5968]">생활 균형 (주간 평균 시간)</h4>
+                                <h4 className="font-bold text-sm text-[#4E5968]">시간 자원 관리 (주간 평균 시간)</h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>아르바이트/근로</Label>
+                                        <Label>경제 활동 (아르바이트 등)</Label>
                                         <div className="relative">
                                             <Input 
                                                 type="number"
@@ -1267,7 +1267,7 @@ export default function Profile() {
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>학업/공부</Label>
+                                        <Label>전공 학습 및 취업 준비</Label>
                                         <div className="relative">
                                             <Input 
                                                 type="number"
@@ -1285,10 +1285,10 @@ export default function Profile() {
                             <Separator />
 
                             <div className="space-y-4">
-                                <h4 className="font-bold text-sm text-[#4E5968]">학교 소속감 및 관계</h4>
+                                <h4 className="font-bold text-sm text-[#4E5968]">인적 네트워크 (Social Capital)</h4>
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label>학교에 대한 소속감</Label>
+                                        <Label>교내 네트워킹/소속감</Label>
                                         <Select 
                                             value={profileData.univ_belongingScore} 
                                             onValueChange={(val) => setProfileData({...profileData, univ_belongingScore: val})}
@@ -1303,7 +1303,7 @@ export default function Profile() {
                                     </div>
                                     
                                     <div className="flex items-center justify-between py-2">
-                                        <Label className="flex-1">캠퍼스 내에 마음을 터놓을 수 있는 친구나 멘토가 있나요?</Label>
+                                        <Label className="flex-1">진로 고민을 나눌 수 있는 멘토 또는 동료가 있나요?</Label>
                                         <div className="flex gap-4">
                                             <div className="flex items-center space-x-2">
                                                 <Checkbox 
@@ -1329,11 +1329,11 @@ export default function Profile() {
                             <Separator />
 
                             <div className="space-y-4">
-                                <h4 className="font-bold text-sm text-[#4E5968]">지원 서비스 활용</h4>
+                                <h4 className="font-bold text-sm text-[#4E5968]">교내 커리어 지원 리소스 활용</h4>
                                 <div className="space-y-3">
                                     <Label>이번 학기 이용한 교내 서비스 (중복 선택)</Label>
                                     <div className="grid grid-cols-2 gap-2">
-                                        {["학업상담/튜터링", "심리상담센터", "진로/취업센터", "글쓰기센터", "장학/복지팀", "보건실", "도서관 프로그램"].map((service) => (
+                                        {["학업상담/튜터링", "심리상담센터", "진로/취업센터", "글쓰기센터", "장학/복지팀", "창업지원단", "현장실습지원센터"].map((service) => (
                                             <div key={service} className="flex items-center space-x-2">
                                                 <Checkbox 
                                                     id={`service-${service}`} 
