@@ -3,23 +3,24 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
-// Validate critical environment variables
+// Validate critical environment variables (log warnings but don't exit)
 function validateEnvironment() {
   const required = ['DATABASE_URL'];
   const missing = required.filter(key => !process.env[key]);
   
   if (missing.length > 0) {
-    console.error(`Missing required environment variables: ${missing.join(', ')}`);
+    console.error(`WARNING: Missing environment variables: ${missing.join(', ')}`);
+    console.error('The application may not function correctly.');
     console.error('Please ensure DATABASE_URL is configured in your deployment settings.');
-    process.exit(1);
+    // Don't exit - let the app try to start anyway
+  } else {
+    console.log('✓ Environment variables validated');
   }
 
   // Warn about SESSION_SECRET but don't crash if missing (it's set automatically in production)
   if (!process.env.SESSION_SECRET) {
     console.warn('WARNING: SESSION_SECRET not found. It should be auto-configured by Replit.');
   }
-
-  console.log('✓ Environment variables validated');
 }
 
 validateEnvironment();
@@ -149,11 +150,36 @@ app.use((req, res, next) => {
     });
 
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('CRITICAL: Failed to start server:', error);
     // Log the full error stack for debugging
     if (error instanceof Error) {
       console.error('Error stack:', error.stack);
     }
-    process.exit(1);
+    // Try to start a minimal server even if initialization failed
+    console.error('Attempting to start minimal server for debugging...');
+    
+    try {
+      const port = parseInt(process.env.PORT || "5000", 10);
+      const host = "0.0.0.0";
+      
+      // Create a minimal error-reporting server
+      httpServer.listen({ port, host, reusePort: true }, () => {
+        console.log(`Minimal server running on ${host}:${port}`);
+        console.log('Server is in degraded mode due to initialization errors');
+      });
+      
+      // Add basic health check route
+      app.get('/health', (_req, res) => {
+        res.status(503).json({ 
+          status: 'degraded',
+          error: 'Server initialization failed',
+          message: 'Check logs for details'
+        });
+      });
+    } catch (fallbackError) {
+      console.error('Failed to start even minimal server:', fallbackError);
+      // Only exit if we absolutely cannot start any server
+      setTimeout(() => process.exit(1), 5000); // Give 5 seconds for logs to flush
+    }
   }
 })();

@@ -137,8 +137,16 @@ export async function setupAuth(app: Express) {
   
   console.log('✓ Authentication configured');
   } catch (error) {
-    console.error('Failed to setup authentication:', error);
-    throw error;
+    console.error('CRITICAL: Failed to setup authentication:', error);
+    console.error('Authentication will not work - users cannot log in');
+    // Don't throw - let the server start anyway
+    // Add a fallback error route
+    app.get("/api/login", (_req, res) => {
+      res.status(503).json({ 
+        message: "Authentication service unavailable",
+        error: "Server configuration error - contact support"
+      });
+    });
   }
 }
 
