@@ -366,18 +366,20 @@ export default function Profile() {
     high_class: "",
     high_academicScore: "", // 내신 (1-9등급)
     high_majorTrack: "", // 계열 (문과/이과/etc)
-    high_interests: "", // 관심분야/동아리
+    high_hopeUniversity: "", // 희망 대학
+    high_careerHope: "", // 진로 희망
+    high_activityStatus: "", // 활동 참여 현황
+    high_favoriteSubject: "", // 좋아하는 과목
+    high_dislikedSubject: "", // 싫어하는 과목
+    high_mbti: "", // 성격 특성 (MBTI)
+    high_hobbies: "", // 취미 관심사
+    high_studyAbroad: false, // 유학 희망 유/무
     high_concerns: "", // 진로 고민
+    high_stressLevel: "", // Recent Stress/Mental Wellbeing Indicator (replacing explicit suicide risk)
+    high_sleepPattern: "", // Sleep indicator
     
-    // High School Academic Performance (Detailed)
-    high_gpa_trend: {
-        "1-1": "", "1-2": "", "2-1": "", "2-2": "", "3-1": ""
-    },
     high_subject_scores: {
         korean: "", math: "", english: "", social: "", science: "", history: "", second_lang: ""
-    },
-    high_mock_scores: {
-        korean: "", math: "", english: "", social: "", science: ""
     },
     // For balance/radar chart
     high_balance: {
@@ -703,30 +705,8 @@ export default function Profile() {
                                 </Select>
                             </div>
 
-                            {/* Detailed Academic Performance */}
-                            <div className="pt-4 pb-2">
-                                <Label className="text-base font-bold text-[#191F28] mb-4 block">학기별 내신 성적 (등급)</Label>
-                                <div className="grid grid-cols-5 gap-2">
-                                    {Object.keys(profileData.high_gpa_trend).map((sem) => (
-                                        <div key={sem} className="space-y-1 text-center">
-                                            <Label className="text-xs text-[#8B95A1]">{sem}</Label>
-                                            <Input 
-                                                value={profileData.high_gpa_trend[sem as keyof typeof profileData.high_gpa_trend]}
-                                                onChange={(e) => setProfileData({
-                                                    ...profileData, 
-                                                    high_gpa_trend: { ...profileData.high_gpa_trend, [sem]: e.target.value }
-                                                })}
-                                                className="h-10 text-center bg-[#F2F4F6] border-none rounded-lg"
-                                                placeholder="-"
-                                                maxLength={3}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
                             <div className="pt-2">
-                                <Label className="text-base font-bold text-[#191F28] mb-4 block">주요 과목 성적 (최근 학기 등급)</Label>
+                                <Label className="text-base font-bold text-[#191F28] mb-4 block">주요 과목 성적 (내신)</Label>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     {[
                                         { id: 'korean', label: '국어' },
@@ -758,52 +738,9 @@ export default function Profile() {
                                     ))}
                                 </div>
                             </div>
-                            
-                            <div className="pt-2">
-                                <Label className="text-base font-bold text-[#191F28] mb-4 block">최근 모의고사 성적 (등급/백분위)</Label>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                    {[
-                                        { id: 'korean', label: '국어' },
-                                        { id: 'math', label: '수학' },
-                                        { id: 'english', label: '영어' },
-                                    ].map((subj) => (
-                                        <div key={subj.id} className="space-y-1">
-                                            <Label className="text-xs text-[#8B95A1]">{subj.label}</Label>
-                                            <Input 
-                                                value={profileData.high_mock_scores[subj.id as keyof typeof profileData.high_mock_scores]}
-                                                onChange={(e) => setProfileData({
-                                                    ...profileData, 
-                                                    high_mock_scores: { ...profileData.high_mock_scores, [subj.id]: e.target.value }
-                                                })}
-                                                className="h-10 bg-[#F2F4F6] border-none rounded-lg"
-                                                placeholder="등급 입력"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
 
-                            <div className="space-y-2 pt-4">
-                                <Label>관심 분야 / 동아리 활동</Label>
-                                <Textarea 
-                                    value={profileData.high_interests}
-                                    onChange={(e) => setProfileData({...profileData, high_interests: e.target.value})}
-                                    placeholder="관심있는 전공이나 현재 활동 중인 동아리에 대해 적어주세요." 
-                                    className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="toss-card">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <BookOpen className="h-5 w-5 text-[#00BFA5]" /> 진로 희망 사항
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                             <div className="space-y-2">
-                                <Label>희망 계열 (전공)</Label>
+                            <div className="space-y-2">
+                                <Label>희망 학업계열</Label>
                                 <Select 
                                     value={profileData.high_majorTrack} 
                                     onValueChange={(val) => setProfileData({...profileData, high_majorTrack: val})}
@@ -818,12 +755,150 @@ export default function Profile() {
                                     </SelectContent>
                                 </Select>
                             </div>
+
                             <div className="space-y-2">
-                                <Label>입시/진로 고민</Label>
+                                <Label>희망 대학</Label>
+                                <Input 
+                                    placeholder="예: 서울대학교, 연세대학교" 
+                                    value={profileData.high_hopeUniversity}
+                                    onChange={(e) => setProfileData({...profileData, high_hopeUniversity: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>진로 희망</Label>
+                                <Input 
+                                    placeholder="예: 소프트웨어 개발자, 의사" 
+                                    value={profileData.high_careerHope}
+                                    onChange={(e) => setProfileData({...profileData, high_careerHope: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>활동 참여 현황</Label>
+                                <Textarea 
+                                    value={profileData.high_activityStatus}
+                                    onChange={(e) => setProfileData({...profileData, high_activityStatus: e.target.value})}
+                                    placeholder="동아리, 봉사활동, 교내 대회 등 참여한 활동을 적어주세요." 
+                                    className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>좋아하는 과목</Label>
+                                    <Input 
+                                        value={profileData.high_favoriteSubject}
+                                        onChange={(e) => setProfileData({...profileData, high_favoriteSubject: e.target.value})}
+                                        className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                        placeholder="예: 수학"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>싫어하는 과목</Label>
+                                    <Input 
+                                        value={profileData.high_dislikedSubject}
+                                        onChange={(e) => setProfileData({...profileData, high_dislikedSubject: e.target.value})}
+                                        className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                        placeholder="예: 영어"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>성격 특성 (MBTI)</Label>
+                                    <Select 
+                                        value={profileData.high_mbti} 
+                                        onValueChange={(val) => setProfileData({...profileData, high_mbti: val})}
+                                    >
+                                        <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                            <SelectValue placeholder="MBTI 선택" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {["ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ", "ENFJ", "ENTJ"].map(m => (
+                                                <SelectItem key={m} value={m}>{m}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2 flex flex-col justify-center">
+                                    <Label className="mb-2">유학 희망 여부</Label>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox 
+                                            id="study-abroad" 
+                                            checked={profileData.high_studyAbroad}
+                                            onCheckedChange={(checked) => setProfileData({...profileData, high_studyAbroad: checked as boolean})}
+                                        />
+                                        <label htmlFor="study-abroad" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                            희망함
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>취미 / 관심사</Label>
+                                <Input 
+                                    value={profileData.high_hobbies}
+                                    onChange={(e) => setProfileData({...profileData, high_hobbies: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                    placeholder="예: 독서, 게임, 축구"
+                                />
+                            </div>
+
+                            <div className="space-y-4 pt-4 border-t border-[#F2F4F6]">
+                                <h4 className="font-bold text-[#191F28] flex items-center gap-2">
+                                    <AlertTriangle className="h-5 w-5 text-[#FF5252]" /> 심리/정서 상태 체크
+                                </h4>
+                                <p className="text-xs text-[#8B95A1] -mt-2">
+                                    학생의 정서적 안정을 위해 솔직하게 답변해주세요. (비공개 처리됩니다)
+                                </p>
+                                
+                                <div className="space-y-3">
+                                    <Label>최근 2주간 느끼는 스트레스 정도</Label>
+                                    <Select 
+                                        value={profileData.high_stressLevel} 
+                                        onValueChange={(val) => setProfileData({...profileData, high_stressLevel: val})}
+                                    >
+                                        <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                            <SelectValue placeholder="선택해주세요" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="low">거의 없음 (편안함)</SelectItem>
+                                            <SelectItem value="moderate">가끔 스트레스를 받음</SelectItem>
+                                            <SelectItem value="high">자주 스트레스를 받음</SelectItem>
+                                            <SelectItem value="severe">매우 심한 스트레스를 받음 (힘듦)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <Label>최근 수면 패턴의 변화</Label>
+                                    <Select 
+                                        value={profileData.high_sleepPattern} 
+                                        onValueChange={(val) => setProfileData({...profileData, high_sleepPattern: val})}
+                                    >
+                                        <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                            <SelectValue placeholder="선택해주세요" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="normal">변화 없음 (잘 잠)</SelectItem>
+                                            <SelectItem value="insomnia">잠들기 어렵거나 자주 깸</SelectItem>
+                                            <SelectItem value="hypersomnia">평소보다 너무 많이 잠</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 pt-2">
+                                <Label>진로 고민 사항</Label>
                                 <Textarea 
                                     value={profileData.high_concerns}
                                     onChange={(e) => setProfileData({...profileData, high_concerns: e.target.value})}
-                                    placeholder="대학 진학, 학과 선택 등 현재 가장 큰 고민은 무엇인가요?" 
+                                    placeholder="진로와 관련하여 현재 가장 고민되는 점을 자유롭게 적어주세요." 
                                     className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
                                 />
                             </div>
