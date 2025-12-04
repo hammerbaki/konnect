@@ -267,7 +267,7 @@ export default function KompassDetail() {
                     <Bell className="h-5 w-5" />
                 </div>
                 <div>
-                    <h3 className="text-sm font-bold text-[#191F28]">Remind Me</h3>
+                    <h3 className="text-sm font-bold text-[#191F28]">목표 알림</h3>
                     <p className="text-xs text-[#8B95A1]">매일 목표 점검 알림 받기</p>
                 </div>
             </div>
@@ -286,7 +286,7 @@ export default function KompassDetail() {
                             className="h-8 text-xs bg-white border-none shadow-sm text-[#3182F6] hover:text-[#2b72d7]"
                             onClick={handleSetCurrentTime}
                         >
-                            Now
+                            지금
                         </Button>
                     </div>
                  )}
@@ -299,7 +299,7 @@ export default function KompassDetail() {
         </div>
 
         <div className="text-center mb-8 pt-2">
-            <h2 className="text-[28px] font-bold text-[#191F28]">Kompass Detail</h2>
+            <h2 className="text-[28px] font-bold text-[#191F28]">나침반 상세</h2>
             <p className="text-[#8B95A1] mt-2 text-lg">나만의 나침반을 따라 목표를 달성하세요</p>
         </div>
 
@@ -324,8 +324,8 @@ export default function KompassDetail() {
         {/* Level 2: Yearly Goals (3 Cards) */}
         <div className="space-y-2 relative">
              <div className="text-center">
-                <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Yearly</Badge>
-                <p className="text-sm text-[#8B95A1] mb-3">Set your high-level milestones for each year.</p>
+                <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">연간 목표</Badge>
+                <p className="text-sm text-[#8B95A1] mb-3">각 연도의 핵심 목표를 설정하세요.</p>
              </div>
              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {vision.children.map((year) => (
@@ -379,8 +379,8 @@ export default function KompassDetail() {
                 className="space-y-2 mt-6"
             >
                 <div className="text-center">
-                    <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Half-Yearly</Badge>
-                    <p className="text-sm text-[#8B95A1] mb-3">Break down your yearly goals into two main phases.</p>
+                    <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">반기별 목표</Badge>
+                    <p className="text-sm text-[#8B95A1] mb-3">연간 목표를 상반기와 하반기로 나누어 계획하세요.</p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
                     {selectedYear.children.map((half) => (
@@ -435,8 +435,8 @@ export default function KompassDetail() {
                 className="space-y-2 mt-6"
             >
                 <div className="text-center">
-                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Monthly</Badge>
-                     <p className="text-sm text-[#8B95A1] mb-3">Plan your key objectives for each month.</p>
+                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">월간 목표</Badge>
+                     <p className="text-sm text-[#8B95A1] mb-3">매월 달성해야 할 핵심 목표를 계획하세요.</p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                     {selectedHalfYear.children.map((month) => (
@@ -489,8 +489,8 @@ export default function KompassDetail() {
                 className="space-y-2 mt-6"
             >
                 <div className="text-center">
-                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Weekly</Badge>
-                     <p className="text-sm text-[#8B95A1] mb-3">Outline your weekly focus areas.</p>
+                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">주간 목표</Badge>
+                     <p className="text-sm text-[#8B95A1] mb-3">이번 주에 집중해야 할 과제를 확인하세요.</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 max-w-3xl mx-auto">
                     {selectedMonth.children.map((week) => (
@@ -543,8 +543,8 @@ export default function KompassDetail() {
                 className="space-y-2 mt-6 pb-10"
             >
                 <div className="text-center">
-                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Daily To-Dos</Badge>
-                     <p className="text-sm text-[#8B95A1] mb-3">Top three things must to do within the next 24 hours.</p>
+                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">일일 과제</Badge>
+                     <p className="text-sm text-[#8B95A1] mb-3">향후 24시간 내에 해야 할 상위 3가지 과제</p>
                 </div>
                 
                 {/* Compact Grid for 7 Days - Expanded for direct editing */}
