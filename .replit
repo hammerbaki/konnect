@@ -25,7 +25,7 @@ localPort = 33151
 externalPort = 3002
 
 [[ports]]
-localPort = 33935
+localPort = 34973
 externalPort = 3003
 
 [[ports]]
@@ -58,4 +58,4 @@ waitForPort = 5000
 
 [agent]
 mockupState = "FULLSTACK"
-integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.0"]
+integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.0", "javascript_anthropic_ai_integrations:1.0.0"]
