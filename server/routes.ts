@@ -9,6 +9,7 @@ import {
   insertKompassGoalSchema,
 } from "@shared/schema";
 import { z } from "zod";
+import { generateCareerAnalysis, generatePersonalEssay } from "./ai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ===== Setup Auth Middleware =====
@@ -322,6 +323,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting kompass:", error);
       res.status(500).json({ message: "Failed to delete kompass" });
+    }
+  });
+
+  // ===== AI Routes =====
+  // Generate career analysis for a profile
+  app.post('/api/profiles/:profileId/generate-analysis', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profile = await storage.getProfile(req.params.profileId);
+      
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      // Check user credits (1 credit per analysis)
+      const user = await storage.getUser(userId);
+      if (!user || user.credits < 1) {
+        return res.status(402).json({ message: "크레딧이 부족합니다. 분석을 생성하려면 최소 1 크레딧이 필요합니다." });
+      }
+
+      // Deduct credits before generating
+      const deducted = await storage.deductUserCredits(userId, 1);
+      if (!deducted) {
+        return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+      }
+
+      // Generate analysis using AI
+      const result = await generateCareerAnalysis(profile);
+
+      // Save to database
+      const analysis = await storage.createAnalysis({
+        profileId: req.params.profileId,
+        summary: result.summary,
+        stats: result.stats,
+        chartData: result.chartData,
+        recommendations: result.recommendations,
+        aiRawResponse: result.rawResponse,
+      });
+
+      // Update profile's lastAnalyzed timestamp
+      await storage.updateProfile(req.params.profileId, {
+        lastAnalyzed: new Date(),
+      });
+
+      res.status(201).json(analysis);
+    } catch (error) {
+      console.error("Error generating analysis:", error);
+      res.status(500).json({ message: "AI 분석 생성 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Generate personal essay
+  app.post('/api/profiles/:profileId/generate-essay', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profile = await storage.getProfile(req.params.profileId);
+      
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { category, topic, context } = req.body;
+      if (!category || !topic) {
+        return res.status(400).json({ message: "카테고리와 주제는 필수입니다." });
+      }
+
+      // Check user credits (1 credit per essay)
+      const user = await storage.getUser(userId);
+      if (!user || user.credits < 1) {
+        return res.status(402).json({ message: "크레딧이 부족합니다. 자기소개서 생성을 위해 최소 1 크레딧이 필요합니다." });
+      }
+
+      // Deduct credits before generating
+      const deducted = await storage.deductUserCredits(userId, 1);
+      if (!deducted) {
+        return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+      }
+
+      // Generate essay using AI
+      const result = await generatePersonalEssay(
+        profile.type,
+        category,
+        topic,
+        context
+      );
+
+      // Save to database
+      const essay = await storage.createEssay({
+        profileId: req.params.profileId,
+        category,
+        topic,
+        title: result.title,
+        content: result.content,
+        draftVersion: 1,
+      });
+
+      res.status(201).json(essay);
+    } catch (error) {
+      console.error("Error generating essay:", error);
+      res.status(500).json({ message: "자기소개서 생성 중 오류가 발생했습니다." });
     }
   });
 
