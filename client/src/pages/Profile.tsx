@@ -332,25 +332,62 @@ export default function Profile() {
   const { setAction } = useMobileAction();
   const { toast } = useToast();
 
-  // State Management
+  // State Management with Prefixed Fields for Analysis Isolation
   const [profileData, setProfileData] = useState({
     type: "general" as "elementary" | "middle" | "high" | "university" | "general",
-    name: "John Doe",
-    role: "Product Manager",
-    email: "john.doe@example.com",
-    location: "Seoul, South Korea",
-    bio: "데이터 기반의 의사결정을 선호하는 PM입니다.",
-    gender: "male" as "male" | "female" | undefined,
-    birthDate: new Date(1995, 5, 15) as Date | null,
     
-    // General / Uni specific
-    workValues: ["성장 가능성", "워라밸"] as string[],
-    experienceYears: 5,
-    salary: 6000,
-    salaryNoPreference: false,
-    environmentPreferences: [] as string[],
-    environmentNoPreference: false,
-    workExperience: [
+    // Common / Basic Info
+    basic_name: "John Doe",
+    basic_role: "Product Manager",
+    basic_email: "john.doe@example.com",
+    basic_location: "Seoul, South Korea",
+    basic_bio: "데이터 기반의 의사결정을 선호하는 PM입니다.",
+    basic_gender: "male" as "male" | "female" | undefined,
+    basic_birthDate: new Date(1995, 5, 15) as Date | null,
+    
+    // Elementary Specific
+    elem_schoolName: "",
+    elem_grade: "",
+    elem_favoriteSubject: "",
+    elem_dreamJob: "",
+    elem_hobbies: "", // Textarea
+    elem_concerns: "", // 고민
+
+    // Middle School Specific
+    mid_schoolName: "",
+    mid_grade: "",
+    mid_class: "",
+    mid_interests: "", // 관심분야
+    mid_concerns: "", // 고민
+
+    // High School Specific
+    high_schoolName: "",
+    high_grade: "",
+    high_class: "",
+    high_academicScore: "", // 내신 (1-9등급)
+    high_majorTrack: "", // 계열 (문과/이과/etc)
+    high_interests: "", // 관심분야/동아리
+    high_concerns: "", // 진로 고민
+
+    // University Specific
+    univ_schoolName: "",
+    univ_majorCategory: "", // 전공 계열
+    univ_majorName: "", // 학과명
+    univ_grade: "",
+    univ_semester: "",
+    univ_gpa: "", // 4.5 scale
+    univ_languageTests: [] as { id: number, type: string, score: string }[],
+    univ_certificates: "",
+    univ_concerns: "", // 진로/취업 고민
+
+    // General (Worker) Specific
+    gen_workValues: ["성장 가능성", "워라밸"] as string[],
+    gen_experienceYears: 5,
+    gen_salary: 6000,
+    gen_salaryNoPreference: false,
+    gen_environmentPreferences: [] as string[],
+    gen_environmentNoPreference: false,
+    gen_workExperience: [
         {
             id: 1,
             role: "Senior Product Manager",
@@ -360,27 +397,7 @@ export default function Profile() {
             description: "- B2B SaaS 제품 기획 및 런칭 주도\n- 3분기 연속 매출 목표 120% 달성"
         }
     ] as any[],
-
-    // Student specific (High/Uni/Middle)
-    schoolName: "",
-    grade: "",
-    classNumber: "", // Added
-    
-    // High School specific
-    highSchoolMajor: "", // 문과/이과/예체능 etc.
-    academicScore: "", // 1-9등급
-
-    // University specific
-    majorCategory: "", // Humanities, Engineering, etc.
-    majorDetail: "", // Specific major name
-    semester: "",
-    uniGpa: "", // 4.5 scale
-    languageTests: [] as { id: number, type: string, score: string }[],
-
-    // Elementary specific
-    dreamJob: "",
-    favoriteSubject: "",
-    hobbies: [] as string[],
+    gen_concerns: "", // 커리어 고민
   });
 
   const handleSave = () => {
@@ -401,24 +418,24 @@ export default function Profile() {
 
   const toggleWorkValue = (value: string) => {
       setProfileData(prev => {
-          const exists = prev.workValues.includes(value);
+          const exists = prev.gen_workValues.includes(value);
           if (exists) {
-              return { ...prev, workValues: prev.workValues.filter(v => v !== value) };
+              return { ...prev, gen_workValues: prev.gen_workValues.filter(v => v !== value) };
           } else {
-              if (prev.workValues.length >= 3) return prev; // Limit to 3
-              return { ...prev, workValues: [...prev.workValues, value] };
+              if (prev.gen_workValues.length >= 3) return prev; // Limit to 3
+              return { ...prev, gen_workValues: [...prev.gen_workValues, value] };
           }
       });
   };
 
   const toggleEnvironmentPreference = (pref: string) => {
-      if (profileData.environmentNoPreference) return;
+      if (profileData.gen_environmentNoPreference) return;
       setProfileData(prev => {
-          const exists = prev.environmentPreferences.includes(pref);
+          const exists = prev.gen_environmentPreferences.includes(pref);
           if (exists) {
-              return { ...prev, environmentPreferences: prev.environmentPreferences.filter(p => p !== pref) };
+              return { ...prev, gen_environmentPreferences: prev.gen_environmentPreferences.filter(p => p !== pref) };
           } else {
-              return { ...prev, environmentPreferences: [...prev.environmentPreferences, pref] };
+              return { ...prev, gen_environmentPreferences: [...prev.gen_environmentPreferences, pref] };
           }
       });
   };
@@ -426,16 +443,16 @@ export default function Profile() {
   const toggleEnvironmentNoPreference = (checked: boolean) => {
         setProfileData(prev => ({
             ...prev,
-            environmentNoPreference: checked,
-            environmentPreferences: checked ? [] : prev.environmentPreferences
+            gen_environmentNoPreference: checked,
+            gen_environmentPreferences: checked ? [] : prev.gen_environmentPreferences
         }));
   };
 
   const toggleSalaryNoPreference = (checked: boolean) => {
         setProfileData(prev => ({
             ...prev,
-            salaryNoPreference: checked,
-            salary: checked ? 0 : prev.salary
+            gen_salaryNoPreference: checked,
+            gen_salary: checked ? 0 : prev.gen_salary
         }));
   };
 
@@ -474,16 +491,16 @@ export default function Profile() {
                                 <Label>장래희망 (되고 싶은 사람)</Label>
                                 <Input 
                                     placeholder="예: 과학자, 유튜버, 선생님" 
-                                    value={profileData.dreamJob}
-                                    onChange={(e) => setProfileData({...profileData, dreamJob: e.target.value})}
+                                    value={profileData.elem_dreamJob}
+                                    onChange={(e) => setProfileData({...profileData, elem_dreamJob: e.target.value})}
                                     className="h-12 rounded-xl bg-[#F2F4F6] border-none"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label>가장 좋아하는 과목</Label>
                                 <Select 
-                                    value={profileData.favoriteSubject} 
-                                    onValueChange={(val) => setProfileData({...profileData, favoriteSubject: val})}
+                                    value={profileData.elem_favoriteSubject} 
+                                    onValueChange={(val) => setProfileData({...profileData, elem_favoriteSubject: val})}
                                 >
                                     <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
                                         <SelectValue placeholder="과목 선택" />
@@ -498,7 +515,18 @@ export default function Profile() {
                             <div className="space-y-2">
                                 <Label>좋아하는 것 (취미)</Label>
                                 <Textarea 
+                                    value={profileData.elem_hobbies}
+                                    onChange={(e) => setProfileData({...profileData, elem_hobbies: e.target.value})}
                                     placeholder="예: 레고 조립하기, 친구들과 축구하기" 
+                                    className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                                />
+                            </div>
+                             <div className="space-y-2">
+                                <Label>요즘 가장 큰 고민</Label>
+                                <Textarea 
+                                    value={profileData.elem_concerns}
+                                    onChange={(e) => setProfileData({...profileData, elem_concerns: e.target.value})}
+                                    placeholder="학교 생활이나 친구 관계 등 요즘 하는 고민이 있다면 적어주세요." 
                                     className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
                                 />
                             </div>
@@ -508,22 +536,21 @@ export default function Profile() {
             );
         
         case 'middle':
-        case 'high':
             return (
                 <div className="space-y-6 animate-in fade-in">
                     <Card className="toss-card">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-lg">
-                                <School className="h-5 w-5 text-[#3182F6]" /> 학교 생활 정보
+                                <School className="h-5 w-5 text-[#3182F6]" /> 학교 생활 정보 (중등)
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label>학교명</Label>
                                 <Input 
-                                    placeholder={profileData.type === 'high' ? "예: 한국고등학교" : "예: 한국중학교"}
-                                    value={profileData.schoolName}
-                                    onChange={(e) => setProfileData({...profileData, schoolName: e.target.value})}
+                                    placeholder="예: 한국중학교"
+                                    value={profileData.mid_schoolName}
+                                    onChange={(e) => setProfileData({...profileData, mid_schoolName: e.target.value})}
                                     className="h-12 rounded-xl bg-[#F2F4F6] border-none"
                                 />
                             </div>
@@ -531,8 +558,8 @@ export default function Profile() {
                                 <div className="space-y-2">
                                     <Label>학년</Label>
                                     <Select 
-                                        value={profileData.grade} 
-                                        onValueChange={(val) => setProfileData({...profileData, grade: val})}
+                                        value={profileData.mid_grade} 
+                                        onValueChange={(val) => setProfileData({...profileData, mid_grade: val})}
                                     >
                                         <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
                                             <SelectValue placeholder="학년 선택" />
@@ -547,8 +574,86 @@ export default function Profile() {
                                 <div className="space-y-2">
                                     <Label>반</Label>
                                     <Select 
-                                        value={profileData.classNumber} 
-                                        onValueChange={(val) => setProfileData({...profileData, classNumber: val})}
+                                        value={profileData.mid_class} 
+                                        onValueChange={(val) => setProfileData({...profileData, mid_class: val})}
+                                    >
+                                        <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                            <SelectValue placeholder="반 선택" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Array.from({length: 15}, (_, i) => i + 1).map(c => (
+                                                <SelectItem key={c} value={c.toString()}>{c}반</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>관심 분야 / 동아리 활동</Label>
+                                <Textarea 
+                                    value={profileData.mid_interests}
+                                    onChange={(e) => setProfileData({...profileData, mid_interests: e.target.value})}
+                                    placeholder="관심있는 분야나 현재 활동 중인 동아리에 대해 적어주세요." 
+                                    className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>진로/학업 고민</Label>
+                                <Textarea 
+                                    value={profileData.mid_concerns}
+                                    onChange={(e) => setProfileData({...profileData, mid_concerns: e.target.value})}
+                                    placeholder="고등학교 진학이나 성적 등 현재 가장 큰 고민은 무엇인가요?" 
+                                    className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            );
+
+        case 'high':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <School className="h-5 w-5 text-[#3182F6]" /> 학교 생활 정보 (고등)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>학교명</Label>
+                                <Input 
+                                    placeholder="예: 한국고등학교"
+                                    value={profileData.high_schoolName}
+                                    onChange={(e) => setProfileData({...profileData, high_schoolName: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>학년</Label>
+                                    <Select 
+                                        value={profileData.high_grade} 
+                                        onValueChange={(val) => setProfileData({...profileData, high_grade: val})}
+                                    >
+                                        <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                            <SelectValue placeholder="학년 선택" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {[1, 2, 3].map(g => (
+                                                <SelectItem key={g} value={g.toString()}>{g}학년</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>반</Label>
+                                    <Select 
+                                        value={profileData.high_class} 
+                                        onValueChange={(val) => setProfileData({...profileData, high_class: val})}
                                     >
                                         <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
                                             <SelectValue placeholder="반 선택" />
@@ -562,28 +667,28 @@ export default function Profile() {
                                 </div>
                             </div>
                             
-                            {profileData.type === 'high' && (
-                                <div className="space-y-2">
-                                    <Label>평균 내신 등급</Label>
-                                    <Select 
-                                        value={profileData.academicScore} 
-                                        onValueChange={(val) => setProfileData({...profileData, academicScore: val})}
-                                    >
-                                        <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
-                                            <SelectValue placeholder="등급 선택" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(s => (
-                                                <SelectItem key={s} value={s.toString()}>{s}등급</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
+                            <div className="space-y-2">
+                                <Label>평균 내신 등급</Label>
+                                <Select 
+                                    value={profileData.high_academicScore} 
+                                    onValueChange={(val) => setProfileData({...profileData, high_academicScore: val})}
+                                >
+                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                        <SelectValue placeholder="등급 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(s => (
+                                            <SelectItem key={s} value={s.toString()}>{s}등급</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
                             <div className="space-y-2">
                                 <Label>관심 분야 / 동아리 활동</Label>
                                 <Textarea 
+                                    value={profileData.high_interests}
+                                    onChange={(e) => setProfileData({...profileData, high_interests: e.target.value})}
                                     placeholder="관심있는 전공이나 현재 활동 중인 동아리에 대해 적어주세요." 
                                     className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
                                 />
@@ -601,8 +706,8 @@ export default function Profile() {
                              <div className="space-y-2">
                                 <Label>희망 계열 (전공)</Label>
                                 <Select 
-                                    value={profileData.highSchoolMajor} 
-                                    onValueChange={(val) => setProfileData({...profileData, highSchoolMajor: val})}
+                                    value={profileData.high_majorTrack} 
+                                    onValueChange={(val) => setProfileData({...profileData, high_majorTrack: val})}
                                 >
                                     <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
                                         <SelectValue placeholder="계열 선택" />
@@ -613,6 +718,15 @@ export default function Profile() {
                                         ))}
                                     </SelectContent>
                                 </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>입시/진로 고민</Label>
+                                <Textarea 
+                                    value={profileData.high_concerns}
+                                    onChange={(e) => setProfileData({...profileData, high_concerns: e.target.value})}
+                                    placeholder="대학 진학, 학과 선택 등 현재 가장 큰 고민은 무엇인가요?" 
+                                    className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                                />
                             </div>
                         </CardContent>
                     </Card>
@@ -633,16 +747,16 @@ export default function Profile() {
                                 <Label>대학교</Label>
                                 <Input 
                                     placeholder="예: 한국대학교" 
-                                    value={profileData.schoolName}
-                                    onChange={(e) => setProfileData({...profileData, schoolName: e.target.value})}
+                                    value={profileData.univ_schoolName}
+                                    onChange={(e) => setProfileData({...profileData, univ_schoolName: e.target.value})}
                                     className="h-12 rounded-xl bg-[#F2F4F6] border-none"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Label>전공 계열</Label>
                                 <Select 
-                                    value={profileData.majorCategory} 
-                                    onValueChange={(val) => setProfileData({...profileData, majorCategory: val})}
+                                    value={profileData.univ_majorCategory} 
+                                    onValueChange={(val) => setProfileData({...profileData, univ_majorCategory: val})}
                                 >
                                     <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
                                         <SelectValue placeholder="전공 계열 선택" />
@@ -658,8 +772,8 @@ export default function Profile() {
                                 <Label>상세 전공 (학과명)</Label>
                                 <Input 
                                     placeholder="예: 경영학과, 컴퓨터공학부" 
-                                    value={profileData.majorDetail}
-                                    onChange={(e) => setProfileData({...profileData, majorDetail: e.target.value})}
+                                    value={profileData.univ_majorName}
+                                    onChange={(e) => setProfileData({...profileData, univ_majorName: e.target.value})}
                                     className="h-12 rounded-xl bg-[#F2F4F6] border-none"
                                 />
                             </div>
@@ -668,8 +782,8 @@ export default function Profile() {
                                 <div className="space-y-2">
                                     <Label>학년</Label>
                                     <Select 
-                                        value={profileData.grade} 
-                                        onValueChange={(val) => setProfileData({...profileData, grade: val})}
+                                        value={profileData.univ_grade} 
+                                        onValueChange={(val) => setProfileData({...profileData, univ_grade: val})}
                                     >
                                         <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
                                             <SelectValue placeholder="학년 선택" />
@@ -684,8 +798,8 @@ export default function Profile() {
                                 <div className="space-y-2">
                                     <Label>학기</Label>
                                     <Select 
-                                        value={profileData.semester} 
-                                        onValueChange={(val) => setProfileData({...profileData, semester: val})}
+                                        value={profileData.univ_semester} 
+                                        onValueChange={(val) => setProfileData({...profileData, univ_semester: val})}
                                     >
                                         <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
                                             <SelectValue placeholder="학기 선택" />
@@ -701,8 +815,8 @@ export default function Profile() {
                             <div className="space-y-2">
                                 <Label>총 학점 (GPA)</Label>
                                 <Select 
-                                    value={profileData.uniGpa} 
-                                    onValueChange={(val) => setProfileData({...profileData, uniGpa: val})}
+                                    value={profileData.univ_gpa} 
+                                    onValueChange={(val) => setProfileData({...profileData, univ_gpa: val})}
                                 >
                                     <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
                                         <SelectValue placeholder="학점 선택 (4.5 만점 기준)" />
@@ -726,7 +840,7 @@ export default function Profile() {
                         <CardContent className="space-y-4">
                              <div className="space-y-3">
                                 <Label>어학 점수</Label>
-                                {profileData.languageTests.map((test) => (
+                                {profileData.univ_languageTests.map((test) => (
                                     <div key={test.id} className="flex items-center gap-2">
                                         <div className="flex-1 p-3 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] text-sm font-medium">
                                             {test.type} <span className="text-[#3182F6] font-bold ml-2">{test.score}</span>
@@ -736,7 +850,7 @@ export default function Profile() {
                                             size="icon" 
                                             onClick={() => setProfileData(prev => ({
                                                 ...prev, 
-                                                languageTests: prev.languageTests.filter(t => t.id !== test.id)
+                                                univ_languageTests: prev.univ_languageTests.filter(t => t.id !== test.id)
                                             }))}
                                         >
                                             <X className="h-4 w-4 text-[#B0B8C1]" />
@@ -750,7 +864,7 @@ export default function Profile() {
                                         if (score) {
                                             setProfileData(prev => ({
                                                 ...prev,
-                                                languageTests: [...prev.languageTests, { id: Date.now(), type, score }]
+                                                univ_languageTests: [...prev.univ_languageTests, { id: Date.now(), type, score }]
                                             }));
                                         }
                                     }}>
@@ -768,6 +882,8 @@ export default function Profile() {
                             <div className="space-y-2 mt-4">
                                 <Label>기타 자격증 / 수상 경력</Label>
                                 <Textarea 
+                                    value={profileData.univ_certificates}
+                                    onChange={(e) => setProfileData({...profileData, univ_certificates: e.target.value})}
                                     placeholder="취득한 자격증이나 공모전 수상 내역을 입력해주세요." 
                                     className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
                                 />
@@ -790,6 +906,25 @@ export default function Profile() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <AlertTriangle className="h-5 w-5 text-[#FF5252]" /> 취업/진로 고민
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                <Label>현재 가장 큰 고민</Label>
+                                <Textarea 
+                                    value={profileData.univ_concerns}
+                                    onChange={(e) => setProfileData({...profileData, univ_concerns: e.target.value})}
+                                    placeholder="취업 준비, 진로 선택 등 현재 가장 고민되는 점을 적어주세요." 
+                                    className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
              );
 
@@ -805,7 +940,7 @@ export default function Profile() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                              {/* Work Experience List */}
-                             {profileData.workExperience.map((exp) => (
+                             {profileData.gen_workExperience.map((exp) => (
                                 <div key={exp.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-3 relative group">
                                     <div className="flex justify-between items-start">
                                         <div>
@@ -848,7 +983,7 @@ export default function Profile() {
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {workValueOptions.map((option) => {
                                     const Icon = option.icon;
-                                    const isSelected = profileData.workValues.includes(option.id);
+                                    const isSelected = profileData.gen_workValues.includes(option.id);
                                     return (
                                         <div 
                                             key={option.id}
@@ -881,7 +1016,7 @@ export default function Profile() {
                                 <div className="flex items-center space-x-2 mb-2">
                                     <Checkbox 
                                         id="salary-none" 
-                                        checked={profileData.salaryNoPreference}
+                                        checked={profileData.gen_salaryNoPreference}
                                         onCheckedChange={toggleSalaryNoPreference}
                                     />
                                     <label htmlFor="salary-none" className="text-sm font-medium leading-none text-[#4E5968] cursor-pointer">
@@ -890,15 +1025,15 @@ export default function Profile() {
                                 </div>
                                 
                                 <ResponsiveModal
-                                    open={!profileData.salaryNoPreference ? undefined : false}
+                                    open={!profileData.gen_salaryNoPreference ? undefined : false}
                                     trigger={
                                         <Button 
                                             variant="outline" 
-                                            className={`w-full h-14 text-lg font-bold justify-between px-4 rounded-xl border-[#E5E8EB] ${profileData.salaryNoPreference ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            disabled={profileData.salaryNoPreference}
+                                            className={`w-full h-14 text-lg font-bold justify-between px-4 rounded-xl border-[#E5E8EB] ${profileData.gen_salaryNoPreference ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            disabled={profileData.gen_salaryNoPreference}
                                         >
                                             <span className="text-[#191F28]">
-                                                {profileData.salary > 0 ? `${profileData.salary.toLocaleString()}만원` : "연봉 입력"}
+                                                {profileData.gen_salary > 0 ? `${profileData.gen_salary.toLocaleString()}만원` : "연봉 입력"}
                                             </span>
                                             <span className="text-[#8B95A1] text-sm font-normal">이상</span>
                                         </Button>
@@ -907,8 +1042,8 @@ export default function Profile() {
                                     description="희망하는 최소 연봉을 입력해주세요."
                                 >
                                     <ResponsiveSalaryInputContent 
-                                        value={profileData.salary} 
-                                        onChange={(val) => setProfileData(prev => ({ ...prev, salary: val }))} 
+                                        value={profileData.gen_salary} 
+                                        onChange={(val) => setProfileData(prev => ({ ...prev, gen_salary: val }))} 
                                     />
                                 </ResponsiveModal>
                             </CardContent>
@@ -924,7 +1059,7 @@ export default function Profile() {
                                 <div className="flex items-center space-x-2 mb-2">
                                     <Checkbox 
                                         id="env-none" 
-                                        checked={profileData.environmentNoPreference}
+                                        checked={profileData.gen_environmentNoPreference}
                                         onCheckedChange={toggleEnvironmentNoPreference}
                                     />
                                     <label htmlFor="env-none" className="text-sm font-medium leading-none text-[#4E5968] cursor-pointer">
@@ -933,16 +1068,16 @@ export default function Profile() {
                                 </div>
 
                                 <ResponsiveModal
-                                    open={!profileData.environmentNoPreference ? undefined : false}
+                                    open={!profileData.gen_environmentNoPreference ? undefined : false}
                                     trigger={
                                         <Button 
                                             variant="outline" 
-                                            className={`w-full h-14 text-lg font-bold justify-between px-4 rounded-xl border-[#E5E8EB] ${profileData.environmentNoPreference ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            disabled={profileData.environmentNoPreference}
+                                            className={`w-full h-14 text-lg font-bold justify-between px-4 rounded-xl border-[#E5E8EB] ${profileData.gen_environmentNoPreference ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            disabled={profileData.gen_environmentNoPreference}
                                         >
                                             <span className="text-[#191F28] truncate max-w-[80%] text-left">
-                                                {profileData.environmentPreferences.length > 0 
-                                                    ? `${profileData.environmentPreferences.length}개 선택됨` 
+                                                {profileData.gen_environmentPreferences.length > 0 
+                                                    ? `${profileData.gen_environmentPreferences.length}개 선택됨` 
                                                     : "근무 환경 선택"}
                                             </span>
                                             <span className="text-[#8B95A1] text-sm font-normal">선택</span>
@@ -953,7 +1088,7 @@ export default function Profile() {
                                 >
                                     <div className="space-y-3 pb-4">
                                         {environmentOptions.map((option) => {
-                                            const isSelected = profileData.environmentPreferences.includes(option.id);
+                                            const isSelected = profileData.gen_environmentPreferences.includes(option.id);
                                             const Icon = option.icon;
                                             return (
                                                 <div 
@@ -989,6 +1124,25 @@ export default function Profile() {
                             </CardContent>
                         </Card>
                     </div>
+                    
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <AlertTriangle className="h-5 w-5 text-[#FF5252]" /> 커리어 고민
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                <Label>현재 가장 큰 고민</Label>
+                                <Textarea 
+                                    value={profileData.gen_concerns}
+                                    onChange={(e) => setProfileData({...profileData, gen_concerns: e.target.value})}
+                                    placeholder="이직, 직무 변경, 연봉 협상 등 현재 커리어와 관련된 가장 큰 고민을 적어주세요." 
+                                    className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             );
       }
@@ -1034,7 +1188,7 @@ export default function Profile() {
         </div>
 
         <div className="grid gap-8 md:grid-cols-[320px_1fr]">
-          {/* Profile Overview Card - Sticky */}
+          {/* Profile Overview Card */}
           <div className="space-y-6">
             <Card className="toss-card">
               <CardContent className="pt-8 flex flex-col items-center text-center">
@@ -1050,13 +1204,13 @@ export default function Profile() {
                 {/* Editable Name & Role */}
                 <div className="w-full space-y-2 mb-6">
                     <Input 
-                        value={profileData.name}
-                        onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                        value={profileData.basic_name}
+                        onChange={(e) => setProfileData({...profileData, basic_name: e.target.value})}
                         className="text-center text-xl font-bold border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 hover:bg-[#F2F4F6] rounded-lg transition-colors"
                     />
                     <Input 
-                        value={profileData.role}
-                        onChange={(e) => setProfileData({...profileData, role: e.target.value})}
+                        value={profileData.basic_role}
+                        onChange={(e) => setProfileData({...profileData, basic_role: e.target.value})}
                         className="text-center text-[#8B95A1] font-medium border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 hover:bg-[#F2F4F6] rounded-lg transition-colors"
                         placeholder="직책 또는 한 줄 소개 입력"
                     />
@@ -1066,16 +1220,16 @@ export default function Profile() {
                   <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB] group focus-within:ring-2 focus-within:ring-blue-100 transition-all">
                     <Mail className="h-4 w-4 text-[#B0B8C1] shrink-0" />
                     <Input 
-                        value={profileData.email}
-                        onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                        value={profileData.basic_email}
+                        onChange={(e) => setProfileData({...profileData, basic_email: e.target.value})}
                         className="border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 text-sm text-[#4E5968]"
                     />
                   </div>
                   <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB] group focus-within:ring-2 focus-within:ring-blue-100 transition-all">
                     <MapPin className="h-4 w-4 text-[#B0B8C1] shrink-0" />
                     <Input 
-                        value={profileData.location}
-                        onChange={(e) => setProfileData({...profileData, location: e.target.value})}
+                        value={profileData.basic_location}
+                        onChange={(e) => setProfileData({...profileData, basic_location: e.target.value})}
                         className="border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 text-sm text-[#4E5968]"
                     />
                   </div>
@@ -1086,9 +1240,9 @@ export default function Profile() {
                             <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB] hover:bg-[#E8F3FF] hover:text-[#3182F6] cursor-pointer transition-colors">
                                 <User className="h-4 w-4 text-[#B0B8C1]" />
                                 <span>
-                                    {profileData.gender === 'male' ? '남성' : profileData.gender === 'female' ? '여성' : '성별'} 
+                                    {profileData.basic_gender === 'male' ? '남성' : profileData.basic_gender === 'female' ? '여성' : '성별'} 
                                     {' / '} 
-                                    {profileData.birthDate ? format(profileData.birthDate, 'yyyy.MM.dd') : '생년월일'}
+                                    {profileData.basic_birthDate ? format(profileData.basic_birthDate, 'yyyy.MM.dd') : '생년월일'}
                                 </span>
                             </div>
                         }
@@ -1100,15 +1254,15 @@ export default function Profile() {
                                 <div className="flex gap-2">
                                     <Button 
                                         variant="outline" 
-                                        className={`flex-1 h-12 rounded-xl border-[#E5E8EB] ${profileData.gender === 'male' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
-                                        onClick={() => setProfileData({...profileData, gender: 'male'})}
+                                        className={`flex-1 h-12 rounded-xl border-[#E5E8EB] ${profileData.basic_gender === 'male' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
+                                        onClick={() => setProfileData({...profileData, basic_gender: 'male'})}
                                     >
                                         남성
                                     </Button>
                                     <Button 
                                         variant="outline" 
-                                        className={`flex-1 h-12 rounded-xl border-[#E5E8EB] ${profileData.gender === 'female' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
-                                        onClick={() => setProfileData({...profileData, gender: 'female'})}
+                                        className={`flex-1 h-12 rounded-xl border-[#E5E8EB] ${profileData.basic_gender === 'female' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
+                                        onClick={() => setProfileData({...profileData, basic_gender: 'female'})}
                                     >
                                         여성
                                     </Button>
@@ -1118,8 +1272,8 @@ export default function Profile() {
                             <div className="space-y-2">
                                 <Label className="text-xs text-[#8B95A1]">생년월일</Label>
                                 <ResponsiveDatePickerContent 
-                                    value={profileData.birthDate} 
-                                    onChange={(date) => setProfileData(prev => ({ ...prev, birthDate: date }))} 
+                                    value={profileData.basic_birthDate} 
+                                    onChange={(date) => setProfileData(prev => ({ ...prev, basic_birthDate: date }))} 
                                     hideButton={true}
                                 />
                             </div>
@@ -1135,8 +1289,8 @@ export default function Profile() {
                 <div className="w-full space-y-2">
                     <Label className="text-left block mb-2 text-[#4E5968]">한 줄 소개</Label>
                     <Textarea 
-                        value={profileData.bio}
-                        onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                        value={profileData.basic_bio}
+                        onChange={(e) => setProfileData({...profileData, basic_bio: e.target.value})}
                         className="bg-[#F9FAFB] border-none rounded-xl min-h-[80px] text-sm resize-none focus-visible:ring-2 focus-visible:ring-blue-100 transition-all"
                     />
                 </div>
