@@ -28,19 +28,19 @@ export default function Dashboard() {
         {/* Progress Overview Section */}
         <div className="grid gap-6 md:grid-cols-2">
             {/* Vision Tree Progress */}
-            <Card className="toss-card p-6 bg-gradient-to-br from-[#191F28] to-[#2C3542] text-white border-none">
+            <Card className="toss-card p-6 text-[#191F28]">
                 <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
                     <div>
-                        <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
-                            <Target className="h-5 w-5 text-[#3182F6]" /> 비전 트리 진행률
+                        <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                            <Target className="h-5 w-5 text-[#3182F6]" /> Kompass 진행률
                         </CardTitle>
-                        <CardDescription className="text-gray-400 mt-1">최종 커리어 목표 달성까지</CardDescription>
+                        <CardDescription className="text-[#8B95A1] mt-1">최종 커리어 목표 달성까지</CardDescription>
                     </div>
                     <span className="text-3xl font-bold text-[#3182F6]">45%</span>
                 </CardHeader>
                 <CardContent className="px-0 pb-0 mt-4">
-                    <Progress value={45} className="h-3 bg-white/10" indicatorClassName="bg-[#3182F6]" />
-                    <div className="mt-4 flex justify-between text-sm text-gray-400">
+                    <Progress value={45} className="h-3 bg-[#F2F4F6]" indicatorClassName="bg-[#3182F6]" />
+                    <div className="mt-4 flex justify-between text-sm text-[#8B95A1]">
                         <span>현재: 시니어 PM 직무 전환</span>
                         <span>목표: CPO (2030)</span>
                     </div>

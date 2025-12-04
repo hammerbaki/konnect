@@ -129,7 +129,7 @@ export default function Goals() {
                 
                 <div className="space-y-6 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="title" className="text-sm font-bold text-[#333D4B]">목표 제목 (Vision)</Label>
+                        <Label htmlFor="title" className="text-sm font-bold text-[#333D4B]">목표 제목 (Kompass)</Label>
                         <Input 
                             id="title" 
                             placeholder="예: 유니콘 기업 CPO 되기" 
