@@ -744,6 +744,7 @@ export default function PersonalStatement() {
                             </div>
                         </div>
                     )}
+                </div>
             </div>
         </Layout>
     );
