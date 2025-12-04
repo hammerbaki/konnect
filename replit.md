@@ -9,6 +9,7 @@ Konnect is a Korean-language AI-powered career guidance platform that provides p
 ### December 4, 2024 - Backend Implementation Complete + Production Deployment Fixes
 - **Complete backend infrastructure implemented** with PostgreSQL, Replit Auth, and Anthropic AI
 - **Production deployment fixes** applied to prevent crash loops
+- **ESM/CJS bundling fixes**: Replaced problematic npm packages (memoizee, p-limit, p-retry) with custom implementations to prevent "is not a function" errors in production builds
 - **Error handling** added throughout (uncaught exceptions, unhandled rejections, initialization errors)
 - **Environment validation** added at startup with clear error messages
 - **Detailed logging** for all initialization steps for easier debugging
@@ -16,7 +17,7 @@ Konnect is a Korean-language AI-powered career guidance platform that provides p
 - **Authentication setup** wrapped in try-catch with detailed logs
 - All API endpoints tested and working (profiles, analyses, essays, kompass goals)
 - Credit system fully functional (10 free credits per user)
-- AI generation with rate limiting and automatic retries operational
+- AI generation with custom rate limiting and exponential backoff retry logic operational
 
 ## User Preferences
 
@@ -71,8 +72,8 @@ Preferred communication style: Simple, everyday language.
 
 **AI Integration**:
 - Anthropic Claude API via Replit AI Integrations (no manual API key required)
-- Rate limiting: 2 concurrent requests using p-limit
-- Retry logic with p-retry for handling rate limits
+- Rate limiting: 2 concurrent requests using custom concurrency limiter (ESM-compatible)
+- Retry logic with custom exponential backoff (2s-128s, 7 attempts) for handling rate limits
 - Profile-specific system prompts for tailored career analysis
 - Streaming responses support for real-time AI generation
 

@@ -1,6 +1,4 @@
 import Anthropic from "@anthropic-ai/sdk";
-import pLimit from "p-limit";
-import pRetry from "p-retry";
 import type { Profile } from "@shared/schema";
 
 // Using Replit AI Integrations for Anthropic - no API key needed, charges to credits
@@ -20,8 +18,69 @@ function isRateLimitError(error: any): boolean {
   );
 }
 
+// Simple concurrency limiter (replaces p-limit)
+function createLimiter(concurrency: number) {
+  let active = 0;
+  const queue: (() => void)[] = [];
+  
+  return async function<T>(fn: () => Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const run = async () => {
+        active++;
+        try {
+          const result = await fn();
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        } finally {
+          active--;
+          if (queue.length > 0) {
+            const next = queue.shift();
+            if (next) next();
+          }
+        }
+      };
+      
+      if (active < concurrency) {
+        run();
+      } else {
+        queue.push(run);
+      }
+    });
+  };
+}
+
+// Simple retry with exponential backoff (replaces p-retry)
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  options: { retries: number; minTimeout: number; maxTimeout: number; factor: number }
+): Promise<T> {
+  let lastError: Error | undefined;
+  let timeout = options.minTimeout;
+  
+  for (let attempt = 0; attempt <= options.retries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      
+      // If it's not a rate limit error, don't retry
+      if (!isRateLimitError(error)) {
+        throw error;
+      }
+      
+      if (attempt < options.retries) {
+        await new Promise(resolve => setTimeout(resolve, timeout));
+        timeout = Math.min(timeout * options.factor, options.maxTimeout);
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
 // Rate limiter: max 2 concurrent requests
-const limit = pLimit(2);
+const limit = createLimiter(2);
 
 // Profile-specific system prompts for career analysis
 const getAnalysisSystemPrompt = (profileType: string): string => {
@@ -85,13 +144,12 @@ export async function generateCareerAnalysis(profile: Profile): Promise<{
   rawResponse: string;
 }> {
   return limit(() =>
-    pRetry(
+    retryWithBackoff(
       async () => {
-        try {
-          const systemPrompt = getAnalysisSystemPrompt(profile.type);
-          const context = getProfileContextData(profile);
+        const systemPrompt = getAnalysisSystemPrompt(profile.type);
+        const contextData = getProfileContextData(profile);
 
-          const prompt = `${context}
+        const prompt = `${contextData}
 
 위 프로필을 분석하여 다음 항목을 JSON 형식으로 제공하세요:
 
@@ -107,49 +165,40 @@ export async function generateCareerAnalysis(profile: Profile): Promise<{
 
 **반드시 유효한 JSON만 반환하세요. 추가 설명 없이 JSON만 출력하세요.**`;
 
-          const message = await anthropic.messages.create({
-            model: "claude-sonnet-4-5",
-            max_tokens: 8192,
-            system: systemPrompt,
-            messages: [
-              {
-                role: "user",
-                content: prompt,
-              },
-            ],
-          });
+        const message = await anthropic.messages.create({
+          model: "claude-sonnet-4-5",
+          max_tokens: 8192,
+          system: systemPrompt,
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+        });
 
-          const content = message.content[0];
-          if (content.type !== "text") {
-            throw new Error("Unexpected response type");
-          }
-
-          const rawResponse = content.text;
-          
-          // Parse JSON from response
-          const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) {
-            throw new Error("No valid JSON found in response");
-          }
-
-          const parsed = JSON.parse(jsonMatch[0]);
-          
-          return {
-            summary: parsed.summary || "분석 중 오류가 발생했습니다.",
-            stats: parsed.stats || { label1: "분석중", val1: "-", label2: "분석중", val2: "-", label3: "분석중", val3: "-" },
-            chartData: parsed.chartData || { radar: [], bar: [] },
-            recommendations: parsed.recommendations || [],
-            rawResponse,
-          };
-        } catch (error: any) {
-          if (isRateLimitError(error)) {
-            throw error;
-          }
-          // Don't retry non-rate-limit errors
-          const abortError = new Error(error.message) as any;
-          abortError.name = 'AbortError';
-          throw abortError;
+        const content = message.content[0];
+        if (content.type !== "text") {
+          throw new Error("Unexpected response type");
         }
+
+        const rawResponse = content.text;
+        
+        // Parse JSON from response
+        const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error("No valid JSON found in response");
+        }
+
+        const parsed = JSON.parse(jsonMatch[0]);
+        
+        return {
+          summary: parsed.summary || "분석 중 오류가 발생했습니다.",
+          stats: parsed.stats || { label1: "분석중", val1: "-", label2: "분석중", val2: "-", label3: "분석중", val3: "-" },
+          chartData: parsed.chartData || { radar: [], bar: [] },
+          recommendations: parsed.recommendations || [],
+          rawResponse,
+        };
       },
       {
         retries: 7,
@@ -166,20 +215,19 @@ export async function generatePersonalEssay(
   profileType: string,
   category: string,
   topic: string,
-  context?: string
+  essayContext?: string
 ): Promise<{
   title: string;
   content: string;
   rawResponse: string;
 }> {
   return limit(() =>
-    pRetry(
+    retryWithBackoff(
       async () => {
-        try {
-          const systemPrompt = `당신은 한국의 자기소개서 전문 작가입니다. ${category}를 위한 자기소개서를 작성합니다. 모든 응답은 한국어로 작성하세요.`;
+        const systemPrompt = `당신은 한국의 자기소개서 전문 작가입니다. ${category}를 위한 자기소개서를 작성합니다. 모든 응답은 한국어로 작성하세요.`;
 
-          const prompt = `주제: ${topic}
-${context ? `추가 정보: ${context}` : ''}
+        const prompt = `주제: ${topic}
+${essayContext ? `추가 정보: ${essayContext}` : ''}
 
 위 주제에 대한 자기소개서를 작성하세요. 다음 JSON 형식으로 반환하세요:
 
@@ -190,47 +238,38 @@ ${context ? `추가 정보: ${context}` : ''}
 
 **반드시 유효한 JSON만 반환하세요. 추가 설명 없이 JSON만 출력하세요.**`;
 
-          const message = await anthropic.messages.create({
-            model: "claude-sonnet-4-5",
-            max_tokens: 8192,
-            system: systemPrompt,
-            messages: [
-              {
-                role: "user",
-                content: prompt,
-              },
-            ],
-          });
+        const message = await anthropic.messages.create({
+          model: "claude-sonnet-4-5",
+          max_tokens: 8192,
+          system: systemPrompt,
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+        });
 
-          const content = message.content[0];
-          if (content.type !== "text") {
-            throw new Error("Unexpected response type");
-          }
-
-          const rawResponse = content.text;
-          
-          // Parse JSON from response
-          const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) {
-            throw new Error("No valid JSON found in response");
-          }
-
-          const parsed = JSON.parse(jsonMatch[0]);
-          
-          return {
-            title: parsed.title || "자기소개서",
-            content: parsed.content || "내용을 생성할 수 없습니다.",
-            rawResponse,
-          };
-        } catch (error: any) {
-          if (isRateLimitError(error)) {
-            throw error;
-          }
-          // Don't retry non-rate-limit errors
-          const abortError = new Error(error.message) as any;
-          abortError.name = 'AbortError';
-          throw abortError;
+        const msgContent = message.content[0];
+        if (msgContent.type !== "text") {
+          throw new Error("Unexpected response type");
         }
+
+        const rawResponse = msgContent.text;
+        
+        // Parse JSON from response
+        const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error("No valid JSON found in response");
+        }
+
+        const parsed = JSON.parse(jsonMatch[0]);
+        
+        return {
+          title: parsed.title || "자기소개서",
+          content: parsed.content || "내용을 생성할 수 없습니다.",
+          rawResponse,
+        };
       },
       {
         retries: 7,

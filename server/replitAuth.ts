@@ -4,19 +4,27 @@ import { Strategy, type VerifyFunction } from "openid-client/passport";
 import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
-import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-const getOidcConfig = memoize(
-  async () => {
-    return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
-    );
-  },
-  { maxAge: 3600 * 1000 }
-);
+// Simple in-memory cache for OIDC config (replaces memoizee)
+let oidcConfigCache: Awaited<ReturnType<typeof client.discovery>> | null = null;
+let oidcConfigTime: number = 0;
+const OIDC_CACHE_TTL = 3600 * 1000; // 1 hour
+
+const getOidcConfig = async () => {
+  const now = Date.now();
+  if (oidcConfigCache && (now - oidcConfigTime) < OIDC_CACHE_TTL) {
+    return oidcConfigCache;
+  }
+  
+  oidcConfigCache = await client.discovery(
+    new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
+    process.env.REPL_ID!
+  );
+  oidcConfigTime = now;
+  return oidcConfigCache;
+};
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
