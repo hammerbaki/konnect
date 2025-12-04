@@ -349,16 +349,27 @@ export default function Profile() {
     elem_schoolName: "",
     elem_grade: "",
     elem_favoriteSubject: "",
+    elem_dislikedSubject: "", // 싫어하는 과목
     elem_dreamJob: "",
+    elem_strengths: "", // 잘하는 것 (강점)
+    elem_interests: "", // 관심 분야
     elem_hobbies: "", // Textarea
     elem_concerns: "", // 고민
+    elem_parentsHope: "", // 부모님 희망 직업
 
     // Middle School Specific
     mid_schoolName: "",
     mid_grade: "",
     mid_class: "",
+    mid_academicScore: "", // 주요 과목 성적 (상/중/하)
+    mid_favoriteSubject: "", // 좋아하는 과목
+    mid_dislikedSubject: "", // 싫어하는 과목
     mid_interests: "", // 관심분야
+    mid_hobbies: "", // 취미
+    mid_dreamJob: "", // 장래희망
+    mid_highSchoolPlan: "", // 고교 진학 계획 (일반고/특목고/특성화고)
     mid_concerns: "", // 고민
+    mid_strengths: "", // 나의 장점
 
     // High School Specific
     high_schoolName: "",
@@ -534,6 +545,34 @@ export default function Profile() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
+                                <Label>학교명</Label>
+                                <Input 
+                                    placeholder="예: 한국초등학교" 
+                                    value={profileData.elem_schoolName}
+                                    onChange={(e) => setProfileData({...profileData, elem_schoolName: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>학년</Label>
+                                <Select 
+                                    value={profileData.elem_grade} 
+                                    onValueChange={(val) => setProfileData({...profileData, elem_grade: val})}
+                                >
+                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                        <SelectValue placeholder="학년 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[1, 2, 3, 4, 5, 6].map(g => (
+                                            <SelectItem key={g} value={g.toString()}>{g}학년</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            
+                            <Separator className="my-2"/>
+
+                            <div className="space-y-2">
                                 <Label>장래희망 (되고 싶은 사람)</Label>
                                 <Input 
                                     placeholder="예: 과학자, 유튜버, 선생님" 
@@ -543,21 +582,70 @@ export default function Profile() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>가장 좋아하는 과목</Label>
-                                <Select 
-                                    value={profileData.elem_favoriteSubject} 
-                                    onValueChange={(val) => setProfileData({...profileData, elem_favoriteSubject: val})}
-                                >
-                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
-                                        <SelectValue placeholder="과목 선택" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {["국어", "수학", "영어", "사회", "과학", "체육", "음악", "미술", "코딩/컴퓨터", "기타"].map(subj => (
-                                            <SelectItem key={subj} value={subj}>{subj}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Label>부모님이 원하시는 나의 직업 (선택)</Label>
+                                <Input 
+                                    placeholder="부모님은 어떤 직업을 추천해주시나요?" 
+                                    value={profileData.elem_parentsHope}
+                                    onChange={(e) => setProfileData({...profileData, elem_parentsHope: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
                             </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>가장 좋아하는 과목</Label>
+                                    <Select 
+                                        value={profileData.elem_favoriteSubject} 
+                                        onValueChange={(val) => setProfileData({...profileData, elem_favoriteSubject: val})}
+                                    >
+                                        <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                            <SelectValue placeholder="과목 선택" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {["국어", "수학", "영어", "사회", "과학", "체육", "음악", "미술", "코딩/컴퓨터", "기타"].map(subj => (
+                                                <SelectItem key={subj} value={subj}>{subj}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>가장 싫어하는 과목</Label>
+                                    <Select 
+                                        value={profileData.elem_dislikedSubject} 
+                                        onValueChange={(val) => setProfileData({...profileData, elem_dislikedSubject: val})}
+                                    >
+                                        <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                            <SelectValue placeholder="과목 선택" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {["국어", "수학", "영어", "사회", "과학", "체육", "음악", "미술", "코딩/컴퓨터", "기타"].map(subj => (
+                                                <SelectItem key={subj} value={subj}>{subj}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>내가 잘하는 것 (강점)</Label>
+                                <Input 
+                                    value={profileData.elem_strengths}
+                                    onChange={(e) => setProfileData({...profileData, elem_strengths: e.target.value})}
+                                    placeholder="예: 만들기, 발표하기, 친구 도와주기" 
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>평소 관심있는 분야</Label>
+                                <Input 
+                                    value={profileData.elem_interests}
+                                    onChange={(e) => setProfileData({...profileData, elem_interests: e.target.value})}
+                                    placeholder="예: 우주, 공룡, 로봇, 요리" 
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+
                             <div className="space-y-2">
                                 <Label>좋아하는 것 (취미)</Label>
                                 <Textarea 
@@ -636,12 +724,102 @@ export default function Profile() {
                             </div>
 
                             <div className="space-y-2">
+                                <Label>주요 과목 성적 (대략적인 수준)</Label>
+                                <Select 
+                                    value={profileData.mid_academicScore} 
+                                    onValueChange={(val) => setProfileData({...profileData, mid_academicScore: val})}
+                                >
+                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                        <SelectValue placeholder="성적 수준 선택" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="high">상위권 (90점 이상)</SelectItem>
+                                        <SelectItem value="mid-high">중상위권 (80-90점)</SelectItem>
+                                        <SelectItem value="mid">중위권 (70-80점)</SelectItem>
+                                        <SelectItem value="mid-low">중하위권 (60-70점)</SelectItem>
+                                        <SelectItem value="low">하위권 (60점 미만)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>좋아하는 과목</Label>
+                                    <Input 
+                                        value={profileData.mid_favoriteSubject}
+                                        onChange={(e) => setProfileData({...profileData, mid_favoriteSubject: e.target.value})}
+                                        className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                        placeholder="예: 수학, 체육"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>싫어하는 과목</Label>
+                                    <Input 
+                                        value={profileData.mid_dislikedSubject}
+                                        onChange={(e) => setProfileData({...profileData, mid_dislikedSubject: e.target.value})}
+                                        className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                        placeholder="예: 영어"
+                                    />
+                                </div>
+                            </div>
+
+                            <Separator className="my-2"/>
+
+                            <div className="space-y-2">
+                                <Label>장래희망</Label>
+                                <Input 
+                                    placeholder="예: 프로그래머, 디자이너" 
+                                    value={profileData.mid_dreamJob}
+                                    onChange={(e) => setProfileData({...profileData, mid_dreamJob: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>고등학교 진학 계획</Label>
+                                <Select 
+                                    value={profileData.mid_highSchoolPlan} 
+                                    onValueChange={(val) => setProfileData({...profileData, mid_highSchoolPlan: val})}
+                                >
+                                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
+                                        <SelectValue placeholder="진학 희망 고교 유형" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="general">일반고등학교</SelectItem>
+                                        <SelectItem value="special_purpose">특수목적고 (과학고/외고 등)</SelectItem>
+                                        <SelectItem value="specialized">특성화고등학교</SelectItem>
+                                        <SelectItem value="autonomous">자율형 사립고</SelectItem>
+                                        <SelectItem value="undecided">아직 모르겠음</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>나의 장점 (성격/재능)</Label>
+                                <Input 
+                                    value={profileData.mid_strengths}
+                                    onChange={(e) => setProfileData({...profileData, mid_strengths: e.target.value})}
+                                    placeholder="예: 끈기 있음, 리더십, 손재주가 좋음" 
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
                                 <Label>관심 분야 / 동아리 활동</Label>
                                 <Textarea 
                                     value={profileData.mid_interests}
                                     onChange={(e) => setProfileData({...profileData, mid_interests: e.target.value})}
                                     placeholder="관심있는 분야나 현재 활동 중인 동아리에 대해 적어주세요." 
                                     className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>취미 생활</Label>
+                                <Input 
+                                    value={profileData.mid_hobbies}
+                                    onChange={(e) => setProfileData({...profileData, mid_hobbies: e.target.value})}
+                                    placeholder="예: 유튜브 시청, 게임, 운동" 
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
                                 />
                             </div>
 
