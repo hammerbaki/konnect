@@ -325,6 +325,7 @@ export default function KompassDetail() {
         <div className="space-y-2 relative">
              <div className="text-center">
                 <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Yearly</Badge>
+                <p className="text-sm text-[#8B95A1] mb-3">Set your high-level milestones for each year.</p>
              </div>
              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {vision.children.map((year) => (
@@ -379,6 +380,7 @@ export default function KompassDetail() {
             >
                 <div className="text-center">
                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Half-Yearly</Badge>
+                    <p className="text-sm text-[#8B95A1] mb-3">Break down your yearly goals into two main phases.</p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
                     {selectedYear.children.map((half) => (
@@ -434,6 +436,7 @@ export default function KompassDetail() {
             >
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Monthly</Badge>
+                     <p className="text-sm text-[#8B95A1] mb-3">Plan your key objectives for each month.</p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                     {selectedHalfYear.children.map((month) => (
@@ -487,6 +490,7 @@ export default function KompassDetail() {
             >
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Weekly</Badge>
+                     <p className="text-sm text-[#8B95A1] mb-3">Outline your weekly focus areas.</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 max-w-3xl mx-auto">
                     {selectedMonth.children.map((week) => (
@@ -540,6 +544,7 @@ export default function KompassDetail() {
             >
                 <div className="text-center">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">Daily To-Dos</Badge>
+                     <p className="text-sm text-[#8B95A1] mb-3">Top three things must to do within the next 24 hours.</p>
                 </div>
                 
                 {/* Compact Grid for 7 Days - Expanded for direct editing */}
