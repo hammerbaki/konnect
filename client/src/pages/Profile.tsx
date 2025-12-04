@@ -1,89 +1,27 @@
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Mail, MapPin, Briefcase, School, Globe, Plus, GraduationCap, Sparkles, Save, Building, Calendar as CalendarIcon, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X, TrendingUp, DollarSign, Smile, Shield } from "lucide-react";
+import { User, Mail, MapPin, Briefcase, School, Save, Building, Calendar as CalendarIcon, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X, TrendingUp, DollarSign, Smile, Shield, BookOpen, GraduationCap, PenTool, Star } from "lucide-react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DateWheelPicker, SalaryWheelPicker, WheelPicker } from "@/components/ui/wheel-picker";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar } from "@/components/ui/calendar";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerClose } from "@/components/ui/drawer";
 
 function ResponsiveClose({ children, asChild }: { children: React.ReactNode, asChild?: boolean }) {
     const isMobile = useIsMobile();
     if (isMobile) return <DrawerClose asChild={asChild}>{children}</DrawerClose>;
     return <DialogClose asChild={asChild}>{children}</DialogClose>;
-}
-
-function ResponsiveModal({ 
-    trigger, 
-    title, 
-    description, 
-    children, 
-    open, 
-    onOpenChange 
-}: { 
-    trigger: React.ReactNode; 
-    title: string; 
-    description?: string; 
-    children: React.ReactNode; 
-    open?: boolean; 
-    onOpenChange?: (open: boolean) => void; 
-}) {
-    const isMobile = useIsMobile();
-
-    if (isMobile) {
-        return (
-            <Drawer open={open} onOpenChange={onOpenChange}>
-                <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-                <DrawerContent className="max-h-[85vh] outline-none">
-                     <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E8EB] mt-3 mb-1" />
-                    <DrawerHeader className="text-left">
-                        <DrawerTitle>{title}</DrawerTitle>
-                        {description && <CardDescription>{description}</CardDescription>}
-                    </DrawerHeader>
-                    <div className="p-4 pb-8 overflow-y-auto">
-                        {children}
-                    </div>
-                </DrawerContent>
-            </Drawer>
-        );
-    }
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogTrigger asChild>{trigger}</DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] md:max-w-xl bg-white border-none shadow-2xl rounded-[24px] p-0 overflow-hidden gap-0 [&>button]:hidden">
-                <DialogHeader className="p-6 pb-4 border-b border-[#F2F4F6] flex flex-row items-center justify-between space-y-0">
-                    <div className="space-y-1 text-left">
-                        <DialogTitle className="text-xl font-bold text-[#191F28]">{title}</DialogTitle>
-                         {description && <DialogDescription>{description}</DialogDescription>}
-                    </div>
-                    <DialogClose asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-[#F2F4F6] hover:bg-[#E5E8EB]">
-                            <X className="h-4 w-4 text-[#333D4B]" />
-                        </Button>
-                    </DialogClose>
-                </DialogHeader>
-                <div className="p-6 max-h-[70vh] overflow-y-auto">
-                    {children}
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
 }
 
 function ResponsiveDatePickerContent({ 
@@ -272,53 +210,61 @@ function ResponsiveDatePickerContent({
     );
 }
 
-function ResponsiveYearPickerContent({ value, onChange }: { value: string, onChange: (val: string) => void }) {
+function ResponsiveModal({ 
+    trigger, 
+    title, 
+    description, 
+    children, 
+    open, 
+    onOpenChange 
+}: { 
+    trigger: React.ReactNode; 
+    title: string; 
+    description?: string; 
+    children: React.ReactNode; 
+    open?: boolean; 
+    onOpenChange?: (open: boolean) => void; 
+}) {
     const isMobile = useIsMobile();
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({length: 50}, (_, i) => (currentYear - 40 + i).toString());
 
     if (isMobile) {
         return (
-            <div className="pb-4">
-                 <div className="flex justify-center">
-                    <div className="w-full max-w-xs">
-                        <div className="relative flex flex-col items-center justify-center h-48 w-full overflow-hidden cursor-grab active:cursor-grabbing touch-pan-y select-none">
-                                <WheelPicker 
-                                items={years}
-                                value={value}
-                                onChange={onChange} 
-                                label="년"
-                                />
-                        </div>
+            <Drawer open={open} onOpenChange={onOpenChange}>
+                <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+                <DrawerContent className="max-h-[85vh] outline-none">
+                     <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E8EB] mt-3 mb-1" />
+                    <DrawerHeader className="text-left">
+                        <DrawerTitle>{title}</DrawerTitle>
+                        {description && <CardDescription>{description}</CardDescription>}
+                    </DrawerHeader>
+                    <div className="p-4 pb-8 overflow-y-auto">
+                        {children}
                     </div>
-                </div>
-                <ResponsiveClose asChild>
-                    <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
-                </ResponsiveClose>
-            </div>
+                </DrawerContent>
+            </Drawer>
         );
     }
 
     return (
-        <div className="flex flex-col h-[400px]">
-            <ScrollArea className="flex-1 pr-4">
-                <div className="grid grid-cols-4 gap-2">
-                    {years.reverse().map((year) => (
-                        <Button
-                            key={year}
-                            variant={value === year ? "default" : "outline"}
-                            className={`h-12 rounded-xl font-medium ${value === year ? "bg-[#3182F6] hover:bg-[#2b72d7]" : "border-[#E5E8EB] hover:bg-[#F2F4F6] text-[#4E5968]"}`}
-                            onClick={() => onChange(year)}
-                        >
-                            {year}
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogTrigger asChild>{trigger}</DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] md:max-w-xl bg-white border-none shadow-2xl rounded-[24px] p-0 overflow-hidden gap-0 [&>button]:hidden">
+                <DialogHeader className="p-6 pb-4 border-b border-[#F2F4F6] flex flex-row items-center justify-between space-y-0">
+                    <div className="space-y-1 text-left">
+                        <DialogTitle className="text-xl font-bold text-[#191F28]">{title}</DialogTitle>
+                         {description && <DialogDescription>{description}</DialogDescription>}
+                    </div>
+                    <DialogClose asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-[#F2F4F6] hover:bg-[#E5E8EB]">
+                            <X className="h-4 w-4 text-[#333D4B]" />
                         </Button>
-                    ))}
+                    </DialogClose>
+                </DialogHeader>
+                <div className="p-6 max-h-[70vh] overflow-y-auto">
+                    {children}
                 </div>
-            </ScrollArea>
-             <ResponsiveClose asChild>
-                <Button className="w-full mt-6 rounded-xl h-12 text-lg font-bold bg-[#3182F6]">선택 완료</Button>
-            </ResponsiveClose>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -327,7 +273,6 @@ function ResponsiveSalaryInputContent({ value, onChange }: { value: number, onCh
     const [inputValue, setInputValue] = useState(value.toLocaleString());
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Remove commas and non-digit characters
         const rawValue = e.target.value.replace(/[^0-9]/g, '');
         const numValue = parseInt(rawValue, 10);
         
@@ -375,6 +320,7 @@ function ResponsiveSalaryInputContent({ value, onChange }: { value: number, onCh
     );
 }
 
+
 export default function Profile() {
   const { setAction } = useMobileAction();
   const { toast } = useToast();
@@ -387,6 +333,8 @@ export default function Profile() {
     bio: "데이터 기반의 의사결정을 선호하는 PM입니다.",
     gender: "male" as "male" | "female" | undefined,
     birthDate: new Date(1995, 5, 15) as Date | null,
+    
+    // General / Uni specific
     workValues: ["성장 가능성", "워라밸"] as string[],
     experienceYears: 5,
     salary: 6000,
@@ -398,26 +346,22 @@ export default function Profile() {
             id: 1,
             role: "Senior Product Manager",
             company: "Tech Corp Inc.",
-            startDate: new Date(2021, 2, 1), // March 2021
-            endDate: new Date(2023, 11, 1), // Dec 2023
+            startDate: new Date(2021, 2, 1),
+            endDate: new Date(2023, 11, 1),
             description: "- B2B SaaS 제품 기획 및 런칭 주도\n- 3분기 연속 매출 목표 120% 달성"
-        },
-        {
-            id: 2,
-            role: "Product Owner",
-            company: "Startup X",
-            startDate: new Date(2019, 0, 1), // Jan 2019
-            endDate: new Date(2021, 1, 1), // Feb 2021
-            description: "- 모바일 앱 2.0 리뉴얼 프로젝트 PM\n- DAU 300% 성장 견인"
         }
-    ] as {
-        id: number;
-        role: string;
-        company: string;
-        startDate: Date;
-        endDate: Date | null;
-        description: string;
-    }[]
+    ] as any[],
+
+    // Student specific (High/Uni/Middle)
+    schoolName: "",
+    major: "",
+    gpa: "",
+    grade: "",
+    
+    // Elementary specific
+    dreamJob: "",
+    favoriteSubject: "",
+    hobbies: [] as string[],
   });
 
   const handleSave = () => {
@@ -436,8 +380,16 @@ export default function Profile() {
     return () => setAction(null);
   }, []);
 
-  const handleExperienceChange = (val: number[]) => {
-      setProfileData(prev => ({ ...prev, experienceYears: val[0] }));
+  const toggleWorkValue = (value: string) => {
+      setProfileData(prev => {
+          const exists = prev.workValues.includes(value);
+          if (exists) {
+              return { ...prev, workValues: prev.workValues.filter(v => v !== value) };
+          } else {
+              if (prev.workValues.length >= 3) return prev; // Limit to 3
+              return { ...prev, workValues: [...prev.workValues, value] };
+          }
+      });
   };
 
   const toggleEnvironmentPreference = (pref: string) => {
@@ -468,17 +420,17 @@ export default function Profile() {
         }));
   };
 
-  // Update work experience date
-  const updateWorkExpDate = (id: number, field: 'startDate' | 'endDate', date: Date | null) => {
-      setProfileData(prev => ({
-          ...prev,
-          workExperience: prev.workExperience.map(exp => 
-              exp.id === id ? { ...exp, [field]: date } : exp
-          )
-      }));
-  };
+    // Options data
+    const workValueOptions = [
+      { id: 'growth', label: '성장 가능성', icon: TrendingUp },
+      { id: 'balance', label: '워라밸', icon: Armchair },
+      { id: 'money', label: '높은 연봉', icon: DollarSign },
+      { id: 'culture', label: '수평적 문화', icon: Smile },
+      { id: 'stability', label: '고용 안정', icon: Shield },
+      { id: 'autonomy', label: '자율성', icon: Zap },
+    ];
 
-  const environmentOptions = [
+    const environmentOptions = [
       { id: 'brain', label: '지식 집약적 업무 (Brain Using)', icon: BrainCircuit, desc: '육체적 노동보다는 정신적 노동 중심' },
       { id: 'sedentary', label: '좌식 근무 (Sitting)', icon: Armchair, desc: '주로 앉아서 하는 사무직 환경' },
       { id: 'active', label: '활동적 근무 (Active)', icon: Zap, desc: '이동이 많거나 현장 활동이 포함됨' },
@@ -486,25 +438,413 @@ export default function Profile() {
       { id: 'challenging', label: '도전적 환경 (Challenging)', icon: AlertTriangle, desc: '위험 요소가 있거나 강도 높은 업무' },
   ];
 
-  const workValueOptions = [
-      { id: 'growth', label: '성장 가능성', icon: TrendingUp },
-      { id: 'balance', label: '워라밸', icon: Armchair },
-      { id: 'money', label: '높은 연봉', icon: DollarSign },
-      { id: 'culture', label: '수평적 문화', icon: Smile },
-      { id: 'stability', label: '고용 안정', icon: Shield },
-      { id: 'autonomy', label: '자율성', icon: Zap },
-  ];
+  // Render different content based on profile type
+  const renderProfileFields = () => {
+      switch (profileData.type) {
+        case 'elementary':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                     <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <Star className="h-5 w-5 text-[#FFB300]" /> 나의 꿈과 관심사
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>장래희망 (되고 싶은 사람)</Label>
+                                <Input 
+                                    placeholder="예: 과학자, 유튜버, 선생님" 
+                                    value={profileData.dreamJob}
+                                    onChange={(e) => setProfileData({...profileData, dreamJob: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>가장 좋아하는 과목</Label>
+                                <Input 
+                                    placeholder="예: 체육, 미술, 수학" 
+                                    value={profileData.favoriteSubject}
+                                    onChange={(e) => setProfileData({...profileData, favoriteSubject: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>좋아하는 것 (취미)</Label>
+                                <Textarea 
+                                    placeholder="예: 레고 조립하기, 친구들과 축구하기" 
+                                    className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                                />
+                            </div>
+                        </CardContent>
+                     </Card>
+                </div>
+            );
+        
+        case 'middle':
+        case 'high':
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <School className="h-5 w-5 text-[#3182F6]" /> 학교 생활 정보
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>학교명</Label>
+                                    <Input 
+                                        placeholder="예: 한국고등학교" 
+                                        value={profileData.schoolName}
+                                        onChange={(e) => setProfileData({...profileData, schoolName: e.target.value})}
+                                        className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>학년 / 반</Label>
+                                    <Input 
+                                        placeholder="예: 2학년 3반" 
+                                        value={profileData.grade}
+                                        onChange={(e) => setProfileData({...profileData, grade: e.target.value})}
+                                        className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                    />
+                                </div>
+                            </div>
+                            
+                            {profileData.type === 'high' && (
+                                <div className="space-y-2">
+                                    <Label>주요 성적 (내신/모의고사)</Label>
+                                    <Input 
+                                        placeholder="예: 평균 2.5등급, 수학 1등급" 
+                                        className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                    />
+                                </div>
+                            )}
 
-  const toggleWorkValue = (value: string) => {
-      setProfileData(prev => {
-          const exists = prev.workValues.includes(value);
-          if (exists) {
-              return { ...prev, workValues: prev.workValues.filter(v => v !== value) };
-          } else {
-              if (prev.workValues.length >= 3) return prev; // Limit to 3
-              return { ...prev, workValues: [...prev.workValues, value] };
-          }
-      });
+                            <div className="space-y-2">
+                                <Label>관심 분야 / 동아리 활동</Label>
+                                <Textarea 
+                                    placeholder="관심있는 전공이나 현재 활동 중인 동아리에 대해 적어주세요." 
+                                    className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <BookOpen className="h-5 w-5 text-[#00BFA5]" /> 진로 희망 사항
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                             <div className="space-y-2">
+                                <Label>희망 전공 (계열)</Label>
+                                <Input 
+                                    placeholder="예: 컴퓨터공학, 경영학, 의예과" 
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            );
+
+        case 'university':
+             return (
+                <div className="space-y-6 animate-in fade-in">
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <GraduationCap className="h-5 w-5 text-[#3182F6]" /> 학력 및 전공 정보
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>대학교</Label>
+                                    <Input 
+                                        placeholder="예: 한국대학교" 
+                                        value={profileData.schoolName}
+                                        onChange={(e) => setProfileData({...profileData, schoolName: e.target.value})}
+                                        className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>전공 (주전공/복수전공)</Label>
+                                    <Input 
+                                        placeholder="예: 경영학과 / 컴퓨터공학" 
+                                        value={profileData.major}
+                                        onChange={(e) => setProfileData({...profileData, major: e.target.value})}
+                                        className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>학년 / 학기</Label>
+                                    <Input 
+                                        placeholder="예: 3학년 2학기" 
+                                        className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>학점 (GPA)</Label>
+                                    <Input 
+                                        placeholder="예: 3.8 / 4.5" 
+                                        value={profileData.gpa}
+                                        onChange={(e) => setProfileData({...profileData, gpa: e.target.value})}
+                                        className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                    />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <Award className="h-5 w-5 text-[#FFB300]" /> 대외활동 및 스펙
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                             <div className="space-y-2">
+                                <Label>어학 성적</Label>
+                                <Input 
+                                    placeholder="예: TOEIC 900, OPIc IH" 
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>자격증 / 수상 경력</Label>
+                                <Textarea 
+                                    placeholder="취득한 자격증이나 공모전 수상 내역을 입력해주세요." 
+                                    className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                     <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <Briefcase className="h-5 w-5 text-[#00BFA5]" /> 인턴 및 실무 경험
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-center py-8 text-[#8B95A1] bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E8EB]">
+                                <p>아직 등록된 인턴십 경험이 없습니다.</p>
+                                <Button variant="link" className="text-[#3182F6] font-bold mt-2">
+                                    + 경험 추가하기
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+             );
+
+        case 'general':
+        default:
+            return (
+                <div className="space-y-6 animate-in fade-in">
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <Briefcase className="h-5 w-5 text-[#3182F6]" /> 경력 및 직무 정보
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                             {/* Work Experience List */}
+                             {profileData.workExperience.map((exp) => (
+                                <div key={exp.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-3 relative group">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h4 className="font-bold text-[#191F28] text-lg">{exp.role}</h4>
+                                            <p className="text-[#4E5968] font-medium">{exp.company}</p>
+                                        </div>
+                                        <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
+                                        <CalendarIcon className="h-4 w-4" />
+                                        <span>{format(exp.startDate, 'yyyy.MM')} - {exp.endDate ? format(exp.endDate, 'yyyy.MM') : '현재'}</span>
+                                    </div>
+
+                                    <p className="text-sm text-[#4E5968] whitespace-pre-line pl-3 border-l-2 border-[#E5E8EB]">
+                                        {exp.description}
+                                    </p>
+                                </div>
+                            ))}
+
+                            <Button variant="outline" className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold">
+                                <Plus className="h-5 w-5 mr-2" /> 경력 추가하기
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Work Values */}
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <Sparkles className="h-5 w-5 text-[#FFB300]" /> 직업 가치관
+                            </CardTitle>
+                            <CardDescription>
+                                직업 선택 시 가장 중요하게 생각하는 가치 3가지를 선택해주세요.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {workValueOptions.map((option) => {
+                                    const Icon = option.icon;
+                                    const isSelected = profileData.workValues.includes(option.id);
+                                    return (
+                                        <div 
+                                            key={option.id}
+                                            onClick={() => toggleWorkValue(option.id)}
+                                            className={`
+                                                cursor-pointer p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 text-center
+                                                ${isSelected 
+                                                    ? 'border-[#3182F6] bg-blue-50 text-[#3182F6]' 
+                                                    : 'border-[#F2F4F6] bg-white hover:border-[#E5E8EB] text-[#8B95A1]'}
+                                            `}
+                                        >
+                                            <Icon className={`h-6 w-6 ${isSelected ? 'text-[#3182F6]' : 'text-[#B0B8C1]'}`} />
+                                            <span className="font-bold text-sm">{option.label}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Salary & Environment */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <Card className="toss-card">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <DollarSign className="h-5 w-5 text-[#00BFA5]" /> 희망 연봉
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center space-x-2 mb-2">
+                                    <Checkbox 
+                                        id="salary-none" 
+                                        checked={profileData.salaryNoPreference}
+                                        onCheckedChange={toggleSalaryNoPreference}
+                                    />
+                                    <label htmlFor="salary-none" className="text-sm font-medium leading-none text-[#4E5968] cursor-pointer">
+                                        상관 없음 (면접 후 협의)
+                                    </label>
+                                </div>
+                                
+                                <ResponsiveModal
+                                    open={!profileData.salaryNoPreference ? undefined : false}
+                                    trigger={
+                                        <Button 
+                                            variant="outline" 
+                                            className={`w-full h-14 text-lg font-bold justify-between px-4 rounded-xl border-[#E5E8EB] ${profileData.salaryNoPreference ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            disabled={profileData.salaryNoPreference}
+                                        >
+                                            <span className="text-[#191F28]">
+                                                {profileData.salary > 0 ? `${profileData.salary.toLocaleString()}만원` : "연봉 입력"}
+                                            </span>
+                                            <span className="text-[#8B95A1] text-sm font-normal">이상</span>
+                                        </Button>
+                                    }
+                                    title="희망 연봉 입력"
+                                    description="희망하는 최소 연봉을 입력해주세요."
+                                >
+                                    <ResponsiveSalaryInputContent 
+                                        value={profileData.salary} 
+                                        onChange={(val) => setProfileData(prev => ({ ...prev, salary: val }))} 
+                                    />
+                                </ResponsiveModal>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="toss-card">
+                             <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <Building className="h-5 w-5 text-[#333D4B]" /> 선호 근무 환경
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center space-x-2 mb-2">
+                                    <Checkbox 
+                                        id="env-none" 
+                                        checked={profileData.environmentNoPreference}
+                                        onCheckedChange={toggleEnvironmentNoPreference}
+                                    />
+                                    <label htmlFor="env-none" className="text-sm font-medium leading-none text-[#4E5968] cursor-pointer">
+                                        상관 없음
+                                    </label>
+                                </div>
+
+                                <ResponsiveModal
+                                    open={!profileData.environmentNoPreference ? undefined : false}
+                                    trigger={
+                                        <Button 
+                                            variant="outline" 
+                                            className={`w-full h-14 text-lg font-bold justify-between px-4 rounded-xl border-[#E5E8EB] ${profileData.environmentNoPreference ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            disabled={profileData.environmentNoPreference}
+                                        >
+                                            <span className="text-[#191F28] truncate max-w-[80%] text-left">
+                                                {profileData.environmentPreferences.length > 0 
+                                                    ? `${profileData.environmentPreferences.length}개 선택됨` 
+                                                    : "근무 환경 선택"}
+                                            </span>
+                                            <span className="text-[#8B95A1] text-sm font-normal">선택</span>
+                                        </Button>
+                                    }
+                                    title="선호 근무 환경"
+                                    description="선호하는 근무 환경을 모두 선택해주세요."
+                                >
+                                    <div className="space-y-3 pb-4">
+                                        {environmentOptions.map((option) => {
+                                            const isSelected = profileData.environmentPreferences.includes(option.id);
+                                            const Icon = option.icon;
+                                            return (
+                                                <div 
+                                                    key={option.id}
+                                                    onClick={() => toggleEnvironmentPreference(option.id)}
+                                                    className={`
+                                                        flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all
+                                                        ${isSelected 
+                                                            ? 'border-[#3182F6] bg-blue-50' 
+                                                            : 'border-[#F2F4F6] hover:border-[#E5E8EB]'}
+                                                    `}
+                                                >
+                                                    <div className={`p-2 rounded-full mr-4 ${isSelected ? 'bg-white text-[#3182F6]' : 'bg-[#F2F4F6] text-[#B0B8C1]'}`}>
+                                                        <Icon className="h-5 w-5" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className={`font-bold ${isSelected ? 'text-[#191F28]' : 'text-[#4E5968]'}`}>
+                                                            {option.label}
+                                                        </p>
+                                                        <p className="text-xs text-[#8B95A1] mt-0.5">
+                                                            {option.desc}
+                                                        </p>
+                                                    </div>
+                                                    {isSelected && <CheckCircle2 className="h-5 w-5 text-[#3182F6]" />}
+                                                </div>
+                                            );
+                                        })}
+                                        <ResponsiveClose asChild>
+                                            <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold bg-[#3182F6]">선택 완료</Button>
+                                        </ResponsiveClose>
+                                    </div>
+                                </ResponsiveModal>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            );
+      }
   };
 
   return (
@@ -570,450 +910,76 @@ export default function Profile() {
                     Seoul, South Korea
                   </div>
                   <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB]">
-                    <Briefcase className="h-4 w-4 text-[#B0B8C1]" />
-                    {profileData.experienceYears}년차
+                    <User className="h-4 w-4 text-[#B0B8C1]" />
+                    {profileData.gender === 'male' ? '남성' : profileData.gender === 'female' ? '여성' : '성별 미입력'} / {profileData.birthDate ? format(profileData.birthDate, 'yyyy.MM.dd') : '생년월일 미입력'}
                   </div>
                 </div>
 
-                <div className="w-full mt-6 pt-6 border-t border-[#F2F4F6]">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-bold text-[#4E5968]">프로필 완성도</span>
-                        <span className="text-sm font-bold text-[#3182F6]">85%</span>
-                    </div>
-                    <div className="h-2 w-full bg-[#F2F4F6] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#3182F6] w-[85%]" />
-                    </div>
+                <Separator className="my-6 bg-[#E5E8EB]" />
+                
+                <div className="w-full space-y-2">
+                    <Label className="text-left block mb-2 text-[#4E5968]">한 줄 소개</Label>
+                    <Textarea 
+                        value={profileData.bio}
+                        onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                        className="bg-[#F9FAFB] border-none rounded-xl min-h-[80px] text-sm resize-none"
+                    />
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Main Form Area */}
-          <div className="space-y-8">
-            
-            {/* 1. Basic Info */}
-            <section className="space-y-4">
-                <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                    <User className="h-5 w-5 text-[#3182F6]" /> 기본 정보
-                </h3>
-                <Card className="toss-card">
-                <CardContent className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label className="text-[#4E5968]">이름</Label>
-                        <Input 
-                            value={profileData.name} 
-                            onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                            className="bg-[#F2F4F6] border-none rounded-xl h-12" 
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label className="text-[#4E5968]">현재 직무</Label>
-                        <Input 
-                            value={profileData.role} 
-                            onChange={(e) => setProfileData({...profileData, role: e.target.value})}
-                            className="bg-[#F2F4F6] border-none rounded-xl h-12" 
-                        />
-                    </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label className="text-[#4E5968]">성별</Label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    onClick={() => setProfileData({...profileData, gender: 'male'})}
-                                    className={`h-12 rounded-xl border font-medium transition-all ${
-                                        profileData.gender === 'male' 
-                                        ? 'border-[#3182F6] bg-blue-50 text-[#3182F6]' 
-                                        : 'border-[#E5E8EB] bg-white text-[#4E5968] hover:bg-[#F9FAFB]'
-                                    }`}
-                                >
-                                    남성
-                                </button>
-                                <button
-                                    onClick={() => setProfileData({...profileData, gender: 'female'})}
-                                    className={`h-12 rounded-xl border font-medium transition-all ${
-                                        profileData.gender === 'female' 
-                                        ? 'border-[#3182F6] bg-blue-50 text-[#3182F6]' 
-                                        : 'border-[#E5E8EB] bg-white text-[#4E5968] hover:bg-[#F9FAFB]'
-                                    }`}
-                                >
-                                    여성
-                                </button>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-[#4E5968]">생년월일</Label>
-                            <ResponsiveModal
-                                trigger={
-                                    <Button 
-                                        variant="outline" 
-                                        className="w-full h-12 justify-start text-left font-normal rounded-xl border-none bg-[#F2F4F6] hover:bg-[#E5E8EB] text-[#191F28]"
-                                    >
-                                        <CalendarIcon className="mr-2 h-4 w-4 text-[#8B95A1]" />
-                                        {profileData.birthDate ? format(profileData.birthDate, "yyyy년 M월 d일") : "날짜 선택"}
-                                    </Button>
-                                }
-                                title="생년월일 선택"
+             <Card className="toss-card">
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-bold text-[#191F28]">기본 정보 수정</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="space-y-2">
+                        <Label className="text-xs text-[#8B95A1]">성별</Label>
+                        <div className="flex gap-2">
+                            <Button 
+                                variant="outline" 
+                                className={`flex-1 h-10 rounded-xl border-[#E5E8EB] ${profileData.gender === 'male' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
+                                onClick={() => setProfileData({...profileData, gender: 'male'})}
                             >
-                                <ResponsiveDatePickerContent 
-                                    value={profileData.birthDate} 
-                                    onChange={(date) => setProfileData({...profileData, birthDate: date})} 
-                                />
-                            </ResponsiveModal>
+                                남성
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                className={`flex-1 h-10 rounded-xl border-[#E5E8EB] ${profileData.gender === 'female' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
+                                onClick={() => setProfileData({...profileData, gender: 'female'})}
+                            >
+                                여성
+                            </Button>
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="text-[#4E5968]">직업 가치관 (최대 3개)</Label>
-                        <div className="flex flex-wrap gap-2">
-                            {workValueOptions.map((option) => {
-                                const isSelected = profileData.workValues.includes(option.label);
-                                const Icon = option.icon;
-                                return (
-                                    <button
-                                        key={option.id}
-                                        onClick={() => toggleWorkValue(option.label)}
-                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
-                                            isSelected
-                                            ? 'border-[#3182F6] bg-blue-50 text-[#3182F6]'
-                                            : 'border-[#E5E8EB] bg-white text-[#4E5968] hover:bg-[#F9FAFB]'
-                                        }`}
-                                    >
-                                        <Icon className="h-3.5 w-3.5" />
-                                        {option.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                    <Label className="text-[#4E5968]">한줄 소개</Label>
-                    <Input 
-                        value={profileData.bio} 
-                        onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
-                        className="bg-[#F2F4F6] border-none rounded-xl h-12" 
-                    />
+                        <Label className="text-xs text-[#8B95A1]">생년월일</Label>
+                        <ResponsiveModal 
+                            trigger={
+                                <Button 
+                                    variant="outline" 
+                                    className="w-full justify-start text-left font-normal h-12 rounded-xl border-[#E5E8EB] hover:bg-[#F9FAFB]"
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4 text-[#B0B8C1]" />
+                                    {profileData.birthDate ? format(profileData.birthDate, "yyyy년 MM월 dd일", { locale: ko }) : <span>날짜 선택</span>}
+                                </Button>
+                            }
+                            title="생년월일 선택"
+                        >
+                            <ResponsiveDatePickerContent 
+                                value={profileData.birthDate} 
+                                onChange={(date) => setProfileData(prev => ({ ...prev, birthDate: date }))} 
+                            />
+                        </ResponsiveModal>
                     </div>
                 </CardContent>
-                </Card>
-            </section>
+             </Card>
+          </div>
 
-            {/* 2. Work Experience (Expanded) with Date Picker Drawers */}
-            <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                        <Briefcase className="h-5 w-5 text-[#3182F6]" /> 경력 사항
-                    </h3>
-                    <Button variant="ghost" size="sm" className="text-[#3182F6] hover:bg-blue-50">
-                        <Plus className="h-4 w-4 mr-1" /> 추가
-                    </Button>
-                </div>
-                
-                <Card className="toss-card">
-                    <CardContent className="p-6 space-y-6">
-                        {profileData.workExperience.map((exp, index) => (
-                            <div key={exp.id} className="space-y-4">
-                                {index > 0 && <Separator className="bg-[#F2F4F6] my-6" />}
-                                <div className="flex justify-between items-start">
-                                    <div className="space-y-1">
-                                        <h4 className="font-bold text-[#191F28] text-lg">{exp.role}</h4>
-                                        <p className="text-[#4E5968] font-medium">{exp.company}</p>
-                                    </div>
-                                    <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-red-500">
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label className="text-[#8B95A1] text-xs">시작일</Label>
-                                        <ResponsiveModal
-                                            trigger={
-                                                <Button variant="outline" className="w-full h-12 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-normal text-[#191F28]">
-                                                    {format(exp.startDate, 'yyyy. MM. dd')}
-                                                </Button>
-                                            }
-                                            title="시작일 선택"
-                                        >
-                                            <ResponsiveDatePickerContent 
-                                                value={exp.startDate} 
-                                                onChange={(date) => updateWorkExpDate(exp.id, 'startDate', date)}
-                                            />
-                                        </ResponsiveModal>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-[#8B95A1] text-xs">종료일</Label>
-                                        <ResponsiveModal
-                                            trigger={
-                                                <Button variant="outline" className="w-full h-12 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-normal text-[#191F28]">
-                                                    {exp.endDate ? format(exp.endDate, 'yyyy. MM. dd') : '현재 재직 중'}
-                                                </Button>
-                                            }
-                                            title="종료일 선택"
-                                        >
-                                            <ResponsiveDatePickerContent 
-                                                value={exp.endDate} 
-                                                onChange={(date) => updateWorkExpDate(exp.id, 'endDate', date)}
-                                                isEndDate={true}
-                                            />
-                                        </ResponsiveModal>
-                                    </div>
-                                </div>
-                                
-                                <Textarea 
-                                    className="bg-[#F2F4F6] border-none rounded-xl min-h-[80px] resize-none text-sm" 
-                                    defaultValue={exp.description}
-                                />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            </section>
-
-            {/* 3. Education (Expanded) */}
-            <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                        <GraduationCap className="h-5 w-5 text-[#3182F6]" /> 학력
-                    </h3>
-                    <Button variant="ghost" size="sm" className="text-[#3182F6] hover:bg-blue-50">
-                        <Plus className="h-4 w-4 mr-1" /> 추가
-                    </Button>
-                </div>
-                <Card className="toss-card">
-                    <CardContent className="p-6 space-y-6">
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-[#4E5968]">학교명</Label>
-                                    <Input defaultValue="한국대학교" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[#4E5968]">전공</Label>
-                                    <Input defaultValue="경영학과" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-[#4E5968]">학위</Label>
-                                    <Select defaultValue="bachelors">
-                                        <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="bachelors">학사 (대졸)</SelectItem>
-                                            <SelectItem value="masters">석사</SelectItem>
-                                            <SelectItem value="phd">박사</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[#4E5968]">졸업년도</Label>
-                                    <ResponsiveModal
-                                        trigger={
-                                            <Button variant="outline" className="w-full h-12 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-normal text-[#191F28]">
-                                                2018
-                                            </Button>
-                                        }
-                                        title="졸업년도 선택"
-                                    >
-                                        <ResponsiveYearPickerContent 
-                                            value={"2018"}
-                                            onChange={(val) => {}} 
-                                        />
-                                    </ResponsiveModal>
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </section>
-
-             {/* 4. Skills & Experience Years Slider */}
-             <section className="space-y-4">
-                <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                    <Award className="h-5 w-5 text-[#3182F6]" /> 스킬 및 경력
-                </h3>
-                <Card className="toss-card">
-                    <CardContent className="p-6 space-y-6">
-                        
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <Label className="text-[#4E5968] font-bold">총 경력 연수 (자동 계산)</Label>
-                                <span className="text-[#3182F6] font-bold text-lg">{profileData.experienceYears}년</span>
-                            </div>
-                            <Slider 
-                                value={[profileData.experienceYears]} 
-                                onValueChange={handleExperienceChange}
-                                max={20} 
-                                step={1} 
-                                className="py-2" 
-                            />
-                            <p className="text-xs text-[#8B95A1]">상단의 프로필 카드에도 반영됩니다.</p>
-                        </div>
-
-                        <Separator className="bg-[#F2F4F6]" />
-
-                        <div className="space-y-3">
-                             <Label className="text-[#4E5968] font-bold">보유 스킬</Label>
-                             <div className="flex flex-wrap gap-2">
-                                {["Product Strategy", "User Research", "Data Analysis", "SQL", "Figma"].map((skill) => (
-                                    <Badge key={skill} variant="secondary" className="bg-[#E8F3FF] text-[#1B64DA] hover:bg-[#D2E6FF] px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer">
-                                    {skill} X
-                                    </Badge>
-                                ))}
-                                <Button variant="outline" size="sm" className="rounded-lg border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] h-8">
-                                    <Plus className="h-4 w-4 mr-1" /> 추가
-                                </Button>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </section>
-
-            {/* 5. Work Environment & Conditions */}
-            <section className="space-y-4">
-                <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-[#FFB300]" /> 근무 환경 및 조건
-                </h3>
-                <Card className="toss-card">
-                    <CardContent className="p-6 space-y-6">
-                         
-                        {/* Work Environment Drawer */}
-                        <div className="space-y-2">
-                            <Label className="text-[#4E5968]">선호 근무 환경 (중복 선택 가능)</Label>
-                            
-                            <div className="flex items-center space-x-2 mb-2">
-                                <Checkbox 
-                                    id="env-no-pref" 
-                                    checked={profileData.environmentNoPreference}
-                                    onCheckedChange={toggleEnvironmentNoPreference}
-                                    className="border-[#D1D6DB] data-[state=checked]:bg-[#3182F6] data-[state=checked]:border-[#3182F6]"
-                                />
-                                <label
-                                    htmlFor="env-no-pref"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-[#4E5968]"
-                                >
-                                    상관 없음
-                                </label>
-                            </div>
-
-                            <ResponsiveModal
-                                trigger={
-                                    <Button 
-                                        variant="ghost" 
-                                        disabled={profileData.environmentNoPreference}
-                                        className="w-full h-auto min-h-[56px] py-3 px-4 justify-between text-left bg-[#F2F4F6] hover:bg-[#E5E8EB] border-none rounded-xl font-medium text-[#191F28] whitespace-normal items-start disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <div className="flex flex-wrap gap-2 flex-1 items-center">
-                                            {profileData.environmentNoPreference ? (
-                                                <span className="text-[#8B95A1]">선호하는 근무 환경이 없습니다.</span>
-                                            ) : (
-                                                profileData.environmentPreferences.length > 0 
-                                                ? profileData.environmentPreferences.map(prefId => {
-                                                    const option = environmentOptions.find(opt => opt.id === prefId);
-                                                    const label = option ? option.label.split('(')[0].trim() : prefId;
-                                                    return (
-                                                        <Badge 
-                                                            key={prefId} 
-                                                            variant="secondary" 
-                                                            className="bg-white text-[#333D4B] hover:bg-white px-3 py-1.5 rounded-lg text-sm font-medium border border-[#E5E8EB] shadow-sm"
-                                                        >
-                                                            {label}
-                                                        </Badge>
-                                                    );
-                                                })
-                                                : <span className="text-[#B0B8C1] py-1">근무 환경 선택하기</span>
-                                            )}
-                                        </div>
-                                        <span className="text-[#3182F6] text-sm font-bold ml-2 mt-1.5 shrink-0">선택 &gt;</span>
-                                    </Button>
-                                }
-                                title="근무 환경 기본 설정"
-                                description="기피하거나 선호하는 근무 환경을 미리 설정하여 필터링합니다."
-                            >
-                                <div className="space-y-4">
-                                    {environmentOptions.map((opt) => (
-                                        <div 
-                                            key={opt.id} 
-                                            className="flex items-center space-x-4 p-4 rounded-xl border border-[#F2F4F6] bg-white cursor-pointer hover:bg-gray-50 transition-colors active:bg-gray-100"
-                                            onClick={() => toggleEnvironmentPreference(opt.id)}
-                                        >
-                                            <div className={`p-3 rounded-full ${profileData.environmentPreferences.includes(opt.id) ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
-                                                <opt.icon className="h-6 w-6" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <label htmlFor={opt.id} className="text-base font-bold text-[#191F28] block mb-1 cursor-pointer pointer-events-none">
-                                                    {opt.label}
-                                                </label>
-                                                <p className="text-xs text-[#8B95A1]">{opt.desc}</p>
-                                            </div>
-                                            <Checkbox 
-                                                id={opt.id} 
-                                                checked={profileData.environmentPreferences.includes(opt.id)}
-                                                onCheckedChange={() => toggleEnvironmentPreference(opt.id)}
-                                                className="h-6 w-6 rounded-full pointer-events-none"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                                <ResponsiveClose asChild>
-                                    <Button className="w-full mt-6 rounded-xl h-14 text-lg font-bold bg-[#3182F6]">설정 완료</Button>
-                                </ResponsiveClose>
-                            </ResponsiveModal>
-                        </div>
-
-                        {/* Salary Drawer */}
-                        <div className="space-y-2">
-                            <Label className="text-[#4E5968]">희망 연봉 (만원)</Label>
-                            
-                            <div className="flex items-center space-x-2 mb-2">
-                                <Checkbox 
-                                    id="salary-no-pref" 
-                                    checked={profileData.salaryNoPreference}
-                                    onCheckedChange={toggleSalaryNoPreference}
-                                    className="border-[#D1D6DB] data-[state=checked]:bg-[#3182F6] data-[state=checked]:border-[#3182F6]"
-                                />
-                                <label
-                                    htmlFor="salary-no-pref"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-[#4E5968]"
-                                >
-                                    상관 없음
-                                </label>
-                            </div>
-
-                            <ResponsiveModal
-                                trigger={
-                                    <Button 
-                                        variant="outline" 
-                                        disabled={profileData.salaryNoPreference}
-                                        className="w-full h-14 justify-start text-left bg-[#F2F4F6] border-none rounded-xl font-bold text-xl text-[#191F28] disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {profileData.salaryNoPreference ? "상관 없음" : `${profileData.salary.toLocaleString()} 만원`}
-                                    </Button>
-                                }
-                                title="희망 연봉 설정"
-                                description="4자리 숫자를 스크롤하여 설정하세요."
-                            >
-                                <ResponsiveSalaryInputContent 
-                                    value={profileData.salary} 
-                                    onChange={(val) => setProfileData({...profileData, salary: val})}
-                                />
-                            </ResponsiveModal>
-                        </div>
-
-                        <div className="space-y-2">
-                             <Label className="text-[#4E5968]">직업적 관심사</Label>
-                             <Textarea 
-                                defaultValue="다양한 팀과 협업하며 복잡한 사용자 문제를 데이터 기반으로 해결하는 것을 즐깁니다."
-                                className="min-h-[100px] bg-[#F2F4F6] border-none rounded-xl resize-none p-4 text-base"
-                             />
-                        </div>
-                    </CardContent>
-                </Card>
-            </section>
+          {/* Main Form Area - Dynamic based on Type */}
+          <div className="space-y-6">
+               {renderProfileFields()}
           </div>
         </div>
       </div>
