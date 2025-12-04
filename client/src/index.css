@@ -62,6 +62,8 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
   
   /* Toss-like smooth font rendering */
