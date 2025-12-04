@@ -37,11 +37,11 @@ const PROFILES = [
         summary: "현재 보유하신 Product Strategy 역량은 시장에서 매우 높은 가치로 평가받고 있습니다.",
         chartData: {
             radar: [
-                { subject: 'Product Strategy', A: 140, fullMark: 150 },
-                { subject: 'User Research', A: 130, fullMark: 150 },
-                { subject: 'Data Analysis', A: 90, fullMark: 150 },
-                { subject: 'Leadership', A: 110, fullMark: 150 },
-                { subject: 'Communication', A: 120, fullMark: 150 },
+                { subject: '제품 전략', A: 140, fullMark: 150 },
+                { subject: '사용자 리서치', A: 130, fullMark: 150 },
+                { subject: '데이터 분석', A: 90, fullMark: 150 },
+                { subject: '리더십', A: 110, fullMark: 150 },
+                { subject: '커뮤니케이션', A: 120, fullMark: 150 },
             ]
         },
         recommendations: MOCK_ANALYSIS.recommendedRoles
