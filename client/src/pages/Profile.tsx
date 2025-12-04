@@ -27,11 +27,13 @@ function ResponsiveClose({ children, asChild }: { children: React.ReactNode, asC
 function ResponsiveDatePickerContent({ 
     value, 
     onChange, 
-    isEndDate = false 
+    isEndDate = false,
+    hideButton = false
 }: { 
     value: Date | null, 
     onChange: (date: Date | null) => void,
-    isEndDate?: boolean 
+    isEndDate?: boolean,
+    hideButton?: boolean
 }) {
     const isMobile = useIsMobile();
     
@@ -138,9 +140,11 @@ function ResponsiveDatePickerContent({
                 {!isCurrent && (
                     <DateWheelPicker value={value || new Date()} onChange={onChange} />
                 )}
-                <ResponsiveClose asChild>
-                    <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
-                </ResponsiveClose>
+                {!hideButton && (
+                    <ResponsiveClose asChild>
+                        <Button className="w-full mt-4 rounded-xl h-12 text-lg font-bold">완료</Button>
+                    </ResponsiveClose>
+                )}
             </div>
         );
     }
@@ -203,9 +207,11 @@ function ResponsiveDatePickerContent({
                     </div>
                 </div>
             </div>
-            <ResponsiveClose asChild>
-                <Button className="w-full rounded-xl h-12 text-lg font-bold bg-[#3182F6]">입력 완료</Button>
-            </ResponsiveClose>
+            {!hideButton && (
+                <ResponsiveClose asChild>
+                    <Button className="w-full rounded-xl h-12 text-lg font-bold bg-[#3182F6]">입력 완료</Button>
+                </ResponsiveClose>
+            )}
         </div>
     );
 }
@@ -975,6 +981,7 @@ export default function Profile() {
                                 <ResponsiveDatePickerContent 
                                     value={profileData.birthDate} 
                                     onChange={(date) => setProfileData(prev => ({ ...prev, birthDate: date }))} 
+                                    hideButton={true}
                                 />
                             </div>
                             <ResponsiveClose asChild>
