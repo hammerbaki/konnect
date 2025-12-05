@@ -3,8 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, Filter, ArrowRight, Building2, Briefcase, X, DollarSign, GraduationCap, TrendingUp, Smile, Activity, Star } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Search, Filter, ArrowRight, Building2, Briefcase, X, DollarSign, GraduationCap, TrendingUp, Smile, Activity, Star, Loader2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import rawData from "@/lib/careerData.json";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -316,6 +315,29 @@ export default function Explorer() {
     // Modal State
     const [selectedCareer, setSelectedCareer] = useState<ProcessedCareer | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    // Data loading state
+    const [rawData, setRawData] = useState<{ career_data: RawCareerItem[] } | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
+
+    // Load career data from public folder
+    useEffect(() => {
+        fetch('/data/careerData.json')
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to load career data');
+                return res.json();
+            })
+            .then(data => {
+                setRawData(data);
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.error('Failed to load career data:', err);
+                setLoadError('직업 데이터를 불러오는데 실패했습니다.');
+                setIsLoading(false);
+            });
+    }, []);
 
     const handleCardClick = (career: ProcessedCareer) => {
         setSelectedCareer(career);
@@ -325,9 +347,11 @@ export default function Explorer() {
 
     // Process and memoize the data
     const { careers, hierarchy } = useMemo(() => {
+        if (!rawData) return { careers: [], hierarchy: {} };
+        
         const hierarchyMap = new Map<string, Set<string>>();
         
-        const processed: ProcessedCareer[] = ((rawData as any).career_data as RawCareerItem[]).map(item => {
+        const processed: ProcessedCareer[] = (rawData.career_data as RawCareerItem[]).map(item => {
             let largeClass = "기타";
             let mediumClass = "기타";
             let tags: string[] = [];
@@ -440,7 +464,7 @@ export default function Explorer() {
         });
 
         return { careers: processed, hierarchy: sortedHierarchy };
-    }, []);
+    }, [rawData]);
 
     // Filter logic
     const filteredCareers = useMemo(() => {
@@ -473,6 +497,37 @@ export default function Explorer() {
     const handleLoadMore = () => setVisibleCount(prev => prev + 20);
 
     const availableMediumClasses = selectedLargeClass !== "all" ? hierarchy[selectedLargeClass] : [];
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <Layout>
+                <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                    <Loader2 className="h-12 w-12 text-[#3182F6] animate-spin mb-4" />
+                    <p className="text-[#4E5968] text-lg">직업 데이터를 불러오는 중...</p>
+                </div>
+            </Layout>
+        );
+    }
+
+    // Error state
+    if (loadError) {
+        return (
+            <Layout>
+                <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                    <div className="text-center space-y-4">
+                        <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-red-50 mb-2">
+                            <X className="h-8 w-8 text-red-500" />
+                        </div>
+                        <h2 className="text-xl font-bold text-[#191F28]">{loadError}</h2>
+                        <Button onClick={() => window.location.reload()} variant="outline">
+                            다시 시도
+                        </Button>
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
 
     return (
         <Layout>
