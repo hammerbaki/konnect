@@ -4,17 +4,19 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/AuthContext";
-import { Mail, Lock, User, Loader2, CheckCircle, AlertCircle, Sparkles } from "lucide-react";
+import { Mail, Lock, User, Loader2, CheckCircle, AlertCircle, Sparkles, ArrowLeft, ArrowRight } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { motion, AnimatePresence } from "framer-motion";
+
+type AuthMode = "login" | "register" | "magic";
 
 export default function Login() {
   const { isAuthenticated, login, register, sendMagicLink } = useAuth();
   const [, setLocation] = useLocation();
   
-  const [activeTab, setActiveTab] = useState("login");
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -26,7 +28,7 @@ export default function Login() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      setLocation("/");
+      setLocation("/dashboard");
     }
   }, [isAuthenticated, setLocation]);
 
@@ -42,16 +44,26 @@ export default function Login() {
     }
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const resetForm = () => {
     setError(null);
     setSuccess(null);
+    setShowMagicLinkHint(false);
+  };
+
+  const handleModeChange = (newMode: AuthMode) => {
+    resetForm();
+    setMode(newMode);
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    resetForm();
     setIsLoading(true);
     
     const result = await login(email, password);
     
     if (result.success) {
-      setLocation("/");
+      setLocation("/dashboard");
     } else {
       setError(result.error || "로그인에 실패했습니다.");
       if (result.useMagicLink) {
@@ -64,14 +76,13 @@ export default function Login() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    resetForm();
     setIsLoading(true);
     
     const result = await register(email, password, firstName, lastName);
     
     if (result.success) {
-      setLocation("/");
+      setLocation("/dashboard");
     } else {
       setError(result.error || "회원가입에 실패했습니다.");
     }
@@ -81,8 +92,7 @@ export default function Login() {
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    resetForm();
     setIsLoading(true);
     
     const result = await sendMagicLink(email);
@@ -96,227 +106,268 @@ export default function Login() {
     setIsLoading(false);
   };
 
+  const modeConfig = {
+    login: {
+      title: "로그인",
+      subtitle: "이메일과 비밀번호로 로그인하세요",
+      buttonText: "로그인",
+      onSubmit: handleLogin,
+    },
+    register: {
+      title: "회원가입",
+      subtitle: "계정을 만들고 무료 크레딧 10개를 받으세요",
+      buttonText: "가입하기",
+      onSubmit: handleRegister,
+    },
+    magic: {
+      title: "매직 링크",
+      subtitle: "비밀번호 없이 이메일로 로그인하세요",
+      buttonText: "로그인 링크 받기",
+      onSubmit: handleMagicLink,
+    },
+  };
+
+  const config = modeConfig[mode];
+
   return (
     <Layout hideNav>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#F9FAFB] to-white p-4">
-        <div className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-[#F2F4F6] relative overflow-hidden font-sans">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+          <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-[#3182F6]/5 blur-3xl" />
+          <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] rounded-full bg-[#3182F6]/5 blur-3xl" />
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="z-10 w-full max-w-md px-4"
+        >
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#3182F6] to-[#1e6ce0] text-white mb-4 shadow-lg">
-              <Sparkles className="h-8 w-8" />
-            </div>
-            <h1 className="text-3xl font-bold text-[#191F28]">Konnect</h1>
-            <p className="text-[#8B95A1] mt-2">AI 진로 가이드 플랫폼</p>
+            <button 
+              onClick={() => setLocation("/")}
+              className="inline-flex items-center justify-center h-16 w-16 rounded-[22px] bg-[#3182F6] text-white mb-6 shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform"
+            >
+              <span className="text-3xl font-bold">K</span>
+            </button>
+            <h1 className="text-3xl font-bold tracking-tight text-[#191F28]">Konnect</h1>
+            <p className="text-[#8B95A1] mt-2">AI 기반 커리어 인텔리전스 플랫폼</p>
           </div>
 
-          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur">
-            <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-xl text-center">환영합니다</CardTitle>
-              <CardDescription className="text-center">
-                로그인하여 맞춤형 진로 분석을 시작하세요
-              </CardDescription>
+          <Card className="toss-card border-none shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-[24px] overflow-hidden bg-white">
+            <CardHeader className="space-y-2 pt-8 px-8 pb-4">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={mode}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <CardTitle className="text-2xl font-bold text-[#191F28]">
+                    {config.title}
+                  </CardTitle>
+                  <CardDescription className="text-[#8B95A1] text-base mt-1">
+                    {config.subtitle}
+                  </CardDescription>
+                </motion.div>
+              </AnimatePresence>
             </CardHeader>
-            <CardContent>
-              {error && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              
-              {success && (
-                <Alert className="mb-4 border-green-200 bg-green-50 text-green-800">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertDescription>{success}</AlertDescription>
-                </Alert>
-              )}
+            
+            <CardContent className="px-8 pb-8">
+              <AnimatePresence mode="wait">
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <Alert variant="destructive" className="mb-6 rounded-xl border-red-100 bg-red-50">
+                      <AlertCircle className="h-4 w-4 text-red-500" />
+                      <AlertDescription className="text-red-600">{error}</AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+                
+                {success && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <Alert className="mb-6 rounded-xl border-green-100 bg-green-50">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <AlertDescription className="text-green-700">{success}</AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-6">
-                  <TabsTrigger value="login" data-testid="tab-login">로그인</TabsTrigger>
-                  <TabsTrigger value="register" data-testid="tab-register">회원가입</TabsTrigger>
-                  <TabsTrigger value="magic" data-testid="tab-magic">매직 링크</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="login" className="space-y-4">
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">이메일</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
-                        <Input
-                          id="login-email"
-                          type="email"
-                          placeholder="email@example.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
-                          required
-                          data-testid="input-login-email"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">비밀번호</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
-                        <Input
-                          id="login-password"
-                          type="password"
-                          placeholder="8자 이상"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10"
-                          required
-                          minLength={8}
-                          data-testid="input-login-password"
-                        />
-                      </div>
-                    </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-[#3182F6] hover:bg-[#1e6ce0]"
-                      disabled={isLoading}
-                      data-testid="button-login"
-                    >
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : null}
-                      로그인
-                    </Button>
-                  </form>
-                  
-                  {showMagicLinkHint && (
-                    <p className="text-sm text-center text-[#8B95A1] mt-4">
-                      비밀번호 없이 가입하셨나요?{" "}
-                      <button 
-                        onClick={() => setActiveTab("magic")}
-                        className="text-[#3182F6] hover:underline"
-                      >
-                        매직 링크로 로그인
-                      </button>
-                    </p>
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="register" className="space-y-4">
-                  <form onSubmit={handleRegister} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
+              <AnimatePresence mode="wait">
+                <motion.form
+                  key={mode}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  onSubmit={config.onSubmit}
+                  className="space-y-5"
+                >
+                  {mode === "register" && (
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="first-name">성</Label>
+                        <Label htmlFor="first-name" className="text-[#4E5968] font-medium">성</Label>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
+                          <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#B0B8C1]" />
                           <Input
                             id="first-name"
                             type="text"
                             placeholder="김"
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
-                            className="pl-10"
+                            className="pl-12 h-14 rounded-xl border-[#E5E8EB] bg-[#F9FAFB] focus:bg-white focus:border-[#3182F6] transition-all text-base"
                             data-testid="input-first-name"
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="last-name">이름</Label>
+                        <Label htmlFor="last-name" className="text-[#4E5968] font-medium">이름</Label>
                         <Input
                           id="last-name"
                           type="text"
                           placeholder="진로"
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
+                          className="h-14 rounded-xl border-[#E5E8EB] bg-[#F9FAFB] focus:bg-white focus:border-[#3182F6] transition-all text-base"
                           data-testid="input-last-name"
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-email">이메일</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
-                        <Input
-                          id="register-email"
-                          type="email"
-                          placeholder="email@example.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
-                          required
-                          data-testid="input-register-email"
-                        />
-                      </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-[#4E5968] font-medium">이메일</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#B0B8C1]" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="email@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-12 h-14 rounded-xl border-[#E5E8EB] bg-[#F9FAFB] focus:bg-white focus:border-[#3182F6] transition-all text-base"
+                        required
+                        data-testid={`input-${mode}-email`}
+                      />
                     </div>
+                  </div>
+
+                  {(mode === "login" || mode === "register") && (
                     <div className="space-y-2">
-                      <Label htmlFor="register-password">비밀번호</Label>
+                      <Label htmlFor="password" className="text-[#4E5968] font-medium">비밀번호</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#B0B8C1]" />
                         <Input
-                          id="register-password"
+                          id="password"
                           type="password"
-                          placeholder="8자 이상"
+                          placeholder="8자 이상 입력"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10"
+                          className="pl-12 h-14 rounded-xl border-[#E5E8EB] bg-[#F9FAFB] focus:bg-white focus:border-[#3182F6] transition-all text-base"
                           required
                           minLength={8}
-                          data-testid="input-register-password"
+                          data-testid={`input-${mode}-password`}
                         />
                       </div>
                     </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-[#3182F6] hover:bg-[#1e6ce0]"
-                      disabled={isLoading}
-                      data-testid="button-register"
-                    >
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : null}
-                      가입하기
-                    </Button>
-                  </form>
-                  <p className="text-xs text-center text-[#8B95A1]">
-                    가입 시 무료 크레딧 10개가 제공됩니다 ✨
-                  </p>
-                </TabsContent>
-                
-                <TabsContent value="magic" className="space-y-4">
-                  <form onSubmit={handleMagicLink} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="magic-email">이메일</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
-                        <Input
-                          id="magic-email"
-                          type="email"
-                          placeholder="email@example.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
-                          required
-                          data-testid="input-magic-email"
-                        />
-                      </div>
-                    </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-[#3182F6] hover:bg-[#1e6ce0]"
-                      disabled={isLoading}
-                      data-testid="button-magic-link"
-                    >
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : null}
-                      로그인 링크 받기
-                    </Button>
-                  </form>
-                  <p className="text-sm text-center text-[#8B95A1]">
-                    비밀번호 없이 이메일로 로그인하세요.<br />
-                    처음 사용 시 자동으로 계정이 생성됩니다.
-                  </p>
-                </TabsContent>
-              </Tabs>
+                  )}
+
+                  <Button 
+                    type="submit" 
+                    className="w-full h-14 text-lg rounded-[16px] bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] mt-2"
+                    disabled={isLoading}
+                    data-testid={`button-${mode}`}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    ) : null}
+                    {config.buttonText}
+                    {!isLoading && <ArrowRight className="ml-2 h-5 w-5" />}
+                  </Button>
+                </motion.form>
+              </AnimatePresence>
+
+              {showMagicLinkHint && mode === "login" && (
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-sm text-center text-[#8B95A1] mt-4"
+                >
+                  비밀번호 없이 가입하셨나요?{" "}
+                  <button 
+                    onClick={() => handleModeChange("magic")}
+                    className="text-[#3182F6] hover:underline font-medium"
+                  >
+                    매직 링크로 로그인
+                  </button>
+                </motion.p>
+              )}
+
+              {mode === "magic" && (
+                <p className="text-sm text-center text-[#8B95A1] mt-4 leading-relaxed">
+                  이메일로 전송된 링크를 클릭하면 자동 로그인됩니다.<br />
+                  <span className="text-[#3182F6]">처음 사용 시 자동으로 계정이 생성됩니다.</span>
+                </p>
+              )}
+
+              {mode === "register" && (
+                <div className="flex items-center justify-center gap-2 mt-4 py-3 px-4 rounded-xl bg-[#F9FAFB]">
+                  <Sparkles className="h-5 w-5 text-[#3182F6]" />
+                  <span className="text-sm text-[#4E5968]">가입 즉시 무료 크레딧 <span className="font-bold text-[#3182F6]">10개</span> 제공</span>
+                </div>
+              )}
             </CardContent>
           </Card>
-        </div>
+
+          <div className="mt-6 flex items-center justify-center gap-2">
+            {mode !== "login" && (
+              <button
+                onClick={() => handleModeChange("login")}
+                className="flex items-center gap-1 text-sm text-[#8B95A1] hover:text-[#4E5968] transition-colors"
+                data-testid="link-to-login"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                로그인으로 돌아가기
+              </button>
+            )}
+          </div>
+
+          <div className="mt-8 flex items-center justify-center gap-6">
+            {mode === "login" && (
+              <>
+                <button
+                  onClick={() => handleModeChange("register")}
+                  className="text-sm text-[#8B95A1] hover:text-[#3182F6] transition-colors"
+                  data-testid="link-to-register"
+                >
+                  계정 만들기
+                </button>
+                <span className="text-[#E5E8EB]">|</span>
+                <button
+                  onClick={() => handleModeChange("magic")}
+                  className="text-sm text-[#8B95A1] hover:text-[#3182F6] transition-colors"
+                  data-testid="link-to-magic"
+                >
+                  비밀번호 없이 로그인
+                </button>
+              </>
+            )}
+          </div>
+
+          <p className="mt-8 text-center text-sm text-[#8B95A1]">
+            &copy; 2025 Konnect.careers. All rights reserved.
+          </p>
+        </motion.div>
       </div>
     </Layout>
   );
