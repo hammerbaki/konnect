@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/lib/AuthContext";
 import { Suspense, lazy } from "react";
 
 const Landing = lazy(() => import("./pages/Landing"));
+const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const NotFound = lazy(() => import("./pages/not-found"));
 const Analysis = lazy(() => import("./pages/Analysis"));
@@ -38,7 +39,7 @@ function ProtectedRoute({ component: Component, ...rest }: { component: React.Co
   }
 
   if (!isAuthenticated) {
-    setLocation("/");
+    setLocation("/login");
     return null;
   }
 
@@ -50,6 +51,7 @@ function Router() {
     <Suspense fallback={<LoadingSpinner />}>
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/login" component={Login} />
         <Route path="/dashboard">
           {(params) => <ProtectedRoute component={Dashboard} params={params} />}
         </Route>

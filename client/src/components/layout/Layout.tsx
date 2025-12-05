@@ -4,9 +4,18 @@ import { MobileNav } from "./MobileNav";
 
 interface LayoutProps {
   children: React.ReactNode;
+  hideNav?: boolean;
 }
 
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children, hideNav }: LayoutProps) {
+  if (hideNav) {
+    return (
+      <div className="min-h-screen w-full bg-[#F2F4F6]">
+        {children}
+      </div>
+    );
+  }
+  
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#F2F4F6]">
       {/* Desktop Sidebar */}

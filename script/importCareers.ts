@@ -39,16 +39,18 @@ async function importCareers() {
     }));
     
     try {
-      await db.insert(careers).values(values).onConflictDoUpdate({
-        target: careers.id,
-        set: {
-          name: values[0].name,
-          category: values[0].category,
-          description: values[0].description,
-          fullData: values[0].fullData,
-          detailData: values[0].detailData,
-        }
-      });
+      for (const value of values) {
+        await db.insert(careers).values(value).onConflictDoUpdate({
+          target: careers.id,
+          set: {
+            name: value.name,
+            category: value.category,
+            description: value.description,
+            fullData: value.fullData,
+            detailData: value.detailData,
+          }
+        });
+      }
       imported += batch.length;
       console.log(`Imported ${imported}/${careerData.length} careers...`);
     } catch (error) {

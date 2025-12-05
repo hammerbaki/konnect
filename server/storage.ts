@@ -4,6 +4,8 @@ import {
   careerAnalyses,
   personalEssays,
   kompassGoals,
+  careers,
+  magicLinkTokens,
   type User,
   type UpsertUser,
   type Profile,
@@ -14,16 +16,28 @@ import {
   type InsertPersonalEssay,
   type KompassGoal,
   type InsertKompassGoal,
+  type Career,
+  type MagicLinkToken,
+  type InsertMagicLinkToken,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, lt, isNull, ilike } from "drizzle-orm";
 
 export interface IStorage {
-  // ===== User Operations (Required for Replit Auth) =====
+  // ===== User Operations =====
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  createUser(email: string, passwordHash?: string | null): Promise<User>;
   updateUserCredits(userId: string, credits: number): Promise<void>;
   deductUserCredits(userId: string, amount: number): Promise<boolean>;
+  verifyUserEmail(userId: string): Promise<void>;
+
+  // ===== Magic Link Token Operations =====
+  createMagicLinkToken(data: InsertMagicLinkToken): Promise<MagicLinkToken>;
+  getMagicLinkToken(token: string): Promise<MagicLinkToken | undefined>;
+  markMagicLinkUsed(id: string): Promise<void>;
+  cleanupExpiredTokens(): Promise<void>;
 
   // ===== Profile Operations =====
   getProfilesByUser(userId: string): Promise<Profile[]>;
@@ -51,12 +65,23 @@ export interface IStorage {
   createKompass(kompass: InsertKompassGoal): Promise<KompassGoal>;
   updateKompass(id: string, data: Partial<InsertKompassGoal>): Promise<KompassGoal>;
   deleteKompass(id: string): Promise<void>;
+
+  // ===== Career Data Operations =====
+  getAllCareers(): Promise<Career[]>;
+  getCareerById(id: string): Promise<Career | undefined>;
+  searchCareers(query: string): Promise<Career[]>;
+  getCareersByCategory(category: string): Promise<Career[]>;
 }
 
 export class DatabaseStorage implements IStorage {
   // ===== User Operations =====
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
   }
 
@@ -75,6 +100,14 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async createUser(email: string, passwordHash?: string | null): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({ email, passwordHash })
+      .returning();
+    return user;
+  }
+
   async updateUserCredits(userId: string, credits: number): Promise<void> {
     await db
       .update(users)
@@ -89,6 +122,46 @@ export class DatabaseStorage implements IStorage {
     }
     await this.updateUserCredits(userId, user.credits - amount);
     return true;
+  }
+
+  async verifyUserEmail(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ emailVerified: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  // ===== Magic Link Token Operations =====
+  async createMagicLinkToken(data: InsertMagicLinkToken): Promise<MagicLinkToken> {
+    const [token] = await db
+      .insert(magicLinkTokens)
+      .values(data)
+      .returning();
+    return token;
+  }
+
+  async getMagicLinkToken(token: string): Promise<MagicLinkToken | undefined> {
+    const [result] = await db
+      .select()
+      .from(magicLinkTokens)
+      .where(and(
+        eq(magicLinkTokens.token, token),
+        isNull(magicLinkTokens.usedAt)
+      ));
+    return result;
+  }
+
+  async markMagicLinkUsed(id: string): Promise<void> {
+    await db
+      .update(magicLinkTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(magicLinkTokens.id, id));
+  }
+
+  async cleanupExpiredTokens(): Promise<void> {
+    await db
+      .delete(magicLinkTokens)
+      .where(lt(magicLinkTokens.expiresAt, new Date()));
   }
 
   // ===== Profile Operations =====
@@ -232,6 +305,30 @@ export class DatabaseStorage implements IStorage {
 
   async deleteKompass(id: string): Promise<void> {
     await db.delete(kompassGoals).where(eq(kompassGoals.id, id));
+  }
+
+  // ===== Career Data Operations =====
+  async getAllCareers(): Promise<Career[]> {
+    return await db.select().from(careers);
+  }
+
+  async getCareerById(id: string): Promise<Career | undefined> {
+    const [career] = await db.select().from(careers).where(eq(careers.id, id));
+    return career;
+  }
+
+  async searchCareers(query: string): Promise<Career[]> {
+    return await db
+      .select()
+      .from(careers)
+      .where(ilike(careers.name, `%${query}%`));
+  }
+
+  async getCareersByCategory(category: string): Promise<Career[]> {
+    return await db
+      .select()
+      .from(careers)
+      .where(eq(careers.category, category));
   }
 }
 

@@ -2,13 +2,13 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Target, FileText, Shield } from "lucide-react";
+import { ArrowRight, Sparkles, Target, FileText, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/AuthContext";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
-  const { isAuthenticated, isLoading, login } = useAuth();
+  const { isAuthenticated, isLoading, navigateToLogin } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -92,16 +92,16 @@ export default function Landing() {
 
             <Button 
               className="w-full h-14 text-lg rounded-[20px] bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02]" 
-              onClick={login}
+              onClick={navigateToLogin}
               data-testid="button-login"
             >
-              Replit으로 로그인
+              시작하기
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
 
             <div className="flex items-center justify-center gap-2 text-xs text-[#8B95A1]">
-              <Shield className="w-4 h-4" />
-              <span>Replit 계정으로 안전하게 로그인</span>
+              <Mail className="w-4 h-4" />
+              <span>이메일로 간편하게 로그인</span>
             </div>
           </CardContent>
         </Card>

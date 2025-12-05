@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, registerAuthRoutes } from "./auth";
 import {
   insertProfileSchema,
   insertCareerAnalysisSchema,
@@ -13,27 +13,60 @@ import { generateCareerAnalysis, generatePersonalEssay } from "./ai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ===== Setup Auth Middleware =====
-  await setupAuth(app);
+  setupAuth(app);
+  
+  // ===== Register Auth Routes =====
+  await registerAuthRoutes(app);
 
-  // ===== Auth Routes =====
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  // ===== Career Data Routes (Public) =====
+  app.get('/api/careers', async (_req, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      res.json(user);
+      const careers = await storage.getAllCareers();
+      res.json(careers);
     } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
+      console.error("Error fetching careers:", error);
+      res.status(500).json({ message: "Failed to fetch careers" });
+    }
+  });
+
+  app.get('/api/careers/search', async (req, res) => {
+    try {
+      const query = req.query.q as string || '';
+      const careers = await storage.searchCareers(query);
+      res.json(careers);
+    } catch (error) {
+      console.error("Error searching careers:", error);
+      res.status(500).json({ message: "Failed to search careers" });
+    }
+  });
+
+  app.get('/api/careers/category/:category', async (req, res) => {
+    try {
+      const careers = await storage.getCareersByCategory(req.params.category);
+      res.json(careers);
+    } catch (error) {
+      console.error("Error fetching careers by category:", error);
+      res.status(500).json({ message: "Failed to fetch careers by category" });
+    }
+  });
+
+  app.get('/api/careers/:id', async (req, res) => {
+    try {
+      const career = await storage.getCareerById(req.params.id);
+      if (!career) {
+        return res.status(404).json({ message: "Career not found" });
+      }
+      res.json(career);
+    } catch (error) {
+      console.error("Error fetching career:", error);
+      res.status(500).json({ message: "Failed to fetch career" });
     }
   });
 
   // ===== Profile Routes =====
   app.get('/api/profiles', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profiles = await storage.getProfilesByUser(userId);
       res.json(profiles);
     } catch (error) {
@@ -48,8 +81,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!profile) {
         return res.status(404).json({ message: "Profile not found" });
       }
-      // Verify ownership
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       if (profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
       }
@@ -62,7 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/profiles', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const data = insertProfileSchema.parse({ ...req.body, userId });
       const profile = await storage.createProfile(data);
       res.status(201).json(profile);
@@ -77,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/profiles/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.id);
       if (!profile) {
         return res.status(404).json({ message: "Profile not found" });
@@ -95,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/profiles/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.id);
       if (!profile) {
         return res.status(404).json({ message: "Profile not found" });
@@ -114,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== Career Analysis Routes =====
   app.get('/api/profiles/:profileId/analyses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -129,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/profiles/:profileId/analyses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -153,7 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/analyses/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const analysis = await storage.getAnalysis(req.params.id);
       if (!analysis) {
         return res.status(404).json({ message: "Analysis not found" });
@@ -173,7 +205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== Personal Essay Routes =====
   app.get('/api/profiles/:profileId/essays', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -188,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/profiles/:profileId/essays', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -212,7 +244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/essays/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const essay = await storage.getEssay(req.params.id);
       if (!essay) {
         return res.status(404).json({ message: "Essay not found" });
@@ -231,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/essays/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const essay = await storage.getEssay(req.params.id);
       if (!essay) {
         return res.status(404).json({ message: "Essay not found" });
@@ -251,7 +283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== Kompass Goal Routes =====
   app.get('/api/profiles/:profileId/kompass', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -266,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/profiles/:profileId/kompass', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -290,7 +322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/kompass/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const kompass = await storage.getKompass(req.params.id);
       if (!kompass) {
         return res.status(404).json({ message: "Kompass not found" });
@@ -309,7 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/kompass/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const kompass = await storage.getKompass(req.params.id);
       if (!kompass) {
         return res.status(404).json({ message: "Kompass not found" });
@@ -330,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate career analysis for a profile
   app.post('/api/profiles/:profileId/generate-analysis', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       
       if (!profile || profile.userId !== userId) {
@@ -377,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate personal essay
   app.post('/api/profiles/:profileId/generate-essay', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       
       if (!profile || profile.userId !== userId) {

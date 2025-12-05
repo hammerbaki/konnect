@@ -18,14 +18,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 
-// Type definition for the raw JSON data
-interface RawCareerItem {
+// Type definition for the API response
+interface CareerApiItem {
     id: string;
     name: string;
-    category: string;
-    description: string;
-    full_data: string;
-    detail_data: string;
+    category: string | null;
+    description: string | null;
+    fullData: any | null;
+    detailData: any | null;
+    createdAt: string | null;
+    updatedAt: string | null;
 }
 
 interface ProcessedCareer {
@@ -317,13 +319,13 @@ export default function Explorer() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     
     // Data loading state
-    const [rawData, setRawData] = useState<{ career_data: RawCareerItem[] } | null>(null);
+    const [rawData, setRawData] = useState<CareerApiItem[] | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
 
-    // Load career data from public folder
+    // Load career data from API
     useEffect(() => {
-        fetch('/data/careerData.json')
+        fetch('/api/careers')
             .then(res => {
                 if (!res.ok) throw new Error('Failed to load career data');
                 return res.json();
@@ -351,7 +353,7 @@ export default function Explorer() {
         
         const hierarchyMap = new Map<string, Set<string>>();
         
-        const processed: ProcessedCareer[] = (rawData.career_data as RawCareerItem[]).map(item => {
+        const processed: ProcessedCareer[] = rawData.map(item => {
             let largeClass = "기타";
             let mediumClass = "기타";
             let tags: string[] = [];
@@ -364,7 +366,7 @@ export default function Explorer() {
             let personality: { name: string; score: number; desc: string }[] = [];
             
             try {
-                const detail = JSON.parse(item.detail_data);
+                const detail = item.detailData;
                 
                 // Tab 1: Summary
                 const jobSum = detail?.tabs?.['1']?.data?.jobSum;
@@ -445,7 +447,7 @@ export default function Explorer() {
                 title: item.name,
                 largeClass,
                 mediumClass,
-                description: item.description,
+                description: item.description || "",
                 tags: tags.slice(0, 3),
                 salary,
                 duties,
