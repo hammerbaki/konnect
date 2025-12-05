@@ -1,52 +1,13 @@
 import { Resend } from 'resend';
 
-let connectionSettings: any;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
-    : null;
-
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
-  }
-
-  connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
-    }
-  ).then(res => res.json()).then(data => data.items?.[0]);
-
-  if (!connectionSettings || (!connectionSettings.settings.api_key)) {
-    throw new Error('Resend not connected');
-  }
-  return {
-    apiKey: connectionSettings.settings.api_key, 
-    fromEmail: connectionSettings.settings.from_email
-  };
-}
-
-async function getResendClient() {
-  const { apiKey, fromEmail } = await getCredentials();
-  return {
-    client: new Resend(apiKey),
-    fromEmail
-  };
-}
+const FROM_EMAIL = 'Konnect <onboarding@resend.dev>';
 
 export async function sendMagicLinkEmail(to: string, magicLink: string): Promise<boolean> {
   try {
-    const { client, fromEmail } = await getResendClient();
-    
-    const { error } = await client.emails.send({
-      from: fromEmail || 'Konnect <noreply@resend.dev>',
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
       to: [to],
       subject: '[Konnect] 로그인 링크',
       html: `
@@ -60,7 +21,7 @@ export async function sendMagicLinkEmail(to: string, magicLink: string): Promise
             <h2 style="color: #191F28; font-size: 20px; margin: 0 0 16px;">로그인 링크</h2>
             <p style="color: #4E5968; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
               아래 버튼을 클릭하여 Konnect에 로그인하세요.<br>
-              이 링크는 15분 후에 만료됩니다.
+              이 링크는 1시간 후에 만료됩니다.
             </p>
             <a href="${magicLink}" style="display: inline-block; background: #3182F6; color: white; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-weight: 600; font-size: 16px;">
               로그인하기
@@ -82,6 +43,7 @@ export async function sendMagicLinkEmail(to: string, magicLink: string): Promise
       return false;
     }
 
+    console.log('Magic link email sent successfully to:', to);
     return true;
   } catch (error) {
     console.error('Error sending magic link email:', error);
@@ -91,12 +53,10 @@ export async function sendMagicLinkEmail(to: string, magicLink: string): Promise
 
 export async function sendWelcomeEmail(to: string, firstName?: string): Promise<boolean> {
   try {
-    const { client, fromEmail } = await getResendClient();
-    
     const name = firstName || '회원';
     
-    const { error } = await client.emails.send({
-      from: fromEmail || 'Konnect <noreply@resend.dev>',
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
       to: [to],
       subject: `[Konnect] ${name}님, 환영합니다!`,
       html: `
@@ -134,6 +94,7 @@ export async function sendWelcomeEmail(to: string, firstName?: string): Promise<
       return false;
     }
 
+    console.log('Welcome email sent successfully to:', to);
     return true;
   } catch (error) {
     console.error('Error sending welcome email:', error);
