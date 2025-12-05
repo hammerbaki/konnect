@@ -295,9 +295,14 @@ export async function registerAuthRoutes(app: Express) {
   });
   
   // Delay cleanup to allow database connection to stabilize in production
+  // This is a non-critical background task - failures don't affect app functionality
   setTimeout(() => {
     storage.cleanupExpiredTokens().catch(err => {
-      console.error('Failed to cleanup expired tokens:', err);
+      // Silently ignore DNS errors - tokens will be cleaned up on next successful run
+      const isDnsError = err.message?.includes('EAI_AGAIN') || err.message?.includes('ENOTFOUND');
+      if (!isDnsError) {
+        console.error('Failed to cleanup expired tokens:', err);
+      }
     });
-  }, 10000); // Wait 10 seconds before cleanup
+  }, 30000); // Wait 30 seconds before cleanup
 }

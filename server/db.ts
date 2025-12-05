@@ -3,7 +3,11 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
+// Configure Neon for serverless with WebSocket
 neonConfig.webSocketConstructor = ws;
+neonConfig.useSecureWebSocket = true;
+neonConfig.pipelineTLS = false;
+neonConfig.pipelineConnect = false;
 
 // Use fallback connection string if DATABASE_URL is not set
 const databaseUrl = process.env.DATABASE_URL || 'postgresql://fallback:fallback@localhost:5432/fallback';
@@ -18,22 +22,32 @@ console.log('Connecting to database...');
 
 export const pool = new Pool({ 
   connectionString: databaseUrl,
-  connectionTimeoutMillis: 30000, // 30 second timeout for production stability
+  connectionTimeoutMillis: 30000,
   idleTimeoutMillis: 30000,
-  max: 10, // Maximum number of clients in the pool
+  max: 10,
 });
 
+// Track connection state
+let isConnected = false;
+
 pool.on('error', (err) => {
-  // DNS errors are transient - don't log full stack trace
-  if (err.message?.includes('EAI_AGAIN') || err.message?.includes('ENOTFOUND')) {
-    console.error('Database DNS resolution error (will retry):', err.message);
+  const isDnsError = err.message?.includes('EAI_AGAIN') || err.message?.includes('ENOTFOUND');
+  if (isDnsError) {
+    // DNS errors are transient in Replit production - log minimally
+    if (isConnected) {
+      console.error('Database connection lost (DNS error), will reconnect');
+      isConnected = false;
+    }
   } else {
-    console.error('Unexpected database error:', err);
+    console.error('Unexpected database error:', err.message);
   }
 });
 
 pool.on('connect', () => {
-  console.log('✓ Database connection established');
+  if (!isConnected) {
+    console.log('✓ Database connection established');
+    isConnected = true;
+  }
 });
 
 export const db = drizzle({ client: pool, schema });
