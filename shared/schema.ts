@@ -12,7 +12,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// ===== SESSION TABLE (Required for Replit Auth) =====
+// ===== SESSION TABLE =====
 export const sessions = pgTable(
   "sessions",
   {
@@ -23,17 +23,60 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// ===== USERS TABLE (Required for Replit Auth) =====
+// ===== USERS TABLE (Email/Password + Magic Link Auth) =====
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
+  passwordHash: varchar("password_hash"), // null for magic link only users
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  credits: integer("credits").notNull().default(10), // Free credits for AI usage
+  credits: integer("credits").notNull().default(10),
+  emailVerified: timestamp("email_verified"), // null if not verified
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// ===== MAGIC LINK TOKENS TABLE =====
+export const magicLinkTokens = pgTable("magic_link_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull(),
+  token: varchar("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertMagicLinkTokenSchema = createInsertSchema(magicLinkTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertMagicLinkToken = z.infer<typeof insertMagicLinkTokenSchema>;
+export type MagicLinkToken = typeof magicLinkTokens.$inferSelect;
+
+// ===== CAREERS TABLE (Korean Career Data) =====
+export const careers = pgTable("careers", {
+  id: varchar("id").primaryKey(),
+  name: varchar("name").notNull(),
+  category: varchar("category"),
+  description: text("description"),
+  fullData: jsonb("full_data"),
+  detailData: jsonb("detail_data"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_careers_category").on(table.category),
+  index("IDX_careers_name").on(table.name),
+]);
+
+export const insertCareerSchema = createInsertSchema(careers).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCareer = z.infer<typeof insertCareerSchema>;
+export type Career = typeof careers.$inferSelect;
 
 export const upsertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
