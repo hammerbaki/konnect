@@ -1,4 +1,4 @@
-import { Bell, Search, User, Coins, Menu } from "lucide-react";
+import { Bell, Search, Coins, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,11 +16,15 @@ import {
 } from "@/components/ui/sheet";
 import { RedeemDialog } from "@/components/token/RedeemDialog";
 import { useTokens } from "@/lib/TokenContext";
+import { useAuth } from "@/lib/AuthContext";
 import { Sidebar } from "./Sidebar";
 import { Link } from "wouter";
 
 export function Header() {
   const { credits } = useTokens();
+  const { logout, user } = useAuth();
+
+  const initials = user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U";
 
   return (
     <header className="sticky top-0 z-30 flex h-[72px] items-center gap-4 bg-[#F2F4F6] px-4 md:px-10">
@@ -81,9 +85,13 @@ export function Header() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 ml-1 p-0 overflow-hidden border-2 border-white shadow-sm">
-              <div className="flex h-full w-full items-center justify-center bg-[#3182F6]/10 text-[#3182F6] font-bold text-sm">
-                JD
-              </div>
+              {user?.profileImageUrl ? (
+                <img src={user.profileImageUrl} alt="Profile" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[#3182F6]/10 text-[#3182F6] font-bold text-sm">
+                  {initials}
+                </div>
+              )}
               <span className="sr-only">메뉴 열기</span>
             </Button>
           </DropdownMenuTrigger>
@@ -99,16 +107,19 @@ export function Header() {
                  <DropdownMenuSeparator className="bg-[#F2F4F6]" />
             </div>
 
-            <Link href="/profile">
-              <DropdownMenuItem className="rounded-lg px-3 py-2.5 text-[#4E5968] focus:bg-[#F2F4F6] focus:text-[#191F28] font-medium cursor-pointer">
+            <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 text-[#4E5968] focus:bg-[#F2F4F6] focus:text-[#191F28] font-medium cursor-pointer">
+              <Link href="/profile">
                 프로필 설정
-              </DropdownMenuItem>
-            </Link>
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem className="rounded-lg px-3 py-2.5 text-[#4E5968] focus:bg-[#F2F4F6] focus:text-[#191F28] font-medium cursor-pointer">
               환경설정
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-[#F2F4F6]" />
-            <DropdownMenuItem className="rounded-lg px-3 py-2.5 text-[#E44E48] focus:bg-red-50 focus:text-[#E44E48] font-medium cursor-pointer">
+            <DropdownMenuItem 
+              onClick={logout}
+              className="rounded-lg px-3 py-2.5 text-[#E44E48] focus:bg-red-50 focus:text-[#E44E48] font-medium cursor-pointer"
+            >
               로그아웃
             </DropdownMenuItem>
           </DropdownMenuContent>

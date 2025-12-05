@@ -6,6 +6,8 @@ interface TokenContextType {
   credits: number;
   isLoading: boolean;
   refreshCredits: () => Promise<void>;
+  deductCredit: () => boolean;
+  addCredits: (amount: number) => void;
 }
 
 const TokenContext = createContext<TokenContextType | undefined>(undefined);
@@ -46,8 +48,24 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  const deductCredit = useCallback(() => {
+    if (credits > 0) {
+      setCredits(prev => prev - 1);
+      return true;
+    }
+    return false;
+  }, [credits]);
+
+  const addCredits = useCallback((amount: number) => {
+    setCredits(prev => prev + amount);
+    toast({
+      title: "토큰 충전 완료",
+      description: `${amount} 토큰이 성공적으로 충전되었습니다.`,
+    });
+  }, [toast]);
+
   return (
-    <TokenContext.Provider value={{ credits, isLoading, refreshCredits }}>
+    <TokenContext.Provider value={{ credits, isLoading, refreshCredits, deductCredit, addCredits }}>
       {children}
     </TokenContext.Provider>
   );
