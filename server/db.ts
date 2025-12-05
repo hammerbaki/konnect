@@ -12,20 +12,24 @@ if (!process.env.DATABASE_URL) {
   console.error('CRITICAL: DATABASE_URL environment variable is not set');
   console.error('Using fallback connection - database operations will fail');
   console.error('Please configure your database in the deployment settings');
-  // Don't throw - let the server start anyway
 }
 
 console.log('Connecting to database...');
 
 export const pool = new Pool({ 
   connectionString: databaseUrl,
-  // Add connection error handling
-  connectionTimeoutMillis: 10000, // 10 second timeout
+  connectionTimeoutMillis: 30000, // 30 second timeout for production stability
+  idleTimeoutMillis: 30000,
+  max: 10, // Maximum number of clients in the pool
 });
 
 pool.on('error', (err) => {
-  console.error('Unexpected database error:', err);
-  // Don't crash - just log
+  // DNS errors are transient - don't log full stack trace
+  if (err.message?.includes('EAI_AGAIN') || err.message?.includes('ENOTFOUND')) {
+    console.error('Database DNS resolution error (will retry):', err.message);
+  } else {
+    console.error('Unexpected database error:', err);
+  }
 });
 
 pool.on('connect', () => {

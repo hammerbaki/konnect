@@ -1,0 +1,129 @@
+2025-12-05 10:38:46.60
+da26fc41
+User
+[Symbol(kMessage)]: 'getaddrinfo EAI_AGAIN helium'
+2025-12-05 10:38:46.60
+da26fc41
+User
+},
+2025-12-05 10:38:46.60
+da26fc41
+User
+error: [Function],
+2025-12-05 10:38:46.60
+da26fc41
+User
+_req: null,
+2025-12-05 10:38:46.60
+da26fc41
+User
+_extensions: {},
+2025-12-05 10:38:46.60
+da26fc41
+User
+_maxListeners: undefined,
+2025-12-05 10:38:46.60
+da26fc41
+User
+close: [Function],
+2025-12-05 10:38:46.60
+da26fc41
+User
+_closeFrameSent: false,
+2025-12-05 10:38:46.60
+da26fc41
+User
+_closeFrameReceived: false,
+2025-12-05 10:38:46.60
+da26fc41
+User
+errno: -3001,
+2025-12-05 10:38:46.60
+da26fc41
+User
+_protocol: '',
+
+2025-12-05 10:38:46.60
+da26fc41
+User
+_isServer: false,
+2025-12-05 10:38:46.60
+da26fc41
+User
+[Symbol(kCapture)]: false
+2025-12-05 10:38:46.60
+da26fc41
+User
+_sender: null,
+2025-12-05 10:38:46.60
+da26fc41
+User
+_autoPong: true,
+2025-12-05 10:38:46.60
+da26fc41
+User
+_errorEmitted: true,
+2025-12-05 10:38:46.60
+da26fc41
+User
+_receiver: null,
+2025-12-05 10:38:46.60
+da26fc41
+User
+[Symbol(kType)]: 'error',
+2025-12-05 10:38:46.60
+da26fc41
+User
+_events: [Object: null prototype] {
+2025-12-05 10:38:46.60
+da26fc41
+User
+at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26) {
+2025-12-05 10:38:46.60
+da26fc41
+User
+[Symbol(kError)]: Error: getaddrinfo EAI_AGAIN helium
+2025-12-05 10:38:46.60
+da26fc41
+User
+message: [Function],
+2025-12-05 10:38:46.60
+da26fc41
+User
+Failed to cleanup expired tokens: ks {
+2025-12-05 10:38:46.60
+da26fc41
+User
+_closeTimer: null,
+2025-12-05 10:38:46.60
+da26fc41
+User
+_redirects: 0,
+2025-12-05 10:38:46.60
+da26fc41
+User
+_bufferedAmount: 0,
+2025-12-05 10:38:46.60
+da26fc41
+User
+_closeMessage: ,
+2025-12-05 10:38:46.60
+da26fc41
+User
+_socket: null,
+2025-12-05 10:39:01.05
+da26fc41
+User
+Error 500: getaddrinfo EAI_AGAIN helium
+2025-12-05 10:39:01.42
+da26fc41
+User
+Error 500: getaddrinfo EAI_AGAIN helium
+2025-12-05 10:39:02.88
+da26fc41
+User
+Error 500: getaddrinfo EAI_AGAIN helium
+2025-12-05 10:39:03.14
+da26fc41
+User
+Error 500: getaddrinfo EAI_AGAIN helium

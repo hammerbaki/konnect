@@ -159,9 +159,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async cleanupExpiredTokens(): Promise<void> {
-    await db
-      .delete(magicLinkTokens)
-      .where(lt(magicLinkTokens.expiresAt, new Date()));
+    // Retry logic for transient DNS errors in production
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await db
+          .delete(magicLinkTokens)
+          .where(lt(magicLinkTokens.expiresAt, new Date()));
+        return;
+      } catch (error: any) {
+        const isTransient = error.message?.includes('EAI_AGAIN') || 
+                           error.message?.includes('ENOTFOUND') ||
+                           error.message?.includes('ECONNREFUSED');
+        if (isTransient && attempt < maxRetries) {
+          console.log(`Retry ${attempt}/${maxRetries} for token cleanup after DNS error`);
+          await new Promise(r => setTimeout(r, 2000 * attempt)); // Exponential backoff
+          continue;
+        }
+        throw error;
+      }
+    }
   }
 
   // ===== Profile Operations =====
