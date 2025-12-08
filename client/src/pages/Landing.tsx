@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/AuthContext";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
-  const { isAuthenticated, isLoading, navigateToLogin } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -92,7 +92,7 @@ export default function Landing() {
 
             <Button 
               className="w-full h-14 text-lg rounded-[20px] bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02]" 
-              onClick={navigateToLogin}
+              onClick={() => setLocation("/login")}
               data-testid="button-login"
             >
               시작하기

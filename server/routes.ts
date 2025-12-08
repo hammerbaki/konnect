@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./supabaseAuth";
 import {
   insertProfileSchema,
   insertCareerAnalysisSchema,
@@ -14,9 +14,16 @@ import { generateCareerAnalysis, generatePersonalEssay } from "./ai";
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
+  app.get('/api/config', (_req, res) => {
+    res.json({
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+    });
+  });
+
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -71,7 +78,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/profiles', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profiles = await storage.getProfilesByUser(userId);
       res.json(profiles);
     } catch (error) {
@@ -86,7 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!profile) {
         return res.status(404).json({ message: "Profile not found" });
       }
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       if (profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
       }
@@ -99,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/profiles', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const data = insertProfileSchema.parse({ ...req.body, userId });
       const profile = await storage.createProfile(data);
       res.status(201).json(profile);
@@ -114,7 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/profiles/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.id);
       if (!profile) {
         return res.status(404).json({ message: "Profile not found" });
@@ -132,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/profiles/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.id);
       if (!profile) {
         return res.status(404).json({ message: "Profile not found" });
@@ -150,7 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/profiles/:profileId/analyses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -165,7 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/profiles/:profileId/analyses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -189,7 +196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/analyses/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const analysis = await storage.getAnalysis(req.params.id);
       if (!analysis) {
         return res.status(404).json({ message: "Analysis not found" });
@@ -208,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/profiles/:profileId/essays', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -223,7 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/profiles/:profileId/essays', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -247,7 +254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/essays/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const essay = await storage.getEssay(req.params.id);
       if (!essay) {
         return res.status(404).json({ message: "Essay not found" });
@@ -266,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/essays/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const essay = await storage.getEssay(req.params.id);
       if (!essay) {
         return res.status(404).json({ message: "Essay not found" });
@@ -285,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/profiles/:profileId/kompass', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -300,7 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/profiles/:profileId/kompass', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
@@ -324,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/kompass/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const kompass = await storage.getKompass(req.params.id);
       if (!kompass) {
         return res.status(404).json({ message: "Kompass not found" });
@@ -343,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/kompass/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const kompass = await storage.getKompass(req.params.id);
       if (!kompass) {
         return res.status(404).json({ message: "Kompass not found" });
@@ -362,7 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/profiles/:profileId/generate-analysis', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       
       if (!profile || profile.userId !== userId) {
@@ -403,7 +410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/profiles/:profileId/generate-essay', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profile = await storage.getProfile(req.params.profileId);
       
       if (!profile || profile.userId !== userId) {

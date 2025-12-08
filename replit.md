@@ -6,15 +6,16 @@ Konnect is a Korean-language AI-powered career guidance platform that provides p
 
 ## Recent Changes
 
-### December 8, 2024 - Replit Auth Integration (Social Login)
-- **Replaced custom authentication with Replit Auth**
-- Removed custom email/password + magic link authentication
-- Added social login support: Google, Apple, GitHub, X (Twitter), Email
-- Simplified users table (removed passwordHash, emailVerified columns)
-- Removed magic_link_tokens table
-- Updated frontend Login page with clean redirect to Replit Auth
-- Production database migrated to Supabase for better stability
-- All 537 career records preserved and migrated
+### December 8, 2024 - Supabase Auth Integration (Full Custom UI)
+- **Migrated from Replit Auth to Supabase Auth** for fully customizable Korean UI
+- Custom login page with Toss design system (#3182F6 primary color, Korean text)
+- Social login support: Google, Apple, GitHub via Supabase OAuth
+- Email/password authentication with Korean error messages
+- JWT-based authentication between frontend and Express backend
+- Supabase client initialized asynchronously via `/api/config` endpoint
+- AuthContext manages session state, token refresh, and user data
+- QueryClient automatically attaches Bearer tokens to all API requests
+- OAuth callback handled via `/auth/callback` route
 
 ### December 4, 2024 - Backend Implementation Complete + Production Deployment Fixes
 - **Complete backend infrastructure implemented** with PostgreSQL, Replit Auth, and Anthropic AI
@@ -68,11 +69,12 @@ Preferred communication style: Simple, everyday language.
 **Framework**: Express.js with TypeScript running on Node.js
 
 **Authentication System**:
-- Replit Auth integration using OpenID Connect (OIDC)
-- Passport.js strategy for session management
-- PostgreSQL-backed session storage via connect-pg-simple
-- JWT token refresh mechanism
+- Supabase Auth integration using JWT tokens
+- OAuth providers: Google, Apple, GitHub
+- Email/password authentication with Korean UI
+- JWT validation via supabaseAdmin.auth.getUser()
 - Protected routes using `isAuthenticated` middleware
+- Tokens passed via Authorization: Bearer header
 
 **Database Layer**:
 - ORM: Drizzle ORM for type-safe database operations

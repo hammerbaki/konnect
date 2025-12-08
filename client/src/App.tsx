@@ -10,6 +10,7 @@ import { Suspense, lazy } from "react";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const NotFound = lazy(() => import("./pages/not-found"));
 const Analysis = lazy(() => import("./pages/Analysis"));
@@ -52,6 +53,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />
+        <Route path="/auth/callback" component={AuthCallback} />
         <Route path="/dashboard">
           {(params) => <ProtectedRoute component={Dashboard} params={params} />}
         </Route>
