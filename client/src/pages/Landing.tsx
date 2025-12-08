@@ -101,7 +101,7 @@ export default function Landing() {
 
             <div className="flex items-center justify-center gap-2 text-xs text-[#8B95A1]">
               <Mail className="w-4 h-4" />
-              <span>이메일로 간편하게 로그인</span>
+              <span>Google, Apple 또는 이메일로 시작</span>
             </div>
           </CardContent>
         </Card>
