@@ -6,6 +6,16 @@ Konnect is a Korean-language AI-powered career guidance platform that provides p
 
 ## Recent Changes
 
+### December 8, 2024 - Replit Auth Integration (Social Login)
+- **Replaced custom authentication with Replit Auth**
+- Removed custom email/password + magic link authentication
+- Added social login support: Google, Apple, GitHub, X (Twitter), Email
+- Simplified users table (removed passwordHash, emailVerified columns)
+- Removed magic_link_tokens table
+- Updated frontend Login page with clean redirect to Replit Auth
+- Production database migrated to Supabase for better stability
+- All 537 career records preserved and migrated
+
 ### December 4, 2024 - Backend Implementation Complete + Production Deployment Fixes
 - **Complete backend infrastructure implemented** with PostgreSQL, Replit Auth, and Anthropic AI
 - **Production deployment fixes** applied to prevent crash loops
