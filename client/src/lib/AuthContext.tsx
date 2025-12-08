@@ -20,10 +20,10 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
-  signInWithGithub: () => Promise<void>;
   signInWithApple: () => Promise<void>;
-  signInWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUpWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithKakao: () => Promise<void>;
+  signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error: Error | null }>;
   getAccessToken: () => Promise<string | null>;
 }
 
@@ -123,16 +123,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const signInWithGithub = async () => {
-    if (!supabaseClient) return;
-    await supabaseClient.auth.signInWithOAuth({
-      provider: "github",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-  };
-
   const signInWithApple = async () => {
     if (!supabaseClient) return;
     await supabaseClient.auth.signInWithOAuth({
@@ -143,23 +133,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const signInWithEmail = async (email: string, password: string) => {
+  const signInWithKakao = async () => {
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signInWithOAuth({
+      provider: "kakao",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+  };
+
+  const signInWithOtp = async (email: string) => {
     if (!supabaseClient) return { error: new Error("Supabase not initialized") };
-    const { error } = await supabaseClient.auth.signInWithPassword({
+    const { error } = await supabaseClient.auth.signInWithOtp({
       email,
-      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
     return { error };
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
+  const verifyOtp = async (email: string, token: string) => {
     if (!supabaseClient) return { error: new Error("Supabase not initialized") };
-    const { error } = await supabaseClient.auth.signUp({
+    const { error } = await supabaseClient.auth.verifyOtp({
       email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      token,
+      type: "email",
     });
     return { error };
   };
@@ -181,10 +181,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         refreshUser,
         signInWithGoogle,
-        signInWithGithub,
         signInWithApple,
-        signInWithEmail,
-        signUpWithEmail,
+        signInWithKakao,
+        signInWithOtp,
+        verifyOtp,
         getAccessToken,
       }}
     >

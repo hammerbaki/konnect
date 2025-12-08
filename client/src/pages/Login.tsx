@@ -6,18 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/AuthContext";
-import { Loader2, Sparkles, Mail, Eye, EyeOff } from "lucide-react";
+import { Loader2, Sparkles, Mail, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Login() {
-  const { isAuthenticated, isLoading, signInWithGoogle, signInWithGithub, signInWithApple, signInWithEmail, signUpWithEmail } = useAuth();
+  const { isAuthenticated, isLoading, signInWithGoogle, signInWithApple, signInWithKakao, signInWithOtp, verifyOtp } = useAuth();
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [showOtpInput, setShowOtpInput] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -25,34 +24,53 @@ export default function Login() {
     }
   }, [isAuthenticated, setLocation]);
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const sendOtpCode = async () => {
+    setMessage(null);
     setAuthLoading(true);
 
     try {
-      const { error } = isSignUp 
-        ? await signUpWithEmail(email, password)
-        : await signInWithEmail(email, password);
+      const { error } = await signInWithOtp(email);
 
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          setError("이메일 또는 비밀번호가 올바르지 않습니다.");
-        } else if (error.message.includes("Email not confirmed")) {
-          setError("이메일 인증이 필요합니다. 메일함을 확인해주세요.");
-        } else if (error.message.includes("User already registered")) {
-          setError("이미 가입된 이메일입니다. 로그인해주세요.");
-        } else {
-          setError(error.message);
-        }
-      } else if (isSignUp) {
-        setError("인증 메일이 발송되었습니다. 메일함을 확인해주세요.");
+        setMessage({ type: "error", text: "인증 코드 발송에 실패했습니다. 다시 시도해주세요." });
+      } else {
+        setShowOtpInput(true);
+        setMessage({ type: "success", text: "인증 코드가 이메일로 발송되었습니다." });
       }
     } catch (err) {
-      setError("인증 중 오류가 발생했습니다.");
+      setMessage({ type: "error", text: "오류가 발생했습니다. 다시 시도해주세요." });
     } finally {
       setAuthLoading(false);
     }
+  };
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await sendOtpCode();
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+    setAuthLoading(true);
+
+    try {
+      const { error } = await verifyOtp(email, otpCode);
+
+      if (error) {
+        setMessage({ type: "error", text: "인증 코드가 올바르지 않습니다." });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "인증에 실패했습니다. 다시 시도해주세요." });
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleBackToEmail = () => {
+    setShowOtpInput(false);
+    setOtpCode("");
+    setMessage(null);
   };
 
   if (isLoading) {
@@ -94,20 +112,20 @@ export default function Login() {
           <Card className="toss-card border-none shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-[24px] overflow-hidden bg-white">
             <CardHeader className="space-y-2 pt-8 px-8 pb-4">
               <CardTitle className="text-2xl font-bold text-[#191F28]">
-                {isSignUp ? "회원가입" : "로그인"}
+                로그인
               </CardTitle>
               <CardDescription className="text-[#8B95A1] text-base mt-1">
-                {isSignUp ? "새 계정을 만들어 시작하세요" : "계정에 로그인하세요"}
+                계정에 로그인하세요
               </CardDescription>
             </CardHeader>
             
             <CardContent className="px-8 pb-8">
               <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <Button
                     variant="outline"
                     onClick={signInWithGoogle}
-                    className="h-14 rounded-[16px] border-[#E5E8EB] hover:bg-[#F9FAFB] hover:border-[#3182F6]/30 transition-all"
+                    className="h-14 rounded-[16px] border-[#E5E8EB] hover:bg-[#F9FAFB] hover:border-[#3182F6]/30 transition-all flex items-center justify-center gap-3"
                     data-testid="button-google"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -116,26 +134,29 @@ export default function Login() {
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
+                    <span className="text-[#191F28] font-medium">Google로 계속하기</span>
                   </Button>
                   <Button
                     variant="outline"
                     onClick={signInWithApple}
-                    className="h-14 rounded-[16px] border-[#E5E8EB] hover:bg-[#F9FAFB] hover:border-[#3182F6]/30 transition-all"
+                    className="h-14 rounded-[16px] border-[#E5E8EB] hover:bg-[#F9FAFB] hover:border-[#3182F6]/30 transition-all flex items-center justify-center gap-3"
                     data-testid="button-apple"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#000">
                       <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
                     </svg>
+                    <span className="text-[#191F28] font-medium">Apple로 계속하기</span>
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={signInWithGithub}
-                    className="h-14 rounded-[16px] border-[#E5E8EB] hover:bg-[#F9FAFB] hover:border-[#3182F6]/30 transition-all"
-                    data-testid="button-github"
+                    onClick={signInWithKakao}
+                    className="h-14 rounded-[16px] border-[#E5E8EB] hover:bg-[#FEE500]/10 hover:border-[#FEE500] transition-all flex items-center justify-center gap-3 bg-[#FEE500]"
+                    data-testid="button-kakao"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#333">
-                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#000">
+                      <path d="M12 3c-5.52 0-10 3.59-10 8 0 2.85 1.89 5.35 4.72 6.74-.18.67-.67 2.42-.77 2.8-.12.47.17.46.37.34.15-.1 2.42-1.65 3.4-2.32.73.11 1.49.17 2.28.17 5.52 0 10-3.59 10-8s-4.48-8-10-8z"/>
                     </svg>
+                    <span className="text-[#191F28] font-medium">카카오로 계속하기</span>
                   </Button>
                 </div>
 
@@ -148,73 +169,111 @@ export default function Login() {
                   </div>
                 </div>
 
-                <form onSubmit={handleEmailAuth} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-[#4E5968] font-medium">
-                      이메일
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#8B95A1]" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="name@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="h-14 pl-12 rounded-[16px] border-[#E5E8EB] focus:border-[#3182F6] focus:ring-[#3182F6]/20"
-                        data-testid="input-email"
-                        required
-                      />
+                {!showOtpInput ? (
+                  <form onSubmit={handleSendOtp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-[#4E5968] font-medium">
+                        이메일
+                      </Label>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#8B95A1]" />
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="name@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="h-14 pl-12 rounded-[16px] border-[#E5E8EB] focus:border-[#3182F6] focus:ring-[#3182F6]/20"
+                          data-testid="input-email"
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-[#4E5968] font-medium">
-                      비밀번호
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="비밀번호를 입력하세요"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="h-14 pl-4 pr-12 rounded-[16px] border-[#E5E8EB] focus:border-[#3182F6] focus:ring-[#3182F6]/20"
-                        data-testid="input-password"
-                        required
-                        minLength={6}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8B95A1] hover:text-[#4E5968]"
-                      >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {error && (
-                    <p className={`text-sm ${error.includes("발송") ? "text-[#3182F6]" : "text-red-500"}`}>
-                      {error}
-                    </p>
-                  )}
-
-                  <Button 
-                    type="submit"
-                    disabled={authLoading}
-                    className="w-full h-14 text-lg rounded-[16px] bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02]"
-                    data-testid="button-submit"
-                  >
-                    {authLoading ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : isSignUp ? (
-                      "가입하기"
-                    ) : (
-                      "로그인"
+                    {message && (
+                      <p className={`text-sm ${message.type === "success" ? "text-[#3182F6]" : "text-red-500"}`}>
+                        {message.text}
+                      </p>
                     )}
-                  </Button>
-                </form>
+
+                    <Button 
+                      type="submit"
+                      disabled={authLoading}
+                      className="w-full h-14 text-lg rounded-[16px] bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02]"
+                      data-testid="button-send-otp"
+                    >
+                      {authLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        "이메일로 인증코드 받기"
+                      )}
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <button
+                      type="button"
+                      onClick={handleBackToEmail}
+                      className="flex items-center gap-2 text-[#8B95A1] hover:text-[#4E5968] transition-colors"
+                      data-testid="button-back"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      <span className="text-sm">이메일 변경</span>
+                    </button>
+
+                    <div className="p-4 rounded-[16px] bg-[#F9FAFB]">
+                      <p className="text-sm text-[#4E5968]">
+                        <span className="font-medium text-[#191F28]">{email}</span>
+                        <span className="block mt-1">으로 발송된 인증 코드를 입력해주세요.</span>
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="otp" className="text-[#4E5968] font-medium">
+                        인증 코드
+                      </Label>
+                      <Input
+                        id="otp"
+                        type="text"
+                        placeholder="6자리 인증 코드"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value)}
+                        className="h-14 text-center text-xl tracking-[0.5em] rounded-[16px] border-[#E5E8EB] focus:border-[#3182F6] focus:ring-[#3182F6]/20"
+                        data-testid="input-otp"
+                        maxLength={6}
+                        required
+                      />
+                    </div>
+
+                    {message && (
+                      <p className={`text-sm ${message.type === "success" ? "text-[#3182F6]" : "text-red-500"}`}>
+                        {message.text}
+                      </p>
+                    )}
+
+                    <Button 
+                      type="submit"
+                      disabled={authLoading || otpCode.length < 6}
+                      className="w-full h-14 text-lg rounded-[16px] bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02]"
+                      data-testid="button-verify-otp"
+                    >
+                      {authLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        "인증하기"
+                      )}
+                    </Button>
+
+                    <button
+                      type="button"
+                      onClick={sendOtpCode}
+                      className="w-full text-center text-sm text-[#8B95A1] hover:text-[#3182F6] transition-colors"
+                      data-testid="button-resend-otp"
+                    >
+                      인증 코드 다시 받기
+                    </button>
+                  </form>
+                )}
 
                 <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#F9FAFB]">
                   <Sparkles className="h-5 w-5 text-[#3182F6]" />
@@ -222,21 +281,6 @@ export default function Login() {
                     신규 가입 시 무료 크레딧 <span className="font-bold text-[#3182F6]">10개</span> 제공
                   </span>
                 </div>
-
-                <p className="text-center text-sm text-[#8B95A1]">
-                  {isSignUp ? "이미 계정이 있으신가요?" : "계정이 없으신가요?"}{" "}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsSignUp(!isSignUp);
-                      setError(null);
-                    }}
-                    className="text-[#3182F6] font-medium hover:underline"
-                    data-testid="button-toggle-auth"
-                  >
-                    {isSignUp ? "로그인" : "회원가입"}
-                  </button>
-                </p>
               </div>
             </CardContent>
           </Card>

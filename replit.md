@@ -9,8 +9,9 @@ Konnect is a Korean-language AI-powered career guidance platform that provides p
 ### December 8, 2024 - Supabase Auth Integration (Full Custom UI)
 - **Migrated from Replit Auth to Supabase Auth** for fully customizable Korean UI
 - Custom login page with Toss design system (#3182F6 primary color, Korean text)
-- Social login support: Google, Apple, GitHub via Supabase OAuth
-- Email/password authentication with Korean error messages
+- Social login support: Google, Apple, KakaoTalk via Supabase OAuth
+- Email OTP (one-time password) authentication - no password signup required
+- Password can optionally be set later via settings page
 - JWT-based authentication between frontend and Express backend
 - Supabase client initialized asynchronously via `/api/config` endpoint
 - AuthContext manages session state, token refresh, and user data
