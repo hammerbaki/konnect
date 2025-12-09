@@ -564,6 +564,7 @@ export default function Profile() {
       toast({
         title: "프로필 저장 완료",
         description: "프로필 정보가 성공적으로 저장되었습니다.",
+        duration: 3000,
       });
       setIsSaving(false);
     },
@@ -573,6 +574,7 @@ export default function Profile() {
         title: "저장 실패",
         description: "프로필 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
         variant: "destructive",
+        duration: 4000,
       });
       setIsSaving(false);
     },
