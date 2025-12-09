@@ -1523,9 +1523,14 @@ export default function Profile() {
                                 ))}
                                 
                                 <Button 
+                                    type="button"
                                     variant="outline" 
                                     className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
-                                    onClick={() => setShowLanguageScoreDialog(true)}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setShowLanguageScoreDialog(true);
+                                    }}
                                     data-testid="button-add-language-score"
                                 >
                                     <Plus className="h-5 w-5 mr-2" /> 어학 점수 추가하기
@@ -1948,9 +1953,14 @@ export default function Profile() {
                                 ))}
 
                                 <Button 
+                                    type="button"
                                     variant="outline" 
                                     className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
-                                    onClick={() => setShowWorkExperienceDialog(true)}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setShowWorkExperienceDialog(true);
+                                    }}
                                     data-testid="button-add-work-experience"
                                 >
                                     <Plus className="h-5 w-5 mr-2" /> 경력 추가하기
