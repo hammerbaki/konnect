@@ -540,14 +540,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
       }
 
-      const result = await generateCareerAnalysis(profile);
+      // Get user identity for comprehensive profile data
+      const userIdentity = {
+        displayName: user.displayName || undefined,
+        gender: user.gender || undefined,
+        birthDate: user.birthDate || undefined,
+      };
 
+      const result = await generateCareerAnalysis(profile, userIdentity);
+
+      // Store careerRecommendations and skillAnalysis together in the recommendations field
       const analysis = await storage.createAnalysis({
         profileId: req.params.profileId,
         summary: result.summary,
         stats: result.stats,
         chartData: result.chartData,
-        recommendations: result.recommendations,
+        recommendations: {
+          careers: result.careerRecommendations,
+          skills: result.skillAnalysis,
+        },
         aiRawResponse: result.rawResponse,
       });
 
