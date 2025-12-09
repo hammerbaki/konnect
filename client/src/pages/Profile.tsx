@@ -542,6 +542,17 @@ export default function Profile() {
   useEffect(() => { selectedTypeRef.current = selectedType; }, [selectedType]);
   useEffect(() => { isSavingRef.current = isSaving; }, [isSaving]);
 
+  // Fetch user identity (shared across all profile types)
+  const { data: userIdentity, isLoading: isLoadingIdentity } = useQuery({
+    queryKey: ['/api/user-identity'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/user-identity');
+      return response.json();
+    },
+    enabled: !!user,
+    staleTime: 30000,
+  });
+  
   // Fetch profile data from API based on selected type
   const { data: serverProfile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['/api/user-profile', selectedType],
@@ -553,6 +564,17 @@ export default function Profile() {
     staleTime: 30000, // Cache for 30 seconds
   });
 
+  // Save user identity mutation (shared fields)
+  const saveIdentityMutation = useMutation({
+    mutationFn: async (data: { name?: string; email?: string; gender?: string; birthDate?: Date | null; location?: string; bio?: string }) => {
+      const response = await apiRequest('PATCH', '/api/user-identity', data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user-identity'] });
+    },
+  });
+  
   // Save profile mutation
   const saveProfileMutation = useMutation({
     mutationFn: async (data: { type: string; profileData: Record<string, any> }) => {
@@ -561,25 +583,29 @@ export default function Profile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user-profile'] });
-      toast({
-        title: "프로필 저장 완료",
-        description: "프로필 정보가 성공적으로 저장되었습니다.",
-        duration: 3000,
-      });
-      setIsSaving(false);
-    },
-    onError: (error) => {
-      console.error('Error saving profile:', error);
-      toast({
-        title: "저장 실패",
-        description: "프로필 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
-        variant: "destructive",
-        duration: 4000,
-      });
-      setIsSaving(false);
     },
   });
 
+  // Load user identity (shared fields) - use ref to prevent infinite loops
+  const lastLoadedIdentityId = useRef<string | null>(null);
+  
+  useEffect(() => {
+    if (userIdentity && userIdentity.id !== lastLoadedIdentityId.current) {
+      lastLoadedIdentityId.current = userIdentity.id;
+      
+      // Update shared fields from identity
+      setProfileData(prev => ({
+        ...prev,
+        basic_name: userIdentity.name || userName || "",
+        basic_email: userIdentity.email || userEmail || "",
+        basic_gender: userIdentity.gender || "",
+        basic_birthDate: userIdentity.birthDate ? new Date(userIdentity.birthDate) : null,
+        basic_location: userIdentity.location || "",
+        basic_bio: userIdentity.bio || "",
+      }));
+    }
+  }, [userIdentity?.id]);
+  
   // Load profile data from server when it changes - use ref to prevent infinite loops
   const lastLoadedProfileId = useRef<string | null>(null);
   
@@ -591,9 +617,6 @@ export default function Profile() {
       
       // Parse dates back from strings (clone to avoid mutating)
       const parsedData = { ...savedData };
-      if (parsedData.basic_birthDate) {
-        parsedData.basic_birthDate = new Date(parsedData.basic_birthDate);
-      }
       if (parsedData.gen_workExperience) {
         parsedData.gen_workExperience = parsedData.gen_workExperience.map((exp: any) => ({
           ...exp,
@@ -602,36 +625,85 @@ export default function Profile() {
         }));
       }
       
-      // Merge with defaults to ensure all fields exist
-      setProfileData({
+      // Merge with defaults to ensure all fields exist (excluding shared fields)
+      setProfileData(prev => ({
         ...getDefaultProfileData(selectedType),
         ...parsedData,
         type: selectedType,
-        // Keep auth-based values as defaults if not saved
-        basic_name: parsedData.basic_name || userName || "",
-        basic_email: parsedData.basic_email || userEmail || "",
-      });
+        // Keep shared fields from identity (don't overwrite with profile data)
+        basic_name: prev.basic_name,
+        basic_email: prev.basic_email,
+        basic_gender: prev.basic_gender,
+        basic_birthDate: prev.basic_birthDate,
+        basic_location: prev.basic_location,
+        basic_bio: prev.basic_bio,
+      }));
       isInitialLoad.current = false;
     }
   }, [serverProfile?.id, selectedType]);
 
-  // Stable save mutation reference
+  // Stable save mutation references
   const saveProfileMutationRef = useRef(saveProfileMutation);
+  const saveIdentityMutationRef = useRef(saveIdentityMutation);
   useEffect(() => { saveProfileMutationRef.current = saveProfileMutation; }, [saveProfileMutation]);
+  useEffect(() => { saveIdentityMutationRef.current = saveIdentityMutation; }, [saveIdentityMutation]);
   
   // Handle save - uses refs to prevent recreating callback
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (isSavingRef.current) return;
     setIsSaving(true);
     
-    // Prepare data for saving (excluding the type field from profileData)
-    const { type, ...dataToSave } = profileDataRef.current;
+    const currentData = profileDataRef.current;
     
-    saveProfileMutationRef.current.mutate({
-      type: selectedTypeRef.current,
-      profileData: dataToSave,
-    });
-  }, []); // Empty deps - uses refs for current values
+    // Shared fields to save to identity
+    const identityData = {
+      name: currentData.basic_name || undefined,
+      email: currentData.basic_email || undefined,
+      gender: currentData.basic_gender || undefined,
+      birthDate: currentData.basic_birthDate || undefined,
+      location: currentData.basic_location || undefined,
+      bio: currentData.basic_bio || undefined,
+    };
+    
+    // Profile-specific fields (exclude shared fields and type)
+    const { 
+      type, 
+      basic_name, 
+      basic_email, 
+      basic_gender, 
+      basic_birthDate, 
+      basic_location, 
+      basic_bio, 
+      ...profileSpecificData 
+    } = currentData;
+    
+    try {
+      // Save both in parallel
+      await Promise.all([
+        saveIdentityMutationRef.current.mutateAsync(identityData),
+        saveProfileMutationRef.current.mutateAsync({
+          type: selectedTypeRef.current,
+          profileData: profileSpecificData,
+        }),
+      ]);
+      
+      toast({
+        title: "프로필 저장 완료",
+        description: "프로필 정보가 성공적으로 저장되었습니다.",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast({
+        title: "저장 실패",
+        description: "프로필 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+        duration: 4000,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [toast]); // Only depends on toast
 
   // Handle profile type change - update both local state and trigger refetch
   const handleTypeChange = useCallback((newType: ProfileDataType["type"]) => {
