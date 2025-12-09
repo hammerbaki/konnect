@@ -1515,6 +1515,7 @@ export default function Profile() {
                                                 ...prev, 
                                                 univ_languageTests: prev.univ_languageTests.filter(t => t.id !== test.id)
                                             }))}
+                                            data-testid={`button-delete-language-${test.id}`}
                                         >
                                             <X className="h-4 w-4 text-[#B0B8C1]" />
                                         </Button>
@@ -2449,6 +2450,7 @@ export default function Profile() {
                 setWorkExpForm({ company: '', role: '', startDate: null, endDate: null, description: '' });
                 setShowWorkExperienceDialog(false);
               }}
+              data-testid="button-cancel-add-work"
             >
               취소
             </Button>
@@ -2508,6 +2510,7 @@ export default function Profile() {
                 setLanguageScoreForm({ type: '', score: '' });
                 setShowLanguageScoreDialog(false);
               }}
+              data-testid="button-cancel-add-language"
             >
               취소
             </Button>
