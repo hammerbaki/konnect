@@ -18,11 +18,17 @@ import { RedeemDialog } from "@/components/token/RedeemDialog";
 import { useTokens } from "@/lib/TokenContext";
 import { useAuth } from "@/lib/AuthContext";
 import { Sidebar } from "./Sidebar";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export function Header() {
   const { credits } = useTokens();
   const { logout, user } = useAuth();
+  const [, setLocation] = useLocation();
+
+  const handleLogout = async () => {
+    await logout();
+    setLocation("/");
+  };
 
   const initials = user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U";
 
@@ -117,7 +123,7 @@ export function Header() {
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-[#F2F4F6]" />
             <DropdownMenuItem 
-              onClick={logout}
+              onClick={handleLogout}
               className="rounded-lg px-3 py-2.5 text-[#E44E48] focus:bg-red-50 focus:text-[#E44E48] font-medium cursor-pointer"
             >
               로그아웃

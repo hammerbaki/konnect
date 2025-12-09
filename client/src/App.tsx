@@ -51,7 +51,7 @@ function ProtectedRoute({ component: Component, ...rest }: { component: React.Co
   }
 
   if (!isAuthenticated) {
-    setLocation("/login");
+    setLocation("/");
     return null;
   }
 

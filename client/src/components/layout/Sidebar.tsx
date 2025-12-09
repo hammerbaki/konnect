@@ -4,8 +4,13 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 
 export function Sidebar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    setLocation("/");
+  };
 
   const navItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "홈" },
@@ -75,7 +80,7 @@ export function Sidebar() {
 
       <div className="p-4 pt-0">
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-xl px-5 py-3 text-sm font-medium text-[#8B95A1] hover:bg-red-50 hover:text-[#E44E48] transition-colors"
         >
           <LogOut className="h-4 w-4" />
