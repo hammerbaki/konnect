@@ -7,6 +7,7 @@ import {
   insertCareerAnalysisSchema,
   insertPersonalEssaySchema,
   insertKompassGoalSchema,
+  updateUserIdentitySchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { generateCareerAnalysis, generatePersonalEssay } from "./ai";
@@ -63,6 +64,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Get user identity (shared info across all profiles)
+  app.get('/api/user-identity', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      let identity = await storage.getUserIdentity(userId);
+      
+      // If no identity exists, create one with defaults from user
+      if (!identity) {
+        const user = await storage.getUser(userId);
+        identity = await storage.createUserIdentity({
+          userId,
+          name: user?.firstName && user?.lastName 
+            ? `${user.firstName} ${user.lastName}`.trim()
+            : user?.email?.split('@')[0] || '',
+          email: user?.email || '',
+          gender: null,
+          birthDate: null,
+          location: null,
+          bio: null,
+        });
+      }
+      
+      res.json(identity);
+    } catch (error) {
+      console.error("Error fetching user identity:", error);
+      res.status(500).json({ message: "Failed to fetch user identity" });
+    }
+  });
+
+  // Update user identity
+  app.patch('/api/user-identity', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const data = updateUserIdentitySchema.parse(req.body);
+      
+      // Ensure identity exists
+      let identity = await storage.getUserIdentity(userId);
+      if (!identity) {
+        const user = await storage.getUser(userId);
+        identity = await storage.createUserIdentity({
+          userId,
+          name: data.name || user?.firstName || '',
+          email: data.email || user?.email || '',
+          gender: data.gender || null,
+          birthDate: data.birthDate || null,
+          location: data.location || null,
+          bio: data.bio || null,
+        });
+      } else {
+        identity = await storage.updateUserIdentity(userId, data);
+      }
+      
+      res.json(identity);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error updating user identity:", error);
+      res.status(500).json({ message: "Failed to update user identity" });
     }
   });
 
