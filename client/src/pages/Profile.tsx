@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Mail, MapPin, Briefcase, School, Save, Building, Calendar as CalendarIcon, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X, TrendingUp, DollarSign, Smile, Shield, BookOpen, GraduationCap, PenTool, Star, Plus, Sparkles, CheckCircle2, Edit2, Languages } from "lucide-react";
 import { useMobileAction } from "@/lib/MobileActionContext";
+import { useAuth } from "@/lib/AuthContext";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
@@ -331,19 +332,27 @@ function ResponsiveSalaryInputContent({ value, onChange }: { value: number, onCh
 export default function Profile() {
   const { setAction } = useMobileAction();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Build user's full name from auth context
+  const userName = user ? 
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email?.split("@")[0] || "" 
+    : "";
+  const userEmail = user?.email || "";
+  const userProfileImage = user?.profileImageUrl || null;
 
   // State Management with Prefixed Fields for Analysis Isolation
   const [profileData, setProfileData] = useState({
     type: "general" as "elementary" | "middle" | "high" | "university" | "general",
     
     // Common / Basic Info
-    basic_name: "John Doe",
-    basic_role: "Product Manager",
-    basic_email: "john.doe@example.com",
+    basic_name: "",
+    basic_role: "",
+    basic_email: "",
     basic_location: "Seoul, South Korea",
-    basic_bio: "데이터 기반의 의사결정을 선호하는 PM입니다.",
-    basic_gender: "male" as "male" | "female" | undefined,
-    basic_birthDate: new Date(1995, 5, 15) as Date | null,
+    basic_bio: "",
+    basic_gender: undefined as "male" | "female" | undefined,
+    basic_birthDate: null as Date | null,
     
     // Elementary Specific
     elem_schoolName: "",
@@ -478,6 +487,17 @@ export default function Profile() {
     });
     return () => setAction(null);
   }, []);
+
+  // Initialize profile data with user information from auth
+  useEffect(() => {
+    if (user) {
+      setProfileData(prev => ({
+        ...prev,
+        basic_name: userName || prev.basic_name,
+        basic_email: userEmail || prev.basic_email,
+      }));
+    }
+  }, [user, userName, userEmail]);
 
   const toggleWorkValue = (value: string) => {
       setProfileData(prev => {
@@ -1971,9 +1991,17 @@ export default function Profile() {
             <Card className="toss-card">
               <CardContent className="pt-8 flex flex-col items-center text-center">
                 <div className="relative mb-4 group cursor-pointer">
-                  <div className="h-24 w-24 rounded-full bg-[#F2F4F6] flex items-center justify-center text-2xl font-bold text-[#3182F6] border-4 border-white shadow-lg group-hover:scale-105 transition-transform">
-                    JD
-                  </div>
+                  {userProfileImage ? (
+                    <img 
+                      src={userProfileImage} 
+                      alt="Profile" 
+                      className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-lg group-hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <div className="h-24 w-24 rounded-full bg-[#F2F4F6] flex items-center justify-center text-2xl font-bold text-[#3182F6] border-4 border-white shadow-lg group-hover:scale-105 transition-transform">
+                      {profileData.basic_name ? profileData.basic_name.charAt(0).toUpperCase() : "U"}
+                    </div>
+                  )}
                   <div className="absolute bottom-0 right-0 h-8 w-8 bg-white rounded-full border shadow-sm flex items-center justify-center">
                       <Edit2 className="h-4 w-4 text-[#8B95A1]" />
                   </div>
