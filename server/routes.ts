@@ -567,9 +567,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.status(201).json(analysis);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating analysis:", error);
-      res.status(500).json({ message: "AI 분석 생성 중 오류가 발생했습니다." });
+      console.error("Error stack:", error?.stack);
+      console.error("Error message:", error?.message);
+      res.status(500).json({ message: "AI 분석 생성 중 오류가 발생했습니다.", details: error?.message });
     }
   });
 
