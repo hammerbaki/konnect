@@ -532,6 +532,12 @@ export default function Profile() {
   const [selectedType, setSelectedType] = useState<ProfileDataType["type"]>("general");
   const isInitialLoad = useRef(true);
   
+  // Dialog states for adding work experience and language scores
+  const [showWorkExperienceDialog, setShowWorkExperienceDialog] = useState(false);
+  const [workExpForm, setWorkExpForm] = useState({ company: '', role: '', startDate: null as Date | null, endDate: null as Date | null, description: '' });
+  const [showLanguageScoreDialog, setShowLanguageScoreDialog] = useState(false);
+  const [languageScoreForm, setLanguageScoreForm] = useState({ type: '', score: '' });
+  
   // Use refs for stable callbacks to prevent infinite loops
   const profileDataRef = useRef(profileData);
   const selectedTypeRef = useRef(selectedType);
@@ -756,6 +762,41 @@ export default function Profile() {
             gen_salaryNoPreference: checked,
             gen_salary: checked ? 0 : prev.gen_salary
         }));
+  };
+
+  // Work experience handlers
+  const addWorkExperience = () => {
+    if (!workExpForm.company || !workExpForm.role || !workExpForm.startDate) {
+      toast({ title: "필수 항목을 입력해주세요", description: "회사명, 직무, 시작일은 필수입니다.", variant: "destructive", duration: 3000 });
+      return;
+    }
+    const newExp = {
+      id: Date.now(),
+      company: workExpForm.company,
+      role: workExpForm.role,
+      startDate: workExpForm.startDate,
+      endDate: workExpForm.endDate,
+      description: workExpForm.description,
+    };
+    setProfileData(prev => ({ ...prev, gen_workExperience: [...prev.gen_workExperience, newExp] }));
+    setWorkExpForm({ company: '', role: '', startDate: null, endDate: null, description: '' });
+    setShowWorkExperienceDialog(false);
+  };
+
+  const deleteWorkExperience = (id: number) => {
+    setProfileData(prev => ({ ...prev, gen_workExperience: prev.gen_workExperience.filter(exp => exp.id !== id) }));
+  };
+
+  // Language score handlers
+  const addLanguageScore = () => {
+    if (!languageScoreForm.type || !languageScoreForm.score) {
+      toast({ title: "필수 항목을 입력해주세요", description: "시험 유형과 점수를 모두 입력해주세요.", variant: "destructive", duration: 3000 });
+      return;
+    }
+    const newScore = { id: Date.now(), type: languageScoreForm.type, score: languageScoreForm.score };
+    setProfileData(prev => ({ ...prev, univ_languageTests: [...prev.univ_languageTests, newScore] }));
+    setLanguageScoreForm({ type: '', score: '' });
+    setShowLanguageScoreDialog(false);
   };
 
     // Options data
@@ -1480,26 +1521,14 @@ export default function Profile() {
                                     </div>
                                 ))}
                                 
-                                <div className="flex gap-2">
-                                    <Select onValueChange={(type) => {
-                                        const score = prompt("점수 또는 등급을 입력해주세요 (예: 850, IH):");
-                                        if (score) {
-                                            setProfileData(prev => ({
-                                                ...prev,
-                                                univ_languageTests: [...prev.univ_languageTests, { id: Date.now(), type, score }]
-                                            }));
-                                        }
-                                    }}>
-                                        <SelectTrigger className="h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold justify-center">
-                                            <Plus className="h-5 w-5 mr-2" /> 어학 점수 추가하기
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {["TOEIC", "TOEIC Speaking", "OPIc", "TOEFL", "TEPS", "JLPT", "HSK", "기타"].map(t => (
-                                                <SelectItem key={t} value={t}>{t}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                <Button 
+                                    variant="outline" 
+                                    className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+                                    onClick={() => setShowLanguageScoreDialog(true)}
+                                    data-testid="button-add-language-score"
+                                >
+                                    <Plus className="h-5 w-5 mr-2" /> 어학 점수 추가하기
+                                </Button>
                             </div>
                             <div className="space-y-2 mt-4">
                                 <Label>기타 자격증 / 수상 경력</Label>
@@ -1893,23 +1922,36 @@ export default function Profile() {
                                                 <h4 className="font-bold text-[#191F28] text-lg">{exp.role}</h4>
                                                 <p className="text-[#4E5968] font-medium">{exp.company}</p>
                                             </div>
-                                            <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50"
+                                                onClick={() => deleteWorkExperience(exp.id)}
+                                                data-testid={`button-delete-work-exp-${exp.id}`}
+                                            >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </div>
                                         
                                         <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
                                             <CalendarIcon className="h-4 w-4" />
-                                            <span>{format(exp.startDate, 'yyyy.MM')} - {exp.endDate ? format(exp.endDate, 'yyyy.MM') : '현재'}</span>
+                                            <span>{exp.startDate ? format(exp.startDate, 'yyyy.MM') : ''} - {exp.endDate ? format(exp.endDate, 'yyyy.MM') : '현재'}</span>
                                         </div>
 
-                                        <p className="text-sm text-[#4E5968] whitespace-pre-line pl-3 border-l-2 border-[#E5E8EB]">
-                                            {exp.description}
-                                        </p>
+                                        {exp.description && (
+                                            <p className="text-sm text-[#4E5968] whitespace-pre-line pl-3 border-l-2 border-[#E5E8EB]">
+                                                {exp.description}
+                                            </p>
+                                        )}
                                     </div>
                                 ))}
 
-                                <Button variant="outline" className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold">
+                                <Button 
+                                    variant="outline" 
+                                    className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+                                    onClick={() => setShowWorkExperienceDialog(true)}
+                                    data-testid="button-add-work-experience"
+                                >
                                     <Plus className="h-5 w-5 mr-2" /> 경력 추가하기
                                 </Button>
                             </div>
@@ -2334,6 +2376,151 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Work Experience Dialog */}
+      <Dialog open={showWorkExperienceDialog} onOpenChange={setShowWorkExperienceDialog}>
+        <DialogContent className="sm:max-w-md rounded-[24px] bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#191F28]">경력 추가</DialogTitle>
+            <DialogDescription className="text-sm text-[#8B95A1]">
+              이전 직장 경력을 입력해주세요.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>회사명 *</Label>
+              <Input 
+                placeholder="예: 삼성전자"
+                value={workExpForm.company}
+                onChange={(e) => setWorkExpForm({...workExpForm, company: e.target.value})}
+                className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                data-testid="input-work-company"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>직무 *</Label>
+              <Input 
+                placeholder="예: 마케팅 매니저"
+                value={workExpForm.role}
+                onChange={(e) => setWorkExpForm({...workExpForm, role: e.target.value})}
+                className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                data-testid="input-work-role"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>시작일 *</Label>
+                <Input 
+                  type="month"
+                  value={workExpForm.startDate ? format(workExpForm.startDate, 'yyyy-MM') : ''}
+                  onChange={(e) => setWorkExpForm({...workExpForm, startDate: e.target.value ? new Date(e.target.value + '-01') : null})}
+                  className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                  data-testid="input-work-start-date"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>종료일</Label>
+                <Input 
+                  type="month"
+                  placeholder="현재 재직 중"
+                  value={workExpForm.endDate ? format(workExpForm.endDate, 'yyyy-MM') : ''}
+                  onChange={(e) => setWorkExpForm({...workExpForm, endDate: e.target.value ? new Date(e.target.value + '-01') : null})}
+                  className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                  data-testid="input-work-end-date"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>업무 설명</Label>
+              <Textarea 
+                placeholder="담당했던 주요 업무나 성과를 입력해주세요."
+                value={workExpForm.description}
+                onChange={(e) => setWorkExpForm({...workExpForm, description: e.target.value})}
+                className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
+                data-testid="input-work-description"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              className="flex-1 h-12 rounded-xl border-[#E5E8EB]"
+              onClick={() => {
+                setWorkExpForm({ company: '', role: '', startDate: null, endDate: null, description: '' });
+                setShowWorkExperienceDialog(false);
+              }}
+            >
+              취소
+            </Button>
+            <Button 
+              className="flex-1 h-12 rounded-xl bg-[#3182F6] font-bold"
+              onClick={addWorkExperience}
+              data-testid="button-confirm-add-work"
+            >
+              추가하기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Language Score Dialog */}
+      <Dialog open={showLanguageScoreDialog} onOpenChange={setShowLanguageScoreDialog}>
+        <DialogContent className="sm:max-w-md rounded-[24px] bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#191F28]">어학 점수 추가</DialogTitle>
+            <DialogDescription className="text-sm text-[#8B95A1]">
+              보유한 어학 시험 점수를 입력해주세요.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>시험 유형 *</Label>
+              <Select 
+                value={languageScoreForm.type} 
+                onValueChange={(val) => setLanguageScoreForm({...languageScoreForm, type: val})}
+              >
+                <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-language-type">
+                  <SelectValue placeholder="시험 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {["TOEIC", "TOEIC Speaking", "OPIc", "TOEFL", "TEPS", "JLPT", "HSK", "DELF/DALF", "TestDaF", "기타"].map(t => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>점수 또는 등급 *</Label>
+              <Input 
+                placeholder="예: 850, IH, N2"
+                value={languageScoreForm.score}
+                onChange={(e) => setLanguageScoreForm({...languageScoreForm, score: e.target.value})}
+                className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                data-testid="input-language-score"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              className="flex-1 h-12 rounded-xl border-[#E5E8EB]"
+              onClick={() => {
+                setLanguageScoreForm({ type: '', score: '' });
+                setShowLanguageScoreDialog(false);
+              }}
+            >
+              취소
+            </Button>
+            <Button 
+              className="flex-1 h-12 rounded-xl bg-[#3182F6] font-bold"
+              onClick={addLanguageScore}
+              data-testid="button-confirm-add-language"
+            >
+              추가하기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
