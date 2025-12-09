@@ -78,11 +78,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Return identity fields from user
+      // Korean style: LastName + FirstName (no space)
       res.json({
         id: user.id,
-        displayName: user.displayName || (user.firstName && user.lastName 
-          ? `${user.firstName} ${user.lastName}`.trim() 
-          : user.email?.split('@')[0] || ''),
+        displayName: user.displayName || (user.lastName && user.firstName 
+          ? `${user.lastName}${user.firstName}` 
+          : user.lastName || user.firstName || user.email?.split('@')[0] || ''),
         email: user.email || '',
         gender: user.gender || null,
         birthDate: user.birthDate || null,

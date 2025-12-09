@@ -519,9 +519,9 @@ export default function Profile() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Build user's full name from auth context
+  // Build user's full name from auth context (Korean style: LastName + FirstName, no space)
   const userName = user ? 
-    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email?.split("@")[0] || "" 
+    (user.lastName && user.firstName ? `${user.lastName}${user.firstName}` : user.lastName || user.firstName || user.email?.split("@")[0] || "")
     : "";
   const userEmail = user?.email || "";
   const userProfileImage = user?.profileImageUrl || null;
