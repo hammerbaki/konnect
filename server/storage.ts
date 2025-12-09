@@ -5,6 +5,7 @@ import {
   personalEssays,
   kompassGoals,
   careers,
+  userIdentities,
   type User,
   type UpsertUser,
   type Profile,
@@ -16,6 +17,9 @@ import {
   type KompassGoal,
   type InsertKompassGoal,
   type Career,
+  type UserIdentity,
+  type InsertUserIdentity,
+  type UpdateUserIdentity,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike } from "drizzle-orm";
@@ -25,6 +29,10 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserCredits(userId: string, credits: number): Promise<void>;
   deductUserCredits(userId: string, amount: number): Promise<boolean>;
+
+  getUserIdentity(userId: string): Promise<UserIdentity | undefined>;
+  createUserIdentity(identity: InsertUserIdentity): Promise<UserIdentity>;
+  updateUserIdentity(userId: string, data: UpdateUserIdentity): Promise<UserIdentity>;
 
   getProfilesByUser(userId: string): Promise<Profile[]>;
   getProfile(id: string): Promise<Profile | undefined>;
@@ -93,6 +101,31 @@ export class DatabaseStorage implements IStorage {
     }
     await this.updateUserCredits(userId, user.credits - amount);
     return true;
+  }
+
+  async getUserIdentity(userId: string): Promise<UserIdentity | undefined> {
+    const [identity] = await db
+      .select()
+      .from(userIdentities)
+      .where(eq(userIdentities.userId, userId));
+    return identity;
+  }
+
+  async createUserIdentity(identityData: InsertUserIdentity): Promise<UserIdentity> {
+    const [identity] = await db
+      .insert(userIdentities)
+      .values(identityData)
+      .returning();
+    return identity;
+  }
+
+  async updateUserIdentity(userId: string, data: UpdateUserIdentity): Promise<UserIdentity> {
+    const [identity] = await db
+      .update(userIdentities)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(userIdentities.userId, userId))
+      .returning();
+    return identity;
   }
 
   async getProfilesByUser(userId: string): Promise<Profile[]> {

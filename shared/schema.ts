@@ -43,6 +43,44 @@ export const upsertUserSchema = createInsertSchema(users).omit({
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;
 
+// ===== USER IDENTITIES TABLE (Shared user info across all profiles) =====
+export const userIdentities = pgTable("user_identities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }),
+  email: varchar("email", { length: 255 }),
+  gender: varchar("gender", { length: 20 }),
+  birthDate: timestamp("birth_date"),
+  location: varchar("location", { length: 255 }),
+  bio: text("bio"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const userIdentitiesRelations = relations(userIdentities, ({ one }) => ({
+  user: one(users, {
+    fields: [userIdentities.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertUserIdentitySchema = createInsertSchema(userIdentities).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateUserIdentitySchema = insertUserIdentitySchema.partial().omit({
+  userId: true,
+});
+
+export type InsertUserIdentity = z.infer<typeof insertUserIdentitySchema>;
+export type UpdateUserIdentity = z.infer<typeof updateUserIdentitySchema>;
+export type UserIdentity = typeof userIdentities.$inferSelect;
+
 // ===== CAREERS TABLE (Korean Career Data) =====
 export const careers = pgTable("careers", {
   id: varchar("id").primaryKey(),
