@@ -25,10 +25,21 @@ const TokenRecharge = lazy(() => import("./pages/TokenRecharge"));
 
 function LoadingSpinner() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F2F4F6]">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3182F6]"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F2F4F6] gap-4">
+      <div className="w-14 h-14 rounded-[18px] bg-[#3182F6] flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <span className="text-white text-2xl font-bold">K</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 rounded-full bg-[#3182F6] animate-bounce" style={{ animationDelay: "0ms" }}></div>
+        <div className="w-2 h-2 rounded-full bg-[#3182F6] animate-bounce" style={{ animationDelay: "150ms" }}></div>
+        <div className="w-2 h-2 rounded-full bg-[#3182F6] animate-bounce" style={{ animationDelay: "300ms" }}></div>
+      </div>
     </div>
   );
+}
+
+function PageLoader() {
+  return null;
 }
 
 function ProtectedRoute({ component: Component, ...rest }: { component: React.ComponentType<any>; [key: string]: any }) {
@@ -49,7 +60,7 @@ function ProtectedRoute({ component: Component, ...rest }: { component: React.Co
 
 function Router() {
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <Suspense fallback={<PageLoader />}>
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />
