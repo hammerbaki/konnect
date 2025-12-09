@@ -6,16 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/AuthContext";
-import { Loader2, Sparkles, Mail, CheckCircle } from "lucide-react";
+import { Loader2, Sparkles, Mail, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Login() {
-  const { isAuthenticated, isLoading, signInWithGoogle, signInWithApple, signInWithKakao, signInWithOtp } = useAuth();
+  const { isAuthenticated, isLoading, signInWithGoogle, signInWithApple, signInWithKakao, signInWithOtp, verifyOtp } = useAuth();
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
-  const [emailSent, setEmailSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [showOtpInput, setShowOtpInput] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -23,46 +24,53 @@ export default function Login() {
     }
   }, [isAuthenticated, setLocation]);
 
-  const handleSendMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const sendOtpCode = async () => {
+    setMessage(null);
     setAuthLoading(true);
 
     try {
       const { error } = await signInWithOtp(email);
 
       if (error) {
-        setError("로그인 링크 발송에 실패했습니다. 다시 시도해주세요.");
+        setMessage({ type: "error", text: "인증 코드 발송에 실패했습니다. 다시 시도해주세요." });
       } else {
-        setEmailSent(true);
+        setShowOtpInput(true);
+        setMessage({ type: "success", text: "인증 코드가 이메일로 발송되었습니다." });
       }
     } catch (err) {
-      setError("오류가 발생했습니다. 다시 시도해주세요.");
+      setMessage({ type: "error", text: "오류가 발생했습니다. 다시 시도해주세요." });
     } finally {
       setAuthLoading(false);
     }
   };
 
-  const handleResend = async () => {
-    setError(null);
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await sendOtpCode();
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
     setAuthLoading(true);
 
     try {
-      const { error } = await signInWithOtp(email);
+      const { error } = await verifyOtp(email, otpCode);
 
       if (error) {
-        setError("로그인 링크 발송에 실패했습니다. 다시 시도해주세요.");
+        setMessage({ type: "error", text: "인증 코드가 올바르지 않습니다." });
       }
     } catch (err) {
-      setError("오류가 발생했습니다. 다시 시도해주세요.");
+      setMessage({ type: "error", text: "인증에 실패했습니다. 다시 시도해주세요." });
     } finally {
       setAuthLoading(false);
     }
   };
 
-  const handleChangeEmail = () => {
-    setEmailSent(false);
-    setError(null);
+  const handleBackToEmail = () => {
+    setShowOtpInput(false);
+    setOtpCode("");
+    setMessage(null);
   };
 
   if (isLoading) {
@@ -161,8 +169,8 @@ export default function Login() {
                   </div>
                 </div>
 
-                {!emailSent ? (
-                  <form onSubmit={handleSendMagicLink} className="space-y-4">
+                {!showOtpInput ? (
+                  <form onSubmit={handleSendOtp} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email" className="text-[#4E5968] font-medium">
                         이메일
@@ -182,65 +190,89 @@ export default function Login() {
                       </div>
                     </div>
 
-                    {error && (
-                      <p className="text-sm text-red-500">{error}</p>
+                    {message && (
+                      <p className={`text-sm ${message.type === "success" ? "text-[#3182F6]" : "text-red-500"}`}>
+                        {message.text}
+                      </p>
                     )}
 
                     <Button 
                       type="submit"
                       disabled={authLoading}
                       className="w-full h-14 text-lg rounded-[16px] bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02]"
-                      data-testid="button-send-magic-link"
+                      data-testid="button-send-otp"
                     >
                       {authLoading ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
                       ) : (
-                        "이메일로 로그인 링크 받기"
+                        "이메일로 인증코드 받기"
                       )}
                     </Button>
                   </form>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="p-6 rounded-[16px] bg-[#F0F7FF] text-center">
-                      <CheckCircle className="h-12 w-12 text-[#3182F6] mx-auto mb-4" />
-                      <p className="text-lg font-medium text-[#191F28] mb-2">
-                        로그인 링크가 발송되었습니다
-                      </p>
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <button
+                      type="button"
+                      onClick={handleBackToEmail}
+                      className="flex items-center gap-2 text-[#8B95A1] hover:text-[#4E5968] transition-colors"
+                      data-testid="button-back"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      <span className="text-sm">이메일 변경</span>
+                    </button>
+
+                    <div className="p-4 rounded-[16px] bg-[#F9FAFB]">
                       <p className="text-sm text-[#4E5968]">
-                        <span className="font-medium text-[#3182F6]">{email}</span>
-                        <span className="block mt-1">으로 발송된 링크를 클릭하여 로그인하세요.</span>
+                        <span className="font-medium text-[#191F28]">{email}</span>
+                        <span className="block mt-1">으로 발송된 인증 코드를 입력해주세요.</span>
                       </p>
                     </div>
 
-                    {error && (
-                      <p className="text-sm text-red-500 text-center">{error}</p>
+                    <div className="space-y-2">
+                      <Label htmlFor="otp" className="text-[#4E5968] font-medium">
+                        인증 코드
+                      </Label>
+                      <Input
+                        id="otp"
+                        type="text"
+                        placeholder="6자리 인증 코드"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value)}
+                        className="h-14 text-center text-xl tracking-[0.5em] rounded-[16px] border-[#E5E8EB] focus:border-[#3182F6] focus:ring-[#3182F6]/20"
+                        data-testid="input-otp"
+                        maxLength={6}
+                        required
+                      />
+                    </div>
+
+                    {message && (
+                      <p className={`text-sm ${message.type === "success" ? "text-[#3182F6]" : "text-red-500"}`}>
+                        {message.text}
+                      </p>
                     )}
 
-                    <div className="flex flex-col gap-2">
-                      <Button 
-                        type="button"
-                        variant="outline"
-                        onClick={handleResend}
-                        disabled={authLoading}
-                        className="w-full h-12 rounded-[16px] border-[#E5E8EB]"
-                        data-testid="button-resend-link"
-                      >
-                        {authLoading ? (
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                          "링크 다시 받기"
-                        )}
-                      </Button>
-                      <button
-                        type="button"
-                        onClick={handleChangeEmail}
-                        className="w-full text-center text-sm text-[#8B95A1] hover:text-[#3182F6] transition-colors py-2"
-                        data-testid="button-change-email"
-                      >
-                        다른 이메일로 로그인
-                      </button>
-                    </div>
-                  </div>
+                    <Button 
+                      type="submit"
+                      disabled={authLoading || otpCode.length < 6}
+                      className="w-full h-14 text-lg rounded-[16px] bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02]"
+                      data-testid="button-verify-otp"
+                    >
+                      {authLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        "인증하기"
+                      )}
+                    </Button>
+
+                    <button
+                      type="button"
+                      onClick={sendOtpCode}
+                      className="w-full text-center text-sm text-[#8B95A1] hover:text-[#3182F6] transition-colors"
+                      data-testid="button-resend-otp"
+                    >
+                      인증 코드 다시 받기
+                    </button>
+                  </form>
                 )}
 
                 <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#F9FAFB]">

@@ -23,6 +23,7 @@ interface AuthContextType {
   signInWithApple: () => Promise<void>;
   signInWithKakao: () => Promise<void>;
   signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error: Error | null }>;
   getAccessToken: () => Promise<string | null>;
 }
 
@@ -153,6 +154,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const verifyOtp = async (email: string, token: string) => {
+    if (!supabaseClient) return { error: new Error("Supabase not initialized") };
+    const { error } = await supabaseClient.auth.verifyOtp({
+      email,
+      token,
+      type: "email",
+    });
+    return { error };
+  };
+
   const getAccessToken = async () => {
     if (!supabaseClient) return null;
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -173,6 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithApple,
         signInWithKakao,
         signInWithOtp,
+        verifyOtp,
         getAccessToken,
       }}
     >
