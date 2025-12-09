@@ -568,9 +568,13 @@ export default function Profile() {
     },
   });
 
-  // Load profile data from server when it changes
+  // Load profile data from server when it changes - use ref to prevent infinite loops
+  const lastLoadedProfileId = useRef<string | null>(null);
+  
   useEffect(() => {
-    if (serverProfile) {
+    if (serverProfile && serverProfile.id !== lastLoadedProfileId.current) {
+      lastLoadedProfileId.current = serverProfile.id;
+      
       const savedData = (serverProfile.profileData || {}) as Record<string, any>;
       
       // Parse dates back from strings (clone to avoid mutating)
@@ -597,7 +601,7 @@ export default function Profile() {
       });
       isInitialLoad.current = false;
     }
-  }, [serverProfile, selectedType, userName, userEmail]);
+  }, [serverProfile?.id, selectedType]);
 
   // Handle save
   const handleSave = useCallback(() => {
@@ -616,6 +620,7 @@ export default function Profile() {
   // Handle profile type change - update both local state and trigger refetch
   const handleTypeChange = useCallback((newType: ProfileDataType["type"]) => {
     if (newType !== selectedType) {
+      lastLoadedProfileId.current = null; // Reset to allow loading new profile
       setSelectedType(newType);
       setProfileData(prev => ({ ...prev, type: newType }));
     }
