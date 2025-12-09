@@ -11,6 +11,40 @@ import {
 import { z } from "zod";
 import { generateCareerAnalysis, generatePersonalEssay } from "./ai";
 
+// Helper functions for profile defaults
+function getProfileTitle(type: string): string {
+  const titles: Record<string, string> = {
+    general: '일반 프로필',
+    university: '대학생 프로필',
+    high: '고등학생 프로필',
+    middle: '중학생 프로필',
+    elementary: '초등학생 프로필',
+  };
+  return titles[type] || '프로필';
+}
+
+function getProfileIcon(type: string): string {
+  const icons: Record<string, string> = {
+    general: 'briefcase',
+    university: 'graduation-cap',
+    high: 'book-open',
+    middle: 'pencil',
+    elementary: 'star',
+  };
+  return icons[type] || 'user';
+}
+
+function getProfileColor(type: string): string {
+  const colors: Record<string, string> = {
+    general: '#3182F6',
+    university: '#7C3AED',
+    high: '#059669',
+    middle: '#D97706',
+    elementary: '#EC4899',
+  };
+  return colors[type] || '#3182F6';
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
@@ -84,6 +118,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching profiles:", error);
       res.status(500).json({ message: "Failed to fetch profiles" });
+    }
+  });
+
+  // Get or create the user's active profile by type
+  app.get('/api/user-profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const type = (req.query.type as string) || 'general';
+      
+      // Try to find existing profile of this type
+      const profiles = await storage.getProfilesByUser(userId);
+      let profile = profiles.find(p => p.type === type);
+      
+      // If no profile exists for this type, create one
+      if (!profile) {
+        profile = await storage.createProfile({
+          userId,
+          type,
+          title: getProfileTitle(type),
+          icon: getProfileIcon(type),
+          color: getProfileColor(type),
+          profileData: {},
+        });
+      }
+      
+      res.json(profile);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
+  // Save/update the user's active profile
+  app.put('/api/user-profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { type, profileData, title } = req.body;
+      
+      if (!type) {
+        return res.status(400).json({ message: "Profile type is required" });
+      }
+      
+      // Find existing profile of this type
+      const profiles = await storage.getProfilesByUser(userId);
+      let profile = profiles.find(p => p.type === type);
+      
+      if (profile) {
+        // Update existing profile
+        profile = await storage.updateProfile(profile.id, {
+          profileData,
+          title: title || profile.title,
+        });
+      } else {
+        // Create new profile
+        profile = await storage.createProfile({
+          userId,
+          type,
+          title: title || getProfileTitle(type),
+          icon: getProfileIcon(type),
+          color: getProfileColor(type),
+          profileData,
+        });
+      }
+      
+      res.json(profile);
+    } catch (error) {
+      console.error("Error saving user profile:", error);
+      res.status(500).json({ message: "Failed to save user profile" });
     }
   });
 

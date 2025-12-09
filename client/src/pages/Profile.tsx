@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Mail, MapPin, Briefcase, School, Save, Building, Calendar as CalendarIcon, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X, TrendingUp, DollarSign, Smile, Shield, BookOpen, GraduationCap, PenTool, Star, Plus, Sparkles, CheckCircle2, Edit2, Languages } from "lucide-react";
+import { User, Mail, MapPin, Briefcase, School, Save, Building, Calendar as CalendarIcon, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X, TrendingUp, DollarSign, Smile, Shield, BookOpen, GraduationCap, PenTool, Star, Plus, Sparkles, CheckCircle2, Edit2, Languages, Loader2 } from "lucide-react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useAuth } from "@/lib/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -19,6 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerClose } from "@/components/ui/drawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 function ResponsiveClose({ children, asChild }: { children: React.ReactNode, asChild?: boolean }) {
     const isMobile = useIsMobile();
@@ -329,10 +331,193 @@ function ResponsiveSalaryInputContent({ value, onChange }: { value: number, onCh
 }
 
 
+// Type for profile data structure
+type ProfileDataType = {
+  type: "elementary" | "middle" | "high" | "university" | "general";
+  basic_name: string;
+  basic_role: string;
+  basic_email: string;
+  basic_location: string;
+  basic_bio: string;
+  basic_gender: "male" | "female" | undefined;
+  basic_birthDate: Date | null;
+  elem_schoolName: string;
+  elem_grade: string;
+  elem_favoriteSubject: string;
+  elem_dislikedSubject: string;
+  elem_dreamJob: string;
+  elem_strengths: string;
+  elem_interests: string;
+  elem_hobbies: string;
+  elem_concerns: string;
+  elem_parentsHope: string;
+  mid_schoolName: string;
+  mid_grade: string;
+  mid_class: string;
+  mid_academicScore: string;
+  mid_favoriteSubject: string;
+  mid_dislikedSubject: string;
+  mid_interests: string;
+  mid_hobbies: string;
+  mid_dreamJob: string;
+  mid_highSchoolPlan: string;
+  mid_concerns: string;
+  mid_strengths: string;
+  high_schoolName: string;
+  high_grade: string;
+  high_class: string;
+  high_academicScore: string;
+  high_majorTrack: string;
+  high_hopeUniversity: string;
+  high_careerHope: string;
+  high_activityStatus: string;
+  high_favoriteSubject: string;
+  high_dislikedSubject: string;
+  high_mbti: string;
+  high_hobbies: string;
+  high_studyAbroad: boolean;
+  high_concerns: string;
+  high_stressLevel: string;
+  high_sleepPattern: string;
+  high_subject_scores: { korean: string; math: string; english: string; social: string; science: string; history: string; second_lang: string };
+  high_balance: { academic: number; activity: number; reading: number; volunteer: number; career: number };
+  univ_schoolName: string;
+  univ_majorCategory: string;
+  univ_majorName: string;
+  univ_grade: string;
+  univ_semester: string;
+  univ_gpa: string;
+  univ_languageTests: { id: number; type: string; score: string }[];
+  univ_certificates: string;
+  univ_concerns: string;
+  univ_academicStress: string;
+  univ_financialStress: string;
+  univ_sleepHours: string;
+  univ_mentalWellbeing: string;
+  univ_workloadWorkHours: string;
+  univ_workloadStudyHours: string;
+  univ_belongingScore: string;
+  univ_hasSupportPerson: boolean;
+  univ_facultyRespect: string;
+  univ_classComfort: string;
+  univ_servicesUsed: string[];
+  univ_serviceBarriers: string;
+  univ_careerReadiness: string;
+  univ_careerGoalClear: string;
+  univ_internshipStatus: string;
+  univ_skillsToDevelop: string[];
+  gen_currentStatus: string;
+  gen_workExperience: any[];
+  gen_skills: string[];
+  gen_prevJobSatisfaction: string;
+  gen_reasonForChange: string;
+  gen_desiredIndustry: string;
+  gen_desiredRole: string;
+  gen_workStyle: string;
+  gen_workValues: string[];
+  gen_salary: number;
+  gen_salaryNoPreference: boolean;
+  gen_environmentPreferences: string[];
+  gen_environmentNoPreference: boolean;
+  gen_concerns: string;
+};
+
+// Default profile data structure
+const getDefaultProfileData = (type: ProfileDataType["type"] = "general"): ProfileDataType => ({
+  type,
+  basic_name: "",
+  basic_role: "",
+  basic_email: "",
+  basic_location: "Seoul, South Korea",
+  basic_bio: "",
+  basic_gender: undefined,
+  basic_birthDate: null,
+  elem_schoolName: "",
+  elem_grade: "",
+  elem_favoriteSubject: "",
+  elem_dislikedSubject: "",
+  elem_dreamJob: "",
+  elem_strengths: "",
+  elem_interests: "",
+  elem_hobbies: "",
+  elem_concerns: "",
+  elem_parentsHope: "",
+  mid_schoolName: "",
+  mid_grade: "",
+  mid_class: "",
+  mid_academicScore: "",
+  mid_favoriteSubject: "",
+  mid_dislikedSubject: "",
+  mid_interests: "",
+  mid_hobbies: "",
+  mid_dreamJob: "",
+  mid_highSchoolPlan: "",
+  mid_concerns: "",
+  mid_strengths: "",
+  high_schoolName: "",
+  high_grade: "",
+  high_class: "",
+  high_academicScore: "",
+  high_majorTrack: "",
+  high_hopeUniversity: "",
+  high_careerHope: "",
+  high_activityStatus: "",
+  high_favoriteSubject: "",
+  high_dislikedSubject: "",
+  high_mbti: "",
+  high_hobbies: "",
+  high_studyAbroad: false,
+  high_concerns: "",
+  high_stressLevel: "",
+  high_sleepPattern: "",
+  high_subject_scores: { korean: "", math: "", english: "", social: "", science: "", history: "", second_lang: "" },
+  high_balance: { academic: 50, activity: 50, reading: 50, volunteer: 50, career: 50 },
+  univ_schoolName: "",
+  univ_majorCategory: "",
+  univ_majorName: "",
+  univ_grade: "",
+  univ_semester: "",
+  univ_gpa: "",
+  univ_languageTests: [],
+  univ_certificates: "",
+  univ_concerns: "",
+  univ_academicStress: "",
+  univ_financialStress: "",
+  univ_sleepHours: "",
+  univ_mentalWellbeing: "",
+  univ_workloadWorkHours: "",
+  univ_workloadStudyHours: "",
+  univ_belongingScore: "",
+  univ_hasSupportPerson: false,
+  univ_facultyRespect: "",
+  univ_classComfort: "",
+  univ_servicesUsed: [],
+  univ_serviceBarriers: "",
+  univ_careerReadiness: "",
+  univ_careerGoalClear: "",
+  univ_internshipStatus: "",
+  univ_skillsToDevelop: [],
+  gen_currentStatus: "",
+  gen_workExperience: [],
+  gen_skills: [],
+  gen_prevJobSatisfaction: "",
+  gen_reasonForChange: "",
+  gen_desiredIndustry: "",
+  gen_desiredRole: "",
+  gen_workStyle: "",
+  gen_workValues: [],
+  gen_salary: 5000,
+  gen_salaryNoPreference: false,
+  gen_environmentPreferences: [],
+  gen_environmentNoPreference: false,
+  gen_concerns: "",
+});
+
 export default function Profile() {
   const { setAction } = useMobileAction();
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   // Build user's full name from auth context
   const userName = user ? 
@@ -342,162 +527,131 @@ export default function Profile() {
   const userProfileImage = user?.profileImageUrl || null;
 
   // State Management with Prefixed Fields for Analysis Isolation
-  const [profileData, setProfileData] = useState({
-    type: "general" as "elementary" | "middle" | "high" | "university" | "general",
-    
-    // Common / Basic Info
-    basic_name: "",
-    basic_role: "",
-    basic_email: "",
-    basic_location: "Seoul, South Korea",
-    basic_bio: "",
-    basic_gender: undefined as "male" | "female" | undefined,
-    basic_birthDate: null as Date | null,
-    
-    // Elementary Specific
-    elem_schoolName: "",
-    elem_grade: "",
-    elem_favoriteSubject: "",
-    elem_dislikedSubject: "", // 싫어하는 과목
-    elem_dreamJob: "",
-    elem_strengths: "", // 잘하는 것 (강점)
-    elem_interests: "", // 관심 분야
-    elem_hobbies: "", // Textarea
-    elem_concerns: "", // 고민
-    elem_parentsHope: "", // 부모님 희망 직업
+  const [profileData, setProfileData] = useState<ProfileDataType>(getDefaultProfileData());
+  const [isSaving, setIsSaving] = useState(false);
 
-    // Middle School Specific
-    mid_schoolName: "",
-    mid_grade: "",
-    mid_class: "",
-    mid_academicScore: "", // 주요 과목 성적 (상/중/하)
-    mid_favoriteSubject: "", // 좋아하는 과목
-    mid_dislikedSubject: "", // 싫어하는 과목
-    mid_interests: "", // 관심분야
-    mid_hobbies: "", // 취미
-    mid_dreamJob: "", // 장래희망
-    mid_highSchoolPlan: "", // 고교 진학 계획 (일반고/특목고/특성화고)
-    mid_concerns: "", // 고민
-    mid_strengths: "", // 나의 장점
+  // Current profile type for API calls
+  const currentType = profileData.type;
 
-    // High School Specific
-    high_schoolName: "",
-    high_grade: "",
-    high_class: "",
-    high_academicScore: "", // 내신 (1-9등급)
-    high_majorTrack: "", // 계열 (문과/이과/etc)
-    high_hopeUniversity: "", // 희망 대학
-    high_careerHope: "", // 진로 희망
-    high_activityStatus: "", // 활동 참여 현황
-    high_favoriteSubject: "", // 좋아하는 과목
-    high_dislikedSubject: "", // 싫어하는 과목
-    high_mbti: "", // 성격 특성 (MBTI)
-    high_hobbies: "", // 취미 관심사
-    high_studyAbroad: false, // 유학 희망 유/무
-    high_concerns: "", // 진로 고민
-    high_stressLevel: "", // Recent Stress/Mental Wellbeing Indicator (replacing explicit suicide risk)
-    high_sleepPattern: "", // Sleep indicator
-    
-    high_subject_scores: {
-        korean: "", math: "", english: "", social: "", science: "", history: "", second_lang: ""
+  // Fetch profile data from API
+  const { data: serverProfile, isLoading: isLoadingProfile, refetch: refetchProfile } = useQuery({
+    queryKey: ['/api/user-profile', currentType],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/user-profile?type=${currentType}`);
+      return response.json();
     },
-    // For balance/radar chart
-    high_balance: {
-        academic: 50, // 학업 충실도
-        activity: 50, // 교내 활동
-        reading: 50,  // 독서 활동
-        volunteer: 50, // 봉사 활동
-        career: 50    // 진로 탐색
-    },
-
-    // University Specific
-    univ_schoolName: "",
-    univ_majorCategory: "", // 전공 계열
-    univ_majorName: "", // 학과명
-    univ_grade: "",
-    univ_semester: "",
-    univ_gpa: "", // 4.5 scale
-    univ_languageTests: [] as { id: number, type: string, score: string }[],
-    univ_certificates: "",
-    univ_concerns: "", // 진로/취업 고민
-
-    // New Fields for University Profile (Research-based)
-    // 1. Well-being, Stress & Workload
-    univ_academicStress: "", // 1-5
-    univ_financialStress: "", // 1-5
-    univ_sleepHours: "", // number
-    univ_mentalWellbeing: "", // Thriving / Managing / Struggling / In crisis
-    univ_workloadWorkHours: "", // Hours of paid work per week
-    univ_workloadStudyHours: "", // Hours of study per week
-
-    // 2. Sense of Belonging & Inclusion
-    univ_belongingScore: "", // 1-5
-    univ_hasSupportPerson: false, // Yes/No
-    univ_facultyRespect: "", // 1-5
-    univ_classComfort: "", // 1-5
-
-    // 3. Use of Support Services & Barriers
-    univ_servicesUsed: [] as string[],
-    univ_serviceBarriers: "", // barrier selection
-
-    // 4. Career Readiness & Graduate Outcomes
-    univ_careerReadiness: "", // 1-5 (Preparedness)
-    univ_careerGoalClear: "", // 1-5
-    univ_internshipStatus: "", // None / Planning / In Progress / Completed
-    univ_skillsToDevelop: [] as string[], // Selection of skills
-
-    // General (Worker) Specific
-    gen_currentStatus: "", // employed, unemployed, freelance, student
-    gen_workExperience: [
-        {
-            id: 1,
-            role: "Senior Product Manager",
-            company: "Tech Corp Inc.",
-            startDate: new Date(2021, 2, 1),
-            endDate: new Date(2023, 11, 1),
-            description: "- B2B SaaS 제품 기획 및 런칭 주도\n- 3분기 연속 매출 목표 120% 달성"
-        }
-    ] as any[],
-    gen_skills: [] as string[], // 보유 스킬
-    gen_prevJobSatisfaction: "", // 1-5
-    gen_reasonForChange: "", // 이직/구직 사유 (복수 선택 가능하지만 simple string for now or array)
-    gen_desiredIndustry: "", // 희망 산업
-    gen_desiredRole: "", // 희망 직무
-    gen_workStyle: "", // 선호하는 업무 스타일
-    gen_workValues: ["성장 가능성", "워라밸"] as string[],
-    gen_salary: 6000,
-    gen_salaryNoPreference: false,
-    gen_environmentPreferences: [] as string[],
-    gen_environmentNoPreference: false,
-    gen_concerns: "", // 커리어 고민
+    enabled: !!user,
+    staleTime: 0,
   });
 
-  const handleSave = () => {
-    toast({
-      title: "프로필 저장 완료",
-      description: "프로필 정보가 성공적으로 업데이트되었습니다.",
-    });
-  };
+  // Save profile mutation
+  const saveProfileMutation = useMutation({
+    mutationFn: async (data: { type: string; profileData: Record<string, any> }) => {
+      const response = await apiRequest('PUT', '/api/user-profile', data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user-profile'] });
+      toast({
+        title: "프로필 저장 완료",
+        description: "프로필 정보가 성공적으로 저장되었습니다.",
+      });
+      setIsSaving(false);
+    },
+    onError: (error) => {
+      console.error('Error saving profile:', error);
+      toast({
+        title: "저장 실패",
+        description: "프로필 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+      setIsSaving(false);
+    },
+  });
 
+  // Load profile data from server when it changes
   useEffect(() => {
-    setAction({
-      icon: Save,
-      label: "저장",
-      onClick: handleSave
+    if (serverProfile?.profileData) {
+      const savedData = serverProfile.profileData as Record<string, any>;
+      
+      // Parse dates back from strings
+      if (savedData.basic_birthDate) {
+        savedData.basic_birthDate = new Date(savedData.basic_birthDate);
+      }
+      if (savedData.gen_workExperience) {
+        savedData.gen_workExperience = savedData.gen_workExperience.map((exp: any) => ({
+          ...exp,
+          startDate: exp.startDate ? new Date(exp.startDate) : null,
+          endDate: exp.endDate ? new Date(exp.endDate) : null,
+        }));
+      }
+      
+      // Merge with defaults to ensure all fields exist
+      setProfileData(prev => ({
+        ...getDefaultProfileData(currentType),
+        ...savedData,
+        type: currentType,
+        // Keep auth-based values as defaults if not saved
+        basic_name: savedData.basic_name || userName || "",
+        basic_email: savedData.basic_email || userEmail || "",
+      }));
+    } else if (serverProfile && !serverProfile.profileData) {
+      // New profile, initialize with user info from auth
+      setProfileData(prev => ({
+        ...getDefaultProfileData(currentType),
+        basic_name: userName || "",
+        basic_email: userEmail || "",
+      }));
+    }
+  }, [serverProfile, currentType, userName, userEmail]);
+
+  // Handle save
+  const handleSave = useCallback(() => {
+    if (isSaving) return;
+    setIsSaving(true);
+    
+    // Prepare data for saving (excluding the type field from profileData)
+    const { type, ...dataToSave } = profileData;
+    
+    saveProfileMutation.mutate({
+      type: currentType,
+      profileData: dataToSave,
     });
-    return () => setAction(null);
+  }, [profileData, currentType, isSaving, saveProfileMutation]);
+
+  // Handle profile type change
+  const handleTypeChange = useCallback((newType: ProfileDataType["type"]) => {
+    setProfileData(prev => ({ ...prev, type: newType }));
   }, []);
 
-  // Initialize profile data with user information from auth
+  // Refetch when type changes
   useEffect(() => {
     if (user) {
+      refetchProfile();
+    }
+  }, [currentType, user, refetchProfile]);
+
+  // Set mobile action button
+  useEffect(() => {
+    setAction({
+      icon: isSaving ? Loader2 : Save,
+      label: isSaving ? "저장 중..." : "저장",
+      onClick: handleSave,
+      disabled: isSaving,
+    });
+    return () => setAction(null);
+  }, [handleSave, isSaving, setAction]);
+
+  // Initialize with auth user info (only once)
+  useEffect(() => {
+    if (user && !serverProfile) {
       setProfileData(prev => ({
         ...prev,
         basic_name: userName || prev.basic_name,
         basic_email: userEmail || prev.basic_email,
       }));
     }
-  }, [user, userName, userEmail]);
+  }, [user, userName, userEmail, serverProfile]);
 
   const toggleWorkValue = (value: string) => {
       setProfileData(prev => {
@@ -1954,8 +2108,13 @@ export default function Profile() {
             <h2 className="text-[28px] font-bold text-[#191F28]">내 프로필</h2>
             <p className="text-[#8B95A1] mt-1 text-lg">AI 분석의 정확도를 높이기 위해 정보를 입력해주세요.</p>
           </div>
-          <Button onClick={handleSave} className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base hidden md:flex">
-            <Save className="h-5 w-5" /> 저장하기
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base hidden md:flex disabled:opacity-50"
+          >
+            {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />} 
+            {isSaving ? "저장 중..." : "저장하기"}
           </Button>
         </div>
 

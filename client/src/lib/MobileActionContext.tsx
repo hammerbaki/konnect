@@ -5,6 +5,7 @@ interface MobileAction {
   icon?: LucideIcon;
   label?: string;
   onClick: () => void;
+  disabled?: boolean;
 }
 
 interface MobileActionContextType {
