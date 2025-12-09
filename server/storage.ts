@@ -102,7 +102,9 @@ export class DatabaseStorage implements IStorage {
     if (data.displayName !== undefined) updateData.displayName = data.displayName;
     if (data.email !== undefined) updateData.email = data.email;
     if (data.gender !== undefined) updateData.gender = data.gender;
-    if (data.birthDate !== undefined) updateData.birthDate = data.birthDate;
+    if (data.birthDate !== undefined) {
+      updateData.birthDate = data.birthDate ? (typeof data.birthDate === 'string' ? new Date(data.birthDate) : data.birthDate) : null;
+    }
     
     const [user] = await db
       .update(users)

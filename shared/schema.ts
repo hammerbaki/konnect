@@ -48,7 +48,10 @@ export const updateUserIdentitySchema = z.object({
   displayName: z.string().optional(),
   email: z.string().optional(),
   gender: z.string().optional(),
-  birthDate: z.union([z.date(), z.string(), z.null()]).optional(),
+  birthDate: z.preprocess(
+    (val) => (typeof val === 'string' ? new Date(val) : val),
+    z.union([z.date(), z.null()]).optional()
+  ),
 });
 
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
