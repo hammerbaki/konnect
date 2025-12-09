@@ -5,7 +5,6 @@ import {
   personalEssays,
   kompassGoals,
   careers,
-  userIdentities,
   type User,
   type UpsertUser,
   type Profile,
@@ -17,8 +16,6 @@ import {
   type KompassGoal,
   type InsertKompassGoal,
   type Career,
-  type UserIdentity,
-  type InsertUserIdentity,
   type UpdateUserIdentity,
 } from "@shared/schema";
 import { db } from "./db";
@@ -29,10 +26,7 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserCredits(userId: string, credits: number): Promise<void>;
   deductUserCredits(userId: string, amount: number): Promise<boolean>;
-
-  getUserIdentity(userId: string): Promise<UserIdentity | undefined>;
-  createUserIdentity(identity: InsertUserIdentity): Promise<UserIdentity>;
-  updateUserIdentity(userId: string, data: UpdateUserIdentity): Promise<UserIdentity>;
+  updateUserIdentity(userId: string, data: UpdateUserIdentity): Promise<User>;
 
   getProfilesByUser(userId: string): Promise<Profile[]>;
   getProfile(id: string): Promise<Profile | undefined>;
@@ -103,29 +97,21 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
 
-  async getUserIdentity(userId: string): Promise<UserIdentity | undefined> {
-    const [identity] = await db
-      .select()
-      .from(userIdentities)
-      .where(eq(userIdentities.userId, userId));
-    return identity;
-  }
-
-  async createUserIdentity(identityData: InsertUserIdentity): Promise<UserIdentity> {
-    const [identity] = await db
-      .insert(userIdentities)
-      .values(identityData)
+  async updateUserIdentity(userId: string, data: UpdateUserIdentity): Promise<User> {
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+    if (data.displayName !== undefined) updateData.displayName = data.displayName;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.gender !== undefined) updateData.gender = data.gender;
+    if (data.birthDate !== undefined) updateData.birthDate = data.birthDate;
+    if (data.location !== undefined) updateData.location = data.location;
+    if (data.bio !== undefined) updateData.bio = data.bio;
+    
+    const [user] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
       .returning();
-    return identity;
-  }
-
-  async updateUserIdentity(userId: string, data: UpdateUserIdentity): Promise<UserIdentity> {
-    const [identity] = await db
-      .update(userIdentities)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(userIdentities.userId, userId))
-      .returning();
-    return identity;
+    return user;
   }
 
   async getProfilesByUser(userId: string): Promise<Profile[]> {

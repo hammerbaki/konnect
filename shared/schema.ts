@@ -23,7 +23,7 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// ===== USERS TABLE (Replit Auth) =====
+// ===== USERS TABLE (with shared identity fields) =====
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
@@ -31,6 +31,12 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   credits: integer("credits").notNull().default(10),
+  // Shared identity fields (consistent across all profile types)
+  displayName: varchar("display_name", { length: 100 }),
+  gender: varchar("gender", { length: 20 }),
+  birthDate: timestamp("birth_date"),
+  location: varchar("location", { length: 255 }),
+  bio: text("bio"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -40,46 +46,18 @@ export const upsertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
+export const updateUserIdentitySchema = z.object({
+  displayName: z.string().optional(),
+  email: z.string().optional(),
+  gender: z.string().optional(),
+  birthDate: z.union([z.date(), z.string(), z.null()]).optional(),
+  location: z.string().optional(),
+  bio: z.string().optional(),
+});
+
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;
-
-// ===== USER IDENTITIES TABLE (Shared user info across all profiles) =====
-export const userIdentities = pgTable("user_identities", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id")
-    .notNull()
-    .unique()
-    .references(() => users.id, { onDelete: "cascade" }),
-  name: varchar("name", { length: 100 }),
-  email: varchar("email", { length: 255 }),
-  gender: varchar("gender", { length: 20 }),
-  birthDate: timestamp("birth_date"),
-  location: varchar("location", { length: 255 }),
-  bio: text("bio"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const userIdentitiesRelations = relations(userIdentities, ({ one }) => ({
-  user: one(users, {
-    fields: [userIdentities.userId],
-    references: [users.id],
-  }),
-}));
-
-export const insertUserIdentitySchema = createInsertSchema(userIdentities).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const updateUserIdentitySchema = insertUserIdentitySchema.partial().omit({
-  userId: true,
-});
-
-export type InsertUserIdentity = z.infer<typeof insertUserIdentitySchema>;
 export type UpdateUserIdentity = z.infer<typeof updateUserIdentitySchema>;
-export type UserIdentity = typeof userIdentities.$inferSelect;
 
 // ===== CAREERS TABLE (Korean Career Data) =====
 export const careers = pgTable("careers", {

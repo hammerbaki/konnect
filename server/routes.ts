@@ -67,59 +67,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user identity (shared info across all profiles)
+  // Get user identity (shared info from users table)
   app.get('/api/user-identity', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      let identity = await storage.getUserIdentity(userId);
+      const user = await storage.getUser(userId);
       
-      // If no identity exists, create one with defaults from user
-      if (!identity) {
-        const user = await storage.getUser(userId);
-        identity = await storage.createUserIdentity({
-          userId,
-          name: user?.firstName && user?.lastName 
-            ? `${user.firstName} ${user.lastName}`.trim()
-            : user?.email?.split('@')[0] || '',
-          email: user?.email || '',
-          gender: null,
-          birthDate: null,
-          location: null,
-          bio: null,
-        });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
       }
       
-      res.json(identity);
+      // Return identity fields from user
+      res.json({
+        id: user.id,
+        displayName: user.displayName || user.firstName && user.lastName 
+          ? `${user.firstName} ${user.lastName}`.trim() 
+          : user.email?.split('@')[0] || '',
+        email: user.email || '',
+        gender: user.gender || null,
+        birthDate: user.birthDate || null,
+        location: user.location || null,
+        bio: user.bio || null,
+      });
     } catch (error) {
       console.error("Error fetching user identity:", error);
       res.status(500).json({ message: "Failed to fetch user identity" });
     }
   });
 
-  // Update user identity
+  // Update user identity (updates users table)
   app.patch('/api/user-identity', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const data = updateUserIdentitySchema.parse(req.body);
       
-      // Ensure identity exists
-      let identity = await storage.getUserIdentity(userId);
-      if (!identity) {
-        const user = await storage.getUser(userId);
-        identity = await storage.createUserIdentity({
-          userId,
-          name: data.name || user?.firstName || '',
-          email: data.email || user?.email || '',
-          gender: data.gender || null,
-          birthDate: data.birthDate || null,
-          location: data.location || null,
-          bio: data.bio || null,
-        });
-      } else {
-        identity = await storage.updateUserIdentity(userId, data);
-      }
+      const user = await storage.updateUserIdentity(userId, data);
       
-      res.json(identity);
+      res.json({
+        id: user.id,
+        displayName: user.displayName || '',
+        email: user.email || '',
+        gender: user.gender || null,
+        birthDate: user.birthDate || null,
+        location: user.location || null,
+        bio: user.bio || null,
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });

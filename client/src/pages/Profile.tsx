@@ -566,7 +566,7 @@ export default function Profile() {
 
   // Save user identity mutation (shared fields)
   const saveIdentityMutation = useMutation({
-    mutationFn: async (data: { name?: string; email?: string; gender?: string; birthDate?: Date | null; location?: string; bio?: string }) => {
+    mutationFn: async (data: { displayName?: string; email?: string; gender?: string; birthDate?: Date | null; location?: string; bio?: string }) => {
       const response = await apiRequest('PATCH', '/api/user-identity', data);
       return response.json();
     },
@@ -596,7 +596,7 @@ export default function Profile() {
       // Update shared fields from identity
       setProfileData(prev => ({
         ...prev,
-        basic_name: userIdentity.name || userName || "",
+        basic_name: userIdentity.displayName || userName || "",
         basic_email: userIdentity.email || userEmail || "",
         basic_gender: userIdentity.gender || "",
         basic_birthDate: userIdentity.birthDate ? new Date(userIdentity.birthDate) : null,
@@ -655,9 +655,9 @@ export default function Profile() {
     
     const currentData = profileDataRef.current;
     
-    // Shared fields to save to identity
+    // Shared fields to save to identity (users table)
     const identityData = {
-      name: currentData.basic_name || undefined,
+      displayName: currentData.basic_name || undefined,
       email: currentData.basic_email || undefined,
       gender: currentData.basic_gender || undefined,
       birthDate: currentData.basic_birthDate || undefined,
