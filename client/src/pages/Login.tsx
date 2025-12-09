@@ -136,28 +136,6 @@ export default function Login() {
                     </svg>
                     <span className="text-[#191F28] font-medium">Google로 계속하기</span>
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={signInWithApple}
-                    className="h-14 rounded-[16px] border-[#E5E8EB] hover:bg-[#F9FAFB] hover:border-[#3182F6]/30 transition-all flex items-center justify-center gap-3"
-                    data-testid="button-apple"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#000">
-                      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-                    </svg>
-                    <span className="text-[#191F28] font-medium">Apple로 계속하기</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={signInWithKakao}
-                    className="h-14 rounded-[16px] border-[#E5E8EB] hover:bg-[#FEE500]/10 hover:border-[#FEE500] transition-all flex items-center justify-center gap-3 bg-[#FEE500]"
-                    data-testid="button-kakao"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#000">
-                      <path d="M12 3c-5.52 0-10 3.59-10 8 0 2.85 1.89 5.35 4.72 6.74-.18.67-.67 2.42-.77 2.8-.12.47.17.46.37.34.15-.1 2.42-1.65 3.4-2.32.73.11 1.49.17 2.28.17 5.52 0 10-3.59 10-8s-4.48-8-10-8z"/>
-                    </svg>
-                    <span className="text-[#191F28] font-medium">카카오로 계속하기</span>
-                  </Button>
                 </div>
 
                 <div className="relative">
@@ -278,7 +256,7 @@ export default function Login() {
                 <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#F9FAFB]">
                   <Sparkles className="h-5 w-5 text-[#3182F6]" />
                   <span className="text-sm text-[#4E5968]">
-                    신규 가입 시 무료 크레딧 <span className="font-bold text-[#3182F6]">10개</span> 제공
+                    신규 가입 시 무료 크레딧 <span className="font-bold text-[#3182F6]">1개</span> 제공
                   </span>
                 </div>
               </div>
