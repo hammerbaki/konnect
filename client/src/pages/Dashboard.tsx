@@ -1,229 +1,365 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MOCK_ANALYSIS, MOCK_GOALS } from "@/lib/mockData";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { ArrowUpRight, TrendingUp, Activity, Award, ChevronRight, FileText, Target, User } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-
-const data = [
-  { name: '1월', score: 65 },
-  { name: '2월', score: 68 },
-  { name: '3월', score: 75 },
-  { name: '4월', score: 72 },
-  { name: '5월', score: 80 },
-  { name: '6월', score: 85 },
-];
+import { useAuth } from "@/lib/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { 
+  User, 
+  Compass, 
+  FileText, 
+  BarChart3, 
+  ChevronRight, 
+  Sparkles,
+  Target,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Coins
+} from "lucide-react";
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  
+  // Fetch user identity for credits
+  const { data: userIdentity } = useQuery({
+    queryKey: ['/api/user-identity'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/user-identity');
+      return response.json();
+    },
+    enabled: !!user,
+  });
+
+  // Fetch profiles
+  const { data: profiles } = useQuery({
+    queryKey: ['/api/profiles'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/profiles');
+      return response.json();
+    },
+    enabled: !!user,
+  });
+
+  // Get first profile ID if exists
+  const firstProfileId = profiles?.[0]?.id;
+
+  // Fetch analyses for the first profile
+  const { data: analyses } = useQuery({
+    queryKey: ['/api/profiles', firstProfileId, 'analyses'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/profiles/${firstProfileId}/analyses`);
+      return response.json();
+    },
+    enabled: !!firstProfileId,
+  });
+
+  // Fetch essays for the first profile
+  const { data: essays } = useQuery({
+    queryKey: ['/api/profiles', firstProfileId, 'essays'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/profiles/${firstProfileId}/essays`);
+      return response.json();
+    },
+    enabled: !!firstProfileId,
+  });
+
+  // Fetch kompass for the first profile
+  const { data: kompass } = useQuery({
+    queryKey: ['/api/profiles', firstProfileId, 'kompass'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/profiles/${firstProfileId}/kompass`);
+      return response.json();
+    },
+    enabled: !!firstProfileId,
+  });
+
+  const userName = user?.lastName && user?.firstName 
+    ? `${user.lastName}${user.firstName}` 
+    : user?.firstName || user?.lastName || user?.email?.split('@')[0] || '사용자';
+
+  const credits = user?.credits ?? 10;
+  const profileCount = profiles?.length ?? 0;
+  const analysisCount = analyses?.length ?? 0;
+  const essayCount = essays?.length ?? 0;
+  const kompassCount = kompass?.length ?? 0;
+
+  // Quick action cards data
+  const quickActions = [
+    {
+      title: "프로필",
+      description: "내 정보 관리",
+      icon: User,
+      color: "#3182F6",
+      bgColor: "bg-blue-50",
+      href: "/profile",
+      stat: profileCount > 0 ? `${profileCount}개 프로필` : "작성하기",
+    },
+    {
+      title: "AI 분석",
+      description: "커리어 분석",
+      icon: BarChart3,
+      color: "#00BFA5",
+      bgColor: "bg-emerald-50",
+      href: "/analysis",
+      stat: analysisCount > 0 ? `${analysisCount}개 분석` : "시작하기",
+    },
+    {
+      title: "Kompass",
+      description: "목표 관리",
+      icon: Compass,
+      color: "#FFB300",
+      bgColor: "bg-amber-50",
+      href: "/kompass",
+      stat: kompassCount > 0 ? `${kompassCount}개 목표` : "목표 설정",
+    },
+    {
+      title: "자기소개서",
+      description: "에세이 작성",
+      icon: FileText,
+      color: "#9852F8",
+      bgColor: "bg-purple-50",
+      href: "/essays",
+      stat: essayCount > 0 ? `${essayCount}개 작성` : "작성하기",
+    },
+  ];
+
   return (
     <Layout>
       <div className="space-y-8 pb-10">
-        <div>
-          <h2 className="text-[28px] font-bold text-[#191F28]">대시보드</h2>
-          <p className="text-[#8B95A1] mt-1 text-lg">반가워요! 현재 커리어 성장 궤적을 확인해보세요.</p>
-        </div>
-
-        {/* Progress Overview Section */}
-        <div className="grid gap-6 md:grid-cols-2">
-            {/* Vision Tree Progress */}
-            <Card className="toss-card p-6 text-[#191F28]">
-                <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                            <Target className="h-5 w-5 text-[#3182F6]" /> Kompass 진행률
-                        </CardTitle>
-                        <CardDescription className="text-[#8B95A1] mt-1">최종 커리어 목표 달성까지</CardDescription>
-                    </div>
-                    <span className="text-3xl font-bold text-[#3182F6]">45%</span>
-                </CardHeader>
-                <CardContent className="px-0 pb-0 mt-4">
-                    <Progress value={45} className="h-3 bg-[#F2F4F6]" indicatorClassName="bg-[#3182F6]" />
-                    <div className="mt-4 flex justify-between text-sm text-[#8B95A1]">
-                        <span>현재: 시니어 PM 직무 전환</span>
-                        <span>목표: CPO (2030)</span>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Essay Progress */}
-            <Card className="toss-card p-6">
-                <CardHeader className="px-0 pt-0 flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-[#00BFA5]" /> 자기소개서 완성도
-                        </CardTitle>
-                        <CardDescription className="text-[#8B95A1] mt-1">경력 기술서 및 포트폴리오</CardDescription>
-                    </div>
-                    <Button variant="outline" className="rounded-xl h-10 text-[#00BFA5] border-[#00BFA5]/20 hover:bg-[#00BFA5]/10 font-bold">
-                        작성하기
-                    </Button>
-                </CardHeader>
-                <CardContent className="px-0 pb-0 mt-4">
-                    <div className="space-y-3">
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-[#4E5968] font-medium">핵심 역량 기술</span>
-                            <span className="text-[#00BFA5] font-bold">완료</span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-[#4E5968] font-medium">프로젝트 성과</span>
-                            <span className="text-[#FFB300] font-bold">작성중</span>
-                        </div>
-                        <Progress value={70} className="h-2 bg-[#F2F4F6] mt-2" indicatorClassName="bg-[#00BFA5]" />
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="toss-card hover:scale-[1.02] transition-transform">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-[#8B95A1]">커리어 매칭 점수</CardTitle>
-              <div className="p-2 bg-blue-50 rounded-xl">
-                <Activity className="h-4 w-4 text-[#3182F6]" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-[#191F28]">{MOCK_ANALYSIS.score}점</div>
-              <p className="text-sm text-[#8B95A1] mt-1 font-medium">
-                <span className="text-[#3182F6]">▲ 2.5%</span> 지난달 대비
-              </p>
-              <div className="mt-4 h-2.5 w-full bg-[#F2F4F6] rounded-full overflow-hidden">
-                <div className="h-full bg-[#3182F6]" style={{ width: `${MOCK_ANALYSIS.score}%` }}></div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Welcome Section */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 className="text-[28px] font-bold text-[#191F28]">
+              안녕하세요, {userName}님
+            </h2>
+            <p className="text-[#8B95A1] mt-1 text-lg">
+              오늘도 커리어 성장을 위한 한 걸음을 시작해보세요.
+            </p>
+          </div>
           
-          <Card className="toss-card hover:scale-[1.02] transition-transform">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-[#8B95A1]">시장 트렌드</CardTitle>
-              <div className="p-2 bg-emerald-50 rounded-xl">
-                <TrendingUp className="h-4 w-4 text-[#00BFA5]" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-[#191F28]">{MOCK_ANALYSIS.marketTrend}</div>
-              <p className="text-sm text-[#8B95A1] mt-1 font-medium">
-                타겟 직군 수요 급증
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="toss-card hover:scale-[1.02] transition-transform">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-[#8B95A1]">진행중인 목표</CardTitle>
-              <div className="p-2 bg-amber-50 rounded-xl">
-                <Award className="h-4 w-4 text-[#FFB300]" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-[#191F28]">{MOCK_GOALS.length}개</div>
-              <p className="text-sm text-[#8B95A1] mt-1 font-medium">
-                {MOCK_GOALS.filter(g => g.status === 'in-progress').length}개 진행중
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="toss-card hover:scale-[1.02] transition-transform">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-[#8B95A1]">예상 연봉 범위</CardTitle>
-              <div className="p-2 bg-purple-50 rounded-xl">
-                <ArrowUpRight className="h-4 w-4 text-[#9852F8]" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-[#191F28]">
-                ${(MOCK_ANALYSIS.salaryRange.min / 1000).toFixed(0)}k - ${(MOCK_ANALYSIS.salaryRange.max / 1000).toFixed(0)}k
-              </div>
-              <p className="text-sm text-[#8B95A1] mt-1 font-medium">
-                경력 및 위치 기반 산정
-              </p>
-            </CardContent>
+          {/* Credits Display */}
+          <Card className="toss-card px-5 py-4 flex items-center gap-3 w-fit">
+            <div className="p-2.5 bg-amber-50 rounded-xl">
+              <Coins className="h-5 w-5 text-[#FFB300]" />
+            </div>
+            <div>
+              <p className="text-sm text-[#8B95A1] font-medium">보유 크레딧</p>
+              <p className="text-xl font-bold text-[#191F28]">{credits}개</p>
+            </div>
           </Card>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="col-span-4 toss-card p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle className="text-xl font-bold text-[#191F28]">준비도 점수 추이</CardTitle>
-              <CardDescription className="text-[#8B95A1]">
-                지난 6개월간의 자격 요건 충족도 변화입니다.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
-              <div className="h-[320px] w-full mt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F2F4F6" />
-                    <XAxis 
-                      dataKey="name" 
-                      stroke="#B0B8C1" 
-                      fontSize={14} 
-                      tickLine={false} 
-                      axisLine={false} 
-                      tickMargin={10}
-                    />
-                    <YAxis 
-                      stroke="#B0B8C1" 
-                      fontSize={14} 
-                      tickLine={false} 
-                      axisLine={false} 
-                      tickFormatter={(value) => `${value}%`} 
-                    />
-                    <Tooltip 
-                      cursor={{fill: '#F9FAFB'}}
-                      contentStyle={{ 
-                        borderRadius: '16px', 
-                        border: 'none', 
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                        padding: '12px 20px',
-                        fontSize: '14px',
-                        fontWeight: 'bold'
-                      }}
-                    />
-                    <Bar dataKey="score" fill="#3182F6" radius={[8, 8, 0, 0]} barSize={40}>
-                      {data.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={index === data.length - 1 ? '#3182F6' : '#E5E8EB'} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="col-span-3 toss-card p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle className="text-xl font-bold text-[#191F28]">주요 스킬 갭 (Gap)</CardTitle>
-              <CardDescription className="text-[#8B95A1]">
-                목표 직무를 위해 보완이 필요한 역량입니다.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-0 mt-4">
-              <div className="space-y-4">
-                {MOCK_ANALYSIS.skillsGap.map((skill, i) => (
-                  <div key={skill} className="flex items-center p-4 bg-[#F2F4F6] rounded-xl group hover:bg-[#E8F3FF] transition-colors cursor-pointer">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#E44E48] mr-4" />
-                    <div className="space-y-1 flex-1">
-                      <p className="text-base font-bold text-[#333D4B]">{skill}</p>
-                      <p className="text-sm text-[#8B95A1]">시니어 레벨 필수 역량</p>
+        {/* Quick Actions Grid */}
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link key={action.title} href={action.href}>
+                <Card className="toss-card p-5 hover:scale-[1.02] transition-all cursor-pointer group h-full" data-testid={`card-action-${action.title}`}>
+                  <div className="flex flex-col h-full">
+                    <div className={`p-3 ${action.bgColor} rounded-xl w-fit mb-4`}>
+                      <Icon className="h-6 w-6" style={{ color: action.color }} />
                     </div>
-                    <ChevronRight className="h-5 w-5 text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
-                  </div>
-                ))}
-                
-                <div className="mt-8 pt-6 border-t border-[#F2F4F6]">
-                  <h4 className="text-base font-bold text-[#333D4B] mb-4">나의 강점</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {MOCK_ANALYSIS.strengths.map(strength => (
-                      <span key={strength} className="px-3 py-1.5 rounded-lg bg-[#E8F3FF] text-[#1B64DA] text-sm font-semibold">
-                        {strength}
+                    <h3 className="text-lg font-bold text-[#191F28] mb-1">{action.title}</h3>
+                    <p className="text-sm text-[#8B95A1] mb-3">{action.description}</p>
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="text-sm font-semibold" style={{ color: action.color }}>
+                        {action.stat}
                       </span>
-                    ))}
+                      <ChevronRight className="h-5 w-5 text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
+                    </div>
                   </div>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Kompass Progress Card */}
+          <Card className="toss-card p-6">
+            <CardHeader className="px-0 pt-0">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                  <Target className="h-5 w-5 text-[#3182F6]" /> Kompass 목표
+                </CardTitle>
+                <Link href="/kompass">
+                  <Button variant="ghost" size="sm" className="text-[#3182F6] font-bold">
+                    전체보기 <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+              <CardDescription className="text-[#8B95A1] mt-1">
+                목표를 향한 여정을 관리하세요
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0 pb-0 mt-4 space-y-4">
+              <div className="p-4 bg-[#F9FAFB] rounded-xl">
+                <div className="flex items-center gap-3 mb-3">
+                  <Calendar className="h-5 w-5 text-[#3182F6]" />
+                  <span className="font-bold text-[#191F28]">오늘의 할 일</span>
+                </div>
+                <p className="text-sm text-[#8B95A1]">
+                  Kompass에서 오늘의 목표를 설정해보세요.
+                </p>
+                <Link href="/kompass">
+                  <Button className="w-full mt-4 rounded-xl h-11 bg-[#3182F6] font-bold" data-testid="button-go-to-kompass">
+                    목표 설정하기
+                  </Button>
+                </Link>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-[#4E5968] font-medium flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-[#00BFA5]" /> 설정된 목표
+                  </span>
+                  <span className="text-[#00BFA5] font-bold">{kompassCount}개</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-[#4E5968] font-medium flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-[#FFB300]" /> 활성 프로필
+                  </span>
+                  <span className="text-[#FFB300] font-bold">{profileCount}개</span>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* AI Analysis Summary Card */}
+          <Card className="toss-card p-6">
+            <CardHeader className="px-0 pt-0">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-[#00BFA5]" /> AI 커리어 분석
+                </CardTitle>
+                <Link href="/analysis">
+                  <Button variant="ghost" size="sm" className="text-[#00BFA5] font-bold">
+                    전체보기 <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+              <CardDescription className="text-[#8B95A1] mt-1">
+                AI가 분석한 나의 커리어 인사이트
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0 pb-0 mt-4">
+              {analysisCount > 0 ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-[#F0FDF9] rounded-xl border border-[#00BFA5]/20">
+                    <p className="text-sm text-[#00BFA5] font-semibold mb-1">최근 분석 완료</p>
+                    <p className="text-[#4E5968] text-sm">
+                      {analysisCount}개의 커리어 분석이 있습니다.
+                    </p>
+                  </div>
+                  <Link href="/analysis">
+                    <Button variant="outline" className="w-full rounded-xl h-11 border-[#00BFA5] text-[#00BFA5] font-bold hover:bg-[#00BFA5]/10" data-testid="button-view-analysis">
+                      분석 결과 보기
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="p-4 bg-[#F9FAFB] rounded-xl">
+                  <div className="flex items-center gap-3 mb-3">
+                    <BarChart3 className="h-5 w-5 text-[#00BFA5]" />
+                    <span className="font-bold text-[#191F28]">분석 시작하기</span>
+                  </div>
+                  <p className="text-sm text-[#8B95A1] mb-4">
+                    프로필을 바탕으로 AI가 맞춤형 커리어 분석을 제공합니다.
+                  </p>
+                  <Link href="/analysis">
+                    <Button className="w-full rounded-xl h-11 bg-[#00BFA5] font-bold hover:bg-[#00BFA5]/90" data-testid="button-start-analysis">
+                      AI 분석 시작 (1 크레딧)
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Bottom Row */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Profile Completion Card */}
+          <Card className="toss-card p-6">
+            <CardHeader className="px-0 pt-0">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                  <User className="h-5 w-5 text-[#3182F6]" /> 프로필 현황
+                </CardTitle>
+                <Link href="/profile">
+                  <Button variant="ghost" size="sm" className="text-[#3182F6] font-bold">
+                    수정하기 <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="px-0 pb-0 mt-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#4E5968] font-medium">프로필 완성도</span>
+                  <span className="text-[#3182F6] font-bold">{profileCount > 0 ? '작성됨' : '미작성'}</span>
+                </div>
+                <Progress 
+                  value={profileCount > 0 ? 60 : 0} 
+                  className="h-3 bg-[#F2F4F6]" 
+                  indicatorClassName="bg-[#3182F6]" 
+                />
+                <p className="text-sm text-[#8B95A1]">
+                  {profileCount > 0 
+                    ? '프로필 정보를 더 상세히 입력하면 더 정확한 분석을 받을 수 있어요.'
+                    : '프로필을 작성하면 AI 분석과 맞춤 추천을 받을 수 있어요.'
+                  }
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Essays Card */}
+          <Card className="toss-card p-6">
+            <CardHeader className="px-0 pt-0">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-[#9852F8]" /> 자기소개서
+                </CardTitle>
+                <Link href="/essays">
+                  <Button variant="ghost" size="sm" className="text-[#9852F8] font-bold">
+                    전체보기 <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="px-0 pb-0 mt-4">
+              {essayCount > 0 ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-[#F5F0FF] rounded-xl border border-[#9852F8]/20">
+                    <p className="text-sm text-[#9852F8] font-semibold mb-1">작성된 에세이</p>
+                    <p className="text-[#4E5968] text-sm">
+                      {essayCount}개의 자기소개서가 있습니다.
+                    </p>
+                  </div>
+                  <Link href="/essays">
+                    <Button variant="outline" className="w-full rounded-xl h-11 border-[#9852F8] text-[#9852F8] font-bold hover:bg-[#9852F8]/10" data-testid="button-view-essays">
+                      에세이 보기
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-[#8B95A1]">
+                    AI가 도와주는 자기소개서 작성으로 취업 준비를 시작해보세요.
+                  </p>
+                  <Link href="/essays">
+                    <Button className="w-full rounded-xl h-11 bg-[#9852F8] font-bold hover:bg-[#9852F8]/90" data-testid="button-write-essay">
+                      자기소개서 작성 (1 크레딧)
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
