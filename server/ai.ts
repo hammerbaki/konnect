@@ -408,7 +408,7 @@ export async function generateCareerAnalysis(
 - 반드시 유효한 JSON만 반환하세요.`;
 
         const message = await anthropic.messages.create({
-          model: "claude-3-haiku-20240307", // Using cheapest model for testing
+          model: "claude-sonnet-4-5", // Using supported model
           max_tokens: 4096,
           system: systemPrompt,
           messages: [
