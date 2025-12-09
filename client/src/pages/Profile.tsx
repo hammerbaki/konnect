@@ -531,6 +531,16 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedType, setSelectedType] = useState<ProfileDataType["type"]>("general");
   const isInitialLoad = useRef(true);
+  
+  // Use refs for stable callbacks to prevent infinite loops
+  const profileDataRef = useRef(profileData);
+  const selectedTypeRef = useRef(selectedType);
+  const isSavingRef = useRef(isSaving);
+  
+  // Keep refs updated
+  useEffect(() => { profileDataRef.current = profileData; }, [profileData]);
+  useEffect(() => { selectedTypeRef.current = selectedType; }, [selectedType]);
+  useEffect(() => { isSavingRef.current = isSaving; }, [isSaving]);
 
   // Fetch profile data from API based on selected type
   const { data: serverProfile, isLoading: isLoadingProfile } = useQuery({
@@ -603,19 +613,23 @@ export default function Profile() {
     }
   }, [serverProfile?.id, selectedType]);
 
-  // Handle save
+  // Stable save mutation reference
+  const saveProfileMutationRef = useRef(saveProfileMutation);
+  useEffect(() => { saveProfileMutationRef.current = saveProfileMutation; }, [saveProfileMutation]);
+  
+  // Handle save - uses refs to prevent recreating callback
   const handleSave = useCallback(() => {
-    if (isSaving) return;
+    if (isSavingRef.current) return;
     setIsSaving(true);
     
     // Prepare data for saving (excluding the type field from profileData)
-    const { type, ...dataToSave } = profileData;
+    const { type, ...dataToSave } = profileDataRef.current;
     
-    saveProfileMutation.mutate({
-      type: selectedType,
+    saveProfileMutationRef.current.mutate({
+      type: selectedTypeRef.current,
       profileData: dataToSave,
     });
-  }, [profileData, selectedType, isSaving, saveProfileMutation]);
+  }, []); // Empty deps - uses refs for current values
 
   // Handle profile type change - update both local state and trigger refetch
   const handleTypeChange = useCallback((newType: ProfileDataType["type"]) => {
@@ -626,7 +640,7 @@ export default function Profile() {
     }
   }, [selectedType]);
 
-  // Set mobile action button
+  // Set mobile action button - depends only on isSaving for updates
   useEffect(() => {
     setAction({
       icon: isSaving ? Loader2 : Save,
@@ -635,7 +649,7 @@ export default function Profile() {
       disabled: isSaving,
     });
     return () => setAction(null);
-  }, [handleSave, isSaving, setAction]);
+  }, [isSaving, setAction, handleSave]);
 
   const toggleWorkValue = (value: string) => {
       setProfileData(prev => {
