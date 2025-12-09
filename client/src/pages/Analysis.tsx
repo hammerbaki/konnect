@@ -444,7 +444,7 @@ export default function Analysis() {
                             </CardHeader>
                             <CardContent>
                                 <ul className="space-y-2">
-                                    {latestAnalysis.skillAnalysis.strengths?.map((strength: string, idx: number) => (
+                                    {skillAnalysis.strengths?.map((strength: string, idx: number) => (
                                         <li key={idx} className="flex items-start gap-2 text-sm text-[#4E5968]">
                                             <CheckCircle2 className="h-4 w-4 text-[#00BFA5] shrink-0 mt-0.5" />
                                             {strength}
@@ -463,7 +463,7 @@ export default function Analysis() {
                             </CardHeader>
                             <CardContent>
                                 <ul className="space-y-2">
-                                    {latestAnalysis.skillAnalysis.weaknesses?.map((weakness: string, idx: number) => (
+                                    {skillAnalysis.weaknesses?.map((weakness: string, idx: number) => (
                                         <li key={idx} className="flex items-start gap-2 text-sm text-[#4E5968]">
                                             <AlertTriangle className="h-4 w-4 text-[#FFB300] shrink-0 mt-0.5" />
                                             {weakness}
@@ -482,7 +482,7 @@ export default function Analysis() {
                             </CardHeader>
                             <CardContent>
                                 <ul className="space-y-2">
-                                    {latestAnalysis.skillAnalysis.developmentPlan?.map((plan: string, idx: number) => (
+                                    {skillAnalysis.developmentPlan?.map((plan: string, idx: number) => (
                                         <li key={idx} className="flex items-start gap-2 text-sm text-[#4E5968]">
                                             <Zap className="h-4 w-4 text-[#3182F6] shrink-0 mt-0.5" />
                                             {plan}
@@ -493,6 +493,22 @@ export default function Analysis() {
                         </Card>
                     </div>
                 )}
+
+                {/* Floating Analyze Button */}
+                <div className="fixed bottom-24 right-6 md:hidden z-50">
+                    <Button 
+                        onClick={handleAnalyze}
+                        disabled={generateAnalysisMutation.isPending}
+                        className="h-14 w-14 rounded-full bg-[#3182F6] shadow-lg shadow-blue-500/30"
+                        data-testid="button-mobile-analyze"
+                    >
+                        {generateAnalysisMutation.isPending ? (
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                        ) : (
+                            <Brain className="h-6 w-6" />
+                        )}
+                    </Button>
+                </div>
             </div>
         );
     };
@@ -521,7 +537,21 @@ export default function Analysis() {
                                 <ProfileSidebar />
                             </SheetContent>
                         </Sheet>
-                        <h1 className="text-lg font-bold text-[#191F28]">커리어 분석</h1>
+                        <h1 className="text-lg font-bold text-[#191F28] flex-1">커리어 분석</h1>
+                        <Button 
+                            onClick={handleAnalyze}
+                            disabled={generateAnalysisMutation.isPending}
+                            size="sm"
+                            className="gap-1 bg-[#3182F6] text-white"
+                            data-testid="button-header-analyze"
+                        >
+                            {generateAnalysisMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Sparkles className="h-4 w-4" />
+                            )}
+                            {latestAnalysis ? '재분석' : '분석'}
+                        </Button>
                     </div>
 
                     {/* Content Scroll Area */}
