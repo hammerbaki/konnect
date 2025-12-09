@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { User, Mail, MapPin, Briefcase, School, Save, Building, Calendar as CalendarIcon, Award, Link as LinkIcon, Trash2, Check, HardHat, Zap, Armchair, BrainCircuit, AlertTriangle, X, TrendingUp, DollarSign, Smile, Shield, BookOpen, GraduationCap, PenTool, Star, Plus, Sparkles, CheckCircle2, Edit2, Languages, Loader2 } from "lucide-react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useAuth } from "@/lib/AuthContext";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -529,19 +529,18 @@ export default function Profile() {
   // State Management with Prefixed Fields for Analysis Isolation
   const [profileData, setProfileData] = useState<ProfileDataType>(getDefaultProfileData());
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedType, setSelectedType] = useState<ProfileDataType["type"]>("general");
+  const isInitialLoad = useRef(true);
 
-  // Current profile type for API calls
-  const currentType = profileData.type;
-
-  // Fetch profile data from API
-  const { data: serverProfile, isLoading: isLoadingProfile, refetch: refetchProfile } = useQuery({
-    queryKey: ['/api/user-profile', currentType],
+  // Fetch profile data from API based on selected type
+  const { data: serverProfile, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ['/api/user-profile', selectedType],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/user-profile?type=${currentType}`);
+      const response = await apiRequest('GET', `/api/user-profile?type=${selectedType}`);
       return response.json();
     },
     enabled: !!user,
-    staleTime: 0,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   // Save profile mutation
@@ -571,15 +570,16 @@ export default function Profile() {
 
   // Load profile data from server when it changes
   useEffect(() => {
-    if (serverProfile?.profileData) {
-      const savedData = serverProfile.profileData as Record<string, any>;
+    if (serverProfile) {
+      const savedData = (serverProfile.profileData || {}) as Record<string, any>;
       
-      // Parse dates back from strings
-      if (savedData.basic_birthDate) {
-        savedData.basic_birthDate = new Date(savedData.basic_birthDate);
+      // Parse dates back from strings (clone to avoid mutating)
+      const parsedData = { ...savedData };
+      if (parsedData.basic_birthDate) {
+        parsedData.basic_birthDate = new Date(parsedData.basic_birthDate);
       }
-      if (savedData.gen_workExperience) {
-        savedData.gen_workExperience = savedData.gen_workExperience.map((exp: any) => ({
+      if (parsedData.gen_workExperience) {
+        parsedData.gen_workExperience = parsedData.gen_workExperience.map((exp: any) => ({
           ...exp,
           startDate: exp.startDate ? new Date(exp.startDate) : null,
           endDate: exp.endDate ? new Date(exp.endDate) : null,
@@ -587,23 +587,17 @@ export default function Profile() {
       }
       
       // Merge with defaults to ensure all fields exist
-      setProfileData(prev => ({
-        ...getDefaultProfileData(currentType),
-        ...savedData,
-        type: currentType,
+      setProfileData({
+        ...getDefaultProfileData(selectedType),
+        ...parsedData,
+        type: selectedType,
         // Keep auth-based values as defaults if not saved
-        basic_name: savedData.basic_name || userName || "",
-        basic_email: savedData.basic_email || userEmail || "",
-      }));
-    } else if (serverProfile && !serverProfile.profileData) {
-      // New profile, initialize with user info from auth
-      setProfileData(prev => ({
-        ...getDefaultProfileData(currentType),
-        basic_name: userName || "",
-        basic_email: userEmail || "",
-      }));
+        basic_name: parsedData.basic_name || userName || "",
+        basic_email: parsedData.basic_email || userEmail || "",
+      });
+      isInitialLoad.current = false;
     }
-  }, [serverProfile, currentType, userName, userEmail]);
+  }, [serverProfile, selectedType, userName, userEmail]);
 
   // Handle save
   const handleSave = useCallback(() => {
@@ -614,22 +608,18 @@ export default function Profile() {
     const { type, ...dataToSave } = profileData;
     
     saveProfileMutation.mutate({
-      type: currentType,
+      type: selectedType,
       profileData: dataToSave,
     });
-  }, [profileData, currentType, isSaving, saveProfileMutation]);
+  }, [profileData, selectedType, isSaving, saveProfileMutation]);
 
-  // Handle profile type change
+  // Handle profile type change - update both local state and trigger refetch
   const handleTypeChange = useCallback((newType: ProfileDataType["type"]) => {
-    setProfileData(prev => ({ ...prev, type: newType }));
-  }, []);
-
-  // Refetch when type changes
-  useEffect(() => {
-    if (user) {
-      refetchProfile();
+    if (newType !== selectedType) {
+      setSelectedType(newType);
+      setProfileData(prev => ({ ...prev, type: newType }));
     }
-  }, [currentType, user, refetchProfile]);
+  }, [selectedType]);
 
   // Set mobile action button
   useEffect(() => {
@@ -641,17 +631,6 @@ export default function Profile() {
     });
     return () => setAction(null);
   }, [handleSave, isSaving, setAction]);
-
-  // Initialize with auth user info (only once)
-  useEffect(() => {
-    if (user && !serverProfile) {
-      setProfileData(prev => ({
-        ...prev,
-        basic_name: userName || prev.basic_name,
-        basic_email: userEmail || prev.basic_email,
-      }));
-    }
-  }, [user, userName, userEmail, serverProfile]);
 
   const toggleWorkValue = (value: string) => {
       setProfileData(prev => {
@@ -713,7 +692,7 @@ export default function Profile() {
 
   // Render different content based on profile type
   const renderProfileFields = () => {
-      switch (profileData.type) {
+      switch (selectedType) {
         case 'elementary':
             return (
                 <div className="space-y-6 animate-in fade-in">
@@ -2128,17 +2107,17 @@ export default function Profile() {
                     { id: 'high', label: '고등학생' },
                     { id: 'middle', label: '중학생' },
                     { id: 'elementary', label: '초등학생' },
-                ].map((type) => (
+                ].map((typeOption) => (
                     <button
-                        key={type.id}
-                        onClick={() => setProfileData(prev => ({ ...prev, type: type.id as any }))}
+                        key={typeOption.id}
+                        onClick={() => handleTypeChange(typeOption.id as ProfileDataType["type"])}
                         className={`px-4 py-2.5 rounded-full text-sm font-bold transition-all ${
-                            profileData.type === type.id
+                            selectedType === typeOption.id
                                 ? "bg-[#3182F6] text-white shadow-md shadow-blue-500/30 ring-2 ring-blue-100"
                                 : "bg-white text-[#8B95A1] border border-[#E5E8EB] hover:bg-[#F2F4F6]"
                         }`}
                     >
-                        {type.label}
+                        {typeOption.label}
                     </button>
                 ))}
             </div>
