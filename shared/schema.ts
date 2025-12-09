@@ -35,8 +35,6 @@ export const users = pgTable("users", {
   displayName: varchar("display_name", { length: 100 }),
   gender: varchar("gender", { length: 20 }),
   birthDate: timestamp("birth_date"),
-  location: varchar("location", { length: 255 }),
-  bio: text("bio"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -51,8 +49,6 @@ export const updateUserIdentitySchema = z.object({
   email: z.string().optional(),
   gender: z.string().optional(),
   birthDate: z.union([z.date(), z.string(), z.null()]).optional(),
-  location: z.string().optional(),
-  bio: z.string().optional(),
 });
 
 export type UpsertUser = z.infer<typeof upsertUserSchema>;

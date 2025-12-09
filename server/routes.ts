@@ -80,14 +80,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Return identity fields from user
       res.json({
         id: user.id,
-        displayName: user.displayName || user.firstName && user.lastName 
+        displayName: user.displayName || (user.firstName && user.lastName 
           ? `${user.firstName} ${user.lastName}`.trim() 
-          : user.email?.split('@')[0] || '',
+          : user.email?.split('@')[0] || ''),
         email: user.email || '',
         gender: user.gender || null,
         birthDate: user.birthDate || null,
-        location: user.location || null,
-        bio: user.bio || null,
       });
     } catch (error) {
       console.error("Error fetching user identity:", error);
@@ -109,8 +107,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email || '',
         gender: user.gender || null,
         birthDate: user.birthDate || null,
-        location: user.location || null,
-        bio: user.bio || null,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {

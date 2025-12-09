@@ -564,9 +564,9 @@ export default function Profile() {
     staleTime: 30000, // Cache for 30 seconds
   });
 
-  // Save user identity mutation (shared fields)
+  // Save user identity mutation (shared fields: name, email, gender, birthDate)
   const saveIdentityMutation = useMutation({
-    mutationFn: async (data: { displayName?: string; email?: string; gender?: string; birthDate?: Date | null; location?: string; bio?: string }) => {
+    mutationFn: async (data: { displayName?: string; email?: string; gender?: string; birthDate?: Date | null }) => {
       const response = await apiRequest('PATCH', '/api/user-identity', data);
       return response.json();
     },
@@ -593,15 +593,13 @@ export default function Profile() {
     if (userIdentity && userIdentity.id !== lastLoadedIdentityId.current) {
       lastLoadedIdentityId.current = userIdentity.id;
       
-      // Update shared fields from identity
+      // Update shared fields from identity (name, email, gender, birthDate only)
       setProfileData(prev => ({
         ...prev,
         basic_name: userIdentity.displayName || userName || "",
         basic_email: userIdentity.email || userEmail || "",
         basic_gender: userIdentity.gender || "",
         basic_birthDate: userIdentity.birthDate ? new Date(userIdentity.birthDate) : null,
-        basic_location: userIdentity.location || "",
-        basic_bio: userIdentity.bio || "",
       }));
     }
   }, [userIdentity?.id]);
@@ -625,18 +623,17 @@ export default function Profile() {
         }));
       }
       
-      // Merge with defaults to ensure all fields exist (excluding shared fields)
+      // Merge with defaults to ensure all fields exist
       setProfileData(prev => ({
         ...getDefaultProfileData(selectedType),
         ...parsedData,
         type: selectedType,
-        // Keep shared fields from identity (don't overwrite with profile data)
+        // Keep shared fields from identity (name, email, gender, birthDate)
         basic_name: prev.basic_name,
         basic_email: prev.basic_email,
         basic_gender: prev.basic_gender,
         basic_birthDate: prev.basic_birthDate,
-        basic_location: prev.basic_location,
-        basic_bio: prev.basic_bio,
+        // Location stays in profile data (can differ per profile type)
       }));
       isInitialLoad.current = false;
     }
@@ -655,25 +652,21 @@ export default function Profile() {
     
     const currentData = profileDataRef.current;
     
-    // Shared fields to save to identity (users table)
+    // Shared fields to save to identity (users table): name, email, gender, birthDate
     const identityData = {
       displayName: currentData.basic_name || undefined,
       email: currentData.basic_email || undefined,
       gender: currentData.basic_gender || undefined,
       birthDate: currentData.basic_birthDate || undefined,
-      location: currentData.basic_location || undefined,
-      bio: currentData.basic_bio || undefined,
     };
     
-    // Profile-specific fields (exclude shared fields and type)
+    // Profile-specific fields (exclude shared fields and type, but keep location)
     const { 
       type, 
       basic_name, 
       basic_email, 
       basic_gender, 
       basic_birthDate, 
-      basic_location, 
-      basic_bio, 
       ...profileSpecificData 
     } = currentData;
     
