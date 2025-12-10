@@ -15,7 +15,7 @@ const TokenContext = createContext<TokenContextType | undefined>(undefined);
 export function TokenProvider({ children }: { children: React.ReactNode }) {
   const [credits, setCredits] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, getAccessToken, refreshUser } = useAuth();
   const { toast } = useToast();
 
   const refreshCredits = useCallback(async () => {
@@ -26,8 +26,16 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      const token = await getAccessToken();
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+      
       const response = await fetch("/api/auth/user", {
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       
       if (response.ok) {
@@ -39,7 +47,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, getAccessToken]);
 
   useEffect(() => {
     if (user) {

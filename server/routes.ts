@@ -118,6 +118,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Redeem token code for credits
+  app.post('/api/redeem', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { code } = req.body;
+      
+      if (!code || typeof code !== 'string') {
+        return res.status(400).json({ message: "유효한 코드를 입력해 주세요." });
+      }
+      
+      const normalizedCode = code.trim().toUpperCase();
+      
+      // Simple demo codes - in production, this would check a database table
+      let creditsToAdd = 0;
+      if (normalizedCode === "DEMO" || normalizedCode === "KONNECT") {
+        creditsToAdd = 5;
+      } else if (normalizedCode.startsWith("KNC-") && normalizedCode.length >= 8) {
+        creditsToAdd = 5;
+      } else if (normalizedCode.length >= 10) {
+        creditsToAdd = 10;
+      } else {
+        return res.status(400).json({ message: "유효하지 않은 코드입니다. 다시 확인해 주세요." });
+      }
+      
+      // Get current user credits and add new ones
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+      }
+      
+      const newCredits = (user.credits || 0) + creditsToAdd;
+      await storage.updateUserCredits(userId, newCredits);
+      
+      res.json({ 
+        message: `${creditsToAdd} 크레딧이 충전되었습니다.`,
+        creditsAdded: creditsToAdd,
+        totalCredits: newCredits,
+      });
+    } catch (error) {
+      console.error("Error redeeming code:", error);
+      res.status(500).json({ message: "코드 등록 중 오류가 발생했습니다." });
+    }
+  });
+
   app.get('/api/careers', async (_req, res) => {
     try {
       const careers = await storage.getAllCareers();

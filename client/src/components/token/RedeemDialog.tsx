@@ -14,37 +14,41 @@ import { Ticket, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTokens } from "@/lib/TokenContext";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export function RedeemDialog() {
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const { addCredits } = useTokens();
+  const { refreshCredits } = useTokens();
   const { toast } = useToast();
 
-  const handleRedeem = (e: React.FormEvent) => {
+  const handleRedeem = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Mock API call
-    setTimeout(() => {
+    try {
+      const response = await apiRequest('POST', '/api/redeem', { code });
+      const data = await response.json();
+      
+      // Refresh credits from database
+      await refreshCredits();
+      
+      setOpen(false);
+      setCode("");
+      toast({
+        title: "토큰 충전 완료",
+        description: data.message || `${data.creditsAdded} 크레딧이 충전되었습니다.`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "충전 실패",
+        description: error?.message || "코드 등록 중 오류가 발생했습니다.",
+      });
+    } finally {
       setIsLoading(false);
-      if (code.trim().toUpperCase() === "DEMO" || code.length > 5) {
-        addCredits(5);
-        setOpen(false);
-        setCode("");
-        toast({
-          title: "토큰 충전 완료",
-          description: "5 토큰이 성공적으로 충전되었습니다.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "유효하지 않은 코드",
-          description: "입력하신 코드가 만료되었거나 잘못되었습니다.",
-        });
-      }
-    }, 1500);
+    }
   };
 
   return (
