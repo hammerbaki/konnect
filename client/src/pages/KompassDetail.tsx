@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar as CalendarIcon, Sparkles, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar as CalendarIcon, Sparkles, Loader2, Eye, X } from "lucide-react";
 import { VisionGoal, DailyGoal, YearlyGoal, HalfYearlyGoal, MonthlyGoal, WeeklyGoal } from "@/lib/mockData";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useMobileAction } from "@/lib/MobileActionContext";
@@ -11,10 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useTokens } from "@/lib/TokenContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -57,6 +60,60 @@ export default function KompassDetail() {
   const [selectedHalfYearId, setSelectedHalfYearId] = useState<string | null>(null);
   const [selectedMonthId, setSelectedMonthId] = useState<string | null>(null);
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(null);
+
+  // Goal Detail Modal State
+  interface GoalModalData {
+    id: string;
+    level: GoalLevel;
+    title: string;
+    description: string;
+    dateDisplay: string;
+    progress: number;
+  }
+  const [goalModalOpen, setGoalModalOpen] = useState(false);
+  const [goalModalData, setGoalModalData] = useState<GoalModalData | null>(null);
+
+  const openGoalModal = (goal: { id: string; title: string; description?: string; dateDisplay?: string; progress?: number }, level: GoalLevel) => {
+    setGoalModalData({
+      id: goal.id,
+      level,
+      title: goal.title,
+      description: goal.description || "",
+      dateDisplay: goal.dateDisplay || "",
+      progress: goal.progress || 0,
+    });
+    setGoalModalOpen(true);
+  };
+
+  const handleModalSave = () => {
+    if (!goalModalData || !vision) return;
+    
+    // Batch both updates in a single vision mutation to avoid race conditions
+    const newVision = JSON.parse(JSON.stringify(vision)) as VisionGoal;
+    
+    const findAndUpdateNode = (nodes: any[]): boolean => {
+      for (const node of nodes) {
+        if (node.id === goalModalData.id) {
+          node.title = goalModalData.title;
+          node.description = goalModalData.description;
+          return true;
+        }
+        if (node.children && findAndUpdateNode(node.children)) return true;
+      }
+      return false;
+    };
+    
+    if (newVision.id === goalModalData.id) {
+      newVision.title = goalModalData.title;
+      newVision.description = goalModalData.description;
+    } else {
+      findAndUpdateNode(newVision.children);
+    }
+    
+    setVision(newVision);
+    setGoalModalOpen(false);
+    toast({ title: "저장 완료", description: "목표가 수정되었습니다." });
+  };
 
   // AI Generation State
   const [generatingLevel, setGeneratingLevel] = useState<GoalLevel | null>(null);
@@ -731,13 +788,15 @@ export default function KompassDetail() {
                                         </h3>
                                         <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md">{year.dateDisplay}</span>
                                     </div>
-                                    {year.description && (
-                                        <Input 
-                                            value={year.description}
-                                            onChange={(e) => updateGoalContent(year.id, 'description', e.target.value)}
-                                            className="text-xs text-[#8B95A1] mb-3 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
-                                        />
-                                    )}
+                                    <p className="text-xs text-[#8B95A1] mb-2 truncate">{year.description || "목표를 입력하세요"}</p>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); openGoalModal(year, 'year'); }}
+                                        className="text-[10px] text-[#3182F6] hover:underline flex items-center justify-center gap-1 mx-auto"
+                                        data-testid={`button-detail-${year.id}`}
+                                    >
+                                        <Eye className="h-3 w-3" />
+                                        상세 보기
+                                    </button>
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-end mb-1">
@@ -791,13 +850,15 @@ export default function KompassDetail() {
                                         </h4>
                                         <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md">{half.dateDisplay}</span>
                                     </div>
-                                    {half.description && (
-                                        <Input 
-                                            value={half.description}
-                                            onChange={(e) => updateGoalContent(half.id, 'description', e.target.value)}
-                                            className="text-xs text-[#8B95A1] mb-3 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
-                                        />
-                                    )}
+                                    <p className="text-xs text-[#8B95A1] mb-2 truncate">{half.description || "목표를 입력하세요"}</p>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); openGoalModal(half, 'half'); }}
+                                        className="text-[10px] text-[#3182F6] hover:underline flex items-center justify-center gap-1 mx-auto"
+                                        data-testid={`button-detail-${half.id}`}
+                                    >
+                                        <Eye className="h-3 w-3" />
+                                        상세 보기
+                                    </button>
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-end mb-1">
@@ -850,15 +911,15 @@ export default function KompassDetail() {
                                         <h5 className={cn("font-bold text-xs truncate w-full", selectedMonthId === month.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
                                             {month.title}
                                         </h5>
-                                        <span className="text-[9px] text-[#8B95A1] bg-[#F2F4F6] px-1 py-0.5 rounded-sm">{month.dateDisplay}</span>
                                     </div>
-                                    {month.description && (
-                                        <Input 
-                                            value={month.description}
-                                            onChange={(e) => updateGoalContent(month.id, 'description', e.target.value)}
-                                            className="text-[10px] text-[#8B95A1] mb-2 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
-                                        />
-                                    )}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); openGoalModal(month, 'month'); }}
+                                        className="text-[9px] text-[#3182F6] hover:underline flex items-center justify-center gap-0.5 mx-auto"
+                                        data-testid={`button-detail-${month.id}`}
+                                    >
+                                        <Eye className="h-2.5 w-2.5" />
+                                        상세
+                                    </button>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Progress value={month.progress} className="h-1 flex-1" indicatorClassName={month.progress === 100 ? "bg-[#00BFA5]" : selectedMonthId === month.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
@@ -911,13 +972,14 @@ export default function KompassDetail() {
                                         </h5>
                                         <span className="text-[9px] text-[#8B95A1] bg-[#F2F4F6] px-1 py-0.5 rounded-sm">{week.dateDisplay}</span>
                                     </div>
-                                    {week.description && (
-                                        <Input 
-                                            value={week.description}
-                                            onChange={(e) => updateGoalContent(week.id, 'description', e.target.value)}
-                                            className="text-[10px] text-[#8B95A1] mb-2 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
-                                        />
-                                    )}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); openGoalModal(week, 'week'); }}
+                                        className="text-[9px] text-[#3182F6] hover:underline flex items-center justify-center gap-0.5 mx-auto mt-1"
+                                        data-testid={`button-detail-${week.id}`}
+                                    >
+                                        <Eye className="h-2.5 w-2.5" />
+                                        상세
+                                    </button>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Progress value={week.progress} className="h-1 flex-1" indicatorClassName={week.progress === 100 ? "bg-[#00BFA5]" : selectedWeekId === week.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
@@ -1016,6 +1078,76 @@ export default function KompassDetail() {
             </motion.div>
         )}
         </AnimatePresence>
+
+        {/* Goal Detail Modal */}
+        <Dialog open={goalModalOpen} onOpenChange={setGoalModalOpen}>
+          <DialogContent className="sm:max-w-lg rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-[#191F28] flex items-center gap-2">
+                {goalModalData?.level === 'year' && <Badge className="bg-[#3182F6]">연간</Badge>}
+                {goalModalData?.level === 'half' && <Badge className="bg-purple-500">반기</Badge>}
+                {goalModalData?.level === 'month' && <Badge className="bg-green-500">월간</Badge>}
+                {goalModalData?.level === 'week' && <Badge className="bg-orange-500">주간</Badge>}
+                목표 상세
+              </DialogTitle>
+            </DialogHeader>
+            
+            {goalModalData && (
+              <div className="space-y-5 py-4">
+                <div className="flex items-center justify-between bg-[#F9FAFB] rounded-xl p-4">
+                  <div>
+                    <p className="text-xs text-[#8B95A1]">기간</p>
+                    <p className="text-sm font-bold text-[#333D4B]">{goalModalData.dateDisplay}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-[#8B95A1]">달성률</p>
+                    <p className="text-lg font-bold text-[#3182F6]">{goalModalData.progress}%</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="modal-title" className="text-sm font-bold text-[#333D4B]">목표 제목</Label>
+                  <Input 
+                    id="modal-title"
+                    value={goalModalData.title}
+                    onChange={(e) => setGoalModalData({ ...goalModalData, title: e.target.value })}
+                    className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6]"
+                    data-testid="input-modal-title"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="modal-description" className="text-sm font-bold text-[#333D4B]">상세 설명</Label>
+                  <Textarea 
+                    id="modal-description"
+                    value={goalModalData.description}
+                    onChange={(e) => setGoalModalData({ ...goalModalData, description: e.target.value })}
+                    placeholder="목표에 대한 상세 설명을 입력하세요"
+                    className="min-h-[120px] rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6] resize-none text-sm"
+                    data-testid="input-modal-description"
+                  />
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setGoalModalOpen(false)}
+                className="flex-1 h-11 rounded-xl"
+              >
+                취소
+              </Button>
+              <Button 
+                onClick={handleModalSave}
+                className="flex-1 h-11 bg-[#3182F6] hover:bg-[#2b72d7] text-white font-bold rounded-xl"
+                data-testid="button-modal-save"
+              >
+                저장
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
       </div>
     </Layout>
