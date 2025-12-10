@@ -253,39 +253,36 @@ export default function KompassDetail() {
     },
   });
 
-  // Apply AI suggestions to the tree - merges with existing content
-  const applyAISuggestions = (level: GoalLevel, suggestions: { title: string; description: string }[]) => {
+  // Apply AI suggestions to the tree - updates title and description with bullets
+  const applyAISuggestions = (level: GoalLevel, suggestions: { title: string; description: string; bullets: string[] }[]) => {
     if (!vision) return;
     
     const newVision = JSON.parse(JSON.stringify(vision)) as VisionGoal;
     
+    // Helper to update a goal node with AI suggestion
+    const updateNode = (node: any, suggestion: { title: string; description: string; bullets: string[] }) => {
+      // Update the title with AI-generated title (keep the date/period prefix)
+      const originalTitle = node.title;
+      const periodMatch = originalTitle.match(/^(\d+년|상반기|하반기|\d+월|\d+주차)/);
+      const prefix = periodMatch ? periodMatch[0] + ' ' : '';
+      node.title = prefix + suggestion.title;
+      // Format bullets into description with bullet points
+      node.description = suggestion.bullets.length > 0
+        ? suggestion.bullets.map(b => `• ${b}`).join('\n')
+        : suggestion.description;
+    };
+    
     switch (level) {
       case 'year':
-        // Update yearly goal descriptions - only if empty or append with AI marker
         suggestions.forEach((s, i) => {
-          if (newVision.children[i]) {
-            const existing = newVision.children[i].description;
-            if (!existing || existing.trim() === '') {
-              newVision.children[i].description = s.description;
-            } else {
-              // Append with separator if already has content
-              newVision.children[i].description = `${existing} | AI: ${s.description}`;
-            }
-          }
+          if (newVision.children[i]) updateNode(newVision.children[i], s);
         });
         break;
       case 'half':
         const yearForHalf = newVision.children.find(y => y.id === selectedYearId);
         if (yearForHalf) {
           suggestions.forEach((s, i) => {
-            if (yearForHalf.children[i]) {
-              const existing = yearForHalf.children[i].description;
-              if (!existing || existing.trim() === '') {
-                yearForHalf.children[i].description = s.description;
-              } else {
-                yearForHalf.children[i].description = `${existing} | AI: ${s.description}`;
-              }
-            }
+            if (yearForHalf.children[i]) updateNode(yearForHalf.children[i], s);
           });
         }
         break;
@@ -294,14 +291,7 @@ export default function KompassDetail() {
         const halfForMonth = yearForMonth?.children.find(h => h.id === selectedHalfYearId);
         if (halfForMonth) {
           suggestions.forEach((s, i) => {
-            if (halfForMonth.children[i]) {
-              const existing = halfForMonth.children[i].description;
-              if (!existing || existing.trim() === '') {
-                halfForMonth.children[i].description = s.description;
-              } else {
-                halfForMonth.children[i].description = `${existing} | AI: ${s.description}`;
-              }
-            }
+            if (halfForMonth.children[i]) updateNode(halfForMonth.children[i], s);
           });
         }
         break;
@@ -311,14 +301,7 @@ export default function KompassDetail() {
         const monthForWeek = halfForWeek?.children.find(m => m.id === selectedMonthId);
         if (monthForWeek) {
           suggestions.forEach((s, i) => {
-            if (monthForWeek.children[i]) {
-              const existing = monthForWeek.children[i].description;
-              if (!existing || existing.trim() === '') {
-                monthForWeek.children[i].description = s.description;
-              } else {
-                monthForWeek.children[i].description = `${existing} | AI: ${s.description}`;
-              }
-            }
+            if (monthForWeek.children[i]) updateNode(monthForWeek.children[i], s);
           });
         }
         break;
@@ -330,23 +313,13 @@ export default function KompassDetail() {
         if (weekForDay) {
           suggestions.forEach((s, i) => {
             if (weekForDay.children[i]) {
-              const existingTodos = weekForDay.children[i].todos || [];
-              const hasContent = existingTodos.some(t => t.title.trim() !== '' && t.title !== '할 일을 입력하세요');
-              
-              if (!hasContent) {
-                // Replace empty todos with AI suggestions
-                weekForDay.children[i].todos = [
-                  { id: `${weekForDay.children[i].id}-ai-1`, title: s.title, completed: false },
-                  { id: `${weekForDay.children[i].id}-ai-2`, title: s.description, completed: false },
-                ];
-              } else {
-                // Append AI todos to existing
-                const newId = Date.now() + i;
-                weekForDay.children[i].todos.push(
-                  { id: `ai-${newId}-1`, title: `✨ ${s.title}`, completed: false },
-                  { id: `ai-${newId}-2`, title: `✨ ${s.description}`, completed: false },
-                );
-              }
+              // For days, use bullets as todos
+              const bullets = s.bullets.length > 0 ? s.bullets : s.description.split('\n').filter(b => b.trim());
+              weekForDay.children[i].todos = bullets.map((b, idx) => ({
+                id: `${weekForDay.children[i].id}-ai-${idx}`,
+                title: b.replace('• ', ''),
+                completed: false,
+              }));
             }
           });
         }
@@ -782,13 +755,26 @@ export default function KompassDetail() {
                         >
                             <CardContent className="p-4 text-center flex flex-col h-full justify-between">
                                 <div>
-                                    <div className="flex justify-center items-center gap-2 mb-2">
-                                        <h3 className={cn("font-bold text-sm", selectedYearId === year.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                            {year.title}
-                                        </h3>
-                                        <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md">{year.dateDisplay}</span>
+                                    <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md mb-2 inline-block">{year.dateDisplay}</span>
+                                    <h3 className={cn("font-bold text-sm mb-2", selectedYearId === year.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                        {year.title}
+                                    </h3>
+                                    {year.description && (
+                                        <div className="text-left text-xs text-[#4E5968] space-y-0.5 mb-2">
+                                            {year.description.split('\n').slice(0, 2).map((line, i) => (
+                                                <p key={i} className="truncate">{line}</p>
+                                            ))}
+                                            {year.description.split('\n').length > 2 && (
+                                                <p className="text-[#8B95A1]">+{year.description.split('\n').length - 2}개 더...</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-end">
+                                        <Progress value={year.progress} className="h-1.5 flex-1 mr-2" indicatorClassName={year.progress === 100 ? "bg-[#00BFA5]" : selectedYearId === year.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                        <span className="text-[10px] font-bold text-[#8B95A1] whitespace-nowrap">{year.progress}%</span>
                                     </div>
-                                    <p className="text-xs text-[#8B95A1] mb-2 truncate">{year.description || "목표를 입력하세요"}</p>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); openGoalModal(year, 'year'); }}
                                         className="text-[10px] text-[#3182F6] hover:underline flex items-center justify-center gap-1 mx-auto"
@@ -797,12 +783,6 @@ export default function KompassDetail() {
                                         <Eye className="h-3 w-3" />
                                         상세 보기
                                     </button>
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-end mb-1">
-                                        <Progress value={year.progress} className="h-1.5 flex-1 mr-2" indicatorClassName={year.progress === 100 ? "bg-[#00BFA5]" : selectedYearId === year.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                        <span className="text-[10px] font-bold text-[#8B95A1] whitespace-nowrap">{year.progress}%</span>
-                                    </div>
                                 </div>
                             </CardContent>
                             <div className="absolute top-3 right-3">
@@ -844,13 +824,26 @@ export default function KompassDetail() {
                         >
                             <CardContent className="p-4 text-center flex flex-col h-full justify-between">
                                 <div>
-                                    <div className="flex justify-center items-center gap-2 mb-2">
-                                        <h4 className={cn("font-bold text-sm", selectedHalfYearId === half.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                            {half.title}
-                                        </h4>
-                                        <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md">{half.dateDisplay}</span>
+                                    <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md mb-2 inline-block">{half.dateDisplay}</span>
+                                    <h4 className={cn("font-bold text-sm mb-2", selectedHalfYearId === half.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                        {half.title}
+                                    </h4>
+                                    {half.description && (
+                                        <div className="text-left text-xs text-[#4E5968] space-y-0.5 mb-2">
+                                            {half.description.split('\n').slice(0, 2).map((line, i) => (
+                                                <p key={i} className="truncate">{line}</p>
+                                            ))}
+                                            {half.description.split('\n').length > 2 && (
+                                                <p className="text-[#8B95A1]">+{half.description.split('\n').length - 2}개 더...</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-end">
+                                        <Progress value={half.progress} className="h-1.5 flex-1 mr-2" indicatorClassName={half.progress === 100 ? "bg-[#00BFA5]" : selectedHalfYearId === half.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                        <span className="text-[10px] font-bold text-[#8B95A1] whitespace-nowrap">{half.progress}%</span>
                                     </div>
-                                    <p className="text-xs text-[#8B95A1] mb-2 truncate">{half.description || "목표를 입력하세요"}</p>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); openGoalModal(half, 'half'); }}
                                         className="text-[10px] text-[#3182F6] hover:underline flex items-center justify-center gap-1 mx-auto"
@@ -859,12 +852,6 @@ export default function KompassDetail() {
                                         <Eye className="h-3 w-3" />
                                         상세 보기
                                     </button>
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-end mb-1">
-                                        <Progress value={half.progress} className="h-1.5 flex-1 mr-2" indicatorClassName={half.progress === 100 ? "bg-[#00BFA5]" : selectedHalfYearId === half.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                        <span className="text-[10px] font-bold text-[#8B95A1] whitespace-nowrap">{half.progress}%</span>
-                                    </div>
                                 </div>
                             </CardContent>
                             <div className="absolute top-3 right-3">
@@ -907,10 +894,17 @@ export default function KompassDetail() {
                         >
                             <CardContent className="p-3 text-center flex flex-col h-full justify-between">
                                 <div>
-                                    <div className="flex flex-col items-center gap-1 mb-1 w-full">
-                                        <h5 className={cn("font-bold text-xs truncate w-full", selectedMonthId === month.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                            {month.title}
-                                        </h5>
+                                    <h5 className={cn("font-bold text-xs truncate w-full mb-1", selectedMonthId === month.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                        {month.title}
+                                    </h5>
+                                    {month.description && (
+                                        <p className="text-[9px] text-[#8B95A1] truncate mb-1">{month.description.split('\n')[0]}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center gap-2">
+                                        <Progress value={month.progress} className="h-1 flex-1" indicatorClassName={month.progress === 100 ? "bg-[#00BFA5]" : selectedMonthId === month.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                        <span className="text-[9px] font-bold text-[#8B95A1] w-5 text-right">{month.progress}%</span>
                                     </div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); openGoalModal(month, 'month'); }}
@@ -920,10 +914,6 @@ export default function KompassDetail() {
                                         <Eye className="h-2.5 w-2.5" />
                                         상세
                                     </button>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Progress value={month.progress} className="h-1 flex-1" indicatorClassName={month.progress === 100 ? "bg-[#00BFA5]" : selectedMonthId === month.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                    <span className="text-[9px] font-bold text-[#8B95A1] w-5 text-right">{month.progress}%</span>
                                 </div>
                             </CardContent>
                             <div className="absolute top-2 right-2">
@@ -966,24 +956,27 @@ export default function KompassDetail() {
                         >
                             <CardContent className="p-3 text-center flex flex-col h-full justify-between">
                                 <div>
-                                    <div className="flex flex-col items-center gap-1 mb-1 w-full">
-                                        <h5 className={cn("font-bold text-xs truncate w-full", selectedWeekId === week.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
-                                            {week.title}
-                                        </h5>
-                                        <span className="text-[9px] text-[#8B95A1] bg-[#F2F4F6] px-1 py-0.5 rounded-sm">{week.dateDisplay}</span>
+                                    <span className="text-[9px] text-[#8B95A1] bg-[#F2F4F6] px-1 py-0.5 rounded-sm mb-1 inline-block">{week.dateDisplay}</span>
+                                    <h5 className={cn("font-bold text-xs truncate w-full mb-1", selectedWeekId === week.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                                        {week.title}
+                                    </h5>
+                                    {week.description && (
+                                        <p className="text-[9px] text-[#8B95A1] truncate mb-1">{week.description.split('\n')[0]}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center gap-2">
+                                        <Progress value={week.progress} className="h-1 flex-1" indicatorClassName={week.progress === 100 ? "bg-[#00BFA5]" : selectedWeekId === week.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
+                                        <span className="text-[9px] font-bold text-[#8B95A1] w-5 text-right">{week.progress}%</span>
                                     </div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); openGoalModal(week, 'week'); }}
-                                        className="text-[9px] text-[#3182F6] hover:underline flex items-center justify-center gap-0.5 mx-auto mt-1"
+                                        className="text-[9px] text-[#3182F6] hover:underline flex items-center justify-center gap-0.5 mx-auto"
                                         data-testid={`button-detail-${week.id}`}
                                     >
                                         <Eye className="h-2.5 w-2.5" />
                                         상세
                                     </button>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Progress value={week.progress} className="h-1 flex-1" indicatorClassName={week.progress === 100 ? "bg-[#00BFA5]" : selectedWeekId === week.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                    <span className="text-[9px] font-bold text-[#8B95A1] w-5 text-right">{week.progress}%</span>
                                 </div>
                             </CardContent>
                             <div className="absolute top-2 right-2">
@@ -1117,15 +1110,43 @@ export default function KompassDetail() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="modal-description" className="text-sm font-bold text-[#333D4B]">상세 설명</Label>
-                  <Textarea 
-                    id="modal-description"
-                    value={goalModalData.description}
-                    onChange={(e) => setGoalModalData({ ...goalModalData, description: e.target.value })}
-                    placeholder="목표에 대한 상세 설명을 입력하세요"
-                    className="min-h-[120px] rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6] resize-none text-sm"
-                    data-testid="input-modal-description"
-                  />
+                  <Label className="text-sm font-bold text-[#333D4B]">세부 실행 과제</Label>
+                  {goalModalData.description.includes('•') ? (
+                    <div className="space-y-2 bg-[#F9FAFB] rounded-xl p-4">
+                      {goalModalData.description.split('\n').filter(line => line.trim()).map((line, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          {line.trim().startsWith('•') ? (
+                            <>
+                              <span className="text-[#3182F6] mt-0.5">•</span>
+                              <Input
+                                value={line.replace('• ', '')}
+                                onChange={(e) => {
+                                  const lines = goalModalData.description.split('\n');
+                                  const bulletIndex = lines.findIndex((l, idx) => idx === i || l === line);
+                                  if (bulletIndex >= 0) {
+                                    lines[bulletIndex] = `• ${e.target.value}`;
+                                    setGoalModalData({ ...goalModalData, description: lines.join('\n') });
+                                  }
+                                }}
+                                className="flex-1 h-9 text-sm border-[#E5E8EB] rounded-lg"
+                              />
+                            </>
+                          ) : (
+                            <p className="text-sm text-[#4E5968]">{line}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Textarea 
+                      id="modal-description"
+                      value={goalModalData.description}
+                      onChange={(e) => setGoalModalData({ ...goalModalData, description: e.target.value })}
+                      placeholder="목표에 대한 상세 설명을 입력하세요"
+                      className="min-h-[120px] rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6] resize-none text-sm"
+                      data-testid="input-modal-description"
+                    />
+                  )}
                 </div>
               </div>
             )}

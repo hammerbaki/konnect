@@ -748,6 +748,7 @@ interface GoalContext {
 interface GeneratedGoal {
   title: string;
   description: string;
+  bullets: string[];
 }
 
 // Get output count based on level
@@ -820,10 +821,21 @@ ${getLevelPrompt(level, count)}
 다음 JSON 형식으로 반환하세요:
 {
   "suggestions": [
-    {"title": "목표 제목", "description": "목표에 대한 간단한 설명 (1-2문장)"},
-    ...
+    {
+      "title": "목표의 핵심 제목 (10자 이내 간결하게)",
+      "bullets": [
+        "구체적인 실행 항목 1",
+        "구체적인 실행 항목 2",
+        "구체적인 실행 항목 3"
+      ]
+    }
   ]
 }
+
+중요: 
+- title은 핵심 키워드만 간결하게 (예: "역량 강화", "자격증 취득")
+- bullets는 3-5개의 구체적인 실행 과제로 작성
+- 각 bullet은 측정 가능하고 실행 가능해야 함
 
 **반드시 유효한 JSON만 반환하세요. 추가 설명 없이 JSON만 출력하세요.**`;
 
@@ -857,6 +869,7 @@ ${getLevelPrompt(level, count)}
         const suggestions: GeneratedGoal[] = (parsed.suggestions || []).map((s: any) => ({
           title: s.title || "목표",
           description: s.description || "",
+          bullets: s.bullets || [],
         }));
         
         return {
