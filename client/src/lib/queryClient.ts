@@ -4,7 +4,37 @@ import { getSupabase } from "./supabase";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    
+    // Try to parse as JSON and extract user-friendly message
+    let message: string;
+    let details: any = null;
+    
+    try {
+      const json = JSON.parse(text);
+      message = json.message || json.error || text;
+      details = json;
+    } catch {
+      // JSON parsing failed, create friendly message based on status code
+      if (res.status === 401) {
+        message = "로그인이 필요합니다.";
+      } else if (res.status === 402) {
+        message = "크레딧이 부족합니다.";
+      } else if (res.status === 403) {
+        message = "접근 권한이 없습니다.";
+      } else if (res.status === 404) {
+        message = "요청한 리소스를 찾을 수 없습니다.";
+      } else if (res.status >= 500) {
+        message = "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+      } else {
+        message = text || "알 수 없는 오류가 발생했습니다.";
+      }
+    }
+    
+    // Create error with additional context
+    const error = new Error(message) as Error & { status?: number; details?: any };
+    error.status = res.status;
+    error.details = details;
+    throw error;
   }
 }
 
