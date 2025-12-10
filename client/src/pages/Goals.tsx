@@ -1,10 +1,10 @@
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ChevronRight, Flag, Compass, X, Sparkles, FolderOpen, Users, Heart } from "lucide-react";
-import { MOCK_VISIONS, generateTree } from "@/lib/mockData";
+import { Plus, ChevronRight, Compass, Sparkles, FolderOpen, Users, Heart, Loader2 } from "lucide-react";
+import { generateTree, VisionGoal } from "@/lib/mockData";
 import { useLocation } from "wouter";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useEffect, useState } from "react";
@@ -14,6 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ImportedCareerData {
   title: string;
@@ -26,19 +29,78 @@ interface ImportedCareerData {
   weaknesses: string[];
 }
 
+interface KompassItem {
+  id: string;
+  profileId: string;
+  targetYear: number;
+  visionData: VisionGoal;
+  progress: number;
+  profileTitle?: string;
+  profileType?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface Profile {
+  id: string;
+  title: string;
+  type: string;
+}
+
 export default function Goals() {
   const [_, setLocation] = useLocation();
   const { setAction } = useMobileAction();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  // Creation Form State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newTargetYear, setNewTargetYear] = useState(String(new Date().getFullYear() + 3));
   const [newDescription, setNewDescription] = useState("");
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const [importedData, setImportedData] = useState<ImportedCareerData | null>(null);
 
-  // Check for imported career data from Analysis page
+  const { data: kompassList = [], isLoading: isLoadingKompass } = useQuery<KompassItem[]>({
+    queryKey: ['/api/kompass'],
+  });
+
+  const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery<Profile[]>({
+    queryKey: ['/api/profiles'],
+  });
+
+  const createKompassMutation = useMutation({
+    mutationFn: async (data: { profileId: string; targetYear: number; visionData: VisionGoal }) => {
+      const response = await apiRequest('POST', `/api/profiles/${data.profileId}/kompass`, {
+        targetYear: data.targetYear,
+        visionData: data.visionData,
+        progress: 0,
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/kompass'] });
+      setIsCreateModalOpen(false);
+      setNewTitle("");
+      setNewDescription("");
+      setSelectedProfileId("");
+      setImportedData(null);
+      toast({ 
+        title: "Kompass 생성 완료", 
+        description: importedData 
+          ? "AI 분석 기반 목표가 생성되었습니다!" 
+          : "새로운 목표 나침반이 생성되었습니다." 
+      });
+      setLocation(`/goals/${data.id}`);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "생성 실패",
+        description: error.message || "Kompass 생성 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
     const imported = sessionStorage.getItem('kompass_import');
     if (imported) {
@@ -48,7 +110,6 @@ export default function Goals() {
         setNewTitle(data.title);
         setNewTargetYear(String(new Date().getFullYear() + 3));
         
-        // Build description from actions
         const actionItems = [
           ...(data.actions?.portfolio || []).map(a => `📁 ${a}`),
           ...(data.actions?.networking || []).map(a => `🤝 ${a}`),
@@ -56,10 +117,7 @@ export default function Goals() {
         ];
         setNewDescription(actionItems.join('\n'));
         
-        // Auto-open the modal
         setIsCreateModalOpen(true);
-        
-        // Clear the session storage
         sessionStorage.removeItem('kompass_import');
         
         toast({ 
@@ -72,37 +130,42 @@ export default function Goals() {
     }
   }, []);
 
+  useEffect(() => {
+    if (profiles.length > 0 && !selectedProfileId) {
+      setSelectedProfileId(profiles[0].id);
+    }
+  }, [profiles, selectedProfileId]);
+
   const handleNewKompass = () => {
     setImportedData(null);
     setNewTitle("");
     setNewDescription("");
+    if (profiles.length > 0) {
+      setSelectedProfileId(profiles[0].id);
+    }
     setIsCreateModalOpen(true);
   };
 
   const handleSubmit = () => {
-      if (!newTitle || !newTargetYear) {
-          toast({ title: "필수 입력 항목", description: "목표 제목과 목표 연도를 입력해주세요.", variant: "destructive" });
-          return;
-      }
+    if (!newTitle || !newTargetYear) {
+      toast({ title: "필수 입력 항목", description: "목표 제목과 목표 연도를 입력해주세요.", variant: "destructive" });
+      return;
+    }
 
-      const newId = String(MOCK_VISIONS.length + 1);
-      const newKompass = generateTree(newId, newTitle, parseInt(newTargetYear));
-      newKompass.description = newDescription;
-      
-      // In a real app, this would be a server call. 
-      // For mockup, we push to the exported array (which persists in memory until refresh)
-      MOCK_VISIONS.unshift(newKompass);
-      
-      setIsCreateModalOpen(false);
-      setNewTitle("");
-      setNewDescription("");
-      setImportedData(null);
-      toast({ 
-        title: "Kompass 생성 완료", 
-        description: importedData 
-          ? "AI 분석 기반 목표가 생성되었습니다!" 
-          : "새로운 목표 나침반이 생성되었습니다." 
-      });
+    if (!selectedProfileId) {
+      toast({ title: "프로필 선택 필요", description: "Kompass를 연결할 프로필을 선택해주세요.", variant: "destructive" });
+      return;
+    }
+
+    const targetYear = parseInt(newTargetYear);
+    const visionData = generateTree(`temp-${Date.now()}`, newTitle, targetYear);
+    visionData.description = newDescription;
+
+    createKompassMutation.mutate({
+      profileId: selectedProfileId,
+      targetYear,
+      visionData,
+    });
   };
 
   useEffect(() => {
@@ -112,7 +175,9 @@ export default function Goals() {
       onClick: handleNewKompass
     });
     return () => setAction(null);
-  }, []);
+  }, [profiles]);
+
+  const isLoading = isLoadingKompass || isLoadingProfiles;
 
   return (
     <Layout>
@@ -122,61 +187,74 @@ export default function Goals() {
             <p className="text-[#8B95A1] mt-2 text-lg">나만의 커리어 나침반을 관리하세요</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Create New Card */}
-            <Card 
-                className="toss-card hover:shadow-md transition-all border-2 border-dashed border-[#E5E8EB] bg-[#F9FAFB] cursor-pointer flex flex-col items-center justify-center min-h-[240px] group"
-                onClick={handleNewKompass}
-            >
-                <div className="p-6 text-center">
-                    <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <Plus className="w-6 h-6 text-[#B0B8C1] group-hover:text-[#3182F6]" />
-                    </div>
-                    <h3 className="text-lg font-bold text-[#8B95A1] group-hover:text-[#3182F6]">새 Kompass 만들기</h3>
-                </div>
-            </Card>
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card 
+                  className="toss-card hover:shadow-md transition-all border-2 border-dashed border-[#E5E8EB] bg-[#F9FAFB] cursor-pointer flex flex-col items-center justify-center min-h-[240px] group"
+                  onClick={handleNewKompass}
+                  data-testid="button-create-kompass"
+              >
+                  <div className="p-6 text-center">
+                      <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                          <Plus className="w-6 h-6 text-[#B0B8C1] group-hover:text-[#3182F6]" />
+                      </div>
+                      <h3 className="text-lg font-bold text-[#8B95A1] group-hover:text-[#3182F6]">새 Kompass 만들기</h3>
+                  </div>
+              </Card>
 
-            {/* Existing Kompass Cards */}
-            {MOCK_VISIONS.map((vision) => (
-                <Card 
-                    key={vision.id} 
-                    className="toss-card hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-[#3182F6] group relative overflow-hidden"
-                    onClick={() => setLocation(`/goals/${vision.id}`)}
-                >
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Compass className="w-24 h-24 text-[#3182F6]" />
-                    </div>
-                    
-                    <CardContent className="p-6 flex flex-col h-full justify-between relative z-10">
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="bg-[#E8F3FF] text-[#3182F6] px-3 py-1 rounded-full text-xs font-bold">
-                                    Target {vision.targetYear}
-                                </div>
-                                <ChevronRight className="w-5 h-5 text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
-                            </div>
-                            
-                            <h3 className="text-xl font-bold text-[#191F28] mb-2 line-clamp-2 h-14">
-                                {vision.title}
-                            </h3>
-                            <p className="text-[#4E5968] text-sm mb-6 line-clamp-2 h-10">
-                                {vision.description}
-                            </p>
-                        </div>
+              {kompassList.map((kompass) => {
+                const vision = kompass.visionData;
+                return (
+                  <Card 
+                      key={kompass.id} 
+                      className="toss-card hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-[#3182F6] group relative overflow-hidden"
+                      onClick={() => setLocation(`/goals/${kompass.id}`)}
+                      data-testid={`card-kompass-${kompass.id}`}
+                  >
+                      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                          <Compass className="w-24 h-24 text-[#3182F6]" />
+                      </div>
+                      
+                      <CardContent className="p-6 flex flex-col h-full justify-between relative z-10">
+                          <div>
+                              <div className="flex items-center justify-between mb-4">
+                                  <div className="bg-[#E8F3FF] text-[#3182F6] px-3 py-1 rounded-full text-xs font-bold">
+                                      Target {kompass.targetYear}
+                                  </div>
+                                  <ChevronRight className="w-5 h-5 text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
+                              </div>
+                              
+                              <h3 className="text-xl font-bold text-[#191F28] mb-2 line-clamp-2 h-14">
+                                  {vision.title}
+                              </h3>
+                              <p className="text-[#4E5968] text-sm mb-6 line-clamp-2 h-10">
+                                  {vision.description}
+                              </p>
+                              {kompass.profileTitle && (
+                                <Badge variant="outline" className="text-xs mb-2">
+                                  {kompass.profileTitle}
+                                </Badge>
+                              )}
+                          </div>
 
-                        <div>
-                            <div className="flex justify-between items-end mb-2">
-                                <span className="text-sm text-[#8B95A1]">전체 달성률</span>
-                                <span className="text-lg font-bold text-[#3182F6]">{vision.progress}%</span>
-                            </div>
-                            <Progress value={vision.progress} className="h-2" indicatorClassName="bg-[#3182F6]" />
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
+                          <div>
+                              <div className="flex justify-between items-end mb-2">
+                                  <span className="text-sm text-[#8B95A1]">전체 달성률</span>
+                                  <span className="text-lg font-bold text-[#3182F6]">{kompass.progress}%</span>
+                              </div>
+                              <Progress value={kompass.progress} className="h-2" indicatorClassName="bg-[#3182F6]" />
+                          </div>
+                      </CardContent>
+                  </Card>
+                );
+              })}
+          </div>
+        )}
 
-        {/* Create Modal */}
         <Dialog open={isCreateModalOpen} onOpenChange={(open) => {
             setIsCreateModalOpen(open);
             if (!open) setImportedData(null);
@@ -234,6 +312,22 @@ export default function Goals() {
                             )}
                         </div>
                     )}
+
+                    <div className="space-y-2">
+                        <Label htmlFor="profile" className="text-sm font-bold text-[#333D4B]">연결할 프로필</Label>
+                        <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+                          <SelectTrigger className="h-12 rounded-xl border-[#E5E8EB]" data-testid="select-profile">
+                            <SelectValue placeholder="프로필을 선택하세요" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {profiles.map((profile) => (
+                              <SelectItem key={profile.id} value={profile.id}>
+                                {profile.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                    </div>
                     
                     <div className="space-y-2">
                         <Label htmlFor="title" className="text-sm font-bold text-[#333D4B]">목표 제목 (Kompass)</Label>
@@ -243,6 +337,7 @@ export default function Goals() {
                             value={newTitle}
                             onChange={(e) => setNewTitle(e.target.value)}
                             className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6]"
+                            data-testid="input-kompass-title"
                         />
                     </div>
 
@@ -255,6 +350,7 @@ export default function Goals() {
                             value={newTargetYear}
                             onChange={(e) => setNewTargetYear(e.target.value)}
                             className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6]"
+                            data-testid="input-target-year"
                         />
                     </div>
 
@@ -268,21 +364,26 @@ export default function Goals() {
                             value={newDescription}
                             onChange={(e) => setNewDescription(e.target.value)}
                             className="min-h-[120px] rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6] resize-none text-sm"
+                            data-testid="input-description"
                         />
                     </div>
                 </div>
 
                 <DialogFooter>
                     <Button 
-                        onClick={handleSubmit} 
+                        onClick={handleSubmit}
+                        disabled={createKompassMutation.isPending || !selectedProfileId}
                         className={cn(
                             "w-full h-12 text-white font-bold rounded-xl text-lg",
                             importedData 
                                 ? "bg-gradient-to-r from-[#3182F6] to-[#1565C0] hover:opacity-90"
                                 : "bg-[#3182F6] hover:bg-[#2b72d7]"
                         )}
+                        data-testid="button-submit-kompass"
                     >
-                        {importedData ? (
+                        {createKompassMutation.isPending ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : importedData ? (
                             <><Compass className="h-5 w-5 mr-2" /> 목표로 저장하기</>
                         ) : (
                             'Kompass 생성하기'
