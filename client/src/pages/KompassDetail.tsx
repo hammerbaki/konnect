@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar as CalendarIcon, Sparkles, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar as CalendarIcon, Sparkles, Loader2, X, Pencil } from "lucide-react";
 import { VisionGoal, DailyGoal, YearlyGoal, HalfYearlyGoal, MonthlyGoal, WeeklyGoal } from "@/lib/mockData";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useMobileAction } from "@/lib/MobileActionContext";
@@ -15,6 +15,9 @@ import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useTokens } from "@/lib/TokenContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -57,6 +60,19 @@ export default function KompassDetail() {
   const [selectedHalfYearId, setSelectedHalfYearId] = useState<string | null>(null);
   const [selectedMonthId, setSelectedMonthId] = useState<string | null>(null);
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(null);
+
+  // Goal Detail Modal State
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<{
+    id: string;
+    level: GoalLevel;
+    title: string;
+    description: string;
+    dateDisplay?: string;
+    progress: number;
+  } | null>(null);
+  const [editGoalTitle, setEditGoalTitle] = useState("");
+  const [editGoalDescription, setEditGoalDescription] = useState("");
 
   // AI Generation State
   const [generatingLevel, setGeneratingLevel] = useState<GoalLevel | null>(null);
@@ -378,6 +394,49 @@ export default function KompassDetail() {
   const selectedHalfYear = selectedYear?.children.find(h => h.id === selectedHalfYearId);
   const selectedMonth = selectedHalfYear?.children.find(m => m.id === selectedMonthId);
   const selectedWeek = selectedMonth?.children.find(w => w.id === selectedWeekId);
+
+  // Goal Modal Handlers
+  const openGoalModal = (goal: { id: string; title: string; description?: string; dateDisplay?: string; progress: number }, level: GoalLevel) => {
+    setSelectedGoal({
+      id: goal.id,
+      level,
+      title: goal.title,
+      description: goal.description || "",
+      dateDisplay: goal.dateDisplay,
+      progress: goal.progress,
+    });
+    setEditGoalTitle(goal.title);
+    setEditGoalDescription(goal.description || "");
+    setIsGoalModalOpen(true);
+    
+    // Also set selection state
+    if (level === 'year') setSelectedYearId(goal.id);
+    else if (level === 'half') setSelectedHalfYearId(goal.id);
+    else if (level === 'month') setSelectedMonthId(goal.id);
+    else if (level === 'week') setSelectedWeekId(goal.id);
+  };
+
+  const handleSaveGoal = () => {
+    if (!selectedGoal || !vision) return;
+    
+    updateGoalContent(selectedGoal.id, 'title', editGoalTitle);
+    updateGoalContent(selectedGoal.id, 'description', editGoalDescription);
+    
+    setIsGoalModalOpen(false);
+    setSelectedGoal(null);
+    toast({ title: "저장 완료", description: "목표가 수정되었습니다." });
+  };
+
+  const getLevelLabel = (level: GoalLevel): string => {
+    switch (level) {
+      case 'year': return '연간 목표';
+      case 'half': return '반기별 목표';
+      case 'month': return '월간 목표';
+      case 'week': return '주간 목표';
+      case 'day': return '일일 목표';
+      default: return '목표';
+    }
+  };
 
   const handleGoToToday = () => {
       if (!vision) return;
@@ -715,7 +774,7 @@ export default function KompassDetail() {
                 {vision.children.map((year) => (
                     <div key={year.id} className="relative">
                         <Card 
-                            onClick={() => setSelectedYearId(year.id)}
+                            onClick={() => openGoalModal(year, 'year')}
                             className={cn(
                                 "toss-card cursor-pointer transition-all hover:-translate-y-1 h-full box-border",
                                 selectedYearId === year.id 
@@ -732,11 +791,9 @@ export default function KompassDetail() {
                                         <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md">{year.dateDisplay}</span>
                                     </div>
                                     {year.description && (
-                                        <Input 
-                                            value={year.description}
-                                            onChange={(e) => updateGoalContent(year.id, 'description', e.target.value)}
-                                            className="text-xs text-[#8B95A1] mb-3 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
-                                        />
+                                        <p className="text-xs text-[#8B95A1] mb-3 text-center truncate">
+                                            {year.description}
+                                        </p>
                                     )}
                                 </div>
                                 <div>
@@ -775,7 +832,7 @@ export default function KompassDetail() {
                     {selectedYear.children.map((half) => (
                         <Card 
                             key={half.id}
-                            onClick={() => setSelectedHalfYearId(half.id)}
+                            onClick={() => openGoalModal(half, 'half')}
                             className={cn(
                                 "toss-card cursor-pointer transition-all box-border",
                                 selectedHalfYearId === half.id 
@@ -792,11 +849,9 @@ export default function KompassDetail() {
                                         <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md">{half.dateDisplay}</span>
                                     </div>
                                     {half.description && (
-                                        <Input 
-                                            value={half.description}
-                                            onChange={(e) => updateGoalContent(half.id, 'description', e.target.value)}
-                                            className="text-xs text-[#8B95A1] mb-3 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
-                                        />
+                                        <p className="text-xs text-[#8B95A1] mb-3 text-center truncate">
+                                            {half.description}
+                                        </p>
                                     )}
                                 </div>
                                 <div>
@@ -836,7 +891,7 @@ export default function KompassDetail() {
                     {selectedHalfYear.children.map((month) => (
                         <Card 
                             key={month.id}
-                            onClick={() => setSelectedMonthId(month.id)}
+                            onClick={() => openGoalModal(month, 'month')}
                             className={cn(
                                 "toss-card cursor-pointer transition-all box-border",
                                 selectedMonthId === month.id 
@@ -853,11 +908,9 @@ export default function KompassDetail() {
                                         <span className="text-[9px] text-[#8B95A1] bg-[#F2F4F6] px-1 py-0.5 rounded-sm">{month.dateDisplay}</span>
                                     </div>
                                     {month.description && (
-                                        <Input 
-                                            value={month.description}
-                                            onChange={(e) => updateGoalContent(month.id, 'description', e.target.value)}
-                                            className="text-[10px] text-[#8B95A1] mb-2 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
-                                        />
+                                        <p className="text-[10px] text-[#8B95A1] mb-2 text-center truncate">
+                                            {month.description}
+                                        </p>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -895,7 +948,7 @@ export default function KompassDetail() {
                     {selectedMonth.children.map((week) => (
                         <Card 
                             key={week.id}
-                            onClick={() => setSelectedWeekId(week.id)}
+                            onClick={() => openGoalModal(week, 'week')}
                             className={cn(
                                 "toss-card cursor-pointer transition-all box-border",
                                 selectedWeekId === week.id 
@@ -912,11 +965,9 @@ export default function KompassDetail() {
                                         <span className="text-[9px] text-[#8B95A1] bg-[#F2F4F6] px-1 py-0.5 rounded-sm">{week.dateDisplay}</span>
                                     </div>
                                     {week.description && (
-                                        <Input 
-                                            value={week.description}
-                                            onChange={(e) => updateGoalContent(week.id, 'description', e.target.value)}
-                                            className="text-[10px] text-[#8B95A1] mb-2 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto truncate w-full"
-                                        />
+                                        <p className="text-[10px] text-[#8B95A1] mb-2 text-center truncate">
+                                            {week.description}
+                                        </p>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -1016,6 +1067,79 @@ export default function KompassDetail() {
             </motion.div>
         )}
         </AnimatePresence>
+
+        {/* Goal Detail Modal */}
+        <Dialog open={isGoalModalOpen} onOpenChange={(open) => {
+          if (!open) {
+            setIsGoalModalOpen(false);
+            setSelectedGoal(null);
+          }
+        }}>
+          <DialogContent className="sm:max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-[#191F28] flex items-center gap-2">
+                {selectedGoal && (
+                  <>
+                    <Badge variant="outline" className="text-xs">
+                      {getLevelLabel(selectedGoal.level)}
+                    </Badge>
+                    {selectedGoal.dateDisplay && (
+                      <span className="text-sm text-[#8B95A1] font-normal">
+                        {selectedGoal.dateDisplay}
+                      </span>
+                    )}
+                  </>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedGoal && (
+              <div className="space-y-5 py-4">
+                <div className="bg-gradient-to-br from-[#F8FAFC] to-white rounded-xl p-4 border border-[#E5E8EB]">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-[#4E5968]">달성률</span>
+                    <span className="text-xl font-bold text-[#3182F6]">{selectedGoal.progress}%</span>
+                  </div>
+                  <Progress value={selectedGoal.progress} className="h-2" indicatorClassName="bg-gradient-to-r from-[#3182F6] to-[#1565C0]" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="goal-title" className="text-sm font-bold text-[#333D4B]">목표 제목</Label>
+                  <Input 
+                    id="goal-title" 
+                    value={editGoalTitle}
+                    onChange={(e) => setEditGoalTitle(e.target.value)}
+                    className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6]"
+                    data-testid="input-goal-title"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="goal-description" className="text-sm font-bold text-[#333D4B]">설명</Label>
+                  <Textarea 
+                    id="goal-description" 
+                    placeholder="이 목표에 대한 상세 설명을 입력하세요."
+                    value={editGoalDescription}
+                    onChange={(e) => setEditGoalDescription(e.target.value)}
+                    className="min-h-[100px] rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6] resize-none text-sm"
+                    data-testid="input-goal-description"
+                  />
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button 
+                onClick={handleSaveGoal}
+                className="w-full h-12 bg-[#3182F6] hover:bg-[#2b72d7] text-white font-bold rounded-xl"
+                data-testid="button-save-goal"
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                저장하기
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
       </div>
     </Layout>
