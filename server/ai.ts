@@ -131,53 +131,94 @@ const getProfileContextData = (profile: Profile, userIdentity?: { displayName?: 
     case 'elementary':
       context += `\n### 초등학생 프로필 정보\n`;
       context += `- 학교명: ${profileData.elem_schoolName || '미제공'}\n`;
-      context += `- 학년: ${profileData.elem_grade || '미제공'}\n`;
-      context += `- 관심 분야: ${profileData.elem_interests || '미제공'}\n`;
-      context += `- 좋아하는 활동: ${profileData.elem_activities || '미제공'}\n`;
+      context += `- 학년: ${profileData.elem_grade || '미제공'}학년\n`;
+      context += `- 장래희망 (되고 싶은 사람): ${profileData.elem_dreamJob || '미제공'}\n`;
+      context += `- 부모님 희망: ${profileData.elem_parentsHope || '미제공'}\n`;
       context += `- 좋아하는 과목: ${profileData.elem_favoriteSubject || '미제공'}\n`;
-      context += `- 장래 희망: ${profileData.elem_dreamJob || '미제공'}\n`;
+      context += `- 싫어하는 과목: ${profileData.elem_dislikedSubject || '미제공'}\n`;
+      context += `- 나의 강점: ${profileData.elem_strengths || '미제공'}\n`;
+      context += `- 관심 분야: ${profileData.elem_interests || '미제공'}\n`;
+      context += `- 취미/좋아하는 활동: ${profileData.elem_hobbies || '미제공'}\n`;
+      context += `- 고민/걱정: ${profileData.elem_concerns || '미제공'}\n`;
       break;
       
     case 'middle':
       context += `\n### 중학생 프로필 정보\n`;
       context += `- 학교명: ${profileData.mid_schoolName || '미제공'}\n`;
-      context += `- 학년: ${profileData.mid_grade || '미제공'}\n`;
-      context += `- 적성: ${profileData.mid_aptitude || '미제공'}\n`;
-      context += `- 관심 과목: ${profileData.mid_favoriteSubjects?.join(', ') || '미제공'}\n`;
-      context += `- 동아리 활동: ${profileData.mid_clubActivities || '미제공'}\n`;
-      context += `- 진로 희망: ${profileData.mid_careerGoal || '미제공'}\n`;
+      context += `- 학년: ${profileData.mid_grade || '미제공'}학년\n`;
+      context += `- 반: ${profileData.mid_class || '미제공'}\n`;
+      context += `- 학업 수준: ${getMidAcademicLabel(profileData.mid_academicScore)}\n`;
+      context += `- 좋아하는 과목: ${profileData.mid_favoriteSubject || '미제공'}\n`;
+      context += `- 싫어하는 과목: ${profileData.mid_dislikedSubject || '미제공'}\n`;
+      context += `- 나의 강점: ${profileData.mid_strengths || '미제공'}\n`;
+      context += `- 관심 분야: ${profileData.mid_interests || '미제공'}\n`;
+      context += `- 취미: ${profileData.mid_hobbies || '미제공'}\n`;
+      context += `- 장래희망: ${profileData.mid_dreamJob || '미제공'}\n`;
+      context += `- 희망 고등학교 유형: ${getHighSchoolPlanLabel(profileData.mid_highSchoolPlan)}\n`;
+      context += `- 현재 고민: ${profileData.mid_concerns || '미제공'}\n`;
       break;
       
     case 'high':
       context += `\n### 고등학생 프로필 정보\n`;
       context += `- 학교명: ${profileData.high_schoolName || '미제공'}\n`;
-      context += `- 학년: ${profileData.high_grade || '미제공'}\n`;
-      context += `- 계열: ${profileData.high_track || '미제공'}\n`;
-      context += `- 내신 등급: ${profileData.high_gpa || '미제공'}\n`;
-      context += `- 희망 대학: ${profileData.high_desiredUniversity || '미제공'}\n`;
-      context += `- 희망 학과: ${profileData.high_desiredMajor || '미제공'}\n`;
-      context += `- 수상 경력: ${profileData.high_awards || '미제공'}\n`;
-      context += `- 동아리 활동: ${profileData.high_clubs || '미제공'}\n`;
-      context += `- 봉사 활동: ${profileData.high_volunteer || '미제공'}\n`;
-      context += `- 성격/강점: ${profileData.high_personality || '미제공'}\n`;
-      context += `- 진로 고민: ${profileData.high_concerns || '미제공'}\n`;
+      context += `- 학년: ${profileData.high_grade || '미제공'}학년\n`;
+      context += `- 반: ${profileData.high_class || '미제공'}\n`;
+      context += `- 내신 등급: ${profileData.high_academicScore || '미제공'}등급\n`;
+      context += `- 계열 (전공 트랙): ${getMajorTrackLabel(profileData.high_majorTrack)}\n`;
+      context += `- 희망 대학: ${profileData.high_hopeUniversity || '미제공'}\n`;
+      context += `- 희망 진로/직업: ${profileData.high_careerHope || '미제공'}\n`;
+      context += `- 비교과 활동 현황: ${getActivityStatusLabel(profileData.high_activityStatus)}\n`;
+      context += `- 좋아하는 과목: ${profileData.high_favoriteSubject || '미제공'}\n`;
+      context += `- 싫어하는 과목: ${profileData.high_dislikedSubject || '미제공'}\n`;
+      context += `- MBTI: ${profileData.high_mbti || '미제공'}\n`;
+      context += `- 취미: ${profileData.high_hobbies || '미제공'}\n`;
+      context += `- 유학 희망 여부: ${profileData.high_studyAbroad ? '예' : '아니오'}\n`;
+      context += `- 스트레스 수준: ${profileData.high_stressLevel || '미제공'}/5\n`;
+      context += `- 수면 패턴: ${profileData.high_sleepPattern || '미제공'}시간\n`;
+      
+      // Subject scores
+      if (profileData.high_subject_scores) {
+        const scores = profileData.high_subject_scores;
+        context += `\n#### 과목별 성적\n`;
+        context += `- 국어: ${scores.korean || '미제공'}등급\n`;
+        context += `- 수학: ${scores.math || '미제공'}등급\n`;
+        context += `- 영어: ${scores.english || '미제공'}등급\n`;
+        context += `- 사회: ${scores.social || '미제공'}등급\n`;
+        context += `- 과학: ${scores.science || '미제공'}등급\n`;
+        context += `- 한국사: ${scores.history || '미제공'}등급\n`;
+        context += `- 제2외국어: ${scores.second_lang || '미제공'}등급\n`;
+      }
+      
+      context += `\n#### 현재 고민\n`;
+      context += `${profileData.high_concerns || '미제공'}\n`;
       break;
       
     case 'university':
       context += `\n### 대학생 프로필 정보\n`;
-      context += `- 대학교: ${profileData.univ_universityName || '미제공'}\n`;
-      context += `- 전공: ${profileData.univ_major || '미제공'}\n`;
-      context += `- 부전공/복수전공: ${profileData.univ_minor || '미제공'}\n`;
-      context += `- 학년: ${profileData.univ_grade || '미제공'}\n`;
-      context += `- 학점: ${profileData.univ_gpa || '미제공'}\n`;
-      context += `- 희망 직무: ${profileData.univ_desiredJob || '미제공'}\n`;
-      context += `- 희망 산업: ${profileData.univ_desiredIndustry || '미제공'}\n`;
-      context += `- 인턴십 상태: ${profileData.univ_internshipStatus || '미제공'}\n`;
+      context += `- 대학교: ${profileData.univ_schoolName || '미제공'}\n`;
+      context += `- 전공 계열: ${getMajorCategoryLabel(profileData.univ_majorCategory)}\n`;
+      context += `- 전공명: ${profileData.univ_majorName || '미제공'}\n`;
+      context += `- 학년: ${profileData.univ_grade || '미제공'}학년\n`;
+      context += `- 학기: ${profileData.univ_semester || '미제공'}학기\n`;
+      context += `- 학점 (GPA): ${profileData.univ_gpa || '미제공'}\n`;
       context += `- 어학 점수: ${profileData.univ_languageTests?.map((t: any) => `${t.type}: ${t.score}`).join(', ') || '미제공'}\n`;
       context += `- 자격증: ${profileData.univ_certificates || '미제공'}\n`;
-      context += `- 취업 준비도: ${profileData.univ_careerReadiness || '미제공'}\n`;
-      context += `- 진로 목표 명확성: ${profileData.univ_careerGoalClear || '미제공'}\n`;
+      context += `- 취업 준비 정도: ${getCareerReadinessLabel(profileData.univ_careerReadiness)}\n`;
+      context += `- 진로 목표 명확성: ${getCareerGoalClearLabel(profileData.univ_careerGoalClear)}\n`;
+      context += `- 인턴십 경험: ${getInternshipStatusLabel(profileData.univ_internshipStatus)}\n`;
       context += `- 개발하고 싶은 역량: ${profileData.univ_skillsToDevelop?.join(', ') || '미제공'}\n`;
+      
+      // Wellbeing info
+      context += `\n#### 대학 생활 현황\n`;
+      context += `- 학업 스트레스: ${profileData.univ_academicStress || '미제공'}/5\n`;
+      context += `- 경제적 스트레스: ${profileData.univ_financialStress || '미제공'}/5\n`;
+      context += `- 수면 시간: ${profileData.univ_sleepHours || '미제공'}시간\n`;
+      context += `- 정신 건강: ${profileData.univ_mentalWellbeing || '미제공'}/5\n`;
+      context += `- 주당 근무 시간: ${profileData.univ_workloadWorkHours || '0'}시간\n`;
+      context += `- 주당 공부 시간: ${profileData.univ_workloadStudyHours || '미제공'}시간\n`;
+      
+      context += `\n#### 현재 고민\n`;
+      context += `${profileData.univ_concerns || '미제공'}\n`;
       break;
       
     case 'general':
@@ -300,6 +341,101 @@ function getEnvironmentLabel(env: string): string {
     'challenging': '도전적 환경'
   };
   return labels[env] || env;
+}
+
+// Helper functions for middle school
+function getMidAcademicLabel(score: string): string {
+  const labels: Record<string, string> = {
+    'top': '상위권',
+    'upper_mid': '중상위권',
+    'mid': '중위권',
+    'lower_mid': '중하위권',
+    'low': '하위권'
+  };
+  return labels[score] || score || '미제공';
+}
+
+function getHighSchoolPlanLabel(plan: string): string {
+  const labels: Record<string, string> = {
+    'general': '일반계고',
+    'specialized': '특성화고',
+    'science': '과학고/영재고',
+    'foreign': '외국어고/국제고',
+    'arts': '예술고/체육고',
+    'undecided': '미정'
+  };
+  return labels[plan] || plan || '미제공';
+}
+
+// Helper functions for high school
+function getMajorTrackLabel(track: string): string {
+  const labels: Record<string, string> = {
+    'humanities': '인문계',
+    'natural': '자연계',
+    'arts': '예체능',
+    'vocational': '실업계',
+    'undecided': '미정'
+  };
+  return labels[track] || track || '미제공';
+}
+
+function getActivityStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    'very_active': '매우 활발',
+    'active': '활발',
+    'moderate': '보통',
+    'inactive': '부족',
+    'none': '거의 없음'
+  };
+  return labels[status] || status || '미제공';
+}
+
+// Helper functions for university
+function getMajorCategoryLabel(category: string): string {
+  const labels: Record<string, string> = {
+    'humanities': '인문계열',
+    'social': '사회계열',
+    'business': '경영/경제계열',
+    'natural': '자연계열',
+    'engineering': '공학계열',
+    'medical': '의약계열',
+    'arts': '예체능계열',
+    'education': '교육계열'
+  };
+  return labels[category] || category || '미제공';
+}
+
+function getCareerReadinessLabel(readiness: string): string {
+  const labels: Record<string, string> = {
+    'very_ready': '매우 준비됨',
+    'ready': '준비됨',
+    'preparing': '준비 중',
+    'not_started': '아직 시작 안함',
+    'confused': '혼란스러움'
+  };
+  return labels[readiness] || readiness || '미제공';
+}
+
+function getCareerGoalClearLabel(clarity: string): string {
+  const labels: Record<string, string> = {
+    'very_clear': '매우 명확',
+    'clear': '명확',
+    'somewhat': '어느 정도',
+    'unclear': '불명확',
+    'no_idea': '전혀 모르겠음'
+  };
+  return labels[clarity] || clarity || '미제공';
+}
+
+function getInternshipStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    'completed': '완료',
+    'in_progress': '진행 중',
+    'planned': '예정',
+    'searching': '찾는 중',
+    'none': '없음'
+  };
+  return labels[status] || status || '미제공';
 }
 
 // Career analysis response type
