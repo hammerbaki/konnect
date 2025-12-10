@@ -527,6 +527,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all kompass goals for current user (across all profiles)
+  app.get('/api/kompass', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const profiles = await storage.getProfilesByUser(userId);
+      
+      // Get all kompass for all user profiles
+      const allKompass = [];
+      for (const profile of profiles) {
+        const profileKompass = await storage.getKompassByProfile(profile.id);
+        allKompass.push(...profileKompass.map(k => ({
+          ...k,
+          profileTitle: profile.title,
+          profileType: profile.type,
+        })));
+      }
+      
+      // Sort by updatedAt descending
+      allKompass.sort((a, b) => {
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dateB - dateA;
+      });
+      
+      res.json(allKompass);
+    } catch (error) {
+      console.error("Error fetching all kompass:", error);
+      res.status(500).json({ message: "Failed to fetch kompass goals" });
+    }
+  });
+
+  // Get single kompass by ID
+  app.get('/api/kompass/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const kompass = await storage.getKompass(req.params.id);
+      if (!kompass) {
+        return res.status(404).json({ message: "Kompass를 찾을 수 없습니다." });
+      }
+      const profile = await storage.getProfile(kompass.profileId);
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: "접근 권한이 없습니다." });
+      }
+      res.json(kompass);
+    } catch (error) {
+      console.error("Error fetching kompass:", error);
+      res.status(500).json({ message: "Failed to fetch kompass" });
+    }
+  });
+
   app.patch('/api/kompass/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
