@@ -4,15 +4,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar as CalendarIcon, Sparkles, Loader2 } from "lucide-react";
-import { MOCK_VISIONS, VisionGoal, DailyGoal, YearlyGoal, HalfYearlyGoal, MonthlyGoal, WeeklyGoal } from "@/lib/mockData";
-import { useState, useEffect, useRef } from "react";
+import { VisionGoal, DailyGoal, YearlyGoal, HalfYearlyGoal, MonthlyGoal, WeeklyGoal } from "@/lib/mockData";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { useRoute } from "wouter";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRoute, useLocation } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useTokens } from "@/lib/TokenContext";
 
@@ -26,15 +26,27 @@ interface AncestorChainItem {
   description?: string;
 }
 
+interface KompassData {
+  id: string;
+  profileId: string;
+  targetYear: number;
+  visionData: VisionGoal;
+  progress: number;
+}
+
 export default function KompassDetail() {
   const [match, params] = useRoute("/goals/:id");
   const id = params?.id;
+  const [_, setLocation] = useLocation();
   
   const [vision, setVision] = useState<VisionGoal | null>(null);
+  const [kompassId, setKompassId] = useState<string | null>(null);
   const { setAction } = useMobileAction();
   const { toast } = useToast();
 
   const dailyCardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedVisionRef = useRef<string>("");
 
   // Reminder State
   const [isReminderEnabled, setIsReminderEnabled] = useState(false);
@@ -50,6 +62,100 @@ export default function KompassDetail() {
   const [generatingLevel, setGeneratingLevel] = useState<GoalLevel | null>(null);
   const { refreshCredits } = useTokens();
   const queryClient = useQueryClient();
+
+  // Load kompass from API
+  const { data: kompassData, isLoading, error } = useQuery<KompassData>({
+    queryKey: [`/api/kompass/${id}`],
+    enabled: !!id,
+  });
+
+  // Save mutation
+  const saveMutation = useMutation({
+    mutationFn: async (visionData: VisionGoal) => {
+      if (!kompassId) return;
+      const response = await apiRequest('PATCH', `/api/kompass/${kompassId}`, {
+        visionData,
+        progress: calculateOverallProgress(visionData),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/kompass'] });
+    },
+    onError: (error: any) => {
+      console.error('Failed to save kompass:', error);
+    },
+  });
+
+  // Calculate overall progress
+  const calculateOverallProgress = (v: VisionGoal): number => {
+    let total = 0;
+    let completed = 0;
+    
+    v.children.forEach(year => {
+      year.children.forEach(half => {
+        half.children.forEach(month => {
+          month.children.forEach(week => {
+            week.children.forEach(day => {
+              day.todos.forEach(todo => {
+                total++;
+                if (todo.completed) completed++;
+              });
+            });
+          });
+        });
+      });
+    });
+    
+    return total > 0 ? Math.round((completed / total) * 100) : 0;
+  };
+
+  // Auto-save with debounce
+  const triggerAutoSave = useCallback(() => {
+    if (!vision || !kompassId) return;
+    
+    const visionStr = JSON.stringify(vision);
+    if (visionStr === lastSavedVisionRef.current) return;
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      lastSavedVisionRef.current = visionStr;
+      saveMutation.mutate(vision);
+    }, 1000);
+  }, [vision, kompassId, saveMutation]);
+
+  // Trigger auto-save when vision changes
+  useEffect(() => {
+    triggerAutoSave();
+  }, [vision, triggerAutoSave]);
+
+  // Initialize from API data
+  useEffect(() => {
+    if (kompassData) {
+      setKompassId(kompassData.id);
+      setVision(kompassData.visionData);
+      lastSavedVisionRef.current = JSON.stringify(kompassData.visionData);
+      
+      // Initialize selection
+      const v = kompassData.visionData;
+      setSelectedYearId(v.children[0]?.id || null);
+      setSelectedHalfYearId(v.children[0]?.children[0]?.id || null);
+      setSelectedMonthId(v.children[0]?.children[0]?.children[0]?.id || null);
+      setSelectedWeekId(v.children[0]?.children[0]?.children[0]?.children[0]?.id || null);
+    }
+  }, [kompassData]);
+
+  // Cleanup save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // AI Goal Suggestion Mutation
   const aiSuggestMutation = useMutation({
@@ -266,19 +372,6 @@ export default function KompassDetail() {
     );
   };
 
-  useEffect(() => {
-      if (id) {
-          const found = MOCK_VISIONS.find(v => v.id === id);
-          if (found) {
-              setVision(found);
-              // Initialize selection
-              setSelectedYearId(found.children[0]?.id || null);
-              setSelectedHalfYearId(found.children[0]?.children[0]?.id || null);
-              setSelectedMonthId(found.children[0]?.children[0]?.children[0]?.id || null);
-              setSelectedWeekId(found.children[0]?.children[0]?.children[0]?.children[0]?.id || null);
-          }
-      }
-  }, [id]);
 
   // Derived Data based on selection
   const selectedYear = vision?.children.find(y => y.id === selectedYearId);
@@ -515,7 +608,28 @@ export default function KompassDetail() {
         }
     };
 
-    if (!vision) return <Layout><div>Loading...</div></Layout>;
+    if (isLoading) {
+      return (
+        <Layout>
+          <div className="flex justify-center items-center h-[60vh]">
+            <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
+          </div>
+        </Layout>
+      );
+    }
+
+    if (error || !vision) {
+      return (
+        <Layout>
+          <div className="flex flex-col justify-center items-center h-[60vh] space-y-4">
+            <p className="text-[#8B95A1]">Kompass를 찾을 수 없습니다.</p>
+            <Button onClick={() => setLocation('/goals')} variant="outline">
+              목록으로 돌아가기
+            </Button>
+          </div>
+        </Layout>
+      );
+    }
 
   return (
     <Layout>
