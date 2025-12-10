@@ -2,17 +2,29 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronRight, Flag, Compass, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, ChevronRight, Flag, Compass, X, Sparkles, FolderOpen, Users, Heart } from "lucide-react";
 import { MOCK_VISIONS, generateTree } from "@/lib/mockData";
 import { useLocation } from "wouter";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
+interface ImportedCareerData {
+  title: string;
+  actions: {
+    portfolio: string[];
+    networking: string[];
+    mindset: string[];
+  };
+  strengths: string[];
+  weaknesses: string[];
+}
 
 export default function Goals() {
   const [_, setLocation] = useLocation();
@@ -24,8 +36,46 @@ export default function Goals() {
   const [newTitle, setNewTitle] = useState("");
   const [newTargetYear, setNewTargetYear] = useState(String(new Date().getFullYear() + 3));
   const [newDescription, setNewDescription] = useState("");
+  const [importedData, setImportedData] = useState<ImportedCareerData | null>(null);
+
+  // Check for imported career data from Analysis page
+  useEffect(() => {
+    const imported = sessionStorage.getItem('kompass_import');
+    if (imported) {
+      try {
+        const data: ImportedCareerData = JSON.parse(imported);
+        setImportedData(data);
+        setNewTitle(data.title);
+        setNewTargetYear(String(new Date().getFullYear() + 3));
+        
+        // Build description from actions
+        const actionItems = [
+          ...(data.actions?.portfolio || []).map(a => `📁 ${a}`),
+          ...(data.actions?.networking || []).map(a => `🤝 ${a}`),
+          ...(data.actions?.mindset || []).map(a => `💭 ${a}`),
+        ];
+        setNewDescription(actionItems.join('\n'));
+        
+        // Auto-open the modal
+        setIsCreateModalOpen(true);
+        
+        // Clear the session storage
+        sessionStorage.removeItem('kompass_import');
+        
+        toast({ 
+          title: "분석에서 가져왔어요!", 
+          description: "목표와 액션 플랜을 확인하고 수정해보세요."
+        });
+      } catch (e) {
+        console.error('Failed to parse imported data:', e);
+      }
+    }
+  }, []);
 
   const handleNewKompass = () => {
+    setImportedData(null);
+    setNewTitle("");
+    setNewDescription("");
     setIsCreateModalOpen(true);
   };
 
@@ -46,7 +96,13 @@ export default function Goals() {
       setIsCreateModalOpen(false);
       setNewTitle("");
       setNewDescription("");
-      toast({ title: "Kompass 생성 완료", description: "새로운 목표 나침반이 생성되었습니다." });
+      setImportedData(null);
+      toast({ 
+        title: "Kompass 생성 완료", 
+        description: importedData 
+          ? "AI 분석 기반 목표가 생성되었습니다!" 
+          : "새로운 목표 나침반이 생성되었습니다." 
+      });
   };
 
   useEffect(() => {
@@ -121,13 +177,64 @@ export default function Goals() {
         </div>
 
         {/* Create Modal */}
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-            <DialogContent className="sm:max-w-md rounded-2xl">
+        <Dialog open={isCreateModalOpen} onOpenChange={(open) => {
+            setIsCreateModalOpen(open);
+            if (!open) setImportedData(null);
+        }}>
+            <DialogContent className="sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-[#191F28]">새 Kompass 만들기</DialogTitle>
+                    <div className="flex items-center gap-2">
+                        <DialogTitle className="text-xl font-bold text-[#191F28]">
+                            {importedData ? '목표로 저장하기' : '새 Kompass 만들기'}
+                        </DialogTitle>
+                        {importedData && (
+                            <Badge className="bg-gradient-to-r from-[#3182F6] to-[#1565C0] text-white border-none">
+                                <Sparkles className="h-3 w-3 mr-1" />
+                                AI 분석
+                            </Badge>
+                        )}
+                    </div>
+                    {importedData && (
+                        <DialogDescription className="text-sm text-[#8B95A1]">
+                            커리어 분석에서 추천받은 목표를 Kompass로 저장하세요
+                        </DialogDescription>
+                    )}
                 </DialogHeader>
                 
-                <div className="space-y-6 py-4">
+                <div className="space-y-5 py-4">
+                    {importedData && (
+                        <div className="bg-gradient-to-br from-[#F8FAFC] to-white rounded-xl p-4 border border-[#E5E8EB] space-y-3">
+                            <h4 className="text-sm font-bold text-[#191F28]">AI가 추천한 액션 플랜</h4>
+                            
+                            {importedData.actions.portfolio?.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                    <FolderOpen className="h-4 w-4 text-[#3182F6] mt-0.5 shrink-0" />
+                                    <div className="text-xs text-[#4E5968]">
+                                        {importedData.actions.portfolio.slice(0, 2).join(' / ')}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {importedData.actions.networking?.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                    <Users className="h-4 w-4 text-purple-500 mt-0.5 shrink-0" />
+                                    <div className="text-xs text-[#4E5968]">
+                                        {importedData.actions.networking.slice(0, 2).join(' / ')}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {importedData.actions.mindset?.length > 0 && (
+                                <div className="flex items-start gap-2">
+                                    <Heart className="h-4 w-4 text-rose-500 mt-0.5 shrink-0" />
+                                    <div className="text-xs text-[#4E5968]">
+                                        {importedData.actions.mindset.slice(0, 2).join(' / ')}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    
                     <div className="space-y-2">
                         <Label htmlFor="title" className="text-sm font-bold text-[#333D4B]">목표 제목 (Kompass)</Label>
                         <Input 
@@ -152,13 +259,15 @@ export default function Goals() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="desc" className="text-sm font-bold text-[#333D4B]">설명 (선택)</Label>
+                        <Label htmlFor="desc" className="text-sm font-bold text-[#333D4B]">
+                            {importedData ? '액션 플랜 (수정 가능)' : '설명 (선택)'}
+                        </Label>
                         <Textarea 
                             id="desc" 
                             placeholder="이 목표를 달성하고 싶은 이유나 구체적인 모습을 적어보세요." 
                             value={newDescription}
                             onChange={(e) => setNewDescription(e.target.value)}
-                            className="min-h-[100px] rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6] resize-none"
+                            className="min-h-[120px] rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6] resize-none text-sm"
                         />
                     </div>
                 </div>
@@ -166,9 +275,18 @@ export default function Goals() {
                 <DialogFooter>
                     <Button 
                         onClick={handleSubmit} 
-                        className="w-full h-12 bg-[#3182F6] hover:bg-[#2b72d7] text-white font-bold rounded-xl text-lg"
+                        className={cn(
+                            "w-full h-12 text-white font-bold rounded-xl text-lg",
+                            importedData 
+                                ? "bg-gradient-to-r from-[#3182F6] to-[#1565C0] hover:opacity-90"
+                                : "bg-[#3182F6] hover:bg-[#2b72d7]"
+                        )}
                     >
-                        Kompass 생성하기
+                        {importedData ? (
+                            <><Compass className="h-5 w-5 mr-2" /> 목표로 저장하기</>
+                        ) : (
+                            'Kompass 생성하기'
+                        )}
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -2,37 +2,44 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { 
     Brain, Sparkles, Loader2, ArrowRight, 
     Briefcase, TrendingUp, School, GraduationCap, 
-    LineChart, Target, Award, Star,
+    Target, Award, Star, Compass,
     ChevronRight, Plus, LayoutDashboard, History,
-    CheckCircle2, AlertTriangle, Zap, User, ExternalLink
+    CheckCircle2, AlertTriangle, Zap, User, ExternalLink,
+    FolderOpen, Users, Heart, Lightbulb, Menu
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileAction } from "@/lib/MobileActionContext";
-import { Link } from "wouter";
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, Tooltip, Cell } from 'recharts';
+import { Link, useLocation } from "wouter";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
 
-// Career recommendation type
+interface CareerActions {
+    portfolio: string[];
+    networking: string[];
+    mindset: string[];
+}
+
 interface CareerRecommendation {
     title: string;
     description: string;
     matchScore: number;
     salary: string;
-    requiredSkills: string[];
     jobOutlook: string;
+    competencies: Array<{ subject: string; A: number; fullMark: number }>;
+    strengths: string[];
+    weaknesses: string[];
+    actions: CareerActions;
 }
 
-// Profile type icon mapping
 const profileTypeIcons: Record<string, any> = {
     general: Briefcase,
     university: GraduationCap,
@@ -57,7 +64,6 @@ const profileTypeLabels: Record<string, string> = {
     elementary: '초등학생',
 };
 
-// Profile-type specific section titles
 const recommendationSectionTitles: Record<string, string> = {
     elementary: '추천 꿈 직업',
     middle: '추천 진로 방향',
@@ -66,7 +72,6 @@ const recommendationSectionTitles: Record<string, string> = {
     general: '추천 커리어',
 };
 
-// Profile-type specific match score labels
 const matchScoreLabels: Record<string, string> = {
     elementary: '흥미도',
     middle: '적합도',
@@ -75,37 +80,17 @@ const matchScoreLabels: Record<string, string> = {
     general: '적합도',
 };
 
-// Profile-type specific salary/info labels
-const salaryLabels: Record<string, string> = {
-    elementary: '특징',
-    middle: '특징',
-    high: '졸업 후 전망',
-    university: '예상 연봉',
-    general: '예상 연봉',
-};
-
-// Profile-type specific chart descriptions
-const chartDescriptions: Record<string, { radar: string; bar: string }> = {
-    elementary: { radar: '나의 잠재력 분포', bar: '흥미와 잠재력 성장' },
-    middle: { radar: '나의 역량 분포', bar: '고등학교 준비 현황' },
-    high: { radar: '입시 역량 분석', bar: '대학 진학 준비 현황' },
-    university: { radar: '취업 역량 분석', bar: '스펙 및 역량 성장' },
-    general: { radar: '현재 역량 분포', bar: '현 직무 대비 성장 가능성' },
-};
-
 export default function Analysis() {
     const { toast } = useToast();
     const { setAction } = useMobileAction();
     const { user } = useAuth();
     const queryClient = useQueryClient();
+    const [, navigate] = useLocation();
     
-    // State
     const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [selectedCareer, setSelectedCareer] = useState<CareerRecommendation | null>(null);
-    const [isCareerDialogOpen, setIsCareerDialogOpen] = useState(false);
+    const [expandedCareer, setExpandedCareer] = useState<string | null>(null);
 
-    // Fetch user's profiles
     const { data: profiles, isLoading: isLoadingProfiles } = useQuery({
         queryKey: ['/api/profiles'],
         queryFn: async () => {
@@ -115,14 +100,12 @@ export default function Analysis() {
         enabled: !!user,
     });
 
-    // Set first profile as active when profiles load
     useEffect(() => {
         if (profiles && profiles.length > 0 && !activeProfileId) {
             setActiveProfileId(profiles[0].id);
         }
     }, [profiles, activeProfileId]);
 
-    // Fetch analyses for active profile
     const { data: analyses, isLoading: isLoadingAnalyses } = useQuery({
         queryKey: ['/api/profiles', activeProfileId, 'analyses'],
         queryFn: async () => {
@@ -132,11 +115,9 @@ export default function Analysis() {
         enabled: !!activeProfileId,
     });
 
-    // Get the latest analysis
     const latestAnalysis = analyses && analyses.length > 0 ? analyses[0] : null;
     const activeProfile = profiles?.find((p: any) => p.id === activeProfileId);
 
-    // Generate analysis mutation
     const generateAnalysisMutation = useMutation({
         mutationFn: async (profileId: string) => {
             const response = await apiRequest('POST', `/api/profiles/${profileId}/generate-analysis`);
@@ -160,7 +141,6 @@ export default function Analysis() {
         },
     });
 
-    // Mobile Action
     useEffect(() => {
         if (activeProfileId) {
             setAction({
@@ -170,17 +150,19 @@ export default function Analysis() {
             });
         }
         return () => setAction(null);
-    }, [activeProfileId]);
+    }, [activeProfileId, setAction]);
 
-    const handleAnalyze = () => {
-        if (!activeProfileId) {
-            toast({ variant: "destructive", title: "프로필 없음", description: "먼저 프로필을 선택해주세요." });
-            return;
-        }
-        generateAnalysisMutation.mutate(activeProfileId);
+    const handleExportToKompass = (career: CareerRecommendation) => {
+        const goalData = {
+            title: career.title,
+            actions: career.actions,
+            strengths: career.strengths,
+            weaknesses: career.weaknesses
+        };
+        sessionStorage.setItem('kompass_import', JSON.stringify(goalData));
+        navigate('/goals');
+        toast({ title: "Kompass로 이동", description: "목표를 설정해보세요!" });
     };
-
-    // --- Components ---
 
     const ProfileSidebar = () => (
         <div className="flex flex-col h-full">
@@ -225,472 +207,393 @@ export default function Analysis() {
                                         <span className={cn("font-bold text-sm truncate", isActive ? "text-[#191F28]" : "text-[#4E5968]")}>
                                             {profile.title || profileTypeLabels[profile.type]}
                                         </span>
-                                        {isActive && <Badge className="h-1.5 w-1.5 p-0 rounded-full bg-[#3182F6]" />}
                                     </div>
-                                    <div className="flex items-center gap-2 text-[11px] text-[#8B95A1]">
-                                        <History className="h-3 w-3" />
-                                        {profile.lastAnalyzed 
-                                            ? new Date(profile.lastAnalyzed).toLocaleDateString('ko-KR')
-                                            : '분석 없음'}
-                                    </div>
+                                    <span className="text-[10px] text-[#8B95A1] block truncate">
+                                        {profileTypeLabels[profile.type]}
+                                    </span>
                                 </div>
+                                <ChevronRight className={cn("h-4 w-4 shrink-0 mt-1", isActive ? "text-[#3182F6]" : "text-[#B0B8C1]")} />
                             </button>
-                        )
+                        );
                     })
                 ) : (
                     <div className="text-center py-8">
-                        <p className="text-sm text-[#8B95A1] mb-4">프로필이 없습니다</p>
+                        <p className="text-sm text-[#8B95A1] mb-3">등록된 프로필이 없습니다</p>
                         <Link href="/profile">
-                            <Button variant="outline" size="sm" className="gap-2">
-                                <Plus className="h-4 w-4" /> 프로필 만들기
+                            <Button size="sm" className="bg-[#3182F6]">
+                                <Plus className="h-4 w-4 mr-1" /> 프로필 만들기
                             </Button>
                         </Link>
                     </div>
                 )}
-                
-                <Link href="/profile">
-                    <button className="w-full flex items-center gap-3 p-3 rounded-xl text-left text-[#8B95A1] hover:bg-[#F2F4F6] hover:text-[#4E5968] transition-all border border-dashed border-[#E5E8EB]">
-                        <div className="p-2 rounded-lg bg-[#F2F4F6]">
-                            <Plus className="h-5 w-5" />
-                        </div>
-                        <span className="text-sm font-medium">프로필 관리</span>
-                    </button>
-                </Link>
             </div>
         </div>
     );
 
+    const CareerCard = ({ career, index }: { career: CareerRecommendation; index: number }) => {
+        const isExpanded = expandedCareer === `career-${index}`;
+        const profileType = activeProfile?.type || 'general';
+        
+        return (
+            <Card className={cn(
+                "border transition-all duration-300",
+                isExpanded ? "border-[#3182F6] shadow-lg" : "border-[#E5E8EB] hover:border-[#3182F6]/50"
+            )}>
+                <Accordion type="single" collapsible value={expandedCareer || ""} onValueChange={setExpandedCareer}>
+                    <AccordionItem value={`career-${index}`} className="border-none">
+                        <AccordionTrigger className="px-5 py-4 hover:no-underline">
+                            <div className="flex items-center justify-between w-full pr-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#3182F6] to-[#1565C0] flex items-center justify-center shrink-0">
+                                        <span className="text-lg font-bold text-white">{career.matchScore}%</span>
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="text-base font-bold text-[#191F28]">{career.title}</h4>
+                                            {index === 0 && (
+                                                <Badge className="bg-[#E8F3FF] text-[#3182F6] hover:bg-[#E8F3FF] border-none px-2 py-0.5 text-[10px]">
+                                                    AI Pick
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-[#8B95A1]">{matchScoreLabels[profileType]}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </AccordionTrigger>
+                        
+                        <AccordionContent className="px-5 pb-5">
+                            <div className="space-y-6">
+                                <p className="text-sm text-[#4E5968] leading-relaxed">{career.description}</p>
+                                
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-[#F9FAFB] rounded-xl p-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <Briefcase className="h-3.5 w-3.5 text-[#3182F6]" />
+                                            <span className="text-[10px] text-[#8B95A1]">정보</span>
+                                        </div>
+                                        <p className="text-sm font-medium text-[#191F28]">{career.salary}</p>
+                                    </div>
+                                    <div className="bg-[#F9FAFB] rounded-xl p-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <TrendingUp className="h-3.5 w-3.5 text-[#00BFA5]" />
+                                            <span className="text-[10px] text-[#8B95A1]">전망</span>
+                                        </div>
+                                        <p className="text-sm font-medium text-[#191F28]">{career.jobOutlook}</p>
+                                    </div>
+                                </div>
+
+                                {career.competencies && career.competencies.length > 0 && (
+                                    <div className="bg-[#F9FAFB] rounded-xl p-4">
+                                        <h5 className="text-sm font-bold text-[#191F28] mb-3 flex items-center gap-2">
+                                            <Award className="h-4 w-4 text-[#3182F6]" /> 역량 분석
+                                        </h5>
+                                        <div className="h-[180px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={career.competencies}>
+                                                    <PolarGrid stroke="#E5E8EB" />
+                                                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#4E5968', fontSize: 10 }} />
+                                                    <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
+                                                    <Radar name="역량" dataKey="A" stroke="#3182F6" fill="#3182F6" fillOpacity={0.3} />
+                                                </RadarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="bg-[#F0FDF4] rounded-xl p-4">
+                                        <h5 className="text-sm font-bold text-[#00BFA5] mb-3 flex items-center gap-2">
+                                            <CheckCircle2 className="h-4 w-4" /> 강점
+                                        </h5>
+                                        <ul className="space-y-2">
+                                            {career.strengths?.map((s, i) => (
+                                                <li key={i} className="flex items-start gap-2 text-sm text-[#4E5968]">
+                                                    <CheckCircle2 className="h-4 w-4 text-[#00BFA5] shrink-0 mt-0.5" />
+                                                    {s}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    <div className="bg-[#FFF7ED] rounded-xl p-4">
+                                        <h5 className="text-sm font-bold text-[#F59E0B] mb-3 flex items-center gap-2">
+                                            <AlertTriangle className="h-4 w-4" /> 보완점
+                                        </h5>
+                                        <ul className="space-y-2">
+                                            {career.weaknesses?.map((w, i) => (
+                                                <li key={i} className="flex items-start gap-2 text-sm text-[#4E5968]">
+                                                    <AlertTriangle className="h-4 w-4 text-[#F59E0B] shrink-0 mt-0.5" />
+                                                    {w}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                {career.actions && (
+                                    <div className="space-y-4">
+                                        <h5 className="text-base font-bold text-[#191F28] flex items-center gap-2">
+                                            <Zap className="h-5 w-5 text-[#3182F6]" /> 추천 액션
+                                        </h5>
+                                        
+                                        <div className="grid gap-4">
+                                            {career.actions.portfolio?.length > 0 && (
+                                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-[#3182F6] flex items-center justify-center">
+                                                            <FolderOpen className="h-4 w-4 text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <h6 className="text-sm font-bold text-[#191F28]">포트폴리오</h6>
+                                                            <p className="text-[10px] text-[#8B95A1]">만들고 준비할 것들</p>
+                                                        </div>
+                                                    </div>
+                                                    <ul className="space-y-2">
+                                                        {career.actions.portfolio.map((item, i) => (
+                                                            <li key={i} className="flex items-start gap-2 text-sm text-[#4E5968] bg-white/60 rounded-lg p-2.5">
+                                                                <div className="w-5 h-5 rounded-full bg-[#3182F6]/10 flex items-center justify-center shrink-0 mt-0.5">
+                                                                    <span className="text-[10px] font-bold text-[#3182F6]">{i + 1}</span>
+                                                                </div>
+                                                                {item}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            {career.actions.networking?.length > 0 && (
+                                                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
+                                                            <Users className="h-4 w-4 text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <h6 className="text-sm font-bold text-[#191F28]">네트워킹</h6>
+                                                            <p className="text-[10px] text-[#8B95A1]">만나고 연결할 사람들</p>
+                                                        </div>
+                                                    </div>
+                                                    <ul className="space-y-2">
+                                                        {career.actions.networking.map((item, i) => (
+                                                            <li key={i} className="flex items-start gap-2 text-sm text-[#4E5968] bg-white/60 rounded-lg p-2.5">
+                                                                <div className="w-5 h-5 rounded-full bg-purple-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                                                                    <span className="text-[10px] font-bold text-purple-600">{i + 1}</span>
+                                                                </div>
+                                                                {item}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            {career.actions.mindset?.length > 0 && (
+                                                <div className="bg-gradient-to-br from-rose-50 to-orange-50 rounded-xl p-4 border border-rose-100">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center">
+                                                            <Heart className="h-4 w-4 text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <h6 className="text-sm font-bold text-[#191F28]">마인드셋</h6>
+                                                            <p className="text-[10px] text-[#8B95A1]">갖춰야 할 마음가짐</p>
+                                                        </div>
+                                                    </div>
+                                                    <ul className="space-y-2">
+                                                        {career.actions.mindset.map((item, i) => (
+                                                            <li key={i} className="flex items-start gap-2 text-sm text-[#4E5968] bg-white/60 rounded-lg p-2.5">
+                                                                <div className="w-5 h-5 rounded-full bg-rose-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                                                                    <Heart className="h-3 w-3 text-rose-500" />
+                                                                </div>
+                                                                {item}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <Button 
+                                    onClick={() => handleExportToKompass(career)}
+                                    className="w-full h-12 rounded-xl bg-gradient-to-r from-[#3182F6] to-[#1565C0] text-white font-bold hover:opacity-90 transition-opacity"
+                                    data-testid={`button-export-kompass-${index}`}
+                                >
+                                    <Compass className="h-5 w-5 mr-2" />
+                                    Kompass로 목표 세우기
+                                    <ArrowRight className="h-4 w-4 ml-2" />
+                                </Button>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </Card>
+        );
+    };
+
     const DashboardContent = () => {
-        if (generateAnalysisMutation.isPending) {
-            return (
-                <div className="h-full flex flex-col items-center justify-center space-y-6 min-h-[60vh]">
-                    <div className="relative">
-                        <div className="absolute inset-0 rounded-full bg-[#3182F6]/20 animate-ping" />
-                        <div className="relative bg-white p-6 rounded-full shadow-xl">
-                            <Loader2 className="h-12 w-12 text-[#3182F6] animate-spin" />
-                        </div>
-                    </div>
-                    <div className="text-center space-y-2">
-                        <h3 className="text-2xl font-bold text-[#191F28]">AI 분석 중...</h3>
-                        <p className="text-[#8B95A1]">프로필 데이터를 분석하고 있습니다. 잠시만 기다려주세요.</p>
-                    </div>
-                </div>
-            );
-        }
-
-        if (isLoadingAnalyses) {
-            return (
-                <div className="h-full flex items-center justify-center min-h-[60vh]">
-                    <Loader2 className="h-8 w-8 text-[#3182F6] animate-spin" />
-                </div>
-            );
-        }
-
         if (!latestAnalysis) {
             return (
-                <div className="h-full flex flex-col items-center justify-center space-y-6 min-h-[60vh]">
-                    <div className="bg-[#F2F4F6] p-8 rounded-full">
-                        <Brain className="h-16 w-16 text-[#B0B8C1]" />
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#3182F6]/20 to-[#3182F6]/5 flex items-center justify-center mb-6">
+                        <Brain className="h-10 w-10 text-[#3182F6]" />
                     </div>
-                    <div className="text-center space-y-2 max-w-md">
-                        <h3 className="text-2xl font-bold text-[#191F28]">아직 분석 결과가 없습니다</h3>
-                        <p className="text-[#8B95A1]">
-                            AI가 프로필을 분석하여 맞춤형 커리어 추천과 인사이트를 제공합니다.
+                    <h3 className="text-xl font-bold text-[#191F28] mb-2 text-center">AI 분석을 시작해보세요</h3>
+                    <p className="text-sm text-[#8B95A1] text-center mb-6 max-w-md">
+                        프로필 정보를 바탕으로 맞춤형 진로 분석을 제공합니다
+                    </p>
+                    <Button 
+                        onClick={() => activeProfileId && generateAnalysisMutation.mutate(activeProfileId)}
+                        disabled={generateAnalysisMutation.isPending || !activeProfileId}
+                        className="h-12 px-8 rounded-xl bg-[#3182F6] text-white font-bold"
+                        data-testid="button-generate-analysis"
+                    >
+                        {generateAnalysisMutation.isPending ? (
+                            <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> 분석 중...</>
+                        ) : (
+                            <><Sparkles className="h-5 w-5 mr-2" /> AI 분석 시작 (1 크레딧)</>
+                        )}
+                    </Button>
+                </div>
+            );
+        }
+
+        const { summary, stats, recommendations } = latestAnalysis;
+        const careerRecommendations: CareerRecommendation[] = recommendations?.careers || [];
+        const profileType = activeProfile?.type || 'general';
+
+        return (
+            <div className="space-y-6 animate-in fade-in-50 duration-500">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-xl font-bold text-[#191F28]">분석 결과</h2>
+                        <p className="text-xs text-[#8B95A1] mt-1">
+                            {new Date(latestAnalysis.createdAt).toLocaleDateString('ko-KR')} 분석
                         </p>
                     </div>
                     <Button 
-                        onClick={handleAnalyze}
-                        className="gap-2 h-12 px-8 rounded-xl bg-[#3182F6] font-bold"
-                        data-testid="button-start-analysis"
+                        onClick={() => activeProfileId && generateAnalysisMutation.mutate(activeProfileId)}
+                        disabled={generateAnalysisMutation.isPending}
+                        variant="outline"
+                        className="rounded-xl border-[#3182F6] text-[#3182F6]"
+                        data-testid="button-regenerate-analysis"
                     >
-                        <Sparkles className="h-5 w-5" /> AI 분석 시작하기
+                        {generateAnalysisMutation.isPending ? (
+                            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> 분석 중...</>
+                        ) : (
+                            <><Sparkles className="h-4 w-4 mr-2" /> 다시 분석하기</>
+                        )}
                     </Button>
-                    <p className="text-xs text-[#8B95A1]">1 크레딧 소요</p>
                 </div>
-            );
-        }
 
-        // Parse recommendations from the analysis (stored as { careers: [...], skills: {...} })
-        const recommendationsData = latestAnalysis.recommendations || {};
-        const careerRecommendations = Array.isArray(recommendationsData) 
-            ? recommendationsData 
-            : (recommendationsData.careers || []);
-        const skillAnalysis = Array.isArray(recommendationsData) 
-            ? null 
-            : (recommendationsData.skills || null);
-        const chartData = latestAnalysis.chartData || { radar: [], bar: [] };
-
-        return (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {/* 1. Hero Summary */}
-                <div className="bg-white rounded-2xl p-6 md:p-8 border border-[#E5E8EB] shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-50 to-transparent rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                    
-                    <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="bg-[#E8F3FF] text-[#3182F6] hover:bg-[#E8F3FF] border-none">
-                                    <Sparkles className="h-3 w-3 mr-1" /> AI Insight
-                                </Badge>
-                                <span className="text-xs text-[#8B95A1]">
-                                    {latestAnalysis.createdAt 
-                                        ? new Date(latestAnalysis.createdAt).toLocaleDateString('ko-KR')
-                                        : '최근 분석'}
-                                </span>
-                            </div>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={handleAnalyze}
-                                disabled={generateAnalysisMutation.isPending}
-                                className="gap-1 text-[#3182F6] border-[#3182F6]"
-                                data-testid="button-reanalyze"
-                            >
-                                <Brain className="h-4 w-4" /> 재분석
-                            </Button>
-                        </div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-[#191F28] mb-4 leading-tight" data-testid="text-analysis-summary">
-                            {latestAnalysis.summary}
-                        </h1>
+                <Card className="bg-gradient-to-br from-[#F8FAFC] to-white border-[#E5E8EB]">
+                    <CardContent className="p-5">
+                        <p className="text-[#4E5968] text-sm leading-relaxed">{summary}</p>
                         
-                        {latestAnalysis.stats && (
-                            <div className="grid grid-cols-3 gap-4 mt-8">
-                                <div className="bg-[#F9FAFB] rounded-xl p-4 text-center border border-[#F2F4F6]">
-                                    <p className="text-xs text-[#8B95A1] mb-1">{latestAnalysis.stats.label1}</p>
-                                    <p className="text-lg md:text-xl font-bold text-[#191F28]" data-testid="text-stat-1">{latestAnalysis.stats.val1}</p>
+                        {stats && (
+                            <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-[#E5E8EB]">
+                                <div className="text-center">
+                                    <p className="text-[10px] text-[#8B95A1] mb-0.5">{stats.label1}</p>
+                                    <p className="text-sm font-bold text-[#3182F6]">{stats.val1}</p>
                                 </div>
-                                <div className="bg-[#F9FAFB] rounded-xl p-4 text-center border border-[#F2F4F6]">
-                                    <p className="text-xs text-[#8B95A1] mb-1">{latestAnalysis.stats.label2}</p>
-                                    <p className="text-lg md:text-xl font-bold text-[#191F28]" data-testid="text-stat-2">{latestAnalysis.stats.val2}</p>
+                                <div className="text-center border-x border-[#E5E8EB]">
+                                    <p className="text-[10px] text-[#8B95A1] mb-0.5">{stats.label2}</p>
+                                    <p className="text-sm font-bold text-[#191F28]">{stats.val2}</p>
                                 </div>
-                                <div className="bg-[#F9FAFB] rounded-xl p-4 text-center border border-[#F2F4F6]">
-                                    <p className="text-xs text-[#8B95A1] mb-1">{latestAnalysis.stats.label3}</p>
-                                    <p className="text-lg md:text-xl font-bold text-[#191F28]" data-testid="text-stat-3">{latestAnalysis.stats.val3}</p>
+                                <div className="text-center">
+                                    <p className="text-[10px] text-[#8B95A1] mb-0.5">{stats.label3}</p>
+                                    <p className="text-sm font-bold text-[#00BFA5]">{stats.val3}</p>
                                 </div>
                             </div>
                         )}
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
 
-                {/* 2. Charts Row */}
-                <div className="grid md:grid-cols-2 gap-6">
-                    {/* Radar Chart */}
-                    <Card className="border border-[#E5E8EB] shadow-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base flex items-center gap-2">
-                                <Award className="h-4 w-4 text-[#3182F6]" /> 역량 분석
-                            </CardTitle>
-                            <CardDescription className="text-xs">{chartDescriptions[activeProfile?.type || 'general'].radar}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="h-[250px] flex items-center justify-center">
-                            {chartData.radar && chartData.radar.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData.radar}>
-                                        <PolarGrid stroke="#E5E8EB" />
-                                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#4E5968', fontSize: 11 }} />
-                                        <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
-                                        <Radar name="My Skills" dataKey="A" stroke="#3182F6" fill="#3182F6" fillOpacity={0.3} />
-                                    </RadarChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <p className="text-sm text-[#8B95A1]">차트 데이터가 없습니다</p>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Bar Chart */}
-                    <Card className="border border-[#E5E8EB] shadow-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base flex items-center gap-2">
-                                <TrendingUp className="h-4 w-4 text-[#00BFA5]" /> 성장 예측
-                            </CardTitle>
-                            <CardDescription className="text-xs">{chartDescriptions[activeProfile?.type || 'general'].bar}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="h-[250px]">
-                            {chartData.bar && chartData.bar.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartData.bar} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#4E5968', fontSize: 12 }} />
-                                        <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                                        <Bar dataKey="val" radius={[6, 6, 0, 0]}>
-                                            <Cell fill="#B0B8C1" />
-                                            <Cell fill="#3182F6" />
-                                            <Cell fill="#00BFA5" />
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <p className="text-sm text-[#8B95A1]">차트 데이터가 없습니다</p>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* 3. Career Recommendations */}
-                {careerRecommendations && careerRecommendations.length > 0 && (
+                {careerRecommendations.length > 0 && (
                     <div>
-                        <div className="flex items-center justify-between mb-4 px-1">
-                            <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                                <Target className="h-5 w-5 text-[#3182F6]" />
-                                {recommendationSectionTitles[activeProfile?.type || 'general']}
+                        <div className="flex items-center gap-2 mb-4 px-1">
+                            <Target className="h-5 w-5 text-[#3182F6]" />
+                            <h3 className="text-lg font-bold text-[#191F28]">
+                                {recommendationSectionTitles[profileType]}
                             </h3>
                         </div>
-                        <div className="grid gap-4">
-                            {careerRecommendations.map((role: CareerRecommendation, idx: number) => (
-                                <Card 
-                                    key={idx} 
-                                    className="toss-card group hover:border-[#3182F6] transition-all cursor-pointer" 
-                                    data-testid={`card-recommendation-${idx}`}
-                                    onClick={() => {
-                                        setSelectedCareer(role);
-                                        setIsCareerDialogOpen(true);
-                                    }}
-                                >
-                                    <CardContent className="p-5">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <h4 className="text-lg font-bold text-[#191F28] group-hover:text-[#3182F6] transition-colors">
-                                                        {role.title}
-                                                    </h4>
-                                                    {idx === 0 && <Badge className="bg-[#E8F3FF] text-[#3182F6] hover:bg-[#E8F3FF] border-none px-2 py-0.5 text-[10px]">AI Pick</Badge>}
-                                                </div>
-                                                <p className="text-sm text-[#4E5968]">{role.description}</p>
-                                            </div>
-                                            <div className="text-right shrink-0 ml-4">
-                                                <span className="text-2xl font-bold text-[#3182F6]">{role.matchScore}%</span>
-                                                <p className="text-[10px] text-[#8B95A1]">{matchScoreLabels[activeProfile?.type || 'general']}</p>
-                                            </div>
-                                        </div>
-                                        
-                                        {role.requiredSkills && role.requiredSkills.length > 0 && (
-                                            <div className="flex flex-wrap gap-1 mb-3">
-                                                {role.requiredSkills.map((skill: string, skillIdx: number) => (
-                                                    <Badge key={skillIdx} variant="secondary" className="text-xs bg-[#F2F4F6] text-[#4E5968]">
-                                                        {skill}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        )}
-                                        
-                                        <div className="flex items-center justify-between pt-3 border-t border-[#F2F4F6]">
-                                            <span className="text-xs font-medium text-[#333D4B] flex items-center gap-1">
-                                                <Briefcase className="h-3 w-3" />
-                                                {role.salary}
-                                            </span>
-                                            <span className="text-xs text-[#8B95A1]">
-                                                {role.jobOutlook}
-                                            </span>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                        <p className="text-sm text-[#8B95A1] mb-4 px-1">
+                            각 항목을 클릭하여 상세 정보와 액션 플랜을 확인하세요
+                        </p>
+                        <div className="space-y-4">
+                            {careerRecommendations.map((career, idx) => (
+                                <CareerCard key={idx} career={career} index={idx} />
                             ))}
                         </div>
                     </div>
                 )}
-
-                {/* 4. Skill Analysis */}
-                {skillAnalysis && (
-                    <div className="grid md:grid-cols-3 gap-4">
-                        {/* Strengths */}
-                        <Card className="border border-[#E5E8EB] shadow-sm">
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-base flex items-center gap-2 text-[#00BFA5]">
-                                    <CheckCircle2 className="h-4 w-4" /> 강점
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <ul className="space-y-2">
-                                    {skillAnalysis.strengths?.map((strength: string, idx: number) => (
-                                        <li key={idx} className="flex items-start gap-2 text-sm text-[#4E5968]">
-                                            <CheckCircle2 className="h-4 w-4 text-[#00BFA5] shrink-0 mt-0.5" />
-                                            {strength}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </CardContent>
-                        </Card>
-
-                        {/* Weaknesses */}
-                        <Card className="border border-[#E5E8EB] shadow-sm">
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-base flex items-center gap-2 text-[#FFB300]">
-                                    <AlertTriangle className="h-4 w-4" /> 보완점
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <ul className="space-y-2">
-                                    {skillAnalysis.weaknesses?.map((weakness: string, idx: number) => (
-                                        <li key={idx} className="flex items-start gap-2 text-sm text-[#4E5968]">
-                                            <AlertTriangle className="h-4 w-4 text-[#FFB300] shrink-0 mt-0.5" />
-                                            {weakness}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </CardContent>
-                        </Card>
-
-                        {/* Development Plan */}
-                        <Card className="border border-[#E5E8EB] shadow-sm">
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-base flex items-center gap-2 text-[#3182F6]">
-                                    <Zap className="h-4 w-4" /> 추천 액션
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <ul className="space-y-2">
-                                    {skillAnalysis.developmentPlan?.map((plan: string, idx: number) => (
-                                        <li key={idx} className="flex items-start gap-2 text-sm text-[#4E5968]">
-                                            <Zap className="h-4 w-4 text-[#3182F6] shrink-0 mt-0.5" />
-                                            {plan}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
-
-                {/* Floating Analyze Button */}
-                <div className="fixed bottom-24 right-6 md:hidden z-50">
-                    <Button 
-                        onClick={handleAnalyze}
-                        disabled={generateAnalysisMutation.isPending}
-                        className="h-14 w-14 rounded-full bg-[#3182F6] shadow-lg shadow-blue-500/30"
-                        data-testid="button-mobile-analyze"
-                    >
-                        {generateAnalysisMutation.isPending ? (
-                            <Loader2 className="h-6 w-6 animate-spin" />
-                        ) : (
-                            <Brain className="h-6 w-6" />
-                        )}
-                    </Button>
-                </div>
             </div>
         );
     };
 
     return (
         <Layout>
-            <div className="max-w-6xl mx-auto h-[calc(100vh-40px)] md:h-[calc(100vh-80px)] flex md:rounded-2xl md:shadow-sm md:border border-[#E5E8EB] overflow-hidden bg-white relative">
-                
-                {/* Desktop Sidebar */}
-                <div className="hidden md:flex w-[280px] border-r border-[#E5E8EB] bg-[#F9FAFB]/50 flex-col">
-                    <ProfileSidebar />
-                </div>
+            <div className="min-h-screen bg-[#F9FAFB]">
+                <div className="flex">
+                    <aside className="hidden lg:block w-72 bg-white border-r border-[#E5E8EB] h-screen sticky top-0">
+                        <ProfileSidebar />
+                    </aside>
 
-                {/* Main Content */}
-                <div className="flex-1 flex flex-col h-full relative bg-[#F9FAFB] md:bg-white">
-                    
-                    {/* Mobile Header */}
-                    <div className="flex md:hidden items-center px-4 py-3 bg-white border-b border-[#E5E8EB] sticky top-0 z-20">
-                        <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-                            <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="-ml-2 mr-2">
-                                    <Menu className="h-5 w-5 text-[#4E5968]" />
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent side="left" className="w-[280px] p-0">
-                                <ProfileSidebar />
-                            </SheetContent>
-                        </Sheet>
-                        <h1 className="text-lg font-bold text-[#191F28] flex-1">커리어 분석</h1>
-                        <Button 
-                            onClick={handleAnalyze}
-                            disabled={generateAnalysisMutation.isPending}
-                            size="sm"
-                            className="gap-1 bg-[#3182F6] text-white"
-                            data-testid="button-header-analyze"
-                        >
-                            {generateAnalysisMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                    <main className="flex-1 min-w-0">
+                        <div className="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-[#E5E8EB]">
+                            <div className="flex items-center justify-between px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                    <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+                                        <SheetTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="shrink-0">
+                                                <Menu className="h-5 w-5" />
+                                            </Button>
+                                        </SheetTrigger>
+                                        <SheetContent side="left" className="w-72 p-0">
+                                            <ProfileSidebar />
+                                        </SheetContent>
+                                    </Sheet>
+                                    
+                                    {activeProfile && (
+                                        <div className="flex items-center gap-2">
+                                            <div className={cn("p-1.5 rounded-lg", profileTypeColors[activeProfile.type])}>
+                                                {(() => {
+                                                    const Icon = profileTypeIcons[activeProfile.type] || Briefcase;
+                                                    return <Icon className="h-4 w-4" />;
+                                                })()}
+                                            </div>
+                                            <span className="font-bold text-sm text-[#191F28] truncate max-w-[150px]">
+                                                {activeProfile.title || profileTypeLabels[activeProfile.type]}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 lg:p-8 max-w-4xl mx-auto">
+                            {isLoadingProfiles || isLoadingAnalyses ? (
+                                <div className="flex items-center justify-center py-20">
+                                    <Loader2 className="h-8 w-8 text-[#3182F6] animate-spin" />
+                                </div>
+                            ) : !activeProfile ? (
+                                <div className="flex flex-col items-center justify-center py-16">
+                                    <User className="h-16 w-16 text-[#B0B8C1] mb-4" />
+                                    <h3 className="text-lg font-bold text-[#191F28] mb-2">프로필을 선택하세요</h3>
+                                    <p className="text-sm text-[#8B95A1] text-center mb-4">
+                                        분석할 프로필을 선택하거나 새로 만들어주세요
+                                    </p>
+                                    <Link href="/profile">
+                                        <Button className="bg-[#3182F6]">
+                                            <Plus className="h-4 w-4 mr-2" /> 프로필 만들기
+                                        </Button>
+                                    </Link>
+                                </div>
                             ) : (
-                                <Sparkles className="h-4 w-4" />
+                                <DashboardContent />
                             )}
-                            {latestAnalysis ? '재분석' : '분석'}
-                        </Button>
-                    </div>
-
-                    {/* Content Scroll Area */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-8">
-                        <DashboardContent />
-                    </div>
+                        </div>
+                    </main>
                 </div>
             </div>
-
-            {/* Career Detail Dialog - moved to top level */}
-            <Dialog open={isCareerDialogOpen} onOpenChange={setIsCareerDialogOpen}>
-                <DialogContent className="max-w-lg mx-4 rounded-2xl">
-                    {selectedCareer && (
-                        <>
-                            <DialogHeader>
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <DialogTitle className="text-xl font-bold text-[#191F28] mb-1">
-                                            {selectedCareer.title}
-                                        </DialogTitle>
-                                        <DialogDescription className="text-sm text-[#4E5968]">
-                                            {selectedCareer.description}
-                                        </DialogDescription>
-                                    </div>
-                                    <div className="text-center ml-4 shrink-0">
-                                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#3182F6] to-[#1565C0] flex items-center justify-center">
-                                            <span className="text-xl font-bold text-white">{selectedCareer.matchScore}%</span>
-                                        </div>
-                                        <p className="text-[10px] text-[#8B95A1] mt-1">{matchScoreLabels[activeProfile?.type || 'general']}</p>
-                                    </div>
-                                </div>
-                            </DialogHeader>
-                            
-                            <div className="space-y-5 mt-4">
-                                {/* Salary & Outlook */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-[#F9FAFB] rounded-xl p-4">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Briefcase className="h-4 w-4 text-[#3182F6]" />
-                                            <span className="text-xs text-[#8B95A1]">{salaryLabels[activeProfile?.type || 'general']}</span>
-                                        </div>
-                                        <p className="text-base font-bold text-[#191F28]">{selectedCareer.salary}</p>
-                                    </div>
-                                    <div className="bg-[#F9FAFB] rounded-xl p-4">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <TrendingUp className="h-4 w-4 text-[#00BFA5]" />
-                                            <span className="text-xs text-[#8B95A1]">전망</span>
-                                        </div>
-                                        <p className="text-base font-bold text-[#191F28]">{selectedCareer.jobOutlook}</p>
-                                    </div>
-                                </div>
-
-                                {/* Required Skills */}
-                                {selectedCareer.requiredSkills && selectedCareer.requiredSkills.length > 0 && (
-                                    <div>
-                                        <h4 className="text-sm font-bold text-[#191F28] mb-2 flex items-center gap-2">
-                                            <Target className="h-4 w-4 text-[#3182F6]" />
-                                            필요 스킬
-                                        </h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            {selectedCareer.requiredSkills.map((skill: string, idx: number) => (
-                                                <Badge key={idx} variant="secondary" className="bg-[#E8F3FF] text-[#3182F6] hover:bg-[#E8F3FF]">
-                                                    {skill}
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Action Button */}
-                                <Button 
-                                    className="w-full h-12 rounded-xl bg-[#3182F6] text-white font-bold"
-                                    onClick={() => setIsCareerDialogOpen(false)}
-                                    data-testid="button-close-career-dialog"
-                                >
-                                    확인
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </DialogContent>
-            </Dialog>
         </Layout>
     );
 }

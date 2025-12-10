@@ -549,15 +549,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const result = await generateCareerAnalysis(profile, userIdentity);
 
-      // Store careerRecommendations and skillAnalysis together in the recommendations field
+      // Store careerRecommendations in the recommendations field
       const analysis = await storage.createAnalysis({
         profileId: req.params.profileId,
         summary: result.summary,
         stats: result.stats,
-        chartData: result.chartData,
+        chartData: null,
         recommendations: {
           careers: result.careerRecommendations,
-          skills: result.skillAnalysis,
         },
         aiRawResponse: result.rawResponse,
       });
