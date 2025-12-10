@@ -2,12 +2,13 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { 
     Brain, Sparkles, Loader2, ArrowRight, 
     Briefcase, TrendingUp, School, GraduationCap, 
     LineChart, Target, Award, Star,
     ChevronRight, Plus, LayoutDashboard, History,
-    CheckCircle2, AlertTriangle, Zap, User
+    CheckCircle2, AlertTriangle, Zap, User, ExternalLink
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,16 @@ import { Menu } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
+
+// Career recommendation type
+interface CareerRecommendation {
+    title: string;
+    description: string;
+    matchScore: number;
+    salary: string;
+    requiredSkills: string[];
+    jobOutlook: string;
+}
 
 // Profile type icon mapping
 const profileTypeIcons: Record<string, any> = {
@@ -55,6 +66,8 @@ export default function Analysis() {
     // State
     const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [selectedCareer, setSelectedCareer] = useState<CareerRecommendation | null>(null);
+    const [isCareerDialogOpen, setIsCareerDialogOpen] = useState(false);
 
     // Fetch user's profiles
     const { data: profiles, isLoading: isLoadingProfiles } = useQuery({
@@ -387,8 +400,16 @@ export default function Analysis() {
                             </h3>
                         </div>
                         <div className="grid gap-4">
-                            {careerRecommendations.map((role: any, idx: number) => (
-                                <Card key={idx} className="toss-card group hover:border-[#3182F6] transition-all cursor-pointer" data-testid={`card-recommendation-${idx}`}>
+                            {careerRecommendations.map((role: CareerRecommendation, idx: number) => (
+                                <Card 
+                                    key={idx} 
+                                    className="toss-card group hover:border-[#3182F6] transition-all cursor-pointer" 
+                                    data-testid={`card-recommendation-${idx}`}
+                                    onClick={() => {
+                                        setSelectedCareer(role);
+                                        setIsCareerDialogOpen(true);
+                                    }}
+                                >
                                     <CardContent className="p-5">
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex-1">
@@ -509,6 +530,80 @@ export default function Analysis() {
                         )}
                     </Button>
                 </div>
+
+                {/* Career Detail Dialog */}
+                <Dialog open={isCareerDialogOpen} onOpenChange={setIsCareerDialogOpen}>
+                    <DialogContent className="max-w-lg mx-4 rounded-2xl">
+                        {selectedCareer && (
+                            <>
+                                <DialogHeader>
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <DialogTitle className="text-xl font-bold text-[#191F28] mb-1">
+                                                {selectedCareer.title}
+                                            </DialogTitle>
+                                            <DialogDescription className="text-sm text-[#4E5968]">
+                                                {selectedCareer.description}
+                                            </DialogDescription>
+                                        </div>
+                                        <div className="text-center ml-4 shrink-0">
+                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#3182F6] to-[#1565C0] flex items-center justify-center">
+                                                <span className="text-xl font-bold text-white">{selectedCareer.matchScore}%</span>
+                                            </div>
+                                            <p className="text-[10px] text-[#8B95A1] mt-1">적합도</p>
+                                        </div>
+                                    </div>
+                                </DialogHeader>
+                                
+                                <div className="space-y-5 mt-4">
+                                    {/* Salary & Outlook */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-[#F9FAFB] rounded-xl p-4">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Briefcase className="h-4 w-4 text-[#3182F6]" />
+                                                <span className="text-xs text-[#8B95A1]">예상 연봉</span>
+                                            </div>
+                                            <p className="text-base font-bold text-[#191F28]">{selectedCareer.salary}</p>
+                                        </div>
+                                        <div className="bg-[#F9FAFB] rounded-xl p-4">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <TrendingUp className="h-4 w-4 text-[#00BFA5]" />
+                                                <span className="text-xs text-[#8B95A1]">전망</span>
+                                            </div>
+                                            <p className="text-base font-bold text-[#191F28]">{selectedCareer.jobOutlook}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Required Skills */}
+                                    {selectedCareer.requiredSkills && selectedCareer.requiredSkills.length > 0 && (
+                                        <div>
+                                            <h4 className="text-sm font-bold text-[#191F28] mb-2 flex items-center gap-2">
+                                                <Target className="h-4 w-4 text-[#3182F6]" />
+                                                필요 스킬
+                                            </h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedCareer.requiredSkills.map((skill: string, idx: number) => (
+                                                    <Badge key={idx} variant="secondary" className="bg-[#E8F3FF] text-[#3182F6] hover:bg-[#E8F3FF]">
+                                                        {skill}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Action Button */}
+                                    <Button 
+                                        className="w-full h-12 rounded-xl bg-[#3182F6] text-white font-bold"
+                                        onClick={() => setIsCareerDialogOpen(false)}
+                                        data-testid="button-close-career-dialog"
+                                    >
+                                        확인
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </DialogContent>
+                </Dialog>
             </div>
         );
     };
