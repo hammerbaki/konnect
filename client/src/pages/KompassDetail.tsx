@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar as CalendarIcon } from "lucide-react";
-import { MOCK_VISIONS, VisionGoal, DailyGoal } from "@/lib/mockData";
+import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar as CalendarIcon, Sparkles, Loader2 } from "lucide-react";
+import { MOCK_VISIONS, VisionGoal, DailyGoal, YearlyGoal, HalfYearlyGoal, MonthlyGoal, WeeklyGoal } from "@/lib/mockData";
 import { useState, useEffect, useRef } from "react";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useToast } from "@/hooks/use-toast";
@@ -12,8 +12,19 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useRoute } from "wouter";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useTokens } from "@/lib/TokenContext";
 
 import { motion, AnimatePresence } from "framer-motion";
+
+type GoalLevel = 'year' | 'half' | 'month' | 'week' | 'day';
+
+interface AncestorChainItem {
+  level: string;
+  title: string;
+  description?: string;
+}
 
 export default function KompassDetail() {
   const [match, params] = useRoute("/goals/:id");
@@ -34,6 +45,226 @@ export default function KompassDetail() {
   const [selectedHalfYearId, setSelectedHalfYearId] = useState<string | null>(null);
   const [selectedMonthId, setSelectedMonthId] = useState<string | null>(null);
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(null);
+
+  // AI Generation State
+  const [generatingLevel, setGeneratingLevel] = useState<GoalLevel | null>(null);
+  const { refreshCredits } = useTokens();
+  const queryClient = useQueryClient();
+
+  // AI Goal Suggestion Mutation
+  const aiSuggestMutation = useMutation({
+    mutationFn: async (params: {
+      level: GoalLevel;
+      visionTitle: string;
+      visionDescription: string;
+      targetYear: number;
+      ancestorChain: AncestorChainItem[];
+      siblings?: { title: string }[];
+      count?: number;
+    }) => {
+      const response = await apiRequest('POST', '/api/goals/ai-suggest', params);
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      if (data.creditsUsed > 0) {
+        refreshCredits();
+      }
+      toast({
+        title: "AI 목표 생성 완료",
+        description: `${data.suggestions.length}개의 목표가 생성되었습니다.`,
+      });
+      
+      // Apply suggestions to the vision tree
+      applyAISuggestions(variables.level, data.suggestions);
+    },
+    onError: (error: any) => {
+      const message = error?.message || "AI 목표 생성 중 오류가 발생했습니다.";
+      toast({
+        title: "생성 실패",
+        description: message,
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setGeneratingLevel(null);
+    },
+  });
+
+  // Apply AI suggestions to the tree - merges with existing content
+  const applyAISuggestions = (level: GoalLevel, suggestions: { title: string; description: string }[]) => {
+    if (!vision) return;
+    
+    const newVision = JSON.parse(JSON.stringify(vision)) as VisionGoal;
+    
+    switch (level) {
+      case 'year':
+        // Update yearly goal descriptions - only if empty or append with AI marker
+        suggestions.forEach((s, i) => {
+          if (newVision.children[i]) {
+            const existing = newVision.children[i].description;
+            if (!existing || existing.trim() === '') {
+              newVision.children[i].description = s.description;
+            } else {
+              // Append with separator if already has content
+              newVision.children[i].description = `${existing} | AI: ${s.description}`;
+            }
+          }
+        });
+        break;
+      case 'half':
+        const yearForHalf = newVision.children.find(y => y.id === selectedYearId);
+        if (yearForHalf) {
+          suggestions.forEach((s, i) => {
+            if (yearForHalf.children[i]) {
+              const existing = yearForHalf.children[i].description;
+              if (!existing || existing.trim() === '') {
+                yearForHalf.children[i].description = s.description;
+              } else {
+                yearForHalf.children[i].description = `${existing} | AI: ${s.description}`;
+              }
+            }
+          });
+        }
+        break;
+      case 'month':
+        const yearForMonth = newVision.children.find(y => y.id === selectedYearId);
+        const halfForMonth = yearForMonth?.children.find(h => h.id === selectedHalfYearId);
+        if (halfForMonth) {
+          suggestions.forEach((s, i) => {
+            if (halfForMonth.children[i]) {
+              const existing = halfForMonth.children[i].description;
+              if (!existing || existing.trim() === '') {
+                halfForMonth.children[i].description = s.description;
+              } else {
+                halfForMonth.children[i].description = `${existing} | AI: ${s.description}`;
+              }
+            }
+          });
+        }
+        break;
+      case 'week':
+        const yearForWeek = newVision.children.find(y => y.id === selectedYearId);
+        const halfForWeek = yearForWeek?.children.find(h => h.id === selectedHalfYearId);
+        const monthForWeek = halfForWeek?.children.find(m => m.id === selectedMonthId);
+        if (monthForWeek) {
+          suggestions.forEach((s, i) => {
+            if (monthForWeek.children[i]) {
+              const existing = monthForWeek.children[i].description;
+              if (!existing || existing.trim() === '') {
+                monthForWeek.children[i].description = s.description;
+              } else {
+                monthForWeek.children[i].description = `${existing} | AI: ${s.description}`;
+              }
+            }
+          });
+        }
+        break;
+      case 'day':
+        const yearForDay = newVision.children.find(y => y.id === selectedYearId);
+        const halfForDay = yearForDay?.children.find(h => h.id === selectedHalfYearId);
+        const monthForDay = halfForDay?.children.find(m => m.id === selectedMonthId);
+        const weekForDay = monthForDay?.children.find(w => w.id === selectedWeekId);
+        if (weekForDay) {
+          suggestions.forEach((s, i) => {
+            if (weekForDay.children[i]) {
+              const existingTodos = weekForDay.children[i].todos || [];
+              const hasContent = existingTodos.some(t => t.title.trim() !== '' && t.title !== '할 일을 입력하세요');
+              
+              if (!hasContent) {
+                // Replace empty todos with AI suggestions
+                weekForDay.children[i].todos = [
+                  { id: `${weekForDay.children[i].id}-ai-1`, title: s.title, completed: false },
+                  { id: `${weekForDay.children[i].id}-ai-2`, title: s.description, completed: false },
+                ];
+              } else {
+                // Append AI todos to existing
+                const newId = Date.now() + i;
+                weekForDay.children[i].todos.push(
+                  { id: `ai-${newId}-1`, title: `✨ ${s.title}`, completed: false },
+                  { id: `ai-${newId}-2`, title: `✨ ${s.description}`, completed: false },
+                );
+              }
+            }
+          });
+        }
+        break;
+    }
+    
+    setVision(newVision);
+  };
+
+  // Build ancestor chain for AI context
+  const buildAncestorChain = (level: GoalLevel): AncestorChainItem[] => {
+    const chain: AncestorChainItem[] = [];
+    
+    if (!vision) return chain;
+    
+    chain.push({ level: '비전', title: vision.title, description: vision.description });
+    
+    if (level === 'year') return chain;
+    
+    const year = vision.children.find(y => y.id === selectedYearId);
+    if (year) chain.push({ level: '연간', title: year.title, description: year.description });
+    
+    if (level === 'half') return chain;
+    
+    const half = year?.children.find(h => h.id === selectedHalfYearId);
+    if (half) chain.push({ level: '반기', title: half.title, description: half.description });
+    
+    if (level === 'month') return chain;
+    
+    const month = half?.children.find(m => m.id === selectedMonthId);
+    if (month) chain.push({ level: '월간', title: month.title, description: month.description });
+    
+    if (level === 'week') return chain;
+    
+    const week = month?.children.find(w => w.id === selectedWeekId);
+    if (week) chain.push({ level: '주간', title: week.title, description: week.description });
+    
+    return chain;
+  };
+
+  // Handle AI generation
+  const handleGenerateWithAI = (level: GoalLevel) => {
+    if (!vision) return;
+    
+    setGeneratingLevel(level);
+    
+    const ancestorChain = buildAncestorChain(level);
+    
+    aiSuggestMutation.mutate({
+      level,
+      visionTitle: vision.title,
+      visionDescription: vision.description,
+      targetYear: vision.targetYear,
+      ancestorChain,
+    });
+  };
+
+  // AI Generate Button Component
+  const AIGenerateButton = ({ level, isStrategic = false }: { level: GoalLevel; isStrategic?: boolean }) => {
+    const isGenerating = generatingLevel === level;
+    
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleGenerateWithAI(level);
+        }}
+        disabled={isGenerating || aiSuggestMutation.isPending}
+        className="h-7 text-xs gap-1.5 bg-gradient-to-r from-[#3182F6]/5 to-purple-500/5 border-[#3182F6]/30 text-[#3182F6] hover:bg-[#3182F6]/10"
+      >
+        {isGenerating ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : (
+          <Sparkles className="h-3 w-3" />
+        )}
+        {isGenerating ? '생성 중...' : (isStrategic ? 'AI 생성 (1 크레딧)' : 'AI 생성')}
+      </Button>
+    );
+  };
 
   useEffect(() => {
       if (id) {
@@ -361,9 +592,10 @@ export default function KompassDetail() {
 
         {/* Level 2: Yearly Goals (3 Cards) */}
         <div className="space-y-2 relative">
-             <div className="text-center">
-                <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">연간 목표</Badge>
-                <p className="text-sm text-[#8B95A1] mb-3">각 연도의 핵심 목표를 설정하세요.</p>
+             <div className="text-center space-y-2">
+                <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">연간 목표</Badge>
+                <p className="text-sm text-[#8B95A1]">각 연도의 핵심 목표를 설정하세요.</p>
+                <AIGenerateButton level="year" isStrategic={true} />
              </div>
              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {vision.children.map((year) => (
@@ -420,9 +652,10 @@ export default function KompassDetail() {
                 transition={{ duration: 0.3 }}
                 className="space-y-2 mt-6"
             >
-                <div className="text-center">
-                    <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">반기별 목표</Badge>
-                    <p className="text-sm text-[#8B95A1] mb-3">연간 목표를 상반기와 하반기로 나누어 계획하세요.</p>
+                <div className="text-center space-y-2">
+                    <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">반기별 목표</Badge>
+                    <p className="text-sm text-[#8B95A1]">연간 목표를 상반기와 하반기로 나누어 계획하세요.</p>
+                    <AIGenerateButton level="half" isStrategic={true} />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
                     {selectedYear.children.map((half) => (
@@ -480,9 +713,10 @@ export default function KompassDetail() {
                 transition={{ duration: 0.3 }}
                 className="space-y-2 mt-6"
             >
-                <div className="text-center">
-                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">월간 목표</Badge>
-                     <p className="text-sm text-[#8B95A1] mb-3">매월 달성해야 할 핵심 목표를 계획하세요.</p>
+                <div className="text-center space-y-2">
+                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">월간 목표</Badge>
+                     <p className="text-sm text-[#8B95A1]">매월 달성해야 할 핵심 목표를 계획하세요.</p>
+                     <AIGenerateButton level="month" />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                     {selectedHalfYear.children.map((month) => (
@@ -538,9 +772,10 @@ export default function KompassDetail() {
                 transition={{ duration: 0.3 }}
                 className="space-y-2 mt-6"
             >
-                <div className="text-center">
-                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">주간 목표</Badge>
-                     <p className="text-sm text-[#8B95A1] mb-3">이번 주에 집중해야 할 과제를 확인하세요.</p>
+                <div className="text-center space-y-2">
+                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">주간 목표</Badge>
+                     <p className="text-sm text-[#8B95A1]">이번 주에 집중해야 할 과제를 확인하세요.</p>
+                     <AIGenerateButton level="week" />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 max-w-3xl mx-auto">
                     {selectedMonth.children.map((week) => (
@@ -596,9 +831,10 @@ export default function KompassDetail() {
                 transition={{ duration: 0.3 }}
                 className="space-y-2 mt-6 pb-10"
             >
-                <div className="text-center">
-                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] mb-2 text-[10px]">일일 과제</Badge>
-                     <p className="text-sm text-[#8B95A1] mb-3">향후 24시간 내에 해야 할 상위 3가지 과제</p>
+                <div className="text-center space-y-2">
+                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">일일 과제</Badge>
+                     <p className="text-sm text-[#8B95A1]">향후 24시간 내에 해야 할 상위 3가지 과제</p>
+                     <AIGenerateButton level="day" />
                 </div>
                 
                 {/* Compact Grid for 7 Days - Expanded for direct editing */}
