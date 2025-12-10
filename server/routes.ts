@@ -10,7 +10,7 @@ import {
   updateUserIdentitySchema,
 } from "@shared/schema";
 import { z } from "zod";
-import { generateCareerAnalysis, generatePersonalEssay } from "./ai";
+import { generateCareerAnalysis, generatePersonalEssay, generateGoals, type GoalLevel } from "./ai";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -618,6 +618,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating essay:", error);
       res.status(500).json({ message: "자기소개서 생성 중 오류가 발생했습니다." });
+    }
+  });
+
+  // AI Goal Suggestions endpoint
+  // Strategic levels (year, half) cost 1 credit
+  // Tactical levels (month, week, day) are free
+  const goalSuggestSchema = z.object({
+    level: z.enum(['year', 'half', 'month', 'week', 'day']),
+    visionTitle: z.string(),
+    visionDescription: z.string(),
+    targetYear: z.number(),
+    ancestorChain: z.array(z.object({
+      level: z.string(),
+      title: z.string(),
+      description: z.string().optional(),
+    })),
+    siblings: z.array(z.object({ title: z.string() })).optional(),
+    count: z.number().min(1).max(10).optional(),
+  });
+
+  app.post('/api/goals/ai-suggest', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const parsed = goalSuggestSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        return res.status(400).json({ message: "잘못된 요청입니다.", errors: parsed.error.errors });
+      }
+
+      const { level, visionTitle, visionDescription, targetYear, ancestorChain, siblings, count } = parsed.data;
+      
+      // Strategic levels (year, half) require 1 credit
+      const isStrategicLevel = level === 'year' || level === 'half';
+      
+      if (isStrategicLevel) {
+        const user = await storage.getUser(userId);
+        if (!user || user.credits < 1) {
+          return res.status(402).json({ 
+            message: "크레딧이 부족합니다. 연도/반기 목표 생성을 위해 최소 1 크레딧이 필요합니다.",
+            requiredCredits: 1,
+            currentCredits: user?.credits || 0,
+          });
+        }
+
+        const deducted = await storage.deductUserCredits(userId, 1);
+        if (!deducted) {
+          return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+        }
+      }
+
+      const result = await generateGoals(
+        level as GoalLevel,
+        { visionTitle, visionDescription, targetYear, ancestorChain, siblings },
+        count
+      );
+
+      // Return updated credits if strategic level was used
+      let updatedCredits: number | undefined;
+      if (isStrategicLevel) {
+        const user = await storage.getUser(userId);
+        updatedCredits = user?.credits;
+      }
+
+      res.json({
+        suggestions: result.suggestions,
+        creditsUsed: isStrategicLevel ? 1 : 0,
+        remainingCredits: updatedCredits,
+      });
+    } catch (error: any) {
+      console.error("Error generating goal suggestions:", error);
+      res.status(500).json({ message: "AI 목표 생성 중 오류가 발생했습니다.", details: error?.message });
     }
   });
 
