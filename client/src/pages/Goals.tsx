@@ -111,10 +111,11 @@ export default function Goals() {
   });
 
   const updateKompassMutation = useMutation({
-    mutationFn: async (data: { id: string; visionData: VisionGoal; targetYear: number }) => {
+    mutationFn: async (data: { id: string; visionData: VisionGoal; targetYear: number; progress: number }) => {
       const response = await apiRequest('PATCH', `/api/kompass/${data.id}`, {
         visionData: data.visionData,
         targetYear: data.targetYear,
+        progress: data.progress,
       });
       return response.json();
     },
@@ -231,6 +232,11 @@ export default function Goals() {
   const handleSaveDetail = () => {
     if (!selectedKompass) return;
     
+    if (!editTitle.trim()) {
+      toast({ title: "제목을 입력해주세요", variant: "destructive" });
+      return;
+    }
+    
     const updatedVisionData = {
       ...selectedKompass.visionData,
       title: editTitle,
@@ -241,6 +247,7 @@ export default function Goals() {
       id: selectedKompass.id,
       visionData: updatedVisionData,
       targetYear: parseInt(editTargetYear),
+      progress: selectedKompass.progress,
     });
   };
 
