@@ -733,3 +733,143 @@ ${essayContext ? `추가 정보: ${essayContext}` : ''}
     )
   );
 }
+
+// Goal level types for AI generation
+export type GoalLevel = 'year' | 'half' | 'month' | 'week' | 'day';
+
+interface GoalContext {
+  visionTitle: string;
+  visionDescription: string;
+  targetYear: number;
+  ancestorChain: { level: string; title: string; description?: string }[];
+  siblings?: { title: string }[];
+}
+
+interface GeneratedGoal {
+  title: string;
+  description: string;
+}
+
+// Get output count based on level
+function getOutputCountForLevel(level: GoalLevel): number {
+  switch (level) {
+    case 'year': return 3; // Usually 3 years for a vision
+    case 'half': return 2; // H1, H2
+    case 'month': return 6; // 6 months per half
+    case 'week': return 4; // 4 weeks per month
+    case 'day': return 7; // 7 days per week (todos)
+    default: return 3;
+  }
+}
+
+// Get level-specific prompt
+function getLevelPrompt(level: GoalLevel, count: number): string {
+  const prompts: Record<GoalLevel, string> = {
+    year: `${count}개의 연도별 목표를 생성하세요. 각 목표는 해당 연도에 달성해야 할 핵심 마일스톤입니다.`,
+    half: `${count}개의 반기별 목표를 생성하세요. 상반기(H1)와 하반기(H2)로 나누어 구체적인 목표를 설정하세요.`,
+    month: `${count}개의 월별 목표를 생성하세요. 각 월에 집중해야 할 구체적인 액션을 포함하세요.`,
+    week: `${count}개의 주간 목표를 생성하세요. 이번 달 목표 달성을 위한 주별 마일스톤입니다.`,
+    day: `${count}개의 일일 할 일(TODO)을 생성하세요. 이번 주 목표 달성을 위한 구체적인 작업입니다.`,
+  };
+  return prompts[level];
+}
+
+// Generate goals at a specific level using AI
+export async function generateGoals(
+  level: GoalLevel,
+  context: GoalContext,
+  customCount?: number
+): Promise<{
+  suggestions: GeneratedGoal[];
+  rawResponse: string;
+}> {
+  return limit(() =>
+    retryWithBackoff(
+      async () => {
+        const count = customCount || getOutputCountForLevel(level);
+        
+        // Build ancestor context string
+        const ancestorContext = context.ancestorChain
+          .map(a => `- ${a.level}: ${a.title}${a.description ? ` (${a.description})` : ''}`)
+          .join('\n');
+        
+        const siblingContext = context.siblings?.length 
+          ? `\n\n기존 항목 (중복 피하기):\n${context.siblings.map(s => `- ${s.title}`).join('\n')}`
+          : '';
+
+        const systemPrompt = `당신은 한국의 목표 설정 전문가입니다. 사용자의 비전과 상위 목표를 바탕으로 구체적이고 실행 가능한 하위 목표를 생성합니다.
+        
+중요 규칙:
+1. 모든 응답은 한국어로 작성
+2. 각 목표는 상위 목표 달성에 직접적으로 기여해야 함
+3. 구체적이고 측정 가능한 목표 설정
+4. 현실적이고 동기부여가 되는 표현 사용
+5. 기존 형제 항목과 중복되지 않게 작성`;
+
+        const prompt = `## 비전
+제목: ${context.visionTitle}
+설명: ${context.visionDescription}
+목표 연도: ${context.targetYear}년
+
+## 상위 목표 체인
+${ancestorContext || '(최상위 레벨)'}${siblingContext}
+
+## 요청
+${getLevelPrompt(level, count)}
+
+다음 JSON 형식으로 반환하세요:
+{
+  "suggestions": [
+    {"title": "목표 제목", "description": "목표에 대한 간단한 설명 (1-2문장)"},
+    ...
+  ]
+}
+
+**반드시 유효한 JSON만 반환하세요. 추가 설명 없이 JSON만 출력하세요.**`;
+
+        const message = await anthropic.messages.create({
+          model: "claude-sonnet-4-5",
+          max_tokens: 2048,
+          system: systemPrompt,
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+        });
+
+        const msgContent = message.content[0];
+        if (msgContent.type !== "text") {
+          throw new Error("Unexpected response type");
+        }
+
+        const rawResponse = msgContent.text;
+        
+        // Parse JSON from response
+        const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error("No valid JSON found in response");
+        }
+
+        const parsed = JSON.parse(jsonMatch[0]);
+        
+        const suggestions: GeneratedGoal[] = (parsed.suggestions || []).map((s: any) => ({
+          title: s.title || "목표",
+          description: s.description || "",
+        }));
+        
+        return {
+          suggestions,
+          rawResponse,
+        };
+      },
+      {
+        retries: 5,
+        minTimeout: 2000,
+        maxTimeout: 64000,
+        factor: 2,
+      }
+    )
+  );
+}
