@@ -462,7 +462,249 @@ export interface CareerAnalysisResult {
   rawResponse: string;
 }
 
-// Generate career analysis using Claude Haiku (cheapest model for testing)
+// Get profile-type specific prompt template
+function getProfileTypePrompt(profileType: string): string {
+  switch (profileType) {
+    case 'elementary':
+      return `{
+  "summary": "전체 분석 요약 (2-3문장, 아이의 흥미와 재능을 격려하는 톤)",
+  "stats": {
+    "label1": "흥미 발견도",
+    "val1": "매우 높음/높음/보통",
+    "label2": "추천 분야",
+    "val2": "관심 분야명",
+    "label3": "탐구력",
+    "val3": "매우 높음/높음/보통"
+  },
+  "chartData": {
+    "radar": [
+      { "subject": "호기심", "A": 85, "fullMark": 150 },
+      { "subject": "창의력", "A": 90, "fullMark": 150 },
+      { "subject": "협동심", "A": 75, "fullMark": 150 },
+      { "subject": "표현력", "A": 80, "fullMark": 150 },
+      { "subject": "집중력", "A": 70, "fullMark": 150 }
+    ],
+    "bar": [
+      { "name": "현재 흥미", "val": 65 },
+      { "name": "발전 가능성", "val": 85 },
+      { "name": "잠재력", "val": 95 }
+    ]
+  },
+  "careerRecommendations": [
+    {
+      "title": "추천 꿈/직업 1 (예: 과학자, 유튜버, 선생님)",
+      "description": "이 꿈이 아이에게 적합한 이유를 재미있게 설명",
+      "matchScore": 92,
+      "salary": "이 직업의 특징 (예: 새로운 것을 발견해요!)",
+      "requiredSkills": ["필요한 능력 1", "필요한 능력 2"],
+      "jobOutlook": "미래에 어떤 일을 하게 되는지 설명"
+    }
+  ],
+  "skillAnalysis": {
+    "strengths": ["아이의 강점 1", "강점 2", "강점 3"],
+    "weaknesses": ["더 키워볼 점 1", "더 키워볼 점 2"],
+    "developmentPlan": ["추천 활동 1", "추천 활동 2", "추천 활동 3"]
+  }
+}
+
+중요:
+- 초등학생에게 적합한 쉽고 재미있는 언어를 사용하세요.
+- 직업보다는 '꿈'이나 '되고 싶은 사람'으로 표현하세요.
+- 아이의 흥미와 재능을 격려하는 긍정적인 톤을 유지하세요.
+- salary 필드는 연봉 대신 직업의 재미있는 특징을 설명하세요.`;
+
+    case 'middle':
+      return `{
+  "summary": "전체 분석 요약 (2-3문장, 적성과 진로 방향 제시)",
+  "stats": {
+    "label1": "적성 파악도",
+    "val1": "높음/보통/탐색중",
+    "label2": "추천 계열",
+    "val2": "인문/자연/예체능 등",
+    "label3": "진로 명확도",
+    "val3": "높음/보통/탐색중"
+  },
+  "chartData": {
+    "radar": [
+      { "subject": "학습능력", "A": 85, "fullMark": 150 },
+      { "subject": "창의력", "A": 90, "fullMark": 150 },
+      { "subject": "사회성", "A": 75, "fullMark": 150 },
+      { "subject": "자기주도성", "A": 80, "fullMark": 150 },
+      { "subject": "탐구력", "A": 70, "fullMark": 150 }
+    ],
+    "bar": [
+      { "name": "현재 역량", "val": 65 },
+      { "name": "고등학교 준비", "val": 80 },
+      { "name": "잠재력", "val": 95 }
+    ]
+  },
+  "careerRecommendations": [
+    {
+      "title": "추천 고등학교 유형 + 관련 진로 (예: 과학고 → 연구원)",
+      "description": "이 진로가 적합한 이유와 준비 방법",
+      "matchScore": 92,
+      "salary": "이 분야의 특징과 진로 전망",
+      "requiredSkills": ["필요한 역량 1", "필요한 역량 2"],
+      "jobOutlook": "관련 직업과 미래 전망"
+    }
+  ],
+  "skillAnalysis": {
+    "strengths": ["강점 1", "강점 2", "강점 3"],
+    "weaknesses": ["보완할 점 1", "보완할 점 2"],
+    "developmentPlan": ["추천 활동 1 (동아리, 독서 등)", "추천 활동 2", "추천 활동 3"]
+  }
+}
+
+중요:
+- 고등학교 선택과 연계된 진로 방향을 제시하세요.
+- 특목고, 자사고, 일반고 등 다양한 옵션을 고려하세요.
+- salary 필드는 해당 분야의 특징과 매력을 설명하세요.`;
+
+    case 'high':
+      return `{
+  "summary": "전체 분석 요약 (2-3문장, 대학 진학 방향 제시)",
+  "stats": {
+    "label1": "입시 경쟁력",
+    "val1": "상위 10%/20%/30% 등",
+    "label2": "추천 학과",
+    "val2": "학과명",
+    "label3": "합격 가능성",
+    "val3": "높음/보통/노력필요"
+  },
+  "chartData": {
+    "radar": [
+      { "subject": "학업역량", "A": 85, "fullMark": 150 },
+      { "subject": "진로역량", "A": 90, "fullMark": 150 },
+      { "subject": "공동체역량", "A": 75, "fullMark": 150 },
+      { "subject": "자기관리", "A": 80, "fullMark": 150 },
+      { "subject": "창의융합", "A": 70, "fullMark": 150 }
+    ],
+    "bar": [
+      { "name": "현재 내신", "val": 65 },
+      { "name": "목표 등급", "val": 85 },
+      { "name": "수능 예상", "val": 75 }
+    ]
+  },
+  "careerRecommendations": [
+    {
+      "title": "추천 대학 학과 1 (예: 서울대 컴퓨터공학과)",
+      "description": "이 학과가 적합한 이유와 입시 전략",
+      "matchScore": 92,
+      "salary": "졸업 후 예상 초봉/취업 분야",
+      "requiredSkills": ["필요한 역량/활동 1", "역량 2"],
+      "jobOutlook": "취업 전망과 커리어 패스"
+    }
+  ],
+  "skillAnalysis": {
+    "strengths": ["학업/활동 강점 1", "강점 2", "강점 3"],
+    "weaknesses": ["보완할 점 1", "보완할 점 2"],
+    "developmentPlan": ["입시 준비 전략 1", "비교과 활동 추천", "학습 방법 추천"]
+  }
+}
+
+중요:
+- 대학 학과와 입시 전략에 초점을 맞추세요.
+- 내신, 수능, 학생부종합전형 등 다양한 입시 전형을 고려하세요.
+- 학과 선택과 미래 직업 연계를 설명하세요.`;
+
+    case 'university':
+      return `{
+  "summary": "전체 분석 요약 (2-3문장, 취업 준비 방향 제시)",
+  "stats": {
+    "label1": "취업 경쟁력",
+    "val1": "상위 10%/20%/30% 등",
+    "label2": "추천 직무",
+    "val2": "직무명",
+    "label3": "취업 가능성",
+    "val3": "높음/보통/준비필요"
+  },
+  "chartData": {
+    "radar": [
+      { "subject": "전공역량", "A": 85, "fullMark": 150 },
+      { "subject": "실무경험", "A": 70, "fullMark": 150 },
+      { "subject": "어학능력", "A": 75, "fullMark": 150 },
+      { "subject": "대외활동", "A": 80, "fullMark": 150 },
+      { "subject": "자격증", "A": 60, "fullMark": 150 }
+    ],
+    "bar": [
+      { "name": "현재 스펙", "val": 65 },
+      { "name": "졸업 시 예상", "val": 85 },
+      { "name": "목표 수준", "val": 95 }
+    ]
+  },
+  "careerRecommendations": [
+    {
+      "title": "추천 인턴십/신입 직무 1 (예: 삼성전자 마케팅 인턴)",
+      "description": "이 기회가 적합한 이유와 지원 전략",
+      "matchScore": 92,
+      "salary": "예상 연봉 (예: 4,000-5,000만원)",
+      "requiredSkills": ["필요 스펙/자격증 1", "스펙 2"],
+      "jobOutlook": "해당 직무의 성장성과 커리어 패스"
+    }
+  ],
+  "skillAnalysis": {
+    "strengths": ["취업 강점 1 (학점, 자격증 등)", "강점 2", "강점 3"],
+    "weaknesses": ["보완할 스펙 1", "보완할 점 2"],
+    "developmentPlan": ["취업 준비 전략 1", "인턴십/대외활동 추천", "자격증/어학 준비"]
+  }
+}
+
+중요:
+- 인턴십, 대기업 신입 채용, 공채 등 취업 기회에 초점을 맞추세요.
+- 전공과 연계된 직무와 산업을 추천하세요.
+- 현실적인 연봉 범위와 취업 준비 전략을 제시하세요.`;
+
+    case 'general':
+    default:
+      return `{
+  "summary": "전체 분석 요약 (2-3문장, 이직/경력 개발 방향 제시)",
+  "stats": {
+    "label1": "시장 경쟁력",
+    "val1": "상위 10%/20%/30% 등",
+    "label2": "추천 직무",
+    "val2": "직무명",
+    "label3": "이직 성공률",
+    "val3": "높음/보통/준비필요"
+  },
+  "chartData": {
+    "radar": [
+      { "subject": "전문성", "A": 85, "fullMark": 150 },
+      { "subject": "커뮤니케이션", "A": 90, "fullMark": 150 },
+      { "subject": "리더십", "A": 75, "fullMark": 150 },
+      { "subject": "문제해결", "A": 80, "fullMark": 150 },
+      { "subject": "적응력", "A": 70, "fullMark": 150 }
+    ],
+    "bar": [
+      { "name": "현재", "val": 65 },
+      { "name": "6개월 후", "val": 80 },
+      { "name": "1년 후", "val": 95 }
+    ]
+  },
+  "careerRecommendations": [
+    {
+      "title": "추천 커리어/이직 기회 1",
+      "description": "이 직무가 적합한 이유와 이직 전략",
+      "matchScore": 92,
+      "salary": "예상 연봉 범위 (예: 5,000-7,000만원)",
+      "requiredSkills": ["필요 역량 1", "필요 역량 2"],
+      "jobOutlook": "해당 직무의 성장성과 전망"
+    }
+  ],
+  "skillAnalysis": {
+    "strengths": ["경력 강점 1", "강점 2", "강점 3"],
+    "weaknesses": ["보완할 역량 1", "보완할 점 2"],
+    "developmentPlan": ["커리어 개발 전략 1", "자격증/스킬업 추천", "네트워킹 전략"]
+  }
+}
+
+중요:
+- 경력 개발과 이직에 초점을 맞추세요.
+- 현실적인 연봉 협상 범위를 제시하세요.
+- 경력과 스킬을 활용한 성장 방향을 제안하세요.`;
+  }
+}
+
+// Generate career analysis using Claude
 export async function generateCareerAnalysis(
   profile: Profile, 
   userIdentity?: { displayName?: string; gender?: string; birthDate?: string | Date }
@@ -472,75 +714,20 @@ export async function generateCareerAnalysis(
       async () => {
         const systemPrompt = getAnalysisSystemPrompt(profile.type);
         const contextData = getProfileContextData(profile, userIdentity);
+        const profileTypePrompt = getProfileTypePrompt(profile.type);
 
         const prompt = `${contextData}
 
 ---
 
-위 프로필 정보를 철저히 분석하여 맞춤형 커리어 분석 결과를 제공해주세요.
+위 프로필 정보를 철저히 분석하여 맞춤형 분석 결과를 제공해주세요.
 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
 
-{
-  "summary": "전체 분석 요약 (2-3문장, 사용자의 강점과 가능성 강조)",
-  "stats": {
-    "label1": "시장 경쟁력",
-    "val1": "Top 30%",
-    "label2": "추천 직무",
-    "val2": "직무명",
-    "label3": "성공 가능성",
-    "val3": "높음/보통/낮음"
-  },
-  "chartData": {
-    "radar": [
-      { "subject": "전문성", "A": 85, "fullMark": 150 },
-      { "subject": "커뮤니케이션", "A": 90, "fullMark": 150 },
-      { "subject": "리더십", "A": 75, "fullMark": 150 },
-      { "subject": "문제해결", "A": 80, "fullMark": 150 },
-      { "subject": "창의성", "A": 70, "fullMark": 150 }
-    ],
-    "bar": [
-      { "name": "현재", "val": 65 },
-      { "name": "6개월 후", "val": 80 },
-      { "name": "목표", "val": 95 }
-    ]
-  },
-  "careerRecommendations": [
-    {
-      "title": "추천 직무 1",
-      "description": "해당 직무가 적합한 이유 설명",
-      "matchScore": 92,
-      "salary": "연봉 범위 (예: 4,000-6,000만원)",
-      "requiredSkills": ["필요 역량 1", "필요 역량 2"],
-      "jobOutlook": "전망 설명"
-    },
-    {
-      "title": "추천 직무 2",
-      "description": "해당 직무가 적합한 이유 설명",
-      "matchScore": 85,
-      "salary": "연봉 범위",
-      "requiredSkills": ["필요 역량 1", "필요 역량 2"],
-      "jobOutlook": "전망 설명"
-    },
-    {
-      "title": "추천 직무 3",
-      "description": "해당 직무가 적합한 이유 설명",
-      "matchScore": 78,
-      "salary": "연봉 범위",
-      "requiredSkills": ["필요 역량 1", "필요 역량 2"],
-      "jobOutlook": "전망 설명"
-    }
-  ],
-  "skillAnalysis": {
-    "strengths": ["강점 1", "강점 2", "강점 3"],
-    "weaknesses": ["보완점 1", "보완점 2"],
-    "developmentPlan": ["추천 액션 1", "추천 액션 2", "추천 액션 3"]
-  }
-}
+${profileTypePrompt}
 
-중요: 
-- 프로필 정보를 기반으로 현실적이고 구체적인 분석을 제공하세요.
-- 한국 취업 시장 기준으로 연봉과 전망을 분석하세요.
+추가 지침:
 - matchScore는 프로필과의 적합도를 0-100 사이 숫자로 표시합니다.
+- 3개의 추천 항목을 제공하세요.
 - 반드시 유효한 JSON만 반환하세요.`;
 
         const message = await anthropic.messages.create({

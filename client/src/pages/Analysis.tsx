@@ -57,6 +57,42 @@ const profileTypeLabels: Record<string, string> = {
     elementary: '초등학생',
 };
 
+// Profile-type specific section titles
+const recommendationSectionTitles: Record<string, string> = {
+    elementary: '추천 꿈 직업',
+    middle: '추천 진로 방향',
+    high: '추천 대학 학과',
+    university: '추천 인턴십/직무',
+    general: '추천 커리어',
+};
+
+// Profile-type specific match score labels
+const matchScoreLabels: Record<string, string> = {
+    elementary: '흥미도',
+    middle: '적합도',
+    high: '합격 가능성',
+    university: '취업 적합도',
+    general: '적합도',
+};
+
+// Profile-type specific salary/info labels
+const salaryLabels: Record<string, string> = {
+    elementary: '특징',
+    middle: '특징',
+    high: '졸업 후 전망',
+    university: '예상 연봉',
+    general: '예상 연봉',
+};
+
+// Profile-type specific chart descriptions
+const chartDescriptions: Record<string, { radar: string; bar: string }> = {
+    elementary: { radar: '나의 잠재력 분포', bar: '흥미와 잠재력 성장' },
+    middle: { radar: '나의 역량 분포', bar: '고등학교 준비 현황' },
+    high: { radar: '입시 역량 분석', bar: '대학 진학 준비 현황' },
+    university: { radar: '취업 역량 분석', bar: '스펙 및 역량 성장' },
+    general: { radar: '현재 역량 분포', bar: '현 직무 대비 성장 가능성' },
+};
+
 export default function Analysis() {
     const { toast } = useToast();
     const { setAction } = useMobileAction();
@@ -344,7 +380,7 @@ export default function Analysis() {
                             <CardTitle className="text-base flex items-center gap-2">
                                 <Award className="h-4 w-4 text-[#3182F6]" /> 역량 분석
                             </CardTitle>
-                            <CardDescription className="text-xs">나의 현재 역량 분포도</CardDescription>
+                            <CardDescription className="text-xs">{chartDescriptions[activeProfile?.type || 'general'].radar}</CardDescription>
                         </CardHeader>
                         <CardContent className="h-[250px] flex items-center justify-center">
                             {chartData.radar && chartData.radar.length > 0 ? (
@@ -368,7 +404,7 @@ export default function Analysis() {
                             <CardTitle className="text-base flex items-center gap-2">
                                 <TrendingUp className="h-4 w-4 text-[#00BFA5]" /> 성장 예측
                             </CardTitle>
-                            <CardDescription className="text-xs">현 직무 대비 성장 가능성</CardDescription>
+                            <CardDescription className="text-xs">{chartDescriptions[activeProfile?.type || 'general'].bar}</CardDescription>
                         </CardHeader>
                         <CardContent className="h-[250px]">
                             {chartData.bar && chartData.bar.length > 0 ? (
@@ -396,7 +432,7 @@ export default function Analysis() {
                         <div className="flex items-center justify-between mb-4 px-1">
                             <h3 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
                                 <Target className="h-5 w-5 text-[#3182F6]" />
-                                추천 커리어
+                                {recommendationSectionTitles[activeProfile?.type || 'general']}
                             </h3>
                         </div>
                         <div className="grid gap-4">
@@ -423,7 +459,7 @@ export default function Analysis() {
                                             </div>
                                             <div className="text-right shrink-0 ml-4">
                                                 <span className="text-2xl font-bold text-[#3182F6]">{role.matchScore}%</span>
-                                                <p className="text-[10px] text-[#8B95A1]">적합도</p>
+                                                <p className="text-[10px] text-[#8B95A1]">{matchScoreLabels[activeProfile?.type || 'general']}</p>
                                             </div>
                                         </div>
                                         
@@ -601,7 +637,7 @@ export default function Analysis() {
                                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#3182F6] to-[#1565C0] flex items-center justify-center">
                                             <span className="text-xl font-bold text-white">{selectedCareer.matchScore}%</span>
                                         </div>
-                                        <p className="text-[10px] text-[#8B95A1] mt-1">적합도</p>
+                                        <p className="text-[10px] text-[#8B95A1] mt-1">{matchScoreLabels[activeProfile?.type || 'general']}</p>
                                     </div>
                                 </div>
                             </DialogHeader>
@@ -612,7 +648,7 @@ export default function Analysis() {
                                     <div className="bg-[#F9FAFB] rounded-xl p-4">
                                         <div className="flex items-center gap-2 mb-1">
                                             <Briefcase className="h-4 w-4 text-[#3182F6]" />
-                                            <span className="text-xs text-[#8B95A1]">예상 연봉</span>
+                                            <span className="text-xs text-[#8B95A1]">{salaryLabels[activeProfile?.type || 'general']}</span>
                                         </div>
                                         <p className="text-base font-bold text-[#191F28]">{selectedCareer.salary}</p>
                                     </div>
