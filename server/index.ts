@@ -47,6 +47,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 app.use(
   express.json({
+    limit: '5mb',
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },

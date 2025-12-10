@@ -291,6 +291,95 @@ export function generateTree(idSuffix: string, title: string, targetYear: number
     return vision;
 }
 
+// Lightweight tree generator for initial Kompass creation
+// Creates minimal structure to avoid 413 errors - details can be filled via AI or manually
+export function generateLightTree(idSuffix: string, title: string, targetYear: number, description: string = ""): VisionGoal {
+    const startYear = new Date().getFullYear();
+    const yearsCount = Math.min(Math.max(targetYear - startYear + 1, 1), 5); // 1-5 years
+    
+    const vision: VisionGoal = {
+        id: `vision-${idSuffix}`,
+        title: title,
+        description: description || "나의 커리어 목표를 향한 여정",
+        targetYear: targetYear,
+        progress: 0,
+        children: []
+    };
+
+    // Create minimal yearly structure
+    for (let y = 0; y < yearsCount; y++) {
+        const yearVal = startYear + y;
+        const year: YearlyGoal = {
+            id: `year-${yearVal}-${idSuffix}`,
+            title: `${yearVal}년`,
+            description: "",
+            dateDisplay: `${yearVal}`,
+            progress: 0,
+            children: []
+        };
+
+        // Just 2 half years with minimal structure
+        for (let h = 1; h <= 2; h++) {
+            const half: HalfYearlyGoal = {
+                id: `h${h}-${yearVal}-${idSuffix}`,
+                title: `${yearVal}년 ${h === 1 ? "상반기" : "하반기"}`,
+                description: "",
+                dateDisplay: h === 1 ? "01-06" : "07-12",
+                progress: 0,
+                children: []
+            };
+
+            // Only create months for the current year to keep it light
+            if (y === 0) {
+                for (let m = 1; m <= 6; m++) {
+                    const monthNum = (h - 1) * 6 + m;
+                    const month: MonthlyGoal = {
+                        id: `m${monthNum}-${yearVal}-${idSuffix}`,
+                        title: `${monthNum}월`,
+                        description: "",
+                        dateDisplay: String(monthNum).padStart(2, '0'),
+                        progress: 0,
+                        children: []
+                    };
+
+                    // Just 4 weeks per month with minimal days
+                    for (let w = 1; w <= 4; w++) {
+                        const week: WeeklyGoal = {
+                            id: `w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
+                            title: `${w}주차`,
+                            description: "",
+                            dateDisplay: `${String(monthNum).padStart(2, '0')}.${String((w-1)*7+1).padStart(2, '0')}`,
+                            progress: 0,
+                            children: []
+                        };
+
+                        // Only 7 days per week
+                        for (let d = 1; d <= 7; d++) {
+                            const dayNum = (w - 1) * 7 + d;
+                            if (dayNum > 28) continue; // Cap at 28 days
+                            
+                            const day: DailyGoal = {
+                                id: `d${dayNum}-w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
+                                title: `Day ${dayNum}`,
+                                dateDisplay: `${yearVal}.${String(monthNum).padStart(2, '0')}.${String(dayNum).padStart(2, '0')}`,
+                                progress: 0,
+                                todos: []
+                            };
+                            week.children.push(day);
+                        }
+                        month.children.push(week);
+                    }
+                    half.children.push(month);
+                }
+            }
+            year.children.push(half);
+        }
+        vision.children.push(year);
+    }
+
+    return vision;
+}
+
 export const MOCK_VISION = generateTree('1', "CPO (Chief Product Officer)", 2028);
 
 export const MOCK_VISIONS = [

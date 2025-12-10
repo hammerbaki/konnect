@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, ChevronRight, Compass, Sparkles, FolderOpen, Users, Heart, Loader2 } from "lucide-react";
-import { generateTree, VisionGoal } from "@/lib/mockData";
+import { generateLightTree, VisionGoal } from "@/lib/mockData";
 import { useLocation } from "wouter";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useEffect, useState } from "react";
@@ -158,8 +158,7 @@ export default function Goals() {
     }
 
     const targetYear = parseInt(newTargetYear);
-    const visionData = generateTree(`temp-${Date.now()}`, newTitle, targetYear);
-    visionData.description = newDescription;
+    const visionData = generateLightTree(`temp-${Date.now()}`, newTitle, targetYear, newDescription);
 
     createKompassMutation.mutate({
       profileId: selectedProfileId,
