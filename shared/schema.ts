@@ -31,7 +31,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  credits: real("credits").notNull().default(10),
+  credits: integer("credits").notNull().default(1000),
   // Shared identity fields (consistent across all profile types)
   displayName: varchar("display_name", { length: 100 }),
   gender: varchar("gender", { length: 20 }),

@@ -80,7 +80,7 @@ export default function Dashboard() {
     ? `${user.lastName}${user.firstName}` 
     : user?.firstName || user?.lastName || user?.email?.split('@')[0] || '사용자';
 
-  const credits = user?.credits ?? 10;
+  const credits = user?.credits ?? 1000;
   const profileCount = profiles?.length ?? 0;
   const analysisCount = analyses?.length ?? 0;
   const essayCount = essays?.length ?? 0;
@@ -273,7 +273,7 @@ export default function Dashboard() {
                   </p>
                   <Link href="/analysis">
                     <Button className="w-full rounded-xl h-11 bg-[#00BFA5] font-bold hover:bg-[#00BFA5]/90" data-testid="button-start-analysis">
-                      AI 분석 시작 (1 크레딧)
+                      AI 분석 시작 (100 크레딧)
                     </Button>
                   </Link>
                 </div>
@@ -355,7 +355,7 @@ export default function Dashboard() {
                   </p>
                   <Link href="/essays">
                     <Button className="w-full rounded-xl h-11 bg-[#9852F8] font-bold hover:bg-[#9852F8]/90" data-testid="button-write-essay">
-                      자기소개서 작성 (1 크레딧)
+                      자기소개서 작성 (100 크레딧)
                     </Button>
                   </Link>
                 </div>

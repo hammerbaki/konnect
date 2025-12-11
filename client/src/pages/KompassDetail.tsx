@@ -394,7 +394,7 @@ export default function KompassDetail() {
         ) : (
           <Sparkles className="h-3 w-3" />
         )}
-        {isGenerating ? '생성 중...' : (isStrategic ? 'AI 생성 (1 크레딧)' : 'AI 생성')}
+        {isGenerating ? '생성 중...' : (isStrategic ? 'AI 생성 (100 크레딧)' : 'AI 생성')}
       </Button>
     );
   };

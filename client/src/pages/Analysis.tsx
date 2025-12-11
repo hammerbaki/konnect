@@ -449,7 +449,7 @@ export default function Analysis() {
                         className="h-12 px-8 rounded-xl bg-[#3182F6] text-white font-bold"
                         data-testid="button-generate-analysis"
                     >
-                        <Sparkles className="h-5 w-5 mr-2" /> AI 분석 시작 (1 크레딧)
+                        <Sparkles className="h-5 w-5 mr-2" /> AI 분석 시작 (100 크레딧)
                     </Button>
                 </div>
             );

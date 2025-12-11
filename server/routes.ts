@@ -148,11 +148,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Simple demo codes - in production, this would check a database table
       let creditsToAdd = 0;
       if (normalizedCode === "DEMO" || normalizedCode === "KONNECT") {
-        creditsToAdd = 5;
+        creditsToAdd = 500;
       } else if (normalizedCode.startsWith("KNC-") && normalizedCode.length >= 8) {
-        creditsToAdd = 5;
+        creditsToAdd = 500;
       } else if (normalizedCode.length >= 10) {
-        creditsToAdd = 10;
+        creditsToAdd = 1000;
       } else {
         return res.status(400).json({ message: "유효하지 않은 코드입니다. 다시 확인해 주세요." });
       }
@@ -652,11 +652,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.getUser(userId);
-      if (!user || user.credits < 1) {
-        return res.status(402).json({ message: "크레딧이 부족합니다. 분석을 생성하려면 최소 1 크레딧이 필요합니다." });
+      if (!user || user.credits < 100) {
+        return res.status(402).json({ message: "크레딧이 부족합니다. 분석을 생성하려면 최소 100 크레딧이 필요합니다." });
       }
 
-      const deducted = await storage.deductUserCredits(userId, 1);
+      const deducted = await storage.deductUserCredits(userId, 100);
       if (!deducted) {
         return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
       }
@@ -722,11 +722,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.getUser(userId);
-      if (!user || user.credits < 1) {
-        return res.status(402).json({ message: "크레딧이 부족합니다. 자기소개서 생성을 위해 최소 1 크레딧이 필요합니다." });
+      if (!user || user.credits < 100) {
+        return res.status(402).json({ message: "크레딧이 부족합니다. 자기소개서 생성을 위해 최소 100 크레딧이 필요합니다." });
       }
 
-      const deducted = await storage.deductUserCredits(userId, 1);
+      const deducted = await storage.deductUserCredits(userId, 100);
       if (!deducted) {
         return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
       }
@@ -878,20 +878,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Strategic levels (year, half) require 1 credit
+      // Strategic levels (year, half) require 100 credits
       const isStrategicLevel = level === 'year' || level === 'half';
       
       if (isStrategicLevel) {
         const user = await storage.getUser(userId);
-        if (!user || user.credits < 1) {
+        if (!user || user.credits < 100) {
           return res.status(402).json({ 
-            message: "크레딧이 부족합니다. 연도/반기 목표 생성을 위해 최소 1 크레딧이 필요합니다.",
-            requiredCredits: 1,
+            message: "크레딧이 부족합니다. 연도/반기 목표 생성을 위해 최소 100 크레딧이 필요합니다.",
+            requiredCredits: 100,
             currentCredits: user?.credits || 0,
           });
         }
 
-        const deducted = await storage.deductUserCredits(userId, 1);
+        const deducted = await storage.deductUserCredits(userId, 100);
         if (!deducted) {
           return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
         }
@@ -912,7 +912,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         suggestions: result.suggestions,
-        creditsUsed: isStrategicLevel ? 1 : 0,
+        creditsUsed: isStrategicLevel ? 100 : 0,
         remainingCredits: updatedCredits,
       });
     } catch (error: any) {
@@ -947,54 +947,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Check credits for expensive operations
+      // Check credits for expensive operations (100 credits each)
       if (type === 'analysis' || type === 'essay') {
         const user = await storage.getUser(userId);
-        if (!user || user.credits < 1) {
+        if (!user || user.credits < 100) {
           return res.status(402).json({ 
             message: "크레딧이 부족합니다.",
-            requiredCredits: 1,
+            requiredCredits: 100,
             currentCredits: user?.credits || 0,
           });
         }
         
-        const deducted = await storage.deductUserCredits(userId, 1);
+        const deducted = await storage.deductUserCredits(userId, 100);
         if (!deducted) {
           return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
         }
       }
       
-      // Essay revision costs 0.3 credits
+      // Essay revision costs 30 credits
       if (type === 'essay_revision') {
         const user = await storage.getUser(userId);
-        if (!user || user.credits < 0.3) {
+        if (!user || user.credits < 30) {
           return res.status(402).json({ 
-            message: "크레딧이 부족합니다. 수정을 위해 0.3 크레딧이 필요합니다.",
-            requiredCredits: 0.3,
+            message: "크레딧이 부족합니다. 수정을 위해 30 크레딧이 필요합니다.",
+            requiredCredits: 30,
             currentCredits: user?.credits || 0,
           });
         }
         
-        const deducted = await storage.deductUserCredits(userId, 0.3);
+        const deducted = await storage.deductUserCredits(userId, 30);
         if (!deducted) {
           return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
         }
       }
       
-      // For goals, check if strategic level requires credits
+      // For goals, check if strategic level requires credits (100 credits)
       if (type === 'goal' && payload?.level) {
         const isStrategicLevel = payload.level === 'year' || payload.level === 'half';
         if (isStrategicLevel) {
           const user = await storage.getUser(userId);
-          if (!user || user.credits < 1) {
+          if (!user || user.credits < 100) {
             return res.status(402).json({ 
-              message: "크레딧이 부족합니다. 연도/반기 목표 생성을 위해 최소 1 크레딧이 필요합니다.",
-              requiredCredits: 1,
+              message: "크레딧이 부족합니다. 연도/반기 목표 생성을 위해 최소 100 크레딧이 필요합니다.",
+              requiredCredits: 100,
               currentCredits: user?.credits || 0,
             });
           }
           
-          const deducted = await storage.deductUserCredits(userId, 1);
+          const deducted = await storage.deductUserCredits(userId, 100);
           if (!deducted) {
             return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
           }

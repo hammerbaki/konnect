@@ -272,7 +272,7 @@ export default function PersonalStatement() {
         },
     });
 
-    // AI Job integration for essay revision (0.3 credits)
+    // AI Job integration for essay revision (30 credits)
     // Note: We use a ref (currentSessionRef defined below) to track the current session for the callback
     const revisionJob = useAIJob({
         onSuccess: async (result: any, jobId: string) => {
@@ -299,7 +299,7 @@ export default function PersonalStatement() {
                         ]);
                     }
                     
-                    toast({ description: "자기소개서가 수정되었습니다! (0.3 크레딧 사용)" });
+                    toast({ description: "자기소개서가 수정되었습니다! (30 크레딧 사용)" });
                 }
             } catch (error) {
                 console.error("Failed to save revised essay:", error);
@@ -478,7 +478,7 @@ export default function PersonalStatement() {
         const revisionRequest = input;
         setInput("");
 
-        // Submit essay_revision job (costs 0.3 credits)
+        // Submit essay_revision job (costs 30 credits)
         try {
             await revisionJob.submitJob("essay_revision", activeProfileId, {
                 essayId: currentSessionId,
@@ -489,7 +489,7 @@ export default function PersonalStatement() {
         } catch (error: any) {
             console.error("Failed to submit revision job:", error);
             if (error.message?.includes("크레딧")) {
-                toast({ variant: "destructive", description: "크레딧이 부족합니다. 수정을 위해 0.3 크레딧이 필요합니다." });
+                toast({ variant: "destructive", description: "크레딧이 부족합니다. 수정을 위해 30 크레딧이 필요합니다." });
             } else {
                 toast({ variant: "destructive", description: "수정 요청 중 오류가 발생했습니다." });
             }

@@ -20,10 +20,10 @@ export default function TokenRecharge() {
     };
 
     const packages = [
-        { tokens: 10, price: "5,000원", bonus: 0, popular: false },
-        { tokens: 50, price: "20,000원", bonus: 5, popular: true }, // 20% discount logic approx
-        { tokens: 100, price: "35,000원", bonus: 15, popular: false },
-        { tokens: 300, price: "99,000원", bonus: 50, popular: false },
+        { tokens: 100, price: "5,000원", bonus: 0, popular: false },
+        { tokens: 300, price: "10,000원", bonus: 30, popular: true },
+        { tokens: 500, price: "15,000원", bonus: 50, popular: false },
+        { tokens: 1000, price: "25,000원", bonus: 150, popular: false },
     ];
 
     return (
@@ -73,7 +73,7 @@ export default function TokenRecharge() {
                                             </Badge>
                                         )}
                                     </div>
-                                    <p className="text-[#8B95A1] text-sm">AI 커리어 분석 {Math.floor((pkg.tokens + pkg.bonus) / 2)}회 가능</p>
+                                    <p className="text-[#8B95A1] text-sm">AI 커리어 분석 {Math.floor((pkg.tokens + pkg.bonus) / 100)}회 가능</p>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <span className="text-lg font-bold text-[#333D4B]">{pkg.price}</span>
