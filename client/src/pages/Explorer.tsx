@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, Filter, ArrowRight, Building2, Briefcase, X, DollarSign, GraduationCap, TrendingUp, Smile, Activity, Star, Loader2 } from "lucide-react";
+import { Search, Filter, ArrowRight, Building2, Briefcase, X, DollarSign, GraduationCap, TrendingUp, Smile, Activity, Star, Loader2, Users, Award, BookOpen, Link2 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useState, useMemo, useEffect } from "react";
 import {
   Select,
@@ -38,12 +39,17 @@ interface ProcessedCareer {
     description: string; // Summary
     tags: string[];
     salary?: string;
+    salaryNum?: number; // numeric salary for sorting
     duties?: string;
     education?: string;
     satisfaction?: number;
     prospect?: string;
     abilities?: { name: string; score: number; desc: string }[];
     personality?: { name: string; score: number; desc: string }[];
+    relatedJobs?: { id: string; name: string }[];
+    relatedMajors?: { code: string; name: string }[];
+    relatedCerts?: string[];
+    interestType?: string;
 }
 
 import careerImages from "@/lib/careerImages.json";
@@ -436,6 +442,59 @@ export default function Explorer() {
                 // Fallback
             }
             
+            // Extract additional fields
+            let relatedJobs: { id: string; name: string }[] = [];
+            let relatedMajors: { code: string; name: string }[] = [];
+            let relatedCerts: string[] = [];
+            let interestType = "";
+            let salaryNum = 0;
+            
+            try {
+                const detail = item.detailData;
+                const jobSum = detail?.tabs?.['1']?.data?.jobSum;
+                
+                // Related Jobs
+                if (jobSum?.relJobList && Array.isArray(jobSum.relJobList)) {
+                    relatedJobs = jobSum.relJobList.slice(0, 5).map((j: any) => ({
+                        id: j.jobCd,
+                        name: j.jobNm
+                    }));
+                }
+                
+                // Related Majors
+                const wayData = detail?.tabs?.['3']?.data?.way;
+                if (wayData?.relMajorList) {
+                    const major = wayData.relMajorList;
+                    if (major.majorNm) {
+                        relatedMajors = [{ code: major.majorCd || '', name: major.majorNm }];
+                    }
+                }
+                
+                // Related Certifications
+                if (wayData?.relCertList) {
+                    const cert = wayData.relCertList;
+                    if (cert.certNm) {
+                        relatedCerts = [cert.certNm];
+                    }
+                }
+                
+                // Interest Type
+                if (jobSum?.jobIntrst) {
+                    interestType = jobSum.jobIntrst;
+                }
+                
+                // Numeric salary for sorting
+                const salData = detail?.tabs?.['4']?.data?.salProspect;
+                if (salData?.sal) {
+                    const match = salData.sal.match(/평균\(50%\)\s*(\d+)/);
+                    if (match && match[1]) {
+                        salaryNum = parseInt(match[1]);
+                    }
+                }
+            } catch (e) {
+                // Fallback
+            }
+            
             // Build Hierarchy
             if (!hierarchyMap.has(largeClass)) {
                 hierarchyMap.set(largeClass, new Set());
@@ -450,12 +509,17 @@ export default function Explorer() {
                 description: item.description || "",
                 tags: tags.slice(0, 3),
                 salary,
+                salaryNum,
                 duties,
                 education,
                 satisfaction,
                 prospect,
                 abilities,
-                personality
+                personality,
+                relatedJobs,
+                relatedMajors,
+                relatedCerts,
+                interestType
             };
         });
 
@@ -467,6 +531,49 @@ export default function Explorer() {
 
         return { careers: processed, hierarchy: sortedHierarchy };
     }, [rawData]);
+
+    // Statistics calculations
+    const stats = useMemo(() => {
+        if (careers.length === 0) return null;
+        
+        // Top 5 highest paying careers
+        const topSalary = [...careers]
+            .filter(c => (c.salaryNum || 0) > 0)
+            .sort((a, b) => (b.salaryNum || 0) - (a.salaryNum || 0))
+            .slice(0, 5)
+            .map(c => ({ name: c.title.slice(0, 8), salary: c.salaryNum || 0 }));
+        
+        // Top 5 most satisfying careers
+        const topSatisfaction = [...careers]
+            .filter(c => (c.satisfaction || 0) > 0)
+            .sort((a, b) => (b.satisfaction || 0) - (a.satisfaction || 0))
+            .slice(0, 5)
+            .map(c => ({ name: c.title.slice(0, 8), satisfaction: c.satisfaction || 0 }));
+        
+        // Careers by category
+        const categoryCount = new Map<string, number>();
+        careers.forEach(c => {
+            categoryCount.set(c.largeClass, (categoryCount.get(c.largeClass) || 0) + 1);
+        });
+        const categoryData = Array.from(categoryCount.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6)
+            .map(([name, value]) => ({ name: name.replace('직', ''), value }));
+        
+        // Average satisfaction
+        const avgSatisfaction = careers.reduce((sum, c) => sum + (c.satisfaction || 0), 0) / 
+            careers.filter(c => (c.satisfaction || 0) > 0).length || 0;
+        
+        return {
+            totalCareers: careers.length,
+            topSalary,
+            topSatisfaction,
+            categoryData,
+            avgSatisfaction: avgSatisfaction.toFixed(1)
+        };
+    }, [careers]);
+
+    const CHART_COLORS = ['#3182F6', '#00BFA5', '#9852F8', '#FFB300', '#E44E48', '#8B95A1'];
 
     // Filter logic
     const filteredCareers = useMemo(() => {
@@ -544,9 +651,113 @@ export default function Explorer() {
                         직업 정보 탐색
                     </h2>
                     <p className="text-[#4E5968] text-base">
-                        표준 직업 분류 체계에 따른 5,000+개의 직업 정보를 확인하세요.
+                        표준 직업 분류 체계에 따른 {stats?.totalCareers || 0}개의 직업 정보를 확인하세요.
                     </p>
                 </div>
+
+                {/* Statistics Dashboard */}
+                {stats && (
+                    <div className="mb-8 space-y-4">
+                        {/* Quick Stats Row */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <Card className="border-[#E5E8EB] shadow-sm">
+                                <CardContent className="p-4 text-center">
+                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 mb-2">
+                                        <Briefcase className="h-5 w-5 text-[#3182F6]" />
+                                    </div>
+                                    <div className="text-2xl font-bold text-[#191F28]">{stats.totalCareers}</div>
+                                    <div className="text-xs text-[#8B95A1]">총 직업 수</div>
+                                </CardContent>
+                            </Card>
+                            <Card className="border-[#E5E8EB] shadow-sm">
+                                <CardContent className="p-4 text-center">
+                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-green-50 mb-2">
+                                        <Smile className="h-5 w-5 text-green-600" />
+                                    </div>
+                                    <div className="text-2xl font-bold text-[#191F28]">{stats.avgSatisfaction}</div>
+                                    <div className="text-xs text-[#8B95A1]">평균 만족도</div>
+                                </CardContent>
+                            </Card>
+                            <Card className="border-[#E5E8EB] shadow-sm">
+                                <CardContent className="p-4 text-center">
+                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-purple-50 mb-2">
+                                        <DollarSign className="h-5 w-5 text-purple-600" />
+                                    </div>
+                                    <div className="text-2xl font-bold text-[#191F28]">
+                                        {stats.topSalary[0]?.salary >= 10000 
+                                            ? `${(stats.topSalary[0].salary / 10000).toFixed(1)}억`
+                                            : `${stats.topSalary[0]?.salary.toLocaleString()}만`}
+                                    </div>
+                                    <div className="text-xs text-[#8B95A1]">최고 연봉</div>
+                                </CardContent>
+                            </Card>
+                            <Card className="border-[#E5E8EB] shadow-sm">
+                                <CardContent className="p-4 text-center">
+                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-orange-50 mb-2">
+                                        <Users className="h-5 w-5 text-orange-600" />
+                                    </div>
+                                    <div className="text-2xl font-bold text-[#191F28]">{Object.keys(hierarchy).length}</div>
+                                    <div className="text-xs text-[#8B95A1]">직군 분류</div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* Charts Section */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Top Salary Chart */}
+                            <Card className="border-[#E5E8EB] shadow-sm">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                        <DollarSign className="h-4 w-4 text-[#3182F6]" />
+                                        연봉 TOP 5
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-4">
+                                    <ResponsiveContainer width="100%" height={150}>
+                                        <BarChart data={stats.topSalary} layout="vertical" margin={{ left: 0, right: 10 }}>
+                                            <XAxis type="number" hide />
+                                            <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11 }} />
+                                            <Tooltip formatter={(v: number) => v >= 10000 ? `${(v/10000).toFixed(1)}억원` : `${v.toLocaleString()}만원`} />
+                                            <Bar dataKey="salary" fill="#3182F6" radius={[0, 4, 4, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </CardContent>
+                            </Card>
+
+                            {/* Category Distribution */}
+                            <Card className="border-[#E5E8EB] shadow-sm">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                        <Building2 className="h-4 w-4 text-[#9852F8]" />
+                                        직군별 분포
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-4">
+                                    <ResponsiveContainer width="100%" height={150}>
+                                        <PieChart>
+                                            <Pie
+                                                data={stats.categoryData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={35}
+                                                outerRadius={55}
+                                                dataKey="value"
+                                                nameKey="name"
+                                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                                labelLine={false}
+                                            >
+                                                {stats.categoryData.map((_, idx) => (
+                                                    <Cell key={`cell-${idx}`} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip formatter={(v: number) => `${v}개`} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                )}
 
                 {/* Smart Filter Section */}
                 <div className="bg-white border border-[#E5E8EB] rounded-2xl p-5 shadow-sm mb-8 z-20">
