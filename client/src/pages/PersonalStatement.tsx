@@ -273,6 +273,45 @@ export default function PersonalStatement() {
         },
     });
 
+    // AI Job integration for essay revision (0.3 credits)
+    // Note: We use a ref (currentSessionRef defined below) to track the current session for the callback
+    const revisionJob = useAIJob({
+        onSuccess: async (result: any, jobId: string) => {
+            try {
+                const res = await apiRequest("POST", `/api/ai/jobs/${jobId}/complete-essay-revision`);
+                if (res.ok) {
+                    const updatedEssay = await res.json();
+                    queryClient.invalidateQueries({ queryKey: ["/api/profiles", activeProfileId, "essays"] });
+                    queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                    
+                    // Update messages if user is still viewing this essay
+                    if (updatedEssay && updatedEssay.id === currentSessionRef.current) {
+                        setMessages(prev => [
+                            ...prev,
+                            {
+                                id: `${updatedEssay.id}-revised-${Date.now()}`,
+                                sender: "ai",
+                                type: "draft",
+                                content: updatedEssay.content || "",
+                                topic: updatedEssay.topic,
+                                version: updatedEssay.draftVersion || 1,
+                                timestamp: new Date(),
+                            }
+                        ]);
+                    }
+                    
+                    toast({ description: "자기소개서가 수정되었습니다! (0.3 크레딧 사용)" });
+                }
+            } catch (error) {
+                console.error("Failed to save revised essay:", error);
+                toast({ variant: "destructive", description: "수정 저장 중 오류가 발생했습니다." });
+            }
+        },
+        onError: (error: string) => {
+            toast({ variant: "destructive", description: error || "수정 중 오류가 발생했습니다." });
+        },
+    });
+
     // Convert essays to history sessions
     const history: ChatSession[] = essays.map(essayToSession);
 
@@ -286,6 +325,12 @@ export default function PersonalStatement() {
         null,
     );
 
+    // Ref to track current session ID for revision callback (avoids stale closure)
+    const currentSessionRef = useRef<string | null>(null);
+    useEffect(() => {
+        currentSessionRef.current = currentSessionId;
+    }, [currentSessionId]);
+
     // History sidebar state
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
@@ -293,8 +338,9 @@ export default function PersonalStatement() {
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState<any[]>([]);
     
-    // Use aiJob.isLoading for generation state
-    const isGenerating = aiJob.isLoading;
+    // Use aiJob.isLoading or revisionJob.isLoading for generation state
+    const isGenerating = aiJob.isLoading || revisionJob.isLoading;
+    const isRevising = revisionJob.isLoading;
 
     // --- Handlers ---
 
@@ -306,9 +352,13 @@ export default function PersonalStatement() {
         setMessages([]);
         setIsHistoryOpen(false);
         aiJob.reset();
+        revisionJob.reset();
     };
 
     const handleLoadSession = (session: ChatSession) => {
+        // Reset any pending revision job when switching sessions
+        revisionJob.reset();
+
         const category = CATEGORIES.find((c) => c.id === session.categoryId);
 
         if (category) {
@@ -397,10 +447,26 @@ export default function PersonalStatement() {
         }
     };
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (!input.trim()) return;
+        if (!currentSessionId) {
+            toast({ variant: "destructive", description: "수정할 자기소개서가 없습니다. 먼저 자소서를 생성해주세요." });
+            return;
+        }
+        if (revisionJob.isLoading) {
+            toast({ description: "수정 중입니다. 잠시만 기다려주세요." });
+            return;
+        }
 
-        // For now, just add user message to chat (revision feature coming soon)
+        // Get the LATEST essay content from messages (most recent draft)
+        const draftMessages = messages.filter(m => m.type === "draft");
+        const draftMessage = draftMessages[draftMessages.length - 1];
+        if (!draftMessage) {
+            toast({ variant: "destructive", description: "수정할 자소서 내용을 찾을 수 없습니다." });
+            return;
+        }
+
+        // Add user message to chat
         const userMsg = {
             id: Date.now().toString(),
             sender: "user",
@@ -409,11 +475,26 @@ export default function PersonalStatement() {
             timestamp: new Date(),
         };
 
-        setMessages([...messages, userMsg]);
+        setMessages(prev => [...prev, userMsg]);
+        const revisionRequest = input;
         setInput("");
-        
-        // Show info that revision is saved locally (full revision feature coming soon)
-        toast({ description: "피드백이 저장되었습니다. AI 수정 기능은 곧 추가됩니다." });
+
+        // Submit essay_revision job (costs 0.3 credits)
+        try {
+            await revisionJob.submitJob("essay_revision", activeProfileId, {
+                essayId: currentSessionId,
+                originalTitle: draftMessage.topic || "자기소개서",
+                originalContent: draftMessage.content,
+                revisionRequest: revisionRequest,
+            });
+        } catch (error: any) {
+            console.error("Failed to submit revision job:", error);
+            if (error.message?.includes("크레딧")) {
+                toast({ variant: "destructive", description: "크레딧이 부족합니다. 수정을 위해 0.3 크레딧이 필요합니다." });
+            } else {
+                toast({ variant: "destructive", description: "수정 요청 중 오류가 발생했습니다." });
+            }
+        }
     };
 
     // Scroll to bottom
@@ -527,9 +608,9 @@ export default function PersonalStatement() {
     return (
         <Layout>
             <AILoadingOverlay 
-                isVisible={aiJob.isLoading} 
-                progress={aiJob.progress} 
-                message="AI가 자기소개서를 작성 중입니다..."
+                isVisible={isGenerating} 
+                progress={isRevising ? revisionJob.progress : aiJob.progress} 
+                message={isRevising ? "AI가 자기소개서를 수정 중입니다..." : "AI가 자기소개서를 작성 중입니다..."}
             />
             <div className="max-w-6xl mx-auto h-[calc(100vh-40px)] md:h-[calc(100vh-80px)] flex md:rounded-2xl md:shadow-sm md:border border-[#E5E8EB] overflow-hidden bg-white relative">
                 {/* Desktop Sidebar */}

@@ -6,6 +6,16 @@ Konnect is a Korean-language AI-powered career guidance platform that provides p
 
 ## Recent Changes
 
+### December 11, 2024 - Essay Revision Feature
+- **Essay revision via chat messages** - Users can send feedback messages to request AI revisions of existing essays
+- **Fractional credits** - Credits now support decimal values (real type in PostgreSQL)
+- **essay_revision job type** added to job queue with 0.3 credit cost per revision
+- Backend: New `/api/ai/jobs/:jobId/complete-essay-revision` endpoint to save revised essays
+- Frontend: revisionJob hook with session tracking via useRef to handle completion callbacks
+- Revisions increment the essay's draftVersion and update content in-place
+- Session switching properly resets revision state to prevent cross-session conflicts
+- Essay list refreshes after revisions complete to keep history in sync
+
 ### December 8, 2024 - Supabase Auth Integration (Full Custom UI)
 - **Migrated from Replit Auth to Supabase Auth** for fully customizable Korean UI
 - Custom login page with Toss design system (#3182F6 primary color, Korean text)

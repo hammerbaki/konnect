@@ -8,6 +8,7 @@ import {
   jsonb,
   index,
   integer,
+  real,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -30,7 +31,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  credits: integer("credits").notNull().default(10),
+  credits: real("credits").notNull().default(10),
   // Shared identity fields (consistent across all profile types)
   displayName: varchar("display_name", { length: 100 }),
   gender: varchar("gender", { length: 20 }),
@@ -248,5 +249,5 @@ export const insertAiJobSchema = createInsertSchema(aiJobs).omit({
 
 export type InsertAiJob = z.infer<typeof insertAiJobSchema>;
 export type AiJob = typeof aiJobs.$inferSelect;
-export type AiJobType = 'analysis' | 'essay' | 'goal';
+export type AiJobType = 'analysis' | 'essay' | 'essay_revision' | 'goal';
 export type AiJobStatus = 'queued' | 'processing' | 'completed' | 'failed';

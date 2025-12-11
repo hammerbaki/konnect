@@ -9,6 +9,7 @@ import {
 import { 
   generateCareerAnalysis, 
   generatePersonalEssay, 
+  revisePersonalEssay,
   generateGoals,
   type GoalLevel 
 } from "./ai";
@@ -40,6 +41,15 @@ export async function processJob(job: AiJob): Promise<any> {
           payload.category,
           payload.topic,
           payload.context
+        );
+        break;
+      }
+      case "essay_revision": {
+        await storage.updateAiJobStatus(job.id, "processing", 30);
+        result = await revisePersonalEssay(
+          payload.originalTitle,
+          payload.originalContent,
+          payload.revisionRequest
         );
         break;
       }
@@ -81,6 +91,7 @@ async function processNextJob(type: AiJobType): Promise<boolean> {
   const concurrencyLimits: Record<AiJobType, number> = {
     goal: 6,
     essay: 2,
+    essay_revision: 2,
     analysis: 2,
   };
   
@@ -110,7 +121,7 @@ async function processNextJob(type: AiJobType): Promise<boolean> {
 }
 
 async function workerLoop(): Promise<void> {
-  const types: AiJobType[] = ["goal", "essay", "analysis"];
+  const types: AiJobType[] = ["goal", "essay", "essay_revision", "analysis"];
   
   for (const type of types) {
     await processNextJob(type);

@@ -7,17 +7,19 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-const QUEUE_KEYS = {
+const QUEUE_KEYS: Record<AiJobType, string> = {
   goal: "ai:queue:goal",
   essay: "ai:queue:essay", 
+  essay_revision: "ai:queue:essay", // Share queue with essay
   analysis: "ai:queue:analysis",
 };
 
 const PROCESSING_KEY = "ai:processing";
 
-const CONCURRENCY_LIMITS = {
+const CONCURRENCY_LIMITS: Record<AiJobType, number> = {
   goal: 6,
   essay: 2,
+  essay_revision: 2, // Share limit with essay
   analysis: 2,
 };
 
@@ -26,6 +28,7 @@ const GLOBAL_LIMIT = 8;
 export interface QueueStats {
   goal: { queued: number; processing: number };
   essay: { queued: number; processing: number };
+  essay_revision: { queued: number; processing: number };
   analysis: { queued: number; processing: number };
   totalProcessing: number;
 }
@@ -74,6 +77,9 @@ export async function getQueueStats(): Promise<QueueStats> {
   const processing = await redis.hgetall<Record<string, string>>(PROCESSING_KEY) || {};
   const processingTypes = Object.values(processing);
   
+  // Count essay_revision in the essay processing count since they share the same queue
+  const essayProcessing = processingTypes.filter(t => t === "essay" || t === "essay_revision").length;
+  
   return {
     goal: {
       queued: goalQueued,
@@ -81,7 +87,11 @@ export async function getQueueStats(): Promise<QueueStats> {
     },
     essay: {
       queued: essayQueued,
-      processing: processingTypes.filter(t => t === "essay").length,
+      processing: essayProcessing,
+    },
+    essay_revision: {
+      queued: essayQueued, // Shares queue with essay
+      processing: essayProcessing,
     },
     analysis: {
       queued: analysisQueued,

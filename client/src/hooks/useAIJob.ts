@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAuthHeaders } from "@/lib/queryClient";
 
-export type AIJobType = "analysis" | "essay" | "goal";
+export type AIJobType = "analysis" | "essay" | "essay_revision" | "goal";
 export type AIJobStatus = "queued" | "processing" | "completed" | "failed";
 
 interface AIJobResponse {

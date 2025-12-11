@@ -792,6 +792,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Complete essay revision job and update existing essay
+  app.post('/api/ai/jobs/:jobId/complete-essay-revision', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const job = await storage.getAiJob(req.params.jobId);
+
+      if (!job || job.userId !== userId) {
+        return res.status(404).json({ message: "작업을 찾을 수 없습니다." });
+      }
+
+      if (job.status !== "completed" || !job.result) {
+        return res.status(400).json({ message: "작업이 아직 완료되지 않았습니다." });
+      }
+
+      if (job.type !== "essay_revision") {
+        return res.status(400).json({ message: "자기소개서 수정 작업이 아닙니다." });
+      }
+
+      const payload = job.payload as any;
+      const result = job.result as { title: string; content: string };
+      const essayId = payload.essayId;
+
+      if (!essayId) {
+        return res.status(400).json({ message: "수정할 자기소개서 ID가 없습니다." });
+      }
+
+      // Get the existing essay to increment version
+      const existingEssay = await storage.getEssay(essayId);
+      if (!existingEssay) {
+        return res.status(404).json({ message: "수정할 자기소개서를 찾을 수 없습니다." });
+      }
+
+      // Update the essay with new content
+      const updatedEssay = await storage.updateEssay(essayId, {
+        title: result.title,
+        content: result.content,
+        draftVersion: (existingEssay.draftVersion || 1) + 1,
+      });
+
+      res.status(200).json(updatedEssay);
+    } catch (error) {
+      console.error("Error completing essay revision job:", error);
+      res.status(500).json({ message: "자기소개서 수정 저장 중 오류가 발생했습니다." });
+    }
+  });
+
   // AI Goal Suggestions endpoint
   // Strategic levels (year, half) cost 1 credit
   // Tactical levels (month, week, day) are free
@@ -883,12 +929,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { type, profileId, payload } = req.body;
       
-      if (!type || !['analysis', 'essay', 'goal'].includes(type)) {
+      if (!type || !['analysis', 'essay', 'essay_revision', 'goal'].includes(type)) {
         return res.status(400).json({ message: "Invalid job type" });
       }
       
       // Check rate limit
-      const operationType = type === 'goal' ? 'goals' : type;
+      const operationType = type === 'goal' ? 'goals' : (type === 'essay_revision' ? 'essay' : type);
       const rateLimitResult = await checkAIRateLimit(userId, operationType as 'analysis' | 'goals' | 'essay');
       res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
       res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
@@ -913,6 +959,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         const deducted = await storage.deductUserCredits(userId, 1);
+        if (!deducted) {
+          return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+        }
+      }
+      
+      // Essay revision costs 0.3 credits
+      if (type === 'essay_revision') {
+        const user = await storage.getUser(userId);
+        if (!user || user.credits < 0.3) {
+          return res.status(402).json({ 
+            message: "크레딧이 부족합니다. 수정을 위해 0.3 크레딧이 필요합니다.",
+            requiredCredits: 0.3,
+            currentCredits: user?.credits || 0,
+          });
+        }
+        
+        const deducted = await storage.deductUserCredits(userId, 0.3);
         if (!deducted) {
           return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
         }

@@ -738,6 +738,85 @@ ${essayContext ? `추가 정보: ${essayContext}` : ''}
   );
 }
 
+// Revise an existing essay based on user feedback
+export async function revisePersonalEssay(
+  originalTitle: string,
+  originalContent: string,
+  revisionRequest: string
+): Promise<{
+  title: string;
+  content: string;
+  rawResponse: string;
+}> {
+  return limit(() =>
+    retryWithBackoff(
+      async () => {
+        const systemPrompt = `당신은 한국의 자기소개서 전문 편집자입니다. 사용자의 요청에 따라 기존 자기소개서를 수정하고 개선합니다. 모든 응답은 한국어로 작성하세요.`;
+
+        const prompt = `## 원본 자기소개서
+
+제목: ${originalTitle}
+
+내용:
+${originalContent}
+
+## 수정 요청
+${revisionRequest}
+
+위 요청에 따라 자기소개서를 수정하세요. 원본의 좋은 부분은 유지하면서 요청된 부분만 개선하세요.
+
+다음 JSON 형식으로 반환하세요:
+
+{
+  "title": "수정된 제목 (필요시 변경, 아니면 원본 유지)",
+  "content": "수정된 자기소개서 본문"
+}
+
+**반드시 유효한 JSON만 반환하세요. 추가 설명 없이 JSON만 출력하세요.**`;
+
+        const message = await anthropic.messages.create({
+          model: "claude-sonnet-4-5",
+          max_tokens: 8192,
+          system: systemPrompt,
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+        });
+
+        const msgContent = message.content[0];
+        if (msgContent.type !== "text") {
+          throw new Error("Unexpected response type");
+        }
+
+        const rawResponse = msgContent.text;
+        
+        // Parse JSON from response
+        const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error("No valid JSON found in response");
+        }
+
+        const parsed = JSON.parse(jsonMatch[0]);
+        
+        return {
+          title: parsed.title || originalTitle,
+          content: parsed.content || "수정된 내용을 생성할 수 없습니다.",
+          rawResponse,
+        };
+      },
+      {
+        retries: 7,
+        minTimeout: 2000,
+        maxTimeout: 128000,
+        factor: 2,
+      }
+    )
+  );
+}
+
 // Goal level types for AI generation
 export type GoalLevel = 'year' | 'half' | 'month' | 'week' | 'day';
 
