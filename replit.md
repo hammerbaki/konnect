@@ -6,10 +6,17 @@ Konnect is a Korean-language AI-powered career guidance platform that provides p
 
 ## Recent Changes
 
-### December 11, 2024 - Essay Revision Feature + ChatGPT-like UI
+### December 11, 2024 - Credit Scaling (×100) + Essay Revision Feature + ChatGPT-like UI
+- **Credit system scaled by 100** - All credit values multiplied by 100 to use integers:
+  - Default new user credits: 1000 (was 10)
+  - Career analysis: 100 credits (was 1)
+  - Essay generation: 100 credits (was 1)
+  - Essay revision: 30 credits (was 0.3)
+  - Strategic goal AI: 100 credits (was 1)
+  - DEMO code: 500 credits (was 5)
+  - Database column changed from real to integer
 - **Essay revision via chat messages** - Users can send feedback messages to request AI revisions of existing essays
-- **Fractional credits** - Credits now support decimal values (real type in PostgreSQL)
-- **essay_revision job type** added to job queue with 0.3 credit cost per revision
+- **essay_revision job type** added to job queue with 30 credit cost per revision
 - Backend: New `/api/ai/jobs/:jobId/complete-essay-revision` endpoint to save revised essays
 - Frontend: revisionJob hook with session tracking via useRef to handle completion callbacks
 - Revisions increment the essay's draftVersion and update content in-place
@@ -42,7 +49,7 @@ Konnect is a Korean-language AI-powered career guidance platform that provides p
 - **Database connection** hardened with timeouts and error listeners
 - **Authentication setup** wrapped in try-catch with detailed logs
 - All API endpoints tested and working (profiles, analyses, essays, kompass goals)
-- Credit system fully functional (10 free credits per user)
+- Credit system fully functional (1000 free credits per user)
 - AI generation with custom rate limiting and exponential backoff retry logic operational
 
 ## User Preferences
