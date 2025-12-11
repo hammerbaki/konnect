@@ -36,6 +36,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
   const [status, setStatus] = useState<AIJobStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const completedJobsRef = useRef<Set<string>>(new Set());
 
   const clearPolling = useCallback(() => {
     if (pollIntervalRef.current) {
@@ -45,6 +46,12 @@ export function useAIJob(options: UseAIJobOptions = {}) {
   }, []);
 
   const pollJobStatus = useCallback(async (id: string) => {
+    // Prevent processing if job was already completed
+    if (completedJobsRef.current.has(id)) {
+      clearPolling();
+      return null;
+    }
+    
     try {
       const authHeaders = await getAuthHeaders();
       const response = await fetch(`/api/ai/jobs/${id}`, {
@@ -61,6 +68,11 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       setStatus(job.status);
       
       if (job.status === "completed") {
+        // Mark job as processed BEFORE calling onSuccess to prevent duplicates
+        if (completedJobsRef.current.has(id)) {
+          return job.result; // Already processed
+        }
+        completedJobsRef.current.add(id);
         clearPolling();
         setIsLoading(false);
         onSuccess?.(job.result, id);
@@ -68,6 +80,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       }
       
       if (job.status === "failed") {
+        completedJobsRef.current.add(id);
         clearPolling();
         setIsLoading(false);
         onError?.(job.error || "작업이 실패했습니다.");
@@ -139,6 +152,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
     setProgress(0);
     setStatus(null);
     setIsLoading(false);
+    // Note: Don't clear completedJobsRef - we want to remember processed jobs
   }, [clearPolling]);
 
   useEffect(() => {
