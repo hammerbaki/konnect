@@ -82,8 +82,22 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      
+      // Skip logging large responses (careers, etc.) to prevent log bloat
+      const skipLogPaths = ['/api/careers'];
+      const shouldSkipBody = skipLogPaths.some(p => path.startsWith(p));
+      
+      if (capturedJsonResponse && !shouldSkipBody) {
+        const jsonStr = JSON.stringify(capturedJsonResponse);
+        // Truncate if too long (max 500 chars)
+        if (jsonStr.length > 500) {
+          logLine += ` :: ${jsonStr.substring(0, 500)}...[truncated]`;
+        } else {
+          logLine += ` :: ${jsonStr}`;
+        }
+      } else if (shouldSkipBody && capturedJsonResponse) {
+        const count = Array.isArray(capturedJsonResponse) ? capturedJsonResponse.length : 1;
+        logLine += ` :: [${count} items]`;
       }
 
       log(logLine);
