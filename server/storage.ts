@@ -5,6 +5,7 @@ import {
   personalEssays,
   kompassGoals,
   careers,
+  aiJobs,
   type User,
   type UpsertUser,
   type Profile,
@@ -17,9 +18,12 @@ import {
   type InsertKompassGoal,
   type Career,
   type UpdateUserIdentity,
+  type AiJob,
+  type InsertAiJob,
+  type AiJobStatus,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, ilike } from "drizzle-orm";
+import { eq, desc, ilike, and, inArray } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -55,6 +59,15 @@ export interface IStorage {
   getCareerById(id: string): Promise<Career | undefined>;
   searchCareers(query: string): Promise<Career[]>;
   getCareersByCategory(category: string): Promise<Career[]>;
+
+  // AI Jobs
+  createAiJob(job: InsertAiJob): Promise<AiJob>;
+  getAiJob(id: string): Promise<AiJob | undefined>;
+  getAiJobsByUser(userId: string): Promise<AiJob[]>;
+  getPendingJobs(type?: string): Promise<AiJob[]>;
+  updateAiJobStatus(id: string, status: AiJobStatus, progress?: number): Promise<AiJob>;
+  updateAiJobResult(id: string, result: any): Promise<AiJob>;
+  updateAiJobError(id: string, error: string): Promise<AiJob>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -274,6 +287,94 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(careers)
       .where(eq(careers.category, category));
+  }
+
+  // AI Jobs implementation
+  async createAiJob(jobData: InsertAiJob): Promise<AiJob> {
+    const [job] = await db
+      .insert(aiJobs)
+      .values(jobData)
+      .returning();
+    return job;
+  }
+
+  async getAiJob(id: string): Promise<AiJob | undefined> {
+    const [job] = await db
+      .select()
+      .from(aiJobs)
+      .where(eq(aiJobs.id, id));
+    return job;
+  }
+
+  async getAiJobsByUser(userId: string): Promise<AiJob[]> {
+    return await db
+      .select()
+      .from(aiJobs)
+      .where(eq(aiJobs.userId, userId))
+      .orderBy(desc(aiJobs.queuedAt));
+  }
+
+  async getPendingJobs(type?: string): Promise<AiJob[]> {
+    const statusFilter = inArray(aiJobs.status, ['queued', 'processing']);
+    if (type) {
+      return await db
+        .select()
+        .from(aiJobs)
+        .where(and(statusFilter, eq(aiJobs.type, type)))
+        .orderBy(aiJobs.queuedAt);
+    }
+    return await db
+      .select()
+      .from(aiJobs)
+      .where(statusFilter)
+      .orderBy(aiJobs.queuedAt);
+  }
+
+  async updateAiJobStatus(id: string, status: AiJobStatus, progress?: number): Promise<AiJob> {
+    const updateData: Record<string, any> = { status };
+    if (progress !== undefined) {
+      updateData.progress = progress;
+    }
+    if (status === 'processing') {
+      updateData.startedAt = new Date();
+    }
+    if (status === 'completed' || status === 'failed') {
+      updateData.completedAt = new Date();
+    }
+    
+    const [job] = await db
+      .update(aiJobs)
+      .set(updateData)
+      .where(eq(aiJobs.id, id))
+      .returning();
+    return job;
+  }
+
+  async updateAiJobResult(id: string, result: any): Promise<AiJob> {
+    const [job] = await db
+      .update(aiJobs)
+      .set({ 
+        result, 
+        status: 'completed' as AiJobStatus, 
+        progress: 100,
+        completedAt: new Date() 
+      })
+      .where(eq(aiJobs.id, id))
+      .returning();
+    return job;
+  }
+
+  async updateAiJobError(id: string, error: string): Promise<AiJob> {
+    const [job] = await db
+      .update(aiJobs)
+      .set({ 
+        error, 
+        status: 'failed' as AiJobStatus,
+        completedAt: new Date() 
+      })
+      .where(eq(aiJobs.id, id))
+      .returning();
+    return job;
   }
 }
 

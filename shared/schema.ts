@@ -205,3 +205,48 @@ export const insertKompassGoalSchema = createInsertSchema(kompassGoals).omit({
 
 export type InsertKompassGoal = z.infer<typeof insertKompassGoalSchema>;
 export type KompassGoal = typeof kompassGoals.$inferSelect;
+
+// ===== AI JOBS TABLE (Queue-based AI processing) =====
+export const aiJobs = pgTable("ai_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  profileId: varchar("profile_id")
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  type: varchar("type", { length: 20 }).notNull(), // 'analysis' | 'essay' | 'goal'
+  status: varchar("status", { length: 20 }).notNull().default("queued"), // 'queued' | 'processing' | 'completed' | 'failed'
+  progress: integer("progress").notNull().default(0), // 0-100
+  payload: jsonb("payload"), // Input data for the AI job
+  result: jsonb("result"), // Output from AI
+  error: text("error"), // Error message if failed
+  queuedAt: timestamp("queued_at").defaultNow(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+}, (table) => [
+  index("IDX_ai_jobs_user").on(table.userId),
+  index("IDX_ai_jobs_status").on(table.status),
+]);
+
+export const aiJobsRelations = relations(aiJobs, ({ one }) => ({
+  user: one(users, {
+    fields: [aiJobs.userId],
+    references: [users.id],
+  }),
+  profile: one(profiles, {
+    fields: [aiJobs.profileId],
+    references: [profiles.id],
+  }),
+}));
+
+export const insertAiJobSchema = createInsertSchema(aiJobs).omit({
+  id: true,
+  queuedAt: true,
+  startedAt: true,
+  completedAt: true,
+});
+
+export type InsertAiJob = z.infer<typeof insertAiJobSchema>;
+export type AiJob = typeof aiJobs.$inferSelect;
+export type AiJobType = 'analysis' | 'essay' | 'goal';
+export type AiJobStatus = 'queued' | 'processing' | 'completed' | 'failed';
