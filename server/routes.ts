@@ -731,17 +731,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
       }
 
-      const result = await generatePersonalEssay(
-        profile.type,
-        category,
-        topic,
-        context
+      // Submit job to queue instead of processing directly
+      const { jobId, immediate } = await submitJobWithFastPath(
+        userId,
+        req.params.profileId,
+        "essay",
+        {
+          profileType: profile.type,
+          category,
+          topic,
+          context,
+        }
       );
 
+      res.status(202).json({ 
+        jobId,
+        immediate,
+        message: immediate ? "자기소개서 생성을 시작합니다." : "대기열에 추가되었습니다.",
+      });
+    } catch (error) {
+      console.error("Error generating essay:", error);
+      res.status(500).json({ message: "자기소개서 생성 중 오류가 발생했습니다." });
+    }
+  });
+
+  // New endpoint: Complete essay job and save to database
+  app.post('/api/ai/jobs/:jobId/complete-essay', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const job = await storage.getAiJob(req.params.jobId);
+
+      if (!job || job.userId !== userId) {
+        return res.status(404).json({ message: "작업을 찾을 수 없습니다." });
+      }
+
+      if (job.status !== "completed" || !job.result) {
+        return res.status(400).json({ message: "작업이 아직 완료되지 않았습니다." });
+      }
+
+      if (job.type !== "essay") {
+        return res.status(400).json({ message: "자기소개서 작업이 아닙니다." });
+      }
+
+      const payload = job.payload as any;
+      const result = job.result as { title: string; content: string };
+
       const essay = await storage.createEssay({
-        profileId: req.params.profileId,
-        category,
-        topic,
+        profileId: job.profileId!,
+        category: payload.category,
+        topic: payload.topic,
         title: result.title,
         content: result.content,
         draftVersion: 1,
@@ -749,8 +787,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(essay);
     } catch (error) {
-      console.error("Error generating essay:", error);
-      res.status(500).json({ message: "자기소개서 생성 중 오류가 발생했습니다." });
+      console.error("Error completing essay job:", error);
+      res.status(500).json({ message: "자기소개서 저장 중 오류가 발생했습니다." });
     }
   });
 

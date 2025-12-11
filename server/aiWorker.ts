@@ -36,10 +36,10 @@ export async function processJob(job: AiJob): Promise<any> {
       case "essay": {
         await storage.updateAiJobStatus(job.id, "processing", 30);
         result = await generatePersonalEssay(
-          payload.profileData,
           payload.profileType,
           payload.category,
-          payload.topic
+          payload.topic,
+          payload.context
         );
         break;
       }
