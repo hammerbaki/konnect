@@ -7,8 +7,48 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-// In-memory cache to reduce Redis calls
-const cache = new Map<string, { success: boolean; reset: number }>();
+// In-memory fallback rate limiter for when Redis is unavailable
+// Uses a simple sliding window approach
+const memoryLimits = new Map<string, { count: number; resetTime: number }>();
+
+function inMemoryRateLimit(
+  identifier: string,
+  limit: number,
+  windowMs: number
+): { success: boolean; limit: number; remaining: number; reset: number } {
+  const now = Date.now();
+  const key = identifier;
+  
+  let entry = memoryLimits.get(key);
+  
+  // Reset if window expired
+  if (!entry || now > entry.resetTime) {
+    entry = { count: 0, resetTime: now + windowMs };
+    memoryLimits.set(key, entry);
+  }
+  
+  // Check limit
+  if (entry.count >= limit) {
+    return {
+      success: false,
+      limit,
+      remaining: 0,
+      reset: entry.resetTime,
+    };
+  }
+  
+  // Increment and allow
+  entry.count++;
+  return {
+    success: true,
+    limit,
+    remaining: limit - entry.count,
+    reset: entry.resetTime,
+  };
+}
+
+// Track Redis connection status
+let redisAvailable = true;
 
 // Different rate limiters for different use cases
 // AI Analysis: 10 requests per minute per user (expensive operations)
@@ -60,12 +100,26 @@ export interface RateLimitResult {
   retryAfter?: number;
 }
 
+// Default limits for fallback (per minute)
+const DEFAULT_LIMITS: Record<string, { limit: number; windowMs: number }> = {
+  analysis: { limit: 10, windowMs: 60000 },
+  goals: { limit: 20, windowMs: 60000 },
+  essay: { limit: 5, windowMs: 60000 },
+  daily: { limit: 50, windowMs: 86400000 },
+  global: { limit: 100, windowMs: 60000 },
+};
+
 // Check rate limit for a specific limiter and identifier
 export async function checkRateLimit(
   limiter: Ratelimit,
-  identifier: string
+  identifier: string,
+  fallbackType?: string
 ): Promise<RateLimitResult> {
   try {
+    if (!redisAvailable) {
+      throw new Error("Redis unavailable, using fallback");
+    }
+    
     const result = await limiter.limit(identifier);
     
     return {
@@ -76,8 +130,23 @@ export async function checkRateLimit(
       retryAfter: result.success ? undefined : Math.ceil((result.reset - Date.now()) / 1000),
     };
   } catch (error) {
+    // Use in-memory fallback when Redis fails
+    if (fallbackType && DEFAULT_LIMITS[fallbackType]) {
+      const config = DEFAULT_LIMITS[fallbackType];
+      const fallbackResult = inMemoryRateLimit(
+        `${fallbackType}:${identifier}`,
+        config.limit,
+        config.windowMs
+      );
+      console.warn(`Rate limit fallback used for ${fallbackType}:${identifier}`);
+      return {
+        ...fallbackResult,
+        retryAfter: fallbackResult.success ? undefined : Math.ceil((fallbackResult.reset - Date.now()) / 1000),
+      };
+    }
+    
     console.error("Rate limit check failed:", error);
-    // On Redis failure, allow the request but log the error
+    // On failure without fallback, allow the request but log the error
     return {
       success: true,
       limit: 0,
@@ -93,7 +162,7 @@ export async function checkAIRateLimit(
   operationType: "analysis" | "goals" | "essay"
 ): Promise<RateLimitResult> {
   // First check daily quota
-  const dailyResult = await checkRateLimit(dailyQuotaLimiter, userId);
+  const dailyResult = await checkRateLimit(dailyQuotaLimiter, userId, "daily");
   if (!dailyResult.success) {
     return {
       ...dailyResult,
@@ -115,7 +184,7 @@ export async function checkAIRateLimit(
       break;
   }
 
-  return checkRateLimit(limiter, userId);
+  return checkRateLimit(limiter, userId, operationType);
 }
 
 // Express middleware for global API rate limiting
@@ -123,7 +192,7 @@ export function createRateLimitMiddleware() {
   return async (req: any, res: any, next: any) => {
     const identifier = req.ip || req.headers["x-forwarded-for"] || "anonymous";
     
-    const result = await checkRateLimit(globalApiLimiter, identifier);
+    const result = await checkRateLimit(globalApiLimiter, identifier, "global");
     
     // Set rate limit headers
     res.setHeader("X-RateLimit-Limit", result.limit);
@@ -166,9 +235,11 @@ export async function logRateLimitStats(userId: string): Promise<void> {
 export async function checkRedisConnection(): Promise<boolean> {
   try {
     await redis.ping();
+    redisAvailable = true;
     return true;
   } catch (error) {
     console.error("Redis connection check failed:", error);
+    redisAvailable = false;
     return false;
   }
 }

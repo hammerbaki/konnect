@@ -11,6 +11,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { generateCareerAnalysis, generatePersonalEssay, generateGoals, type GoalLevel, checkAIRateLimit } from "./ai";
+import { createRateLimitMiddleware, checkRedisConnection } from "./rateLimiter";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -48,6 +49,15 @@ function getProfileColor(type: string): string {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
+
+  // Check Redis connection and apply global rate limiting if available
+  const redisConnected = await checkRedisConnection();
+  if (redisConnected) {
+    console.log("✓ Redis connected - global rate limiting enabled");
+    app.use('/api', createRateLimitMiddleware());
+  } else {
+    console.log("⚠ Redis not connected - global rate limiting disabled");
+  }
 
   app.get('/api/config', (_req, res) => {
     res.json({
@@ -626,10 +636,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check rate limit before processing
       const rateLimitResult = await checkAIRateLimit(userId, "analysis");
+      res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
+      res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
+      res.setHeader("X-RateLimit-Reset", rateLimitResult.reset);
       if (!rateLimitResult.success) {
-        res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
-        res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
-        res.setHeader("X-RateLimit-Reset", rateLimitResult.reset);
         return res.status(429).json({ 
           message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
           retryAfter: rateLimitResult.retryAfter
@@ -691,10 +701,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check rate limit before processing
       const rateLimitResult = await checkAIRateLimit(userId, "essay");
+      res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
+      res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
+      res.setHeader("X-RateLimit-Reset", rateLimitResult.reset);
       if (!rateLimitResult.success) {
-        res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
-        res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
-        res.setHeader("X-RateLimit-Reset", rateLimitResult.reset);
         return res.status(429).json({ 
           message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
           retryAfter: rateLimitResult.retryAfter
@@ -769,10 +779,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check rate limit before processing
       const rateLimitResult = await checkAIRateLimit(userId, "goals");
+      res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
+      res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
+      res.setHeader("X-RateLimit-Reset", rateLimitResult.reset);
       if (!rateLimitResult.success) {
-        res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
-        res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
-        res.setHeader("X-RateLimit-Reset", rateLimitResult.reset);
         return res.status(429).json({ 
           message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
           retryAfter: rateLimitResult.retryAfter
