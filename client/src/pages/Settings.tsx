@@ -97,8 +97,8 @@ export default function Settings() {
                                 </button>
                                 <button className="w-full flex items-center justify-between p-5 hover:bg-[#F9FAFB] transition-colors text-left">
                                     <div className="flex items-center gap-3">
-                                        <UserX className="h-5 w-5 text-[#E44E48]" />
-                                        <span className="font-medium text-[#E44E48]">회원 탈퇴</span>
+                                        <UserX className="h-5 w-5 text-[#8B95A1]" />
+                                        <span className="font-medium text-[#8B95A1]">회원 탈퇴</span>
                                     </div>
                                     <ChevronRight className="h-5 w-5 text-[#B0B8C1]" />
                                 </button>

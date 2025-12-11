@@ -393,7 +393,7 @@ export const MOCK_GOALS: any[] = [];
 export const MOCK_ANALYSIS: CareerAnalysis = {
   score: 85,
   matchLevel: "High",
-  salaryRange: { min: 120000, max: 160000, currency: "USD" },
+  salaryRange: { min: 50000000, max: 80000000, currency: "KRW" },
   marketTrend: "상승세",
   skillsGap: ["고급 SQL 활용 능력", "팀 리더십", "전략적 기획"],
   strengths: ["제품 생애주기 관리", "사용자 리서치", "이해관계자 관리"],
