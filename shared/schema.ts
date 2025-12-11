@@ -24,6 +24,9 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// User roles
+export type UserRole = 'user' | 'staff' | 'admin';
+
 // ===== USERS TABLE (with shared identity fields) =====
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -32,6 +35,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   credits: integer("credits").notNull().default(1000),
+  role: varchar("role", { length: 20 }).notNull().default('user'), // 'user' | 'staff' | 'admin'
   // Shared identity fields (consistent across all profile types)
   displayName: varchar("display_name", { length: 100 }),
   gender: varchar("gender", { length: 20 }),
