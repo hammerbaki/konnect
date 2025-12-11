@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 
 import { motion, AnimatePresence } from "framer-motion";
 
-type GoalLevel = 'year' | 'half' | 'month' | 'week' | 'day';
+type GoalLevel = 'vision' | 'year' | 'half' | 'month' | 'week' | 'day';
 
 interface AncestorChainItem {
   level: string;
@@ -261,11 +261,8 @@ export default function KompassDetail() {
     
     // Helper to update a goal node with AI suggestion
     const updateNode = (node: any, suggestion: { title: string; description: string; bullets: string[] }) => {
-      // Update the title with AI-generated title (keep the date/period prefix)
-      const originalTitle = node.title;
-      const periodMatch = originalTitle.match(/^(\d+년|상반기|하반기|\d+월|\d+주차)/);
-      const prefix = periodMatch ? periodMatch[0] + ' ' : '';
-      node.title = prefix + suggestion.title;
+      // Set title directly from AI (dateDisplay already shows the date/period separately)
+      node.title = suggestion.title;
       // Format bullets into description with bullet points
       node.description = suggestion.bullets.length > 0
         ? suggestion.bullets.map(b => `• ${b}`).join('\n')
@@ -417,20 +414,21 @@ export default function KompassDetail() {
       const currentMonthVal = today.getMonth() + 1;
       const currentDayVal = today.getDate();
 
-      // Find Year
-      const yearNode = vision.children.find(y => y.title.includes(String(currentYearVal)));
+      // Find Year by dateDisplay (which contains just the year number like "2025")
+      const yearNode = vision.children.find(y => y.dateDisplay === String(currentYearVal) || y.id.includes(String(currentYearVal)));
       if (!yearNode) {
           toast({ title: "오늘 날짜를 찾을 수 없습니다.", description: `${currentYearVal}년 목표가 없습니다.` });
           return;
       }
 
-      // Find Month
+      // Find Month by dateDisplay (which contains month number like "01", "12")
       let monthNode;
       let halfNode;
+      const monthPadded = String(currentMonthVal).padStart(2, '0');
       
       // Search through halves to find month
       for (const h of yearNode.children) {
-          const m = h.children.find(m => m.title === `${currentMonthVal}월`);
+          const m = h.children.find(m => m.dateDisplay === monthPadded || m.dateDisplay === String(currentMonthVal));
           if (m) {
               monthNode = m;
               halfNode = h;
@@ -445,7 +443,8 @@ export default function KompassDetail() {
 
       // Find Week (Approximate logic: 1-7 -> W1, 8-14 -> W2, etc.)
       const weekNum = Math.ceil(currentDayVal / 7);
-      const weekNode = monthNode.children.find(w => w.title === `${weekNum}주차`);
+      // Week dateDisplay is like "01.01" (month.day), so find by week number in ID
+      const weekNode = monthNode.children.find(w => w.id.includes(`w${weekNum}-`));
       
       if (!weekNode) {
            // Fallback to first week if 5th week doesn't exist or logic fails
@@ -453,17 +452,11 @@ export default function KompassDetail() {
            return;
       }
 
-      // Find Day
-      // In mock data, days are just "Day 1", "Day 2"... 
-      // We map currentDayVal % 7 || 7 to Day X? 
-      // Or just map 1st day of week to today?
-      // Let's try to find "Day {dayOfWeek}" where 1=Mon... 
-      // Actually mock data is just 1-7. 
-      // Let's just select the current day of the week (0-6 -> 1-7)
+      // Find Day by day number in ID or title
       let dayOfWeek = today.getDay(); // 0=Sun, 1=Mon...
       if (dayOfWeek === 0) dayOfWeek = 7; // Make Sunday 7
       
-      const dayNode = weekNode.children.find(d => d.title === `Day ${dayOfWeek}`);
+      const dayNode = weekNode.children.find(d => d.title === `Day ${dayOfWeek}` || d.id.includes(`d${dayOfWeek}-`));
 
       // Update State
       setSelectedYearId(yearNode.id);
@@ -714,21 +707,36 @@ export default function KompassDetail() {
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#191F28] text-white px-3 py-0.5 rounded-full text-xs font-bold shadow-md">
                     Kompass {vision.targetYear}
                 </div>
-                <Card className="toss-card border-2 border-[#191F28] shadow-xl bg-[#F9FAFB]">
-                    <CardContent className="p-6 text-center">
-                        <Flag className="h-8 w-8 mx-auto text-[#191F28] mb-3" />
-                        <Input 
-                            value={vision.title} 
-                            onChange={(e) => updateGoalContent(vision.id, 'title', e.target.value)}
-                            className="text-2xl font-bold text-[#191F28] mb-2 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto"
-                        />
-                        <Input 
-                            value={vision.description} 
-                            onChange={(e) => updateGoalContent(vision.id, 'description', e.target.value)}
-                            className="text-[#4E5968] text-sm mb-4 text-center border-none shadow-none bg-transparent focus-visible:ring-0 p-0 h-auto"
-                        />
-                        <Progress value={vision.progress} className="h-2" indicatorClassName="bg-[#191F28]" />
-                        <p className="text-right text-xs font-bold text-[#191F28] mt-1">{vision.progress}% 달성</p>
+                <Card className="toss-card border-2 border-[#191F28] shadow-xl bg-gradient-to-br from-[#F9FAFB] to-white">
+                    <CardContent className="p-6">
+                        <div className="text-center mb-4">
+                            <Flag className="h-8 w-8 mx-auto text-[#191F28] mb-3" />
+                            <h2 className="text-2xl font-bold text-[#191F28] mb-2">{vision.title}</h2>
+                            {vision.description && (
+                                <div className="text-[#6B7684] text-sm space-y-1">
+                                    {vision.description.split('\n').slice(0, 2).map((line, i) => (
+                                        <p key={i} className="truncate">{line}</p>
+                                    ))}
+                                    {vision.description.split('\n').length > 2 && (
+                                        <p className="text-[#8B95A1]">+{vision.description.split('\n').length - 2}개 더보기</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <Progress value={vision.progress} className="h-2.5 flex-1 rounded-full" indicatorClassName="bg-gradient-to-r from-[#191F28] to-[#4E5968] rounded-full" />
+                                <span className="text-sm font-bold text-[#191F28]">{vision.progress}%</span>
+                            </div>
+                            <button
+                                onClick={() => openGoalModal({ id: vision.id, title: vision.title, description: vision.description, dateDisplay: `${vision.targetYear}년`, progress: vision.progress }, 'vision')}
+                                className="w-full py-2.5 text-sm font-medium text-[#191F28] bg-[#191F28]/5 hover:bg-[#191F28]/10 rounded-xl flex items-center justify-center gap-2 transition-colors"
+                                data-testid="button-detail-vision"
+                            >
+                                <Eye className="h-4 w-4" />
+                                상세 보기
+                            </button>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -1078,6 +1086,7 @@ export default function KompassDetail() {
           <DialogContent className="sm:max-w-lg rounded-2xl border-0 shadow-2xl">
             <DialogHeader className="pb-4 border-b border-[#F2F4F6]">
               <DialogTitle className="text-xl font-bold text-[#191F28] flex items-center gap-3">
+                {goalModalData?.level === 'vision' && <Badge className="bg-gradient-to-r from-[#191F28] to-[#4E5968] text-white px-3 py-1">비전</Badge>}
                 {goalModalData?.level === 'year' && <Badge className="bg-gradient-to-r from-[#3182F6] to-[#60A5FA] text-white px-3 py-1">연간</Badge>}
                 {goalModalData?.level === 'half' && <Badge className="bg-gradient-to-r from-purple-500 to-purple-400 text-white px-3 py-1">반기</Badge>}
                 {goalModalData?.level === 'month' && <Badge className="bg-gradient-to-r from-green-500 to-green-400 text-white px-3 py-1">월간</Badge>}
