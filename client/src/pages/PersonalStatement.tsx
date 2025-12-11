@@ -33,7 +33,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAIJob } from "@/hooks/useAIJob";
-import { AILoadingOverlay } from "@/components/ui/CircularProgress";
 import type { Profile, PersonalEssay } from "@shared/schema";
 import { Link } from "wouter";
 
@@ -607,11 +606,6 @@ export default function PersonalStatement() {
 
     return (
         <Layout>
-            <AILoadingOverlay 
-                isVisible={isGenerating} 
-                progress={isRevising ? revisionJob.progress : aiJob.progress} 
-                message={isRevising ? "AI가 자기소개서를 수정 중입니다..." : "AI가 자기소개서를 작성 중입니다..."}
-            />
             <div className="max-w-6xl mx-auto h-[calc(100vh-40px)] md:h-[calc(100vh-80px)] flex md:rounded-2xl md:shadow-sm md:border border-[#E5E8EB] overflow-hidden bg-white relative">
                 {/* Desktop Sidebar */}
                 <div className="hidden md:flex w-[260px] border-r border-[#E5E8EB] bg-white flex-col">
@@ -884,26 +878,55 @@ export default function PersonalStatement() {
                                     </div>
                                 ))}
 
-                                {/* Loading State */}
+                                {/* ChatGPT-like Thinking Animation */}
                                 {isGenerating && (
-                                    <div className="flex w-full gap-3 justify-start animate-in fade-in">
-                                        <Avatar className="h-8 w-8 mt-1 shadow-sm">
-                                            <div className="bg-gradient-to-br from-[#3182F6] to-[#1B64DA] w-full h-full flex items-center justify-center">
+                                    <div className="flex w-full gap-3 justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <Avatar className="h-9 w-9 mt-0.5 shadow-sm ring-2 ring-white">
+                                            <div className="bg-gradient-to-br from-[#3182F6] to-[#1e6cd6] w-full h-full flex items-center justify-center">
                                                 <Bot className="h-5 w-5 text-white" />
                                             </div>
                                         </Avatar>
-                                        <div className="bg-white border border-[#E5E8EB] px-4 py-3 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-2">
-                                            <span className="flex gap-1">
-                                                <span className="w-1.5 h-1.5 bg-[#3182F6] rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                                <span className="w-1.5 h-1.5 bg-[#3182F6] rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                                <span className="w-1.5 h-1.5 bg-[#3182F6] rounded-full animate-bounce"></span>
-                                            </span>
-                                            <span className="text-xs text-[#8B95A1] font-medium ml-1">
-                                                작성 중...
-                                            </span>
+                                        <div className="flex flex-col gap-1 max-w-[85%]">
+                                            <span className="text-xs font-medium text-[#4E5968]">AI 어시스턴트</span>
+                                            <div className="bg-white border border-[#E5E8EB] px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-1">
+                                                        <span 
+                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
+                                                            style={{
+                                                                animation: 'thinking-pulse 1.4s ease-in-out infinite',
+                                                                animationDelay: '0s'
+                                                            }}
+                                                        />
+                                                        <span 
+                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
+                                                            style={{
+                                                                animation: 'thinking-pulse 1.4s ease-in-out infinite',
+                                                                animationDelay: '0.2s'
+                                                            }}
+                                                        />
+                                                        <span 
+                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
+                                                            style={{
+                                                                animation: 'thinking-pulse 1.4s ease-in-out infinite',
+                                                                animationDelay: '0.4s'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-sm text-[#4E5968] ml-1">
+                                                        {isRevising ? "수정하고 있어요" : "작성하고 있어요"}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
+                                <style>{`
+                                    @keyframes thinking-pulse {
+                                        0%, 100% { opacity: 0.4; transform: scale(0.8); }
+                                        50% { opacity: 1; transform: scale(1); }
+                                    }
+                                `}</style>
                             </div>
                         )}
                     </div>

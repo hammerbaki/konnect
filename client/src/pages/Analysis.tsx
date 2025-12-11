@@ -22,7 +22,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useAIJob } from "@/hooks/useAIJob";
-import { AILoadingOverlay } from "@/components/ui/CircularProgress";
+import { Bot } from "lucide-react";
 
 interface CareerActions {
     portfolio: string[];
@@ -526,11 +526,6 @@ export default function Analysis() {
 
     return (
         <Layout>
-            <AILoadingOverlay 
-                isVisible={aiJob.isLoading} 
-                progress={aiJob.progress} 
-                message="AI가 분석 중입니다..."
-            />
             <div className="min-h-screen bg-[#F9FAFB]">
                 <div className="flex">
                     <aside className="hidden lg:block w-72 bg-white border-r border-[#E5E8EB] h-screen sticky top-0">
@@ -570,7 +565,55 @@ export default function Analysis() {
                         </div>
 
                         <div className="p-4 lg:p-8 max-w-4xl mx-auto">
-                            {isLoadingProfiles || isLoadingAnalyses ? (
+                            {aiJob.isLoading ? (
+                                <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-300">
+                                    <div className="bg-white rounded-2xl border border-[#E5E8EB] shadow-sm p-6 max-w-md w-full">
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3182F6] to-[#1e6cd6] flex items-center justify-center flex-shrink-0">
+                                                <Bot className="w-5 h-5 text-white" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-[#191F28] mb-2">AI 어시스턴트</p>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-1">
+                                                        <span 
+                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
+                                                            style={{
+                                                                animation: 'thinking-pulse 1.4s ease-in-out infinite',
+                                                                animationDelay: '0s'
+                                                            }}
+                                                        />
+                                                        <span 
+                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
+                                                            style={{
+                                                                animation: 'thinking-pulse 1.4s ease-in-out infinite',
+                                                                animationDelay: '0.2s'
+                                                            }}
+                                                        />
+                                                        <span 
+                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
+                                                            style={{
+                                                                animation: 'thinking-pulse 1.4s ease-in-out infinite',
+                                                                animationDelay: '0.4s'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-sm text-[#4E5968]">프로필을 분석하고 있어요</span>
+                                                </div>
+                                                <p className="text-xs text-[#8B95A1] mt-3">
+                                                    맞춤형 진로 분석을 준비하고 있습니다. 잠시만 기다려주세요.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <style>{`
+                                        @keyframes thinking-pulse {
+                                            0%, 100% { opacity: 0.4; transform: scale(0.8); }
+                                            50% { opacity: 1; transform: scale(1); }
+                                        }
+                                    `}</style>
+                                </div>
+                            ) : isLoadingProfiles || isLoadingAnalyses ? (
                                 <div className="flex items-center justify-center py-20">
                                     <Loader2 className="h-8 w-8 text-[#3182F6] animate-spin" />
                                 </div>
