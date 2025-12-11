@@ -18,9 +18,11 @@ import { Link, useLocation } from "wouter";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
+import { useAIJob } from "@/hooks/useAIJob";
+import { AILoadingOverlay } from "@/components/ui/CircularProgress";
 
 interface CareerActions {
     portfolio: string[];
@@ -118,35 +120,36 @@ export default function Analysis() {
     const latestAnalysis = analyses && analyses.length > 0 ? analyses[0] : null;
     const activeProfile = profiles?.find((p: any) => p.id === activeProfileId);
 
-    const generateAnalysisMutation = useMutation({
-        mutationFn: async (profileId: string) => {
-            const response = await apiRequest('POST', `/api/profiles/${profileId}/generate-analysis`);
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Failed to generate analysis');
-            }
-            return response.json();
-        },
+    const aiJob = useAIJob({
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['/api/profiles', activeProfileId, 'analyses'] });
             queryClient.invalidateQueries({ queryKey: ['/api/user-identity'] });
             toast({ title: "분석 완료", description: "AI 커리어 분석이 완료되었습니다." });
         },
-        onError: (error: Error) => {
+        onError: (error: string) => {
             toast({ 
                 variant: "destructive", 
                 title: "분석 실패", 
-                description: error.message || "AI 분석 중 오류가 발생했습니다." 
+                description: error || "AI 분석 중 오류가 발생했습니다." 
             });
         },
     });
+
+    const handleGenerateAnalysis = async (profileId: string) => {
+        if (!activeProfile) return;
+        
+        await aiJob.submitJob("analysis", profileId, {
+            profileData: activeProfile.profileData,
+            profileType: activeProfile.type,
+        });
+    };
 
     useEffect(() => {
         if (activeProfileId) {
             setAction({
                 icon: Brain,
                 label: "분석하기",
-                onClick: () => generateAnalysisMutation.mutate(activeProfileId)
+                onClick: () => activeProfileId && handleGenerateAnalysis(activeProfileId)
             });
         }
         return () => setAction(null);
@@ -441,16 +444,12 @@ export default function Analysis() {
                         프로필 정보를 바탕으로 맞춤형 진로 분석을 제공합니다
                     </p>
                     <Button 
-                        onClick={() => activeProfileId && generateAnalysisMutation.mutate(activeProfileId)}
-                        disabled={generateAnalysisMutation.isPending || !activeProfileId}
+                        onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
+                        disabled={aiJob.isLoading || !activeProfileId}
                         className="h-12 px-8 rounded-xl bg-[#3182F6] text-white font-bold"
                         data-testid="button-generate-analysis"
                     >
-                        {generateAnalysisMutation.isPending ? (
-                            <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> 분석 중...</>
-                        ) : (
-                            <><Sparkles className="h-5 w-5 mr-2" /> AI 분석 시작 (1 크레딧)</>
-                        )}
+                        <Sparkles className="h-5 w-5 mr-2" /> AI 분석 시작 (1 크레딧)
                     </Button>
                 </div>
             );
@@ -470,17 +469,13 @@ export default function Analysis() {
                         </p>
                     </div>
                     <Button 
-                        onClick={() => activeProfileId && generateAnalysisMutation.mutate(activeProfileId)}
-                        disabled={generateAnalysisMutation.isPending}
+                        onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
+                        disabled={aiJob.isLoading}
                         variant="outline"
                         className="rounded-xl border-[#3182F6] text-[#3182F6]"
                         data-testid="button-regenerate-analysis"
                     >
-                        {generateAnalysisMutation.isPending ? (
-                            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> 분석 중...</>
-                        ) : (
-                            <><Sparkles className="h-4 w-4 mr-2" /> 다시 분석하기</>
-                        )}
+                        <Sparkles className="h-4 w-4 mr-2" /> 다시 분석하기
                     </Button>
                 </div>
 
@@ -531,6 +526,11 @@ export default function Analysis() {
 
     return (
         <Layout>
+            <AILoadingOverlay 
+                isVisible={aiJob.isLoading} 
+                progress={aiJob.progress} 
+                message="AI가 분석 중입니다..."
+            />
             <div className="min-h-screen bg-[#F9FAFB]">
                 <div className="flex">
                     <aside className="hidden lg:block w-72 bg-white border-r border-[#E5E8EB] h-screen sticky top-0">
