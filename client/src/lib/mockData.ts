@@ -311,7 +311,7 @@ export function generateLightTree(idSuffix: string, title: string, targetYear: n
         const yearVal = startYear + y;
         const year: YearlyGoal = {
             id: `year-${yearVal}-${idSuffix}`,
-            title: `${yearVal}년`,
+            title: `${yearVal}년 목표`,
             description: "",
             dateDisplay: `${yearVal}`,
             progress: 0,
@@ -322,7 +322,7 @@ export function generateLightTree(idSuffix: string, title: string, targetYear: n
         for (let h = 1; h <= 2; h++) {
             const half: HalfYearlyGoal = {
                 id: `h${h}-${yearVal}-${idSuffix}`,
-                title: `${yearVal}년 ${h === 1 ? "상반기" : "하반기"}`,
+                title: `${h === 1 ? "상반기" : "하반기"} 목표`,
                 description: "",
                 dateDisplay: h === 1 ? "01-06" : "07-12",
                 progress: 0,
@@ -335,7 +335,7 @@ export function generateLightTree(idSuffix: string, title: string, targetYear: n
                     const monthNum = (h - 1) * 6 + m;
                     const month: MonthlyGoal = {
                         id: `m${monthNum}-${yearVal}-${idSuffix}`,
-                        title: `${monthNum}월`,
+                        title: `${monthNum}월 목표`,
                         description: "",
                         dateDisplay: String(monthNum).padStart(2, '0'),
                         progress: 0,
@@ -346,7 +346,7 @@ export function generateLightTree(idSuffix: string, title: string, targetYear: n
                     for (let w = 1; w <= 4; w++) {
                         const week: WeeklyGoal = {
                             id: `w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
-                            title: `${w}주차`,
+                            title: `${w}주차 목표`,
                             description: "",
                             dateDisplay: `${String(monthNum).padStart(2, '0')}.${String((w-1)*7+1).padStart(2, '0')}`,
                             progress: 0,
