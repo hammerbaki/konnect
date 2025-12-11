@@ -8,10 +8,13 @@ import {
   insertPersonalEssaySchema,
   insertKompassGoalSchema,
   updateUserIdentitySchema,
+  type AiJobType,
 } from "@shared/schema";
 import { z } from "zod";
 import { generateCareerAnalysis, generatePersonalEssay, generateGoals, type GoalLevel, checkAIRateLimit } from "./ai";
 import { createRateLimitMiddleware, checkRedisConnection } from "./rateLimiter";
+import { startWorker, submitJobWithFastPath } from "./aiWorker";
+import { getQueueStats, estimateProgress } from "./jobQueue";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -833,6 +836,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "AI 목표 생성 중 오류가 발생했습니다.", details: error?.message });
     }
   });
+
+  // ===== AI JOB QUEUE ENDPOINTS =====
+  
+  // Submit a new AI job
+  app.post('/api/ai/jobs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { type, profileId, payload } = req.body;
+      
+      if (!type || !['analysis', 'essay', 'goal'].includes(type)) {
+        return res.status(400).json({ message: "Invalid job type" });
+      }
+      
+      // Check rate limit
+      const operationType = type === 'goal' ? 'goals' : type;
+      const rateLimitResult = await checkAIRateLimit(userId, operationType as 'analysis' | 'goals' | 'essay');
+      res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
+      res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
+      res.setHeader("X-RateLimit-Reset", rateLimitResult.reset);
+      
+      if (!rateLimitResult.success) {
+        return res.status(429).json({ 
+          message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+          retryAfter: rateLimitResult.retryAfter
+        });
+      }
+      
+      // Check credits for expensive operations
+      if (type === 'analysis' || type === 'essay') {
+        const user = await storage.getUser(userId);
+        if (!user || user.credits < 1) {
+          return res.status(402).json({ 
+            message: "크레딧이 부족합니다.",
+            requiredCredits: 1,
+            currentCredits: user?.credits || 0,
+          });
+        }
+        
+        const deducted = await storage.deductUserCredits(userId, 1);
+        if (!deducted) {
+          return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+        }
+      }
+      
+      // For goals, check if strategic level requires credits
+      if (type === 'goal' && payload?.level) {
+        const isStrategicLevel = payload.level === 'year' || payload.level === 'half';
+        if (isStrategicLevel) {
+          const user = await storage.getUser(userId);
+          if (!user || user.credits < 1) {
+            return res.status(402).json({ 
+              message: "크레딧이 부족합니다. 연도/반기 목표 생성을 위해 최소 1 크레딧이 필요합니다.",
+              requiredCredits: 1,
+              currentCredits: user?.credits || 0,
+            });
+          }
+          
+          const deducted = await storage.deductUserCredits(userId, 1);
+          if (!deducted) {
+            return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+          }
+        }
+      }
+      
+      const result = await submitJobWithFastPath(
+        userId,
+        profileId || null,
+        type as AiJobType,
+        payload
+      );
+      
+      res.json({
+        jobId: result.jobId,
+        immediate: result.immediate,
+        status: result.immediate ? 'processing' : 'queued',
+      });
+    } catch (error: any) {
+      console.error("Error submitting AI job:", error);
+      res.status(500).json({ message: "AI 작업 제출 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get job status
+  app.get('/api/ai/jobs/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const jobId = req.params.id;
+      
+      const job = await storage.getAiJob(jobId);
+      
+      if (!job) {
+        return res.status(404).json({ message: "작업을 찾을 수 없습니다." });
+      }
+      
+      if (job.userId !== userId) {
+        return res.status(403).json({ message: "접근 권한이 없습니다." });
+      }
+      
+      const progress = estimateProgress(job);
+      
+      res.json({
+        id: job.id,
+        type: job.type,
+        status: job.status,
+        progress,
+        result: job.result,
+        error: job.error,
+        queuedAt: job.queuedAt,
+        startedAt: job.startedAt,
+        completedAt: job.completedAt,
+      });
+    } catch (error: any) {
+      console.error("Error fetching job status:", error);
+      res.status(500).json({ message: "작업 상태 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get queue stats
+  app.get('/api/ai/queue/stats', isAuthenticated, async (_req, res) => {
+    try {
+      const stats = await getQueueStats();
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Error fetching queue stats:", error);
+      res.status(500).json({ message: "큐 상태 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Start the AI worker
+  startWorker();
 
   const httpServer = createServer(app);
   return httpServer;
