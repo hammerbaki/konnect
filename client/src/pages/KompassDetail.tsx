@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar as CalendarIcon, Sparkles, Loader2, Eye, X } from "lucide-react";
+import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar, Sparkles, Loader2, Eye, X, CheckSquare } from "lucide-react";
 import { VisionGoal, DailyGoal, YearlyGoal, HalfYearlyGoal, MonthlyGoal, WeeklyGoal } from "@/lib/mockData";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useMobileAction } from "@/lib/MobileActionContext";
@@ -483,7 +483,7 @@ export default function KompassDetail() {
 
   useEffect(() => {
     setAction({
-      icon: CalendarIcon,
+      icon: Calendar,
       label: "Today",
       onClick: handleGoToToday
     });
@@ -747,47 +747,47 @@ export default function KompassDetail() {
                         <Card 
                             onClick={() => setSelectedYearId(year.id)}
                             className={cn(
-                                "toss-card cursor-pointer transition-all hover:-translate-y-1 h-full box-border",
+                                "toss-card cursor-pointer transition-all duration-200 hover:-translate-y-1 h-full box-border overflow-hidden",
                                 selectedYearId === year.id 
-                                    ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
-                                    : "border-2 border-transparent hover:shadow-sm"
+                                    ? "border-2 border-[#3182F6] shadow-lg ring-2 ring-[#3182F6]/20 bg-gradient-to-br from-blue-50/50 to-white" 
+                                    : "border border-[#E5E8EB] hover:shadow-md hover:border-[#3182F6]/30"
                             )}
                         >
-                            <CardContent className="p-4 text-center flex flex-col h-full justify-between">
-                                <div>
-                                    <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md mb-2 inline-block">{year.dateDisplay}</span>
-                                    <h3 className={cn("font-bold text-sm mb-2", selectedYearId === year.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                            <CardContent className="p-5 flex flex-col h-full">
+                                <div className="flex items-start justify-between mb-3">
+                                    <span className="text-[11px] font-medium text-[#3182F6] bg-[#3182F6]/10 px-2 py-1 rounded-lg">{year.dateDisplay}</span>
+                                    <CheckCircle2 className={cn("w-5 h-5", year.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className={cn("font-bold text-base mb-2 line-clamp-2", selectedYearId === year.id ? "text-[#3182F6]" : "text-[#191F28]")}>
                                         {year.title}
                                     </h3>
                                     {year.description && (
-                                        <div className="text-left text-xs text-[#4E5968] space-y-0.5 mb-2">
+                                        <div className="text-left text-xs text-[#6B7684] space-y-1 mb-3">
                                             {year.description.split('\n').slice(0, 2).map((line, i) => (
-                                                <p key={i} className="truncate">{line}</p>
+                                                <p key={i} className="truncate leading-relaxed">{line}</p>
                                             ))}
                                             {year.description.split('\n').length > 2 && (
-                                                <p className="text-[#8B95A1]">+{year.description.split('\n').length - 2}개 더...</p>
+                                                <p className="text-[#8B95A1] font-medium">+{year.description.split('\n').length - 2}개 더보기</p>
                                             )}
                                         </div>
                                     )}
                                 </div>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-end">
-                                        <Progress value={year.progress} className="h-1.5 flex-1 mr-2" indicatorClassName={year.progress === 100 ? "bg-[#00BFA5]" : selectedYearId === year.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                        <span className="text-[10px] font-bold text-[#8B95A1] whitespace-nowrap">{year.progress}%</span>
+                                <div className="space-y-3 pt-2 border-t border-[#F2F4F6]">
+                                    <div className="flex justify-between items-center">
+                                        <Progress value={year.progress} className="h-2 flex-1 mr-3 rounded-full" indicatorClassName={cn("rounded-full transition-all", year.progress === 100 ? "bg-gradient-to-r from-[#00BFA5] to-[#00E5A0]" : selectedYearId === year.id ? "bg-gradient-to-r from-[#3182F6] to-[#60A5FA]" : "bg-[#B0B8C1]")} />
+                                        <span className={cn("text-xs font-bold whitespace-nowrap", year.progress === 100 ? "text-[#00BFA5]" : "text-[#6B7684]")}>{year.progress}%</span>
                                     </div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); openGoalModal(year, 'year'); }}
-                                        className="text-[10px] text-[#3182F6] hover:underline flex items-center justify-center gap-1 mx-auto"
+                                        className="w-full py-2 text-xs font-medium text-[#3182F6] bg-[#3182F6]/5 hover:bg-[#3182F6]/10 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
                                         data-testid={`button-detail-${year.id}`}
                                     >
-                                        <Eye className="h-3 w-3" />
+                                        <Eye className="h-3.5 w-3.5" />
                                         상세 보기
                                     </button>
                                 </div>
                             </CardContent>
-                            <div className="absolute top-3 right-3">
-                                <CheckCircle2 className={cn("w-4 h-4", year.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
-                            </div>
                         </Card>
                     </div>
                 ))}
@@ -810,53 +810,53 @@ export default function KompassDetail() {
                     <p className="text-sm text-[#8B95A1]">연간 목표를 상반기와 하반기로 나누어 계획하세요.</p>
                     <AIGenerateButton level="half" isStrategic={true} />
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
                     {selectedYear.children.map((half) => (
                         <Card 
                             key={half.id}
                             onClick={() => setSelectedHalfYearId(half.id)}
                             className={cn(
-                                "toss-card cursor-pointer transition-all box-border",
+                                "toss-card cursor-pointer transition-all duration-200 hover:-translate-y-1 box-border overflow-hidden",
                                 selectedHalfYearId === half.id 
-                                    ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
-                                    : "border-2 border-transparent hover:shadow-sm"
+                                    ? "border-2 border-purple-500 shadow-lg ring-2 ring-purple-500/20 bg-gradient-to-br from-purple-50/50 to-white" 
+                                    : "border border-[#E5E8EB] hover:shadow-md hover:border-purple-500/30"
                             )}
                         >
-                            <CardContent className="p-4 text-center flex flex-col h-full justify-between">
-                                <div>
-                                    <span className="text-[10px] text-[#8B95A1] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md mb-2 inline-block">{half.dateDisplay}</span>
-                                    <h4 className={cn("font-bold text-sm mb-2", selectedHalfYearId === half.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                            <CardContent className="p-5 flex flex-col h-full">
+                                <div className="flex items-start justify-between mb-3">
+                                    <span className="text-[11px] font-medium text-purple-600 bg-purple-100 px-2 py-1 rounded-lg">{half.dateDisplay}</span>
+                                    <CheckCircle2 className={cn("w-5 h-5", half.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className={cn("font-bold text-base mb-2 line-clamp-2", selectedHalfYearId === half.id ? "text-purple-600" : "text-[#191F28]")}>
                                         {half.title}
                                     </h4>
                                     {half.description && (
-                                        <div className="text-left text-xs text-[#4E5968] space-y-0.5 mb-2">
+                                        <div className="text-left text-xs text-[#6B7684] space-y-1 mb-3">
                                             {half.description.split('\n').slice(0, 2).map((line, i) => (
-                                                <p key={i} className="truncate">{line}</p>
+                                                <p key={i} className="truncate leading-relaxed">{line}</p>
                                             ))}
                                             {half.description.split('\n').length > 2 && (
-                                                <p className="text-[#8B95A1]">+{half.description.split('\n').length - 2}개 더...</p>
+                                                <p className="text-[#8B95A1] font-medium">+{half.description.split('\n').length - 2}개 더보기</p>
                                             )}
                                         </div>
                                     )}
                                 </div>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-end">
-                                        <Progress value={half.progress} className="h-1.5 flex-1 mr-2" indicatorClassName={half.progress === 100 ? "bg-[#00BFA5]" : selectedHalfYearId === half.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                        <span className="text-[10px] font-bold text-[#8B95A1] whitespace-nowrap">{half.progress}%</span>
+                                <div className="space-y-3 pt-2 border-t border-[#F2F4F6]">
+                                    <div className="flex justify-between items-center">
+                                        <Progress value={half.progress} className="h-2 flex-1 mr-3 rounded-full" indicatorClassName={cn("rounded-full transition-all", half.progress === 100 ? "bg-gradient-to-r from-[#00BFA5] to-[#00E5A0]" : selectedHalfYearId === half.id ? "bg-gradient-to-r from-purple-500 to-purple-400" : "bg-[#B0B8C1]")} />
+                                        <span className={cn("text-xs font-bold whitespace-nowrap", half.progress === 100 ? "text-[#00BFA5]" : "text-[#6B7684]")}>{half.progress}%</span>
                                     </div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); openGoalModal(half, 'half'); }}
-                                        className="text-[10px] text-[#3182F6] hover:underline flex items-center justify-center gap-1 mx-auto"
+                                        className="w-full py-2 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
                                         data-testid={`button-detail-${half.id}`}
                                     >
-                                        <Eye className="h-3 w-3" />
+                                        <Eye className="h-3.5 w-3.5" />
                                         상세 보기
                                     </button>
                                 </div>
                             </CardContent>
-                            <div className="absolute top-3 right-3">
-                                <CheckCircle2 className={cn("w-4 h-4", half.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
-                            </div>
                         </Card>
                     ))}
                 </div>
@@ -880,45 +880,46 @@ export default function KompassDetail() {
                      <p className="text-sm text-[#8B95A1]">매월 달성해야 할 핵심 목표를 계획하세요.</p>
                      <AIGenerateButton level="month" />
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                     {selectedHalfYear.children.map((month) => (
                         <Card 
                             key={month.id}
                             onClick={() => setSelectedMonthId(month.id)}
                             className={cn(
-                                "toss-card cursor-pointer transition-all box-border",
+                                "toss-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 box-border overflow-hidden",
                                 selectedMonthId === month.id 
-                                    ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
-                                    : "border-2 border-transparent hover:shadow-sm"
+                                    ? "border-2 border-green-500 shadow-lg ring-2 ring-green-500/20 bg-gradient-to-br from-green-50/50 to-white" 
+                                    : "border border-[#E5E8EB] hover:shadow-md hover:border-green-500/30"
                             )}
                         >
-                            <CardContent className="p-3 text-center flex flex-col h-full justify-between">
-                                <div>
-                                    <h5 className={cn("font-bold text-xs truncate w-full mb-1", selectedMonthId === month.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                            <CardContent className="p-3 flex flex-col h-full">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[10px] font-medium text-green-600 bg-green-100 px-1.5 py-0.5 rounded">{month.dateDisplay}</span>
+                                    <CheckCircle2 className={cn("w-4 h-4", month.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
+                                </div>
+                                <div className="flex-1 mb-2">
+                                    <h5 className={cn("font-bold text-sm truncate w-full", selectedMonthId === month.id ? "text-green-600" : "text-[#191F28]")}>
                                         {month.title}
                                     </h5>
                                     {month.description && (
-                                        <p className="text-[9px] text-[#8B95A1] truncate mb-1">{month.description.split('\n')[0]}</p>
+                                        <p className="text-[10px] text-[#8B95A1] truncate mt-1">{month.description.split('\n')[0]}</p>
                                     )}
                                 </div>
-                                <div className="space-y-1.5">
+                                <div className="space-y-2 pt-2 border-t border-[#F2F4F6]">
                                     <div className="flex items-center gap-2">
-                                        <Progress value={month.progress} className="h-1 flex-1" indicatorClassName={month.progress === 100 ? "bg-[#00BFA5]" : selectedMonthId === month.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                        <span className="text-[9px] font-bold text-[#8B95A1] w-5 text-right">{month.progress}%</span>
+                                        <Progress value={month.progress} className="h-1.5 flex-1 rounded-full" indicatorClassName={cn("rounded-full", month.progress === 100 ? "bg-gradient-to-r from-[#00BFA5] to-[#00E5A0]" : selectedMonthId === month.id ? "bg-gradient-to-r from-green-500 to-green-400" : "bg-[#B0B8C1]")} />
+                                        <span className={cn("text-[10px] font-bold w-6 text-right", month.progress === 100 ? "text-[#00BFA5]" : "text-[#6B7684]")}>{month.progress}%</span>
                                     </div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); openGoalModal(month, 'month'); }}
-                                        className="text-[9px] text-[#3182F6] hover:underline flex items-center justify-center gap-0.5 mx-auto"
+                                        className="w-full py-1.5 text-[10px] font-medium text-green-600 bg-green-50 hover:bg-green-100 rounded flex items-center justify-center gap-1 transition-colors"
                                         data-testid={`button-detail-${month.id}`}
                                     >
-                                        <Eye className="h-2.5 w-2.5" />
+                                        <Eye className="h-3 w-3" />
                                         상세
                                     </button>
                                 </div>
                             </CardContent>
-                            <div className="absolute top-2 right-2">
-                                <CheckCircle2 className={cn("w-3 h-3", month.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
-                            </div>
                         </Card>
                     ))}
                 </div>
@@ -942,46 +943,46 @@ export default function KompassDetail() {
                      <p className="text-sm text-[#8B95A1]">이번 주에 집중해야 할 과제를 확인하세요.</p>
                      <AIGenerateButton level="week" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 max-w-3xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto">
                     {selectedMonth.children.map((week) => (
                         <Card 
                             key={week.id}
                             onClick={() => setSelectedWeekId(week.id)}
                             className={cn(
-                                "toss-card cursor-pointer transition-all box-border",
+                                "toss-card cursor-pointer transition-all duration-200 hover:-translate-y-0.5 box-border overflow-hidden",
                                 selectedWeekId === week.id 
-                                    ? "border-2 border-[#3182F6] shadow-md bg-blue-50/30" 
-                                    : "border-2 border-transparent hover:shadow-sm"
+                                    ? "border-2 border-orange-500 shadow-lg ring-2 ring-orange-500/20 bg-gradient-to-br from-orange-50/50 to-white" 
+                                    : "border border-[#E5E8EB] hover:shadow-md hover:border-orange-500/30"
                             )}
                         >
-                            <CardContent className="p-3 text-center flex flex-col h-full justify-between">
-                                <div>
-                                    <span className="text-[9px] text-[#8B95A1] bg-[#F2F4F6] px-1 py-0.5 rounded-sm mb-1 inline-block">{week.dateDisplay}</span>
-                                    <h5 className={cn("font-bold text-xs truncate w-full mb-1", selectedWeekId === week.id ? "text-[#3182F6]" : "text-[#333D4B]")}>
+                            <CardContent className="p-4 flex flex-col h-full">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[10px] font-medium text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded">{week.dateDisplay}</span>
+                                    <CheckCircle2 className={cn("w-4 h-4", week.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
+                                </div>
+                                <div className="flex-1 mb-2">
+                                    <h5 className={cn("font-bold text-sm mb-1", selectedWeekId === week.id ? "text-orange-600" : "text-[#191F28]")}>
                                         {week.title}
                                     </h5>
                                     {week.description && (
-                                        <p className="text-[9px] text-[#8B95A1] truncate mb-1">{week.description.split('\n')[0]}</p>
+                                        <p className="text-[10px] text-[#8B95A1] line-clamp-2">{week.description.split('\n')[0]}</p>
                                     )}
                                 </div>
-                                <div className="space-y-1.5">
+                                <div className="space-y-2 pt-2 border-t border-[#F2F4F6]">
                                     <div className="flex items-center gap-2">
-                                        <Progress value={week.progress} className="h-1 flex-1" indicatorClassName={week.progress === 100 ? "bg-[#00BFA5]" : selectedWeekId === week.id ? "bg-[#3182F6]" : "bg-[#B0B8C1]"} />
-                                        <span className="text-[9px] font-bold text-[#8B95A1] w-5 text-right">{week.progress}%</span>
+                                        <Progress value={week.progress} className="h-1.5 flex-1 rounded-full" indicatorClassName={cn("rounded-full", week.progress === 100 ? "bg-gradient-to-r from-[#00BFA5] to-[#00E5A0]" : selectedWeekId === week.id ? "bg-gradient-to-r from-orange-500 to-orange-400" : "bg-[#B0B8C1]")} />
+                                        <span className={cn("text-[10px] font-bold w-6 text-right", week.progress === 100 ? "text-[#00BFA5]" : "text-[#6B7684]")}>{week.progress}%</span>
                                     </div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); openGoalModal(week, 'week'); }}
-                                        className="text-[9px] text-[#3182F6] hover:underline flex items-center justify-center gap-0.5 mx-auto"
+                                        className="w-full py-1.5 text-[10px] font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 rounded flex items-center justify-center gap-1 transition-colors"
                                         data-testid={`button-detail-${week.id}`}
                                     >
-                                        <Eye className="h-2.5 w-2.5" />
+                                        <Eye className="h-3 w-3" />
                                         상세
                                     </button>
                                 </div>
                             </CardContent>
-                            <div className="absolute top-2 right-2">
-                                <CheckCircle2 className={cn("w-3 h-3", week.progress === 100 ? "text-[#00BFA5]" : "text-[#E5E8EB]")} />
-                            </div>
                         </Card>
                     ))}
                 </div>
@@ -1074,50 +1075,66 @@ export default function KompassDetail() {
 
         {/* Goal Detail Modal */}
         <Dialog open={goalModalOpen} onOpenChange={setGoalModalOpen}>
-          <DialogContent className="sm:max-w-lg rounded-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-[#191F28] flex items-center gap-2">
-                {goalModalData?.level === 'year' && <Badge className="bg-[#3182F6]">연간</Badge>}
-                {goalModalData?.level === 'half' && <Badge className="bg-purple-500">반기</Badge>}
-                {goalModalData?.level === 'month' && <Badge className="bg-green-500">월간</Badge>}
-                {goalModalData?.level === 'week' && <Badge className="bg-orange-500">주간</Badge>}
+          <DialogContent className="sm:max-w-lg rounded-2xl border-0 shadow-2xl">
+            <DialogHeader className="pb-4 border-b border-[#F2F4F6]">
+              <DialogTitle className="text-xl font-bold text-[#191F28] flex items-center gap-3">
+                {goalModalData?.level === 'year' && <Badge className="bg-gradient-to-r from-[#3182F6] to-[#60A5FA] text-white px-3 py-1">연간</Badge>}
+                {goalModalData?.level === 'half' && <Badge className="bg-gradient-to-r from-purple-500 to-purple-400 text-white px-3 py-1">반기</Badge>}
+                {goalModalData?.level === 'month' && <Badge className="bg-gradient-to-r from-green-500 to-green-400 text-white px-3 py-1">월간</Badge>}
+                {goalModalData?.level === 'week' && <Badge className="bg-gradient-to-r from-orange-500 to-orange-400 text-white px-3 py-1">주간</Badge>}
                 목표 상세
               </DialogTitle>
             </DialogHeader>
             
             {goalModalData && (
-              <div className="space-y-5 py-4">
-                <div className="flex items-center justify-between bg-[#F9FAFB] rounded-xl p-4">
-                  <div>
-                    <p className="text-xs text-[#8B95A1]">기간</p>
-                    <p className="text-sm font-bold text-[#333D4B]">{goalModalData.dateDisplay}</p>
+              <div className="space-y-6 py-4">
+                <div className="flex items-center justify-between bg-gradient-to-r from-[#F9FAFB] to-[#F2F4F6] rounded-2xl p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                      <Calendar className="h-5 w-5 text-[#6B7684]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#8B95A1] uppercase tracking-wider font-medium">기간</p>
+                      <p className="text-sm font-bold text-[#191F28]">{goalModalData.dateDisplay}</p>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-[#8B95A1]">달성률</p>
-                    <p className="text-lg font-bold text-[#3182F6]">{goalModalData.progress}%</p>
+                    <p className="text-[10px] text-[#8B95A1] uppercase tracking-wider font-medium">달성률</p>
+                    <div className="flex items-center gap-2">
+                      <Progress value={goalModalData.progress} className="w-16 h-2 rounded-full" indicatorClassName={cn("rounded-full", goalModalData.progress === 100 ? "bg-gradient-to-r from-[#00BFA5] to-[#00E5A0]" : "bg-gradient-to-r from-[#3182F6] to-[#60A5FA]")} />
+                      <p className={cn("text-lg font-bold", goalModalData.progress === 100 ? "text-[#00BFA5]" : "text-[#3182F6]")}>{goalModalData.progress}%</p>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="modal-title" className="text-sm font-bold text-[#333D4B]">목표 제목</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="modal-title" className="text-sm font-bold text-[#191F28] flex items-center gap-2">
+                    <Flag className="h-4 w-4 text-[#6B7684]" />
+                    목표 제목
+                  </Label>
                   <Input 
                     id="modal-title"
                     value={goalModalData.title}
                     onChange={(e) => setGoalModalData({ ...goalModalData, title: e.target.value })}
-                    className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6]"
+                    className="h-12 rounded-xl border-[#E5E8EB] bg-[#F9FAFB] focus-visible:ring-[#3182F6] focus-visible:bg-white transition-colors text-[#191F28] font-medium"
                     data-testid="input-modal-title"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-bold text-[#333D4B]">세부 실행 과제</Label>
+                <div className="space-y-3">
+                  <Label className="text-sm font-bold text-[#191F28] flex items-center gap-2">
+                    <CheckSquare className="h-4 w-4 text-[#6B7684]" />
+                    세부 실행 과제
+                  </Label>
                   {goalModalData.description.includes('•') ? (
                     <div className="space-y-2 bg-[#F9FAFB] rounded-xl p-4">
                       {goalModalData.description.split('\n').filter(line => line.trim()).map((line, i) => (
-                        <div key={i} className="flex items-start gap-2">
+                        <div key={i} className="flex items-center gap-3 group">
                           {line.trim().startsWith('•') ? (
                             <>
-                              <span className="text-[#3182F6] mt-0.5">•</span>
+                              <div className="w-6 h-6 rounded-full bg-[#3182F6]/10 flex items-center justify-center flex-shrink-0">
+                                <span className="text-[#3182F6] font-bold text-sm">•</span>
+                              </div>
                               <Input
                                 value={line.replace('• ', '')}
                                 onChange={(e) => {
@@ -1128,14 +1145,32 @@ export default function KompassDetail() {
                                     setGoalModalData({ ...goalModalData, description: lines.join('\n') });
                                   }
                                 }}
-                                className="flex-1 h-9 text-sm border-[#E5E8EB] rounded-lg"
+                                className="flex-1 h-10 text-sm border-[#E5E8EB] rounded-lg bg-white focus-visible:ring-[#3182F6]"
                               />
+                              <button
+                                onClick={() => {
+                                  const lines = goalModalData.description.split('\n').filter((l, idx) => idx !== i);
+                                  setGoalModalData({ ...goalModalData, description: lines.join('\n') });
+                                }}
+                                className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-opacity"
+                              >
+                                ×
+                              </button>
                             </>
                           ) : (
                             <p className="text-sm text-[#4E5968]">{line}</p>
                           )}
                         </div>
                       ))}
+                      <button
+                        onClick={() => {
+                          setGoalModalData({ ...goalModalData, description: goalModalData.description + '\n• ' });
+                        }}
+                        className="w-full mt-2 py-2 text-xs font-medium text-[#3182F6] bg-white hover:bg-[#3182F6]/5 border border-dashed border-[#3182F6]/30 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        항목 추가
+                      </button>
                     </div>
                   ) : (
                     <Textarea 
@@ -1143,7 +1178,7 @@ export default function KompassDetail() {
                       value={goalModalData.description}
                       onChange={(e) => setGoalModalData({ ...goalModalData, description: e.target.value })}
                       placeholder="목표에 대한 상세 설명을 입력하세요"
-                      className="min-h-[120px] rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6] resize-none text-sm"
+                      className="min-h-[120px] rounded-xl border-[#E5E8EB] bg-[#F9FAFB] focus-visible:ring-[#3182F6] focus-visible:bg-white resize-none text-sm transition-colors"
                       data-testid="input-modal-description"
                     />
                   )}
@@ -1151,17 +1186,17 @@ export default function KompassDetail() {
               </div>
             )}
 
-            <DialogFooter className="gap-2">
+            <DialogFooter className="gap-3 pt-4 border-t border-[#F2F4F6]">
               <Button 
                 variant="outline" 
                 onClick={() => setGoalModalOpen(false)}
-                className="flex-1 h-11 rounded-xl"
+                className="flex-1 h-12 rounded-xl border-[#E5E8EB] text-[#6B7684] hover:bg-[#F9FAFB] font-medium"
               >
                 취소
               </Button>
               <Button 
                 onClick={handleModalSave}
-                className="flex-1 h-11 bg-[#3182F6] hover:bg-[#2b72d7] text-white font-bold rounded-xl"
+                className="flex-1 h-12 bg-gradient-to-r from-[#3182F6] to-[#2b72d7] hover:opacity-90 text-white font-bold rounded-xl shadow-lg shadow-[#3182F6]/25 transition-all"
                 data-testid="button-modal-save"
               >
                 저장
