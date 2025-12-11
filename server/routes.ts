@@ -10,7 +10,7 @@ import {
   updateUserIdentitySchema,
 } from "@shared/schema";
 import { z } from "zod";
-import { generateCareerAnalysis, generatePersonalEssay, generateGoals, type GoalLevel } from "./ai";
+import { generateCareerAnalysis, generatePersonalEssay, generateGoals, type GoalLevel, checkAIRateLimit } from "./ai";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -624,6 +624,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
+      // Check rate limit before processing
+      const rateLimitResult = await checkAIRateLimit(userId, "analysis");
+      if (!rateLimitResult.success) {
+        res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
+        res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
+        res.setHeader("X-RateLimit-Reset", rateLimitResult.reset);
+        return res.status(429).json({ 
+          message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+          retryAfter: rateLimitResult.retryAfter
+        });
+      }
+
       const user = await storage.getUser(userId);
       if (!user || user.credits < 1) {
         return res.status(402).json({ message: "크레딧이 부족합니다. 분석을 생성하려면 최소 1 크레딧이 필요합니다." });
@@ -675,6 +687,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!profile || profile.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
+      }
+
+      // Check rate limit before processing
+      const rateLimitResult = await checkAIRateLimit(userId, "essay");
+      if (!rateLimitResult.success) {
+        res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
+        res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
+        res.setHeader("X-RateLimit-Reset", rateLimitResult.reset);
+        return res.status(429).json({ 
+          message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+          retryAfter: rateLimitResult.retryAfter
+        });
       }
 
       const { category, topic, context } = req.body;
@@ -743,6 +767,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { level, visionTitle, visionDescription, targetYear, ancestorChain, siblings, count } = parsed.data;
       
+      // Check rate limit before processing
+      const rateLimitResult = await checkAIRateLimit(userId, "goals");
+      if (!rateLimitResult.success) {
+        res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
+        res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
+        res.setHeader("X-RateLimit-Reset", rateLimitResult.reset);
+        return res.status(429).json({ 
+          message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+          retryAfter: rateLimitResult.retryAfter
+        });
+      }
+
       // Strategic levels (year, half) require 1 credit
       const isStrategicLevel = level === 'year' || level === 'half';
       

@@ -1,11 +1,15 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Profile } from "@shared/schema";
+import { checkAIRateLimit, type RateLimitResult } from "./rateLimiter";
 
 // Using Replit AI Integrations for Anthropic - no API key needed, charges to credits
 const anthropic = new Anthropic({
   apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
 });
+
+// Export rate limit check for use in routes
+export { checkAIRateLimit, type RateLimitResult };
 
 // Helper function to check if error is rate limit or quota violation
 function isRateLimitError(error: any): boolean {
