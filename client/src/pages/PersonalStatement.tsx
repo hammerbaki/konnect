@@ -440,6 +440,7 @@ export default function PersonalStatement() {
                 category: selectedCategory.id,
                 topic: agent.label,
                 context: agent.promptTemplate,
+                profileData: activeProfile.profileData,
             });
         } catch (error) {
             console.error("Failed to submit essay job:", error);

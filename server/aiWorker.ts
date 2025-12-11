@@ -40,7 +40,8 @@ export async function processJob(job: AiJob): Promise<any> {
           payload.profileType,
           payload.category,
           payload.topic,
-          payload.context
+          payload.context,
+          payload.profileData
         );
         break;
       }

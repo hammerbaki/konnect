@@ -667,12 +667,63 @@ ${profileTypePrompt}
   );
 }
 
+// Build essay-specific profile context
+function getEssayProfileContext(profileData: any, profileType: string): string {
+  if (!profileData) return '';
+  
+  let context = `\n## 지원자 정보\n`;
+  
+  // Common fields
+  if (profileData.basic_name) context += `- 이름: ${profileData.basic_name}\n`;
+  if (profileData.basic_bio) context += `- 소개: ${profileData.basic_bio}\n`;
+  
+  switch (profileType) {
+    case 'general':
+      if (profileData.gen_desiredIndustry) context += `- 희망 산업: ${profileData.gen_desiredIndustry}\n`;
+      if (profileData.gen_desiredRole) context += `- 희망 직무: ${profileData.gen_desiredRole}\n`;
+      if (profileData.gen_experience) context += `- 경력: ${profileData.gen_experience}\n`;
+      if (profileData.gen_skills) context += `- 보유 스킬: ${profileData.gen_skills}\n`;
+      if (profileData.gen_strengths) context += `- 강점: ${profileData.gen_strengths}\n`;
+      if (profileData.gen_achievements) context += `- 성과/실적: ${profileData.gen_achievements}\n`;
+      break;
+    case 'university':
+      if (profileData.univ_university) context += `- 대학: ${profileData.univ_university}\n`;
+      if (profileData.univ_major) context += `- 전공: ${profileData.univ_major}\n`;
+      if (profileData.univ_desiredIndustry) context += `- 희망 산업: ${profileData.univ_desiredIndustry}\n`;
+      if (profileData.univ_desiredRole) context += `- 희망 직무: ${profileData.univ_desiredRole}\n`;
+      if (profileData.univ_skills) context += `- 보유 스킬: ${profileData.univ_skills}\n`;
+      if (profileData.univ_activities) context += `- 활동/경험: ${profileData.univ_activities}\n`;
+      break;
+    case 'high':
+      if (profileData.high_schoolName) context += `- 고등학교: ${profileData.high_schoolName}\n`;
+      if (profileData.high_track) context += `- 계열: ${profileData.high_track}\n`;
+      if (profileData.high_desiredMajor) context += `- 희망 전공: ${profileData.high_desiredMajor}\n`;
+      if (profileData.high_desiredUniversity) context += `- 희망 대학: ${profileData.high_desiredUniversity}\n`;
+      if (profileData.high_strengths) context += `- 강점: ${profileData.high_strengths}\n`;
+      if (profileData.high_activities) context += `- 활동/경험: ${profileData.high_activities}\n`;
+      break;
+    case 'middle':
+      if (profileData.mid_schoolName) context += `- 중학교: ${profileData.mid_schoolName}\n`;
+      if (profileData.mid_strengths) context += `- 강점: ${profileData.mid_strengths}\n`;
+      if (profileData.mid_interests) context += `- 관심사: ${profileData.mid_interests}\n`;
+      break;
+    case 'elementary':
+      if (profileData.elem_dreamJob) context += `- 장래희망: ${profileData.elem_dreamJob}\n`;
+      if (profileData.elem_strengths) context += `- 강점: ${profileData.elem_strengths}\n`;
+      if (profileData.elem_interests) context += `- 관심사: ${profileData.elem_interests}\n`;
+      break;
+  }
+  
+  return context;
+}
+
 // Generate personal essay using Claude
 export async function generatePersonalEssay(
   profileType: string,
   category: string,
   topic: string,
-  essayContext?: string
+  essayContext?: string,
+  profileData?: any
 ): Promise<{
   title: string;
   content: string;
@@ -681,12 +732,21 @@ export async function generatePersonalEssay(
   return limit(() =>
     retryWithBackoff(
       async () => {
-        const systemPrompt = `당신은 한국의 자기소개서 전문 작가입니다. ${category}를 위한 자기소개서를 작성합니다. 모든 응답은 한국어로 작성하세요.`;
+        const profileContext = getEssayProfileContext(profileData, profileType);
+        
+        const systemPrompt = `당신은 한국의 자기소개서 전문 작가입니다. ${category}를 위한 자기소개서를 작성합니다. 
+모든 응답은 한국어로 작성하세요.
+중요: 지원자 정보에 제공된 실제 값(희망 산업, 희망 직무 등)을 자기소개서에 그대로 사용하세요. 
+절대 {변수명} 형태의 플레이스홀더를 사용하지 마세요.`;
 
         const prompt = `주제: ${topic}
-${essayContext ? `추가 정보: ${essayContext}` : ''}
+${profileContext}
+${essayContext ? `\n추가 정보: ${essayContext}` : ''}
 
-위 주제에 대한 자기소개서를 작성하세요. 다음 JSON 형식으로 반환하세요:
+위 주제와 지원자 정보를 바탕으로 맞춤형 자기소개서를 작성하세요.
+지원자의 희망 산업, 희망 직무, 강점 등을 구체적으로 언급하세요.
+
+다음 JSON 형식으로 반환하세요:
 
 {
   "title": "자기소개서 제목",
