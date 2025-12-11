@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ChevronRight, Compass, Sparkles, FolderOpen, Users, Heart, Loader2 } from "lucide-react";
+import { Plus, ChevronRight, Compass, Sparkles, FolderOpen, Users, Heart, Loader2, Trash2 } from "lucide-react";
 import { generateLightTree, VisionGoal } from "@/lib/mockData";
 import { useLocation } from "wouter";
 import { useMobileAction } from "@/lib/MobileActionContext";
@@ -100,6 +100,33 @@ export default function Goals() {
       });
     },
   });
+
+  const deleteKompassMutation = useMutation({
+    mutationFn: async (kompassId: string) => {
+      await apiRequest('DELETE', `/api/kompass/${kompassId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/kompass'] });
+      toast({ 
+        title: "삭제 완료", 
+        description: "Kompass가 삭제되었습니다." 
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "삭제 실패",
+        description: error.message || "Kompass 삭제 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteKompass = (e: React.MouseEvent, kompassId: string, title: string) => {
+    e.stopPropagation();
+    if (window.confirm(`"${title}" Kompass를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+      deleteKompassMutation.mutate(kompassId);
+    }
+  };
 
   useEffect(() => {
     const imported = sessionStorage.getItem('kompass_import');
@@ -224,7 +251,16 @@ export default function Goals() {
                                   <div className="bg-[#E8F3FF] text-[#3182F6] px-3 py-1 rounded-full text-xs font-bold">
                                       Target {kompass.targetYear}
                                   </div>
-                                  <ChevronRight className="w-5 h-5 text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={(e) => handleDeleteKompass(e, kompass.id, vision.title)}
+                                      className="p-1.5 rounded-lg text-[#B0B8C1] hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                                      data-testid={`button-delete-kompass-${kompass.id}`}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                    <ChevronRight className="w-5 h-5 text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
+                                  </div>
                               </div>
                               
                               <h3 className="text-xl font-bold text-[#191F28] mb-2 line-clamp-2 h-14">
