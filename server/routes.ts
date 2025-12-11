@@ -50,13 +50,15 @@ function getProfileColor(type: string): string {
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
-  // Check Redis connection and apply global rate limiting if available
+  // Apply global rate limiting unconditionally (uses in-memory fallback if Redis is down)
+  app.use('/api', createRateLimitMiddleware());
+  
+  // Check Redis connection for logging purposes
   const redisConnected = await checkRedisConnection();
   if (redisConnected) {
     console.log("✓ Redis connected - global rate limiting enabled");
-    app.use('/api', createRateLimitMiddleware());
   } else {
-    console.log("⚠ Redis not connected - global rate limiting disabled");
+    console.log("⚠ Redis not connected - using in-memory rate limiting fallback");
   }
 
   app.get('/api/config', (_req, res) => {

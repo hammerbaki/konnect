@@ -146,11 +146,12 @@ export async function checkRateLimit(
     }
     
     console.error("Rate limit check failed:", error);
-    // On failure without fallback, allow the request but log the error
+    // On failure without fallback type, use global defaults and allow request
+    const defaultLimit = 100;
     return {
       success: true,
-      limit: 0,
-      remaining: 0,
+      limit: defaultLimit,
+      remaining: defaultLimit,
       reset: Date.now() + 60000,
     };
   }
