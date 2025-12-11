@@ -6,6 +6,19 @@ Konnect is a Korean-language AI-powered career guidance platform that provides p
 
 ## Recent Changes
 
+### December 11, 2024 - Admin Dashboard + Role-Based Access Control
+- **User roles system** added with three levels: `user`, `staff`, `admin`
+- **Admin Dashboard** at `/admin` with three tabs:
+  - **Member Management**: View all users, edit credits (admin only), change roles (admin only)
+  - **System Monitor**: Total users, profiles, analyses, pending/processing jobs, avg tokens
+  - **Token System**: Credit pricing display, statistics on total/average credits
+- **Role-based authorization middleware**:
+  - `requireStaffOrAdmin`: Allows read access (viewing stats, user list)
+  - `requireAdmin`: Required for write operations (role changes, credit edits)
+- **Sidebar navigation** shows Admin link only for admin/staff users
+- **Frontend authorization**: Admin page shows access denied for non-admin/staff users
+- **wowkjobs@gmail.com** set as initial admin account
+
 ### December 11, 2024 - Credit Scaling (×100) + Essay Revision Feature + ChatGPT-like UI
 - **Credit system scaled by 100** - All credit values multiplied by 100 to use integers:
   - Default new user credits: 1000 (was 10)

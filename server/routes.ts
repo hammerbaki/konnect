@@ -1064,6 +1064,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "큐 상태 조회 중 오류가 발생했습니다." });
     }
   });
+
+  // ===== ADMIN ROUTES =====
+  // Middleware for admin/staff access (read-only operations)
+  const requireStaffOrAdmin = async (req: any, res: any, next: any) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const user = await storage.getUser(userId);
+      const role = user?.role || 'user'; // Default to 'user' if role is null
+      if (role !== 'admin' && role !== 'staff') {
+        return res.status(403).json({ message: "관리자 권한이 필요합니다." });
+      }
+      
+      req.userRole = role;
+      next();
+    } catch (error) {
+      console.error("Admin check error:", error);
+      res.status(500).json({ message: "권한 확인 중 오류가 발생했습니다." });
+    }
+  };
+
+  // Middleware for admin-only access (write operations)
+  const requireAdmin = async (req: any, res: any, next: any) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const user = await storage.getUser(userId);
+      const role = user?.role || 'user'; // Default to 'user' if role is null
+      if (role !== 'admin') {
+        return res.status(403).json({ message: "관리자 권한이 필요합니다." });
+      }
+      
+      req.userRole = role;
+      next();
+    } catch (error) {
+      console.error("Admin check error:", error);
+      res.status(500).json({ message: "권한 확인 중 오류가 발생했습니다." });
+    }
+  };
+
+  // Get all users (admin/staff can view)
+  app.get('/api/admin/users', isAuthenticated, requireStaffOrAdmin, async (_req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error: any) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "사용자 목록 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Zod schemas for admin PATCH requests
+  const updateRoleSchema = z.object({
+    role: z.enum(['user', 'staff', 'admin']),
+  });
+
+  const updateCreditsSchema = z.object({
+    credits: z.number().int().min(0).max(10000000),
+  });
+
+  // Update user role (admin only - write operation)
+  app.patch('/api/admin/users/:id/role', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const targetUserId = req.params.id;
+      const parsed = updateRoleSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        return res.status(400).json({ message: "유효하지 않은 역할입니다.", errors: parsed.error.errors });
+      }
+      
+      const user = await storage.updateUserRole(targetUserId, parsed.data.role);
+      res.json(user);
+    } catch (error: any) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "역할 변경 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Update user credits (admin only - write operation)
+  app.patch('/api/admin/users/:id/credits', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const targetUserId = req.params.id;
+      const parsed = updateCreditsSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        return res.status(400).json({ message: "유효하지 않은 크레딧 값입니다.", errors: parsed.error.errors });
+      }
+      
+      const user = await storage.updateUserCreditsAdmin(targetUserId, parsed.data.credits);
+      res.json(user);
+    } catch (error: any) {
+      console.error("Error updating user credits:", error);
+      res.status(500).json({ message: "크레딧 변경 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get system stats (admin/staff can view)
+  app.get('/api/admin/stats/system', isAuthenticated, requireStaffOrAdmin, async (_req, res) => {
+    try {
+      const stats = await storage.getSystemStats();
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Error fetching system stats:", error);
+      res.status(500).json({ message: "시스템 통계 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get AI job stats (admin/staff can view)
+  app.get('/api/admin/stats/ai', isAuthenticated, requireStaffOrAdmin, async (_req, res) => {
+    try {
+      const stats = await storage.getAiJobStats();
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Error fetching AI stats:", error);
+      res.status(500).json({ message: "AI 통계 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get recent AI jobs for monitoring (admin/staff can view)
+  app.get('/api/admin/jobs', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit) || 50;
+      const allJobs = await storage.getPendingJobs();
+      res.json(allJobs.slice(0, limit));
+    } catch (error: any) {
+      console.error("Error fetching jobs:", error);
+      res.status(500).json({ message: "작업 목록 조회 중 오류가 발생했습니다." });
+    }
+  });
   
   // Start the AI worker
   startWorker();

@@ -1,11 +1,23 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, PieChart, Target, LogOut, User, FileText, Search, Settings, Coins } from "lucide-react";
+import { LayoutDashboard, PieChart, Target, LogOut, User, FileText, Search, Settings, Coins, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+
+interface UserData {
+  id: string;
+  role?: string;
+}
 
 export function Sidebar() {
   const [location, setLocation] = useLocation();
   const { logout } = useAuth();
+
+  const { data: user } = useQuery<UserData>({
+    queryKey: ['/api/auth/user'],
+  });
+
+  const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
 
   const handleLogout = async () => {
     await logout();
@@ -24,6 +36,7 @@ export function Sidebar() {
   const bottomItems = [
       { href: "/recharge", icon: Coins, label: "토큰 충전" },
       { href: "/settings", icon: Settings, label: "설정" },
+      ...(isAdminOrStaff ? [{ href: "/admin", icon: Shield, label: "관리자" }] : []),
   ];
 
   return (

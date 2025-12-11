@@ -22,6 +22,7 @@ const Report = lazy(() => import("./pages/Report"));
 const Explorer = lazy(() => import("./pages/Explorer"));
 const Settings = lazy(() => import("./pages/Settings"));
 const TokenRecharge = lazy(() => import("./pages/TokenRecharge"));
+const Admin = lazy(() => import("./pages/Admin"));
 
 function LoadingSpinner() {
   return (
@@ -92,6 +93,9 @@ function Router() {
         </Route>
         <Route path="/recharge">
           {(params) => <ProtectedRoute component={TokenRecharge} params={params} />}
+        </Route>
+        <Route path="/admin">
+          {(params) => <ProtectedRoute component={Admin} params={params} />}
         </Route>
         <Route component={NotFound} />
       </Switch>

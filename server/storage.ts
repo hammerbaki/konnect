@@ -21,9 +21,10 @@ import {
   type AiJob,
   type InsertAiJob,
   type AiJobStatus,
+  type UserRole,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, ilike, and, inArray } from "drizzle-orm";
+import { eq, desc, ilike, and, inArray, sql, count } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -68,6 +69,27 @@ export interface IStorage {
   updateAiJobStatus(id: string, status: AiJobStatus, progress?: number): Promise<AiJob>;
   updateAiJobResult(id: string, result: any): Promise<AiJob>;
   updateAiJobError(id: string, error: string): Promise<AiJob>;
+
+  // Admin functions
+  getAllUsers(): Promise<User[]>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  updateUserRole(userId: string, role: UserRole): Promise<User>;
+  updateUserCreditsAdmin(userId: string, credits: number): Promise<User>;
+  getSystemStats(): Promise<{
+    totalUsers: number;
+    totalProfiles: number;
+    totalAnalyses: number;
+    totalEssays: number;
+    pendingJobs: number;
+    processingJobs: number;
+  }>;
+  getAiJobStats(): Promise<{
+    totalJobs: number;
+    completedJobs: number;
+    failedJobs: number;
+    avgTokensPerJob: number;
+    jobsByType: Record<string, number>;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -375,6 +397,101 @@ export class DatabaseStorage implements IStorage {
       .where(eq(aiJobs.id, id))
       .returning();
     return job;
+  }
+
+  // Admin functions
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async updateUserRole(userId: string, role: UserRole): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async updateUserCreditsAdmin(userId: string, credits: number): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ credits, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async getSystemStats(): Promise<{
+    totalUsers: number;
+    totalProfiles: number;
+    totalAnalyses: number;
+    totalEssays: number;
+    pendingJobs: number;
+    processingJobs: number;
+  }> {
+    const [userCount] = await db.select({ count: count() }).from(users);
+    const [profileCount] = await db.select({ count: count() }).from(profiles);
+    const [analysisCount] = await db.select({ count: count() }).from(careerAnalyses);
+    const [essayCount] = await db.select({ count: count() }).from(personalEssays);
+    const [pendingCount] = await db.select({ count: count() }).from(aiJobs).where(eq(aiJobs.status, 'pending'));
+    const [processingCount] = await db.select({ count: count() }).from(aiJobs).where(eq(aiJobs.status, 'processing'));
+
+    return {
+      totalUsers: userCount.count,
+      totalProfiles: profileCount.count,
+      totalAnalyses: analysisCount.count,
+      totalEssays: essayCount.count,
+      pendingJobs: pendingCount.count,
+      processingJobs: processingCount.count,
+    };
+  }
+
+  async getAiJobStats(): Promise<{
+    totalJobs: number;
+    completedJobs: number;
+    failedJobs: number;
+    avgTokensPerJob: number;
+    jobsByType: Record<string, number>;
+  }> {
+    const allJobs = await db.select().from(aiJobs);
+    const completed = allJobs.filter(j => j.status === 'completed');
+    const failed = allJobs.filter(j => j.status === 'failed');
+    
+    // Calculate average tokens (assuming result contains token info)
+    let totalTokens = 0;
+    let tokenCount = 0;
+    for (const job of completed) {
+      if (job.result && typeof job.result === 'object') {
+        const result = job.result as any;
+        if (result.inputTokens) {
+          totalTokens += result.inputTokens;
+          tokenCount++;
+        }
+        if (result.outputTokens) {
+          totalTokens += result.outputTokens;
+        }
+      }
+    }
+    
+    // Count jobs by type
+    const jobsByType: Record<string, number> = {};
+    for (const job of allJobs) {
+      jobsByType[job.type] = (jobsByType[job.type] || 0) + 1;
+    }
+
+    return {
+      totalJobs: allJobs.length,
+      completedJobs: completed.length,
+      failedJobs: failed.length,
+      avgTokensPerJob: tokenCount > 0 ? Math.round(totalTokens / tokenCount) : 0,
+      jobsByType,
+    };
   }
 }
 
