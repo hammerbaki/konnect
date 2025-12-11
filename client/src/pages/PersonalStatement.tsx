@@ -21,6 +21,8 @@ import {
     MessageSquare,
     Menu,
     Trash2,
+    Loader2,
+    User,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -28,46 +30,18 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useAIJob } from "@/hooks/useAIJob";
+import { AILoadingOverlay } from "@/components/ui/CircularProgress";
+import type { Profile, PersonalEssay } from "@shared/schema";
+import { Link } from "wouter";
 
-// --- Mock Data (Mirroring Profile.tsx structure) ---
-const MOCK_PROFILE_DB = {
-    basic: {
-        name: "김철수",
-        role: "Product Manager",
-    },
-    // Simulate populated High School data
-    high: {
-        high_schoolName: "한국고등학교",
-        high_hopeUniversity: "서울대학교",
-        high_majorTrack: "공학계열",
-        high_careerHope: "AI 연구원",
-        high_activityStatus: "코딩 동아리 부장, 전국 정보올림피아드 은상",
-        high_favoriteSubject: "수학",
-        // high_mbti is missing to simulate incomplete profile for testing if needed,
-        // but let's populate it for now to allow generation.
-        high_mbti: "INTJ",
-    },
-    // Simulate populated University data
-    univ: {
-        univ_majorName: "컴퓨터공학과",
-        univ_careerGoalClear: "5",
-        univ_skillsToDevelop: ["Deep Learning", "React"],
-    },
-    // Simulate populated General Job Seeker data
-    general: {
-        gen_currentStatus: "employed",
-        gen_workExperience: [
-            {
-                role: "Product Manager",
-                company: "Tech Corp",
-                description: "SaaS Launch",
-            },
-        ],
-        gen_reasonForChange: "growth",
-        gen_desiredIndustry: "Fintech",
-        gen_desiredRole: "Senior PM",
-        gen_skills: ["Communication", "Data Analysis"],
-    },
+// Profile type mappings for categories
+const profileTypeToCategoryId: Record<string, CategoryId> = {
+    high: "high",
+    university: "univ",
+    general: "general",
 };
 
 // --- Types ---
@@ -210,69 +184,97 @@ const CATEGORIES: Category[] = [
     },
 ];
 
-// --- Mock History Data ---
-const MOCK_HISTORY: ChatSession[] = [
-    {
-        id: "session-1",
-        title: "서울대 지원동기 초안",
-        categoryId: "high",
-        agentId: "high_motive",
-        lastModified: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
+// Convert essay to chat session for display
+function essayToSession(essay: PersonalEssay): ChatSession {
+    return {
+        id: essay.id,
+        title: essay.title || `${essay.topic} 자소서`,
+        categoryId: (essay.category as CategoryId) || "general",
+        agentId: "",
+        lastModified: essay.createdAt ? new Date(essay.createdAt) : new Date(),
         messages: [
             {
-                id: "msg-1",
-                sender: "ai",
-                type: "text",
-                content:
-                    "안녕하세요! [고등학생 (대입)] - [대입 지원동기] 에이전트입니다.\n\n김철수님의 프로필 정보를 바탕으로 초안 작성을 시작하겠습니다.",
-                timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-            },
-            {
-                id: "msg-2",
+                id: `${essay.id}-draft`,
                 sender: "ai",
                 type: "draft",
-                content:
-                    "[자동 생성된 초안입니다]\n\n저는 어릴 적부터 수학을 좋아하여 공학계열에 관심을 가지게 되었습니다...\n\n(과거 작성된 내용)",
-                topic: "대입 지원동기",
-                version: 1,
-                timestamp: new Date(
-                    Date.now() - 1000 * 60 * 60 * 24 * 2 + 2000,
-                ),
+                content: essay.content || "",
+                topic: essay.topic,
+                version: essay.draftVersion || 1,
+                timestamp: essay.createdAt ? new Date(essay.createdAt) : new Date(),
             },
         ],
-    },
-    {
-        id: "session-2",
-        title: "PM 이직 사유 정리",
-        categoryId: "general",
-        agentId: "gen_change",
-        lastModified: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-        messages: [
-            {
-                id: "msg-3",
-                sender: "ai",
-                type: "text",
-                content:
-                    "안녕하세요! [일반 구직자 (경력)] - [이직/구직 사유] 에이전트입니다.",
-                timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
-            },
-            {
-                id: "msg-4",
-                sender: "ai",
-                type: "draft",
-                content:
-                    "현재 Tech Corp에서 Senior PM으로 재직하며 SaaS 런칭을 주도했지만, 더 큰 성장을 위해 이직을 결심했습니다.",
-                topic: "이직/구직 사유",
-                version: 1,
-                timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5 + 2000),
-            },
-        ],
-    },
-];
+    };
+}
 
 export default function PersonalStatement() {
     const { toast } = useToast();
     const scrollRef = useRef<HTMLDivElement>(null);
+    const queryClient = useQueryClient();
+
+    // API Queries
+    const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery<Profile[]>({
+        queryKey: ["/api/profiles"],
+    });
+
+    const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
+
+    // Get eligible profiles (high, university, general only - essay categories)
+    const eligibleProfiles = profiles.filter(p => 
+        ["high", "university", "general"].includes(p.type)
+    );
+
+    // Set initial active profile
+    useEffect(() => {
+        if (eligibleProfiles.length > 0 && !activeProfileId) {
+            setActiveProfileId(eligibleProfiles[0].id);
+        }
+    }, [eligibleProfiles, activeProfileId]);
+
+    const activeProfile = profiles.find(p => p.id === activeProfileId);
+
+    // Fetch essays for active profile
+    const { data: essays = [], isLoading: isLoadingEssays } = useQuery<PersonalEssay[]>({
+        queryKey: ["/api/profiles", activeProfileId, "essays"],
+        queryFn: async () => {
+            if (!activeProfileId) return [];
+            const res = await apiRequest("GET", `/api/profiles/${activeProfileId}/essays`);
+            return res.json();
+        },
+        enabled: !!activeProfileId,
+    });
+
+    // AI Job integration for essay generation
+    const aiJob = useAIJob({
+        onSuccess: async (result: any, jobId: string) => {
+            // Save the completed essay to database
+            try {
+                const res = await apiRequest("POST", `/api/ai/jobs/${jobId}/complete-essay`);
+                if (res.ok) {
+                    const savedEssay = await res.json();
+                    queryClient.invalidateQueries({ queryKey: ["/api/profiles", activeProfileId, "essays"] });
+                    queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                    
+                    // Update current session with saved essay
+                    if (savedEssay) {
+                        const newSession = essayToSession(savedEssay);
+                        setMessages(newSession.messages);
+                        setCurrentSessionId(savedEssay.id);
+                    }
+                    
+                    toast({ description: "자기소개서가 생성되었습니다!" });
+                }
+            } catch (error) {
+                console.error("Failed to save essay:", error);
+                toast({ variant: "destructive", description: "저장 중 오류가 발생했습니다." });
+            }
+        },
+        onError: (error: string) => {
+            toast({ variant: "destructive", description: error || "생성 중 오류가 발생했습니다." });
+        },
+    });
+
+    // Convert essays to history sessions
+    const history: ChatSession[] = essays.map(essayToSession);
 
     // State
     const [step, setStep] = useState<"category" | "agent" | "chat">("category");
@@ -284,14 +286,15 @@ export default function PersonalStatement() {
         null,
     );
 
-    // History State
-    const [history, setHistory] = useState<ChatSession[]>(MOCK_HISTORY);
+    // History sidebar state
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
     // Chat State
     const [input, setInput] = useState("");
-    const [isGenerating, setIsGenerating] = useState(false);
     const [messages, setMessages] = useState<any[]>([]);
+    
+    // Use aiJob.isLoading for generation state
+    const isGenerating = aiJob.isLoading;
 
     // --- Handlers ---
 
@@ -302,15 +305,21 @@ export default function PersonalStatement() {
         setCurrentSessionId(null);
         setMessages([]);
         setIsHistoryOpen(false);
+        aiJob.reset();
     };
 
     const handleLoadSession = (session: ChatSession) => {
         const category = CATEGORIES.find((c) => c.id === session.categoryId);
-        const agent = category?.agents.find((a) => a.id === session.agentId);
 
-        if (category && agent) {
+        if (category) {
             setSelectedCategory(category);
-            setSelectedAgent(agent);
+            setSelectedAgent(null);
+            setMessages(session.messages);
+            setCurrentSessionId(session.id);
+            setStep("chat");
+            setIsHistoryOpen(false);
+        } else {
+            // Load without category match
             setMessages(session.messages);
             setCurrentSessionId(session.id);
             setStep("chat");
@@ -318,13 +327,27 @@ export default function PersonalStatement() {
         }
     };
 
+    // Delete essay from database
+    const deleteEssayMutation = useMutation({
+        mutationFn: async (essayId: string) => {
+            const res = await apiRequest("DELETE", `/api/essays/${essayId}`);
+            if (!res.ok) throw new Error("삭제 실패");
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/profiles", activeProfileId, "essays"] });
+            toast({ description: "기록이 삭제되었습니다." });
+        },
+        onError: () => {
+            toast({ variant: "destructive", description: "삭제 중 오류가 발생했습니다." });
+        },
+    });
+
     const handleDeleteSession = (e: React.MouseEvent, sessionId: string) => {
         e.stopPropagation();
-        setHistory((prev) => prev.filter((h) => h.id !== sessionId));
+        deleteEssayMutation.mutate(sessionId);
         if (currentSessionId === sessionId) {
             handleNewChat();
         }
-        toast({ description: "기록이 삭제되었습니다." });
     };
 
     const handleCategorySelect = (category: Category) => {
@@ -332,107 +355,45 @@ export default function PersonalStatement() {
         setStep("agent");
     };
 
-    const handleAgentSelect = (agent: Agent) => {
-        if (!selectedCategory) return;
-
-        // 1. Validation
-        const categoryData = MOCK_PROFILE_DB[
-            selectedCategory.id as keyof typeof MOCK_PROFILE_DB
-        ] as any;
-        const missingFields = agent.requiredFields.filter((field) => {
-            const val = categoryData[field];
-            return !val || (Array.isArray(val) && val.length === 0);
-        });
-
-        if (missingFields.length > 0) {
-            toast({
-                variant: "destructive",
-                title: "프로필 정보 부족",
-                description: `이 에이전트를 사용하려면 프로필에서 다음 정보를 먼저 입력해야 합니다: ${missingFields.join(", ")}`,
-            });
+    const handleAgentSelect = async (agent: Agent) => {
+        if (!selectedCategory || !activeProfileId || !activeProfile) {
+            toast({ variant: "destructive", description: "프로필을 먼저 선택해주세요." });
             return;
         }
 
-        // 2. Initialize New Session
+        // Initialize session
         setSelectedAgent(agent);
         setStep("chat");
-
-        const newSessionId = Date.now().toString();
-        setCurrentSessionId(newSessionId);
+        setCurrentSessionId(null);
 
         const initialMsg = {
             id: "system-welcome",
             sender: "ai",
             type: "text",
-            content: `안녕하세요! [${selectedCategory.label}] - [${agent.label}] 에이전트입니다.\n\n${MOCK_PROFILE_DB.basic.name}님의 프로필 정보를 바탕으로 초안 작성을 시작하겠습니다.`,
+            content: `안녕하세요! [${selectedCategory.label}] - [${agent.label}] 에이전트입니다.\n\n프로필 정보를 바탕으로 자기소개서 초안 작성을 시작합니다.`,
             timestamp: new Date(),
         };
 
         setMessages([initialMsg]);
 
-        // Add to History immediately (or could wait until first generation)
-        const newSession: ChatSession = {
-            id: newSessionId,
-            title: `${agent.label} (작성 중)`,
-            categoryId: selectedCategory.id,
-            agentId: agent.id,
-            lastModified: new Date(),
-            messages: [initialMsg],
-        };
-        setHistory((prev) => [newSession, ...prev]);
-
-        // 3. Trigger Auto-Generation
-        setIsGenerating(true);
-        setTimeout(() => {
-            const draft = generateMockDraft(agent, categoryData);
-            const draftMsg = {
-                id: Date.now().toString(),
-                sender: "ai",
-                type: "draft",
-                content: draft,
+        // Submit job to queue for AI generation (costs 1 credit)
+        // Note: Credits are deducted by the backend before job submission
+        try {
+            await aiJob.submitJob("essay", activeProfileId, {
+                profileType: activeProfile.type,
+                category: selectedCategory.id,
                 topic: agent.label,
-                version: 1,
-                timestamp: new Date(),
-            };
-
-            const updatedMessages = [initialMsg, draftMsg];
-            setMessages(updatedMessages);
-
-            // Update History
-            setHistory((prev) =>
-                prev.map((h) =>
-                    h.id === newSessionId
-                        ? {
-                              ...h,
-                              messages: updatedMessages,
-                              lastModified: new Date(),
-                          }
-                        : h,
-                ),
-            );
-
-            setIsGenerating(false);
-        }, 2000);
-    };
-
-    const generateMockDraft = (agent: Agent, profileData: any) => {
-        let draft = agent.promptTemplate;
-        agent.requiredFields.forEach((field) => {
-            const val = profileData[field];
-            const stringVal = Array.isArray(val)
-                ? val
-                      .map((v: any) => (typeof v === "object" ? v.role : v))
-                      .join(", ")
-                : val;
-            draft = draft.replace(`{${field}}`, `"${stringVal}"`);
-        });
-
-        return `[자동 생성된 초안입니다]\n\n${draft}\n\n이 내용은 사용자의 프로필 데이터를 기반으로 생성되었습니다. 구체적인 에피소드를 추가하면 더 좋은 글이 됩니다.`;
+                context: agent.promptTemplate,
+            });
+        } catch (error) {
+            console.error("Failed to submit essay job:", error);
+        }
     };
 
     const handleSendMessage = () => {
-        if (!input.trim() || !currentSessionId) return;
+        if (!input.trim()) return;
 
+        // For now, just add user message to chat (revision feature coming soon)
         const userMsg = {
             id: Date.now().toString(),
             sender: "user",
@@ -441,71 +402,11 @@ export default function PersonalStatement() {
             timestamp: new Date(),
         };
 
-        const updatedMessagesWithUser = [...messages, userMsg];
-        setMessages(updatedMessagesWithUser);
-        // Update History
-        setHistory((prev) =>
-            prev.map((h) =>
-                h.id === currentSessionId
-                    ? {
-                          ...h,
-                          messages: updatedMessagesWithUser,
-                          lastModified: new Date(),
-                      }
-                    : h,
-            ),
-        );
-
+        setMessages([...messages, userMsg]);
         setInput("");
-        setIsGenerating(true);
-
-        // Mock Revision
-        setTimeout(() => {
-            const prevDraft = [...updatedMessagesWithUser]
-                .reverse()
-                .find((m) => m.type === "draft");
-            const newVersion = (prevDraft?.version || 1) + 1;
-
-            const aiResponseMsg = {
-                id: Date.now().toString(),
-                sender: "ai",
-                type: "text",
-                content: "요청하신 내용을 반영하여 수정했습니다.",
-                timestamp: new Date(),
-            };
-
-            const newDraftMsg = {
-                id: (Date.now() + 1).toString(),
-                sender: "ai",
-                type: "draft",
-                content: `[수정본 V${newVersion}]\n\n(사용자 피드백: "${input}" 반영됨)\n\n${prevDraft?.content}`,
-                topic: selectedAgent?.label,
-                version: newVersion,
-                timestamp: new Date(),
-            };
-
-            const finalMessages = [
-                ...updatedMessagesWithUser,
-                aiResponseMsg,
-                newDraftMsg,
-            ];
-            setMessages(finalMessages);
-
-            // Update History
-            setHistory((prev) =>
-                prev.map((h) =>
-                    h.id === currentSessionId
-                        ? {
-                              ...h,
-                              messages: finalMessages,
-                              lastModified: new Date(),
-                          }
-                        : h,
-                ),
-            );
-
-            setIsGenerating(false);
-        }, 1500);
+        
+        // Show info that revision is saved locally (full revision feature coming soon)
+        toast({ description: "피드백이 저장되었습니다. AI 수정 기능은 곧 추가됩니다." });
     };
 
     // Scroll to bottom
@@ -580,8 +481,44 @@ export default function PersonalStatement() {
         </div>
     );
 
+    // Loading state
+    if (isLoadingProfiles) {
+        return (
+            <Layout>
+                <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+                    <Loader2 className="h-8 w-8 text-[#3182F6] animate-spin" />
+                </div>
+            </Layout>
+        );
+    }
+
+    // No eligible profiles state
+    if (eligibleProfiles.length === 0) {
+        return (
+            <Layout>
+                <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] gap-4">
+                    <User className="h-16 w-16 text-[#B0B8C1]" />
+                    <h3 className="text-lg font-bold text-[#191F28]">자기소개서 작성을 위한 프로필이 필요합니다</h3>
+                    <p className="text-sm text-[#8B95A1] text-center max-w-md">
+                        고등학생, 대학생, 또는 일반 구직자 프로필을 먼저 만들어주세요.
+                    </p>
+                    <Link href="/profile">
+                        <Button className="bg-[#3182F6]">
+                            <Plus className="h-4 w-4 mr-2" /> 프로필 만들기
+                        </Button>
+                    </Link>
+                </div>
+            </Layout>
+        );
+    }
+
     return (
         <Layout>
+            <AILoadingOverlay 
+                isVisible={aiJob.isLoading} 
+                progress={aiJob.progress} 
+                message="AI가 자기소개서를 작성 중입니다..."
+            />
             <div className="max-w-6xl mx-auto h-[calc(100vh-40px)] md:h-[calc(100vh-80px)] flex md:rounded-2xl md:shadow-sm md:border border-[#E5E8EB] overflow-hidden bg-white relative">
                 {/* Desktop Sidebar */}
                 <div className="hidden md:flex w-[260px] border-r border-[#E5E8EB] bg-white flex-col">

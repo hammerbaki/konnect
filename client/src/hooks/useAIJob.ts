@@ -24,7 +24,7 @@ interface SubmitJobResponse {
 }
 
 interface UseAIJobOptions {
-  onSuccess?: (result: any) => void;
+  onSuccess?: (result: any, jobId: string) => void;
   onError?: (error: string) => void;
   pollInterval?: number;
 }
@@ -63,7 +63,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       if (job.status === "completed") {
         clearPolling();
         setIsLoading(false);
-        onSuccess?.(job.result);
+        onSuccess?.(job.result, id);
         return job.result;
       }
       
