@@ -83,21 +83,24 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       
-      // Skip logging large responses (careers, etc.) to prevent log bloat
+      // Skip logging body entirely for large data endpoints
       const skipLogPaths = ['/api/careers'];
       const shouldSkipBody = skipLogPaths.some(p => path.startsWith(p));
       
-      if (capturedJsonResponse && !shouldSkipBody) {
+      if (shouldSkipBody && capturedJsonResponse) {
+        const count = Array.isArray(capturedJsonResponse) ? capturedJsonResponse.length : 1;
+        logLine += ` :: [${count} items]`;
+      } else if (capturedJsonResponse) {
+        // Only log small responses (max 200 chars) to prevent memory issues
         const jsonStr = JSON.stringify(capturedJsonResponse);
-        // Truncate if too long (max 500 chars)
-        if (jsonStr.length > 500) {
-          logLine += ` :: ${jsonStr.substring(0, 500)}...[truncated]`;
+        if (jsonStr.length > 200) {
+          // Just log the type and size, not content
+          const type = Array.isArray(capturedJsonResponse) ? 'array' : 'object';
+          const size = Array.isArray(capturedJsonResponse) ? capturedJsonResponse.length : Object.keys(capturedJsonResponse).length;
+          logLine += ` :: [${type}:${size}]`;
         } else {
           logLine += ` :: ${jsonStr}`;
         }
-      } else if (shouldSkipBody && capturedJsonResponse) {
-        const count = Array.isArray(capturedJsonResponse) ? capturedJsonResponse.length : 1;
-        logLine += ` :: [${count} items]`;
       }
 
       log(logLine);

@@ -1,0 +1,116 @@
+
+f5e0518d
+User
+2:34:19 PM [express] GET /api/ai/jobs/d6764fba-5a9a-405f-bb73-c6f2d643e30e 304 in 711ms :: {"id":"d6764fba-5a9a-405f-bb73-c6f2d643e30e","type":"essay_revision","status":"completed","progress":100,"result":{"title":"경력 기술 (핵심 성과)","content":"오랜 기간 개발자로 일하며 쌓은 기술적 전문성과 프로젝트 경험을 교육 현장에서 새롭게 펼치고자 합니다. 개발 업무를 수행하며 느낀 가장 큰 보람은 복잡한 기술을 팀원들에게 이해하기 쉽게 설명하고, 함께 문제를 해결해 나갈 때였습니다. 이러한 경험을 통해 저는 '가르침'이야말로 제가 진정으로 추구해야 할 길임을 깨달았고, 교사라는 직무를 통해 학생들에게 실질적이고 미래지향적인 교육을 제공하고자 합니다.\n\n개발자로서 다수의 프로젝트를 관리하며 체계적인 계획 수립, 진행 상황 모니터링, 팀원 간 역할 분배 등을 주도해왔습니다. 특히 프로젝트 일정 관리와 리스크 대응 과정에서 예측 불가능한 상황에 유연하게 대처하는 능력을 ...[truncated]
+2025-12-11 23:34:20.85
+f5e0518d
+User
+2:34:20 PM [express] GET /api/ai/jobs/d6764fba-5a9a-405f-bb73-c6f2d643e30e 304 in 719ms :: {"id":"d6764fba-5a9a-405f-bb73-c6f2d643e30e","type":"essay_revision","status":"completed","progress":100,"result":{"title":"경력 기술 (핵심 성과)","content":"오랜 기간 개발자로 일하며 쌓은 기술적 전문성과 프로젝트 경험을 교육 현장에서 새롭게 펼치고자 합니다. 개발 업무를 수행하며 느낀 가장 큰 보람은 복잡한 기술을 팀원들에게 이해하기 쉽게 설명하고, 함께 문제를 해결해 나갈 때였습니다. 이러한 경험을 통해 저는 '가르침'이야말로 제가 진정으로 추구해야 할 길임을 깨달았고, 교사라는 직무를 통해 학생들에게 실질적이고 미래지향적인 교육을 제공하고자 합니다.\n\n개발자로서 다수의 프로젝트를 관리하며 체계적인 계획 수립, 진행 상황 모니터링, 팀원 간 역할 분배 등을 주도해왔습니다. 특히 프로젝트 일정 관리와 리스크 대응 과정에서 예측 불가능한 상황에 유연하게 대처하는 능력을 ...[truncated]
+2025-12-11 23:34:23.48
+f5e0518d
+User
+2:34:23 PM [express] GET /api/auth/user 200 in 849ms :: {"id":"34b1d987-dc45-4694-b1e3-a03a74386bab","email":"wowkjobs@gmail.com","firstName":"kjobs","lastName":"Kim","profileImageUrl":"https://lh3.googleusercontent.com/a/ACg8ocL5rlIJGaEPoQaWLXWBcbDKNv7eEwMmH6CklrfZXk_vun98ag=s96-c","credits":214,"displayName":"김잡스","gender":"male","birthDate":"1975-10-09T15:00:00.000Z","createdAt":"2025-12-09T01:20:53.421Z","updatedAt":"2025-12-11T14:34:23.168Z"}
+2025-12-11 23:34:33.56
+ec694689
+System
+system: received signal terminated
+2025-12-11 23:34:56.66
+f5e0518d
+User
+Unexpected database error: DbHandler exited. Check logs for more information.
+2025-12-11 23:35:56.37
+f5e0518d
+User
+2:35:56 PM [express] POST /api/ai/jobs 200 in 3581ms :: {"jobId":"effc44e4-6c0e-4121-a34b-708bc203509d","immediate":true,"status":"processing"}
+2025-12-11 23:35:58.10
+f5e0518d
+User
+2:35:58 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 761ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":16,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:35:59.10
+f5e0518d
+User
+2:35:59 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 741ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":20,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:00.02
+f5e0518d
+User
+2:36:00 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 715ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":23,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:01.02
+f5e0518d
+User
+2:36:01 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 741ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":27,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:02.00
+f5e0518d
+User
+2:36:02 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 718ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":31,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:03.01
+f5e0518d
+User
+2:36:03 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 722ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":35,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:04.07
+f5e0518d
+User
+2:36:04 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 727ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":40,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:05.02
+f5e0518d
+User
+2:36:05 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 719ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":43,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:06.09
+f5e0518d
+User
+2:36:06 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 809ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":48,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:07.13
+f5e0518d
+User
+2:36:07 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 705ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":52,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:08.29
+f5e0518d
+User
+2:36:08 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 711ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":56,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:09.22
+f5e0518d
+User
+2:36:09 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 708ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":60,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:10.15
+f5e0518d
+User
+2:36:10 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 719ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":64,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:11.08
+f5e0518d
+User
+2:36:11 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 713ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":68,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:12.05
+f5e0518d
+User
+2:36:12 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 727ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":71,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:13.01
+f5e0518d
+User
+2:36:13 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 719ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":75,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:14.29
+f5e0518d
+User
+2:36:14 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 701ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"processing","progress":80,"result":null,"error":null,"queuedAt":"2025-12-11T14:35:55.980Z","startedAt":"2025-12-11T14:35:56.692Z","completedAt":null}
+2025-12-11 23:36:15.90
+f5e0518d
+User
+2:36:15 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 200 in 861ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"completed","progress":100,"result":{"title":"경력 기술 (핵심 성과)","content":"저는 개발자로서 쌓아온 기술적 전문성과 프로젝트 경험을 교육 현장에 반드시 필요한 인재입니다. 개발 업무를 수행하며 느낀 가장 큰 보람은 복잡한 기술을 팀원들에게 이해하기 쉽게 설명하고, 함께 문제를 해결해 나갈 때였습니다. 이러한 경험을 통해 저는 '가르침'이야말로 제가 진정으로 추구해야 할 길임을 깨달았고, 교사라는 직무를 통해 학생들에게 실질적이고 미래지향적인 교육을 제공하고자 합니다.\n\n개발자로서 다수의 프로젝트를 성공적으로 완수하며 체계적인 계획 수립, 진행 상황 모니터링, 팀원 간 역할 분배 등을 주도해왔습니다. 특히 프로젝트 일정 관리와 리스크 대응 과정에서 예측 불가능한 상황에 유연하게 대처하는 능력을...[truncated]
+2025-12-11 23:36:17.15
+f5e0518d
+User
+2:36:17 PM [express] GET /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d 304 in 869ms :: {"id":"effc44e4-6c0e-4121-a34b-708bc203509d","type":"essay_revision","status":"completed","progress":100,"result":{"title":"경력 기술 (핵심 성과)","content":"저는 개발자로서 쌓아온 기술적 전문성과 프로젝트 경험을 교육 현장에 반드시 필요한 인재입니다. 개발 업무를 수행하며 느낀 가장 큰 보람은 복잡한 기술을 팀원들에게 이해하기 쉽게 설명하고, 함께 문제를 해결해 나갈 때였습니다. 이러한 경험을 통해 저는 '가르침'이야말로 제가 진정으로 추구해야 할 길임을 깨달았고, 교사라는 직무를 통해 학생들에게 실질적이고 미래지향적인 교육을 제공하고자 합니다.\n\n개발자로서 다수의 프로젝트를 성공적으로 완수하며 체계적인 계획 수립, 진행 상황 모니터링, 팀원 간 역할 분배 등을 주도해왔습니다. 특히 프로젝트 일정 관리와 리스크 대응 과정에서 예측 불가능한 상황에 유연하게 대처하는 능력을...[truncated]
+2025-12-11 23:36:18.67
+f5e0518d
+User
+2:36:18 PM [express] POST /api/ai/jobs/effc44e4-6c0e-4121-a34b-708bc203509d/complete-essay-revision 200 in 2377ms :: {"id":"cfba13ee-5292-4e00-bac2-e43ee4c97950","profileId":"abd0b205-6590-4486-83cb-c31415ea02ec","category":"general","topic":"경력 기술 (핵심 성과)","title":"경력 기술 (핵심 성과)","content":"저는 개발자로서 쌓아온 기술적 전문성과 프로젝트 경험을 교육 현장에 반드시 필요한 인재입니다. 개발 업무를 수행하며 느낀 가장 큰 보람은 복잡한 기술을 팀원들에게 이해하기 쉽게 설명하고, 함께 문제를 해결해 나갈 때였습니다. 이러한 경험을 통해 저는 '가르침'이야말로 제가 진정으로 추구해야 할 길임을 깨달았고, 교사라는 직무를 통해 학생들에게 실질적이고 미래지향적인 교육을 제공하고자 합니다.\n\n개발자로서 다수의 프로젝트를 성공적으로 완수하며 체계적인 계획 수립, 진행 상황 모니터링, 팀원 간 역할 분배 등을 주도해왔습니다. 특히 프로젝트 일정 관리와 리스크 대응 과정에서...[truncated]
+2025-12-11 23:36:19.78
+f5e0518d
+User
+2:36:19 PM [express] GET /api/profiles/abd0b205-6590-4486-83cb-c31415ea02ec/essays 200 in 862ms :: [{"id":"cfba13ee-5292-4e00-bac2-e43ee4c97950","profileId":"abd0b205-6590-4486-83cb-c31415ea02ec","category":"general","topic":"경력 기술 (핵심 성과)","title":"경력 기술 (핵심 성과)","content":"저는 개발자로서 쌓아온 기술적 전문성과 프로젝트 경험을 교육 현장에 반드시 필요한 인재입니다. 개발 업무를 수행하며 느낀 가장 큰 보람은 복잡한 기술을 팀원들에게 이해하기 쉽게 설명하고, 함께 문제를 해결해 나갈 때였습니다. 이러한 경험을 통해 저는 '가르침'이야말로 제가 진정으로 추구해야 할 길임을 깨달았고, 교사라는 직무를 통해 학생들에게 실질적이고 미래지향적인 교육을 제공하고자 합니다.\n\n개발자로서 다수의 프로젝트를 성공적으로 완수하며 체계적인 계획 수립, 진행 상황 모니터링, 팀원 간 역할 분배 등을 주도해왔습니다. 특히 프로젝트 일정 관리와 리스크 대응 과정에...[truncated]
+2025-12-11 23:36:42.39
+f5e0518d
+User
+2:36:42 PM [express] GET /api/auth/user 200 in 790ms :: {"id":"34b1d987-dc45-4694-b1e3-a03a74386bab","email":"wowkjobs@gmail.com","firstName":"kjobs","lastName":"Kim","profileImageUrl":"https://lh3.googleusercontent.com/a/ACg8ocL5rlIJGaEPoQaWLXWBcbDKNv7eEwMmH6CklrfZXk_vun98ag=s96-c","credits":184,"displayName":"김잡스","gender":"male","birthDate":"1975-10-09T15:00:00.000Z","createdAt":"2025-12-09T01:20:53.421Z","updatedAt":"2025-12-11T14:36:42.074Z"}
+2025-12-11 23:37:14.16
+f5e0518d
+User
+Unexpected database error: DbHandler exited. Check logs for more information.

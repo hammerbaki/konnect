@@ -35,9 +35,9 @@ console.log('Connecting to database...');
 
 export const pool = new Pool({ 
   connectionString: databaseUrl,
-  connectionTimeoutMillis: 30000,
-  idleTimeoutMillis: 30000,
-  max: 10,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 10000,
+  max: 5, // Reduced pool size to prevent connection exhaustion
   ssl: isProduction ? { rejectUnauthorized: false } : undefined,
 });
 
