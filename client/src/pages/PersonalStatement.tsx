@@ -327,6 +327,9 @@ export default function PersonalStatement() {
         }
     };
 
+    // Track which essay is being deleted for spinner display
+    const [deletingEssayId, setDeletingEssayId] = useState<string | null>(null);
+
     // Delete essay from database
     const deleteEssayMutation = useMutation({
         mutationFn: async (essayId: string) => {
@@ -336,14 +339,18 @@ export default function PersonalStatement() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/profiles", activeProfileId, "essays"] });
             toast({ description: "기록이 삭제되었습니다." });
+            setDeletingEssayId(null);
         },
         onError: () => {
             toast({ variant: "destructive", description: "삭제 중 오류가 발생했습니다." });
+            setDeletingEssayId(null);
         },
     });
 
     const handleDeleteSession = (e: React.MouseEvent, sessionId: string) => {
         e.stopPropagation();
+        if (deletingEssayId) return; // Prevent double-click
+        setDeletingEssayId(sessionId);
         deleteEssayMutation.mutate(sessionId);
         if (currentSessionId === sessionId) {
             handleNewChat();
@@ -467,12 +474,17 @@ export default function PersonalStatement() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 opacity-0 group-hover:opacity-100 text-[#B0B8C1] hover:text-[#FF5252] hover:bg-red-50"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100 text-[#B0B8C1] hover:text-[#FF5252] hover:bg-red-50 disabled:opacity-100"
                                 onClick={(e) =>
                                     handleDeleteSession(e, session.id)
                                 }
+                                disabled={deletingEssayId === session.id}
                             >
-                                <Trash2 className="h-3 w-3" />
+                                {deletingEssayId === session.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                    <Trash2 className="h-3 w-3" />
+                                )}
                             </Button>
                         </div>
                     ))

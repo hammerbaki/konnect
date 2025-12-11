@@ -101,6 +101,9 @@ export default function Goals() {
     },
   });
 
+  // Track which Kompass is being deleted for spinner display
+  const [deletingKompassId, setDeletingKompassId] = useState<string | null>(null);
+
   const deleteKompassMutation = useMutation({
     mutationFn: async (kompassId: string) => {
       await apiRequest('DELETE', `/api/kompass/${kompassId}`);
@@ -111,6 +114,7 @@ export default function Goals() {
         title: "삭제 완료", 
         description: "Kompass가 삭제되었습니다." 
       });
+      setDeletingKompassId(null);
     },
     onError: (error: any) => {
       toast({
@@ -118,12 +122,15 @@ export default function Goals() {
         description: error.message || "Kompass 삭제 중 오류가 발생했습니다.",
         variant: "destructive",
       });
+      setDeletingKompassId(null);
     },
   });
 
   const handleDeleteKompass = (e: React.MouseEvent, kompassId: string, title: string) => {
     e.stopPropagation();
+    if (deletingKompassId) return; // Prevent double-click
     if (window.confirm(`"${title}" Kompass를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+      setDeletingKompassId(kompassId);
       deleteKompassMutation.mutate(kompassId);
     }
   };
@@ -254,10 +261,15 @@ export default function Goals() {
                                   <div className="flex items-center gap-2">
                                     <button
                                       onClick={(e) => handleDeleteKompass(e, kompass.id, vision.title)}
-                                      className="p-1.5 rounded-lg text-[#B0B8C1] hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                                      className="p-1.5 rounded-lg text-[#B0B8C1] hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-100 disabled:cursor-not-allowed"
                                       data-testid={`button-delete-kompass-${kompass.id}`}
+                                      disabled={deletingKompassId === kompass.id}
                                     >
-                                      <Trash2 className="w-4 h-4" />
+                                      {deletingKompassId === kompass.id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                      )}
                                     </button>
                                     <ChevronRight className="w-5 h-5 text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
                                   </div>
