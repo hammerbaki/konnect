@@ -295,7 +295,7 @@ export function generateTree(idSuffix: string, title: string, targetYear: number
 // Creates minimal structure to avoid 413 errors - details can be filled via AI or manually
 export function generateLightTree(idSuffix: string, title: string, targetYear: number, description: string = ""): VisionGoal {
     const startYear = new Date().getFullYear();
-    const yearsCount = Math.min(Math.max(targetYear - startYear + 1, 1), 5); // 1-5 years
+    const yearsCount = Math.min(Math.max(targetYear - startYear + 1, 1), 3); // 1-3 years maximum
     
     const vision: VisionGoal = {
         id: `vision-${idSuffix}`,

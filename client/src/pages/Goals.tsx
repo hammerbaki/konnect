@@ -55,7 +55,7 @@ export default function Goals() {
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
-  const [newTargetYear, setNewTargetYear] = useState(String(new Date().getFullYear() + 3));
+  const [newTargetYear, setNewTargetYear] = useState(String(new Date().getFullYear() + 2)); // Default 3 years (current + 2)
   const [newDescription, setNewDescription] = useState("");
   const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const [importedData, setImportedData] = useState<ImportedCareerData | null>(null);
@@ -108,7 +108,7 @@ export default function Goals() {
         const data: ImportedCareerData = JSON.parse(imported);
         setImportedData(data);
         setNewTitle(data.title);
-        setNewTargetYear(String(new Date().getFullYear() + 3));
+        setNewTargetYear(String(new Date().getFullYear() + 2)); // Default 3 years
         
         const actionItems = [
           ...(data.actions?.portfolio || []).map(a => `📁 ${a}`),
