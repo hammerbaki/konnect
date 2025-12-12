@@ -121,10 +121,10 @@ export default function Goals() {
         (old: any[] | undefined) => old?.filter(k => k.id !== kompassId) ?? []
       );
       
-      toast({ title: "삭제 완료", description: "Kompass가 삭제되었습니다." });
-      setDeletingKompassId(null);
-      
       return { previousKompass };
+    },
+    onSuccess: () => {
+      toast({ title: "삭제 완료", description: "Kompass가 삭제되었습니다." });
     },
     onError: (error: any, _kompassId, context) => {
       // Rollback on error
@@ -138,6 +138,7 @@ export default function Goals() {
       });
     },
     onSettled: () => {
+      setDeletingKompassId(null);
       // Sync with server data
       queryClient.invalidateQueries({ queryKey: ['/api/kompass'] });
     },
