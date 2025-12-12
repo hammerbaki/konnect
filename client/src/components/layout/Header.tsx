@@ -54,8 +54,8 @@ export function Header() {
         <img src="/konnect-logo.png" alt="Konnect" className="h-6 w-auto" />
       </div>
 
-      {/* Desktop Search */}
-      <div className="hidden md:block flex-1">
+      {/* Desktop Search - Hidden for now */}
+      <div className="hidden flex-1">
         <form>
           <div className="relative max-w-[480px]">
             <Search className="absolute left-4 top-3.5 h-5 w-5 text-[#B0B8C1]" />
@@ -67,6 +67,8 @@ export function Header() {
           </div>
         </form>
       </div>
+      {/* Spacer for flex layout */}
+      <div className="hidden md:block flex-1" />
 
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
         <div className="hidden md:flex items-center gap-2 mr-2 bg-white px-4 py-2 rounded-full shadow-sm">

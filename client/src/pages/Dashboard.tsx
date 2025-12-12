@@ -76,9 +76,9 @@ export default function Dashboard() {
     enabled: !!firstProfileId,
   });
 
-  const userName = user?.lastName && user?.firstName 
-    ? `${user.lastName}${user.firstName}` 
-    : user?.firstName || user?.lastName || user?.email?.split('@')[0] || '사용자';
+  const userName = user?.displayName 
+    || (user?.lastName && user?.firstName ? `${user.lastName}${user.firstName}` : null)
+    || user?.firstName || user?.lastName || user?.email?.split('@')[0] || '사용자';
 
   const credits = user?.credits ?? 1000;
   const profileCount = profiles?.length ?? 0;

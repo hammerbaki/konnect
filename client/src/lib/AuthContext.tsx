@@ -7,6 +7,7 @@ interface User {
   email: string | null;
   firstName: string | null;
   lastName: string | null;
+  displayName: string | null;
   profileImageUrl: string | null;
   credits: number;
   role: 'user' | 'staff' | 'admin';
