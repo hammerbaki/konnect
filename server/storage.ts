@@ -47,9 +47,18 @@ import {
   type InsertPointTransaction,
   type ServicePricing,
   type InsertServicePricing,
+  type SystemSettings,
+  type InsertSystemSettings,
+  type RedemptionCode,
+  type CreateRedemptionCode,
+  type RedemptionHistory,
+  systemSettings,
+  redemptionCodes,
+  redemptionHistory,
   DEFAULT_PAGE_CONFIGS,
   NEW_PAGE_DEFAULT_ROLES,
   DEFAULT_SERVICE_PRICING,
+  DEFAULT_SYSTEM_SETTINGS,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, and, inArray, sql, count, gte, lte, sum, isNull } from "drizzle-orm";
@@ -176,6 +185,21 @@ export interface IStorage {
   upsertServicePricing(pricing: InsertServicePricing): Promise<ServicePricing>;
   updateServicePricing(id: string, data: Partial<ServicePricing>, updatedBy: string): Promise<ServicePricing>;
   getServiceCost(serviceType: string): Promise<number>;
+
+  // System Settings
+  getSystemSetting(key: string): Promise<string | undefined>;
+  upsertSystemSetting(key: string, value: string, description: string | null, updatedBy: string | null): Promise<SystemSettings>;
+  getAllSystemSettings(): Promise<SystemSettings[]>;
+
+  // Redemption Codes
+  getAllRedemptionCodes(): Promise<RedemptionCode[]>;
+  getRedemptionCode(id: string): Promise<RedemptionCode | undefined>;
+  getRedemptionCodeByCode(code: string): Promise<RedemptionCode | undefined>;
+  createRedemptionCode(codeData: CreateRedemptionCode, createdBy: string): Promise<RedemptionCode>;
+  updateRedemptionCode(id: string, data: Partial<CreateRedemptionCode>): Promise<RedemptionCode>;
+  deleteRedemptionCode(id: string): Promise<void>;
+  redeemCode(userId: string, code: string): Promise<{ success: boolean; message: string; pointsAwarded?: number }>;
+  getRedemptionHistory(userId: string): Promise<RedemptionHistory[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1100,6 +1124,145 @@ export class DatabaseStorage implements IStorage {
     // Fallback to defaults if not in database
     const defaults = DEFAULT_SERVICE_PRICING as Record<string, { pointCost: number }>;
     return defaults[serviceType]?.pointCost ?? 100;
+  }
+
+  // System Settings
+  async getSystemSetting(key: string): Promise<string | undefined> {
+    const [setting] = await db.select().from(systemSettings).where(eq(systemSettings.key, key));
+    if (setting) {
+      return setting.value;
+    }
+    // Fallback to defaults
+    return DEFAULT_SYSTEM_SETTINGS[key]?.value;
+  }
+
+  async upsertSystemSetting(key: string, value: string, description: string | null, updatedBy: string | null): Promise<SystemSettings> {
+    const [result] = await db
+      .insert(systemSettings)
+      .values({ key, value, description, updatedBy })
+      .onConflictDoUpdate({
+        target: systemSettings.key,
+        set: { value, description, updatedAt: new Date(), updatedBy },
+      })
+      .returning();
+    return result;
+  }
+
+  async getAllSystemSettings(): Promise<SystemSettings[]> {
+    return db.select().from(systemSettings);
+  }
+
+  // Redemption Codes
+  async getAllRedemptionCodes(): Promise<RedemptionCode[]> {
+    return db.select().from(redemptionCodes).orderBy(desc(redemptionCodes.createdAt));
+  }
+
+  async getRedemptionCode(id: string): Promise<RedemptionCode | undefined> {
+    const [code] = await db.select().from(redemptionCodes).where(eq(redemptionCodes.id, id));
+    return code;
+  }
+
+  async getRedemptionCodeByCode(code: string): Promise<RedemptionCode | undefined> {
+    const [result] = await db.select().from(redemptionCodes).where(eq(redemptionCodes.code, code.toUpperCase()));
+    return result;
+  }
+
+  async createRedemptionCode(codeData: CreateRedemptionCode, createdBy: string): Promise<RedemptionCode> {
+    const [result] = await db
+      .insert(redemptionCodes)
+      .values({
+        code: codeData.code.toUpperCase(),
+        pointAmount: codeData.pointAmount,
+        maxUses: codeData.maxUses ?? null,
+        isActive: codeData.isActive ?? 1,
+        expiresAt: codeData.expiresAt ?? null,
+        createdBy,
+      })
+      .returning();
+    return result;
+  }
+
+  async updateRedemptionCode(id: string, data: Partial<CreateRedemptionCode>): Promise<RedemptionCode> {
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+    if (data.code !== undefined) updateData.code = data.code.toUpperCase();
+    if (data.pointAmount !== undefined) updateData.pointAmount = data.pointAmount;
+    if (data.maxUses !== undefined) updateData.maxUses = data.maxUses;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.expiresAt !== undefined) updateData.expiresAt = data.expiresAt;
+
+    const [result] = await db
+      .update(redemptionCodes)
+      .set(updateData)
+      .where(eq(redemptionCodes.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteRedemptionCode(id: string): Promise<void> {
+    await db.delete(redemptionCodes).where(eq(redemptionCodes.id, id));
+  }
+
+  async redeemCode(userId: string, code: string): Promise<{ success: boolean; message: string; pointsAwarded?: number }> {
+    const redemption = await this.getRedemptionCodeByCode(code);
+    
+    if (!redemption) {
+      return { success: false, message: '존재하지 않는 쿠폰 코드입니다' };
+    }
+    
+    if (redemption.isActive !== 1) {
+      return { success: false, message: '비활성화된 쿠폰입니다' };
+    }
+    
+    if (redemption.expiresAt && new Date(redemption.expiresAt) < new Date()) {
+      return { success: false, message: '만료된 쿠폰입니다' };
+    }
+    
+    if (redemption.maxUses !== null && redemption.currentUses >= redemption.maxUses) {
+      return { success: false, message: '사용 횟수가 초과된 쿠폰입니다' };
+    }
+    
+    // Check if user already redeemed this code
+    const [existing] = await db
+      .select()
+      .from(redemptionHistory)
+      .where(and(
+        eq(redemptionHistory.userId, userId),
+        eq(redemptionHistory.codeId, redemption.id)
+      ));
+    
+    if (existing) {
+      return { success: false, message: '이미 사용한 쿠폰입니다' };
+    }
+    
+    // Award points
+    await this.addUserPoints(userId, redemption.pointAmount, 'coupon', `쿠폰 사용: ${redemption.code}`);
+    
+    // Record redemption history
+    await db.insert(redemptionHistory).values({
+      userId,
+      codeId: redemption.id,
+      pointsAwarded: redemption.pointAmount,
+    });
+    
+    // Increment usage count
+    await db
+      .update(redemptionCodes)
+      .set({ currentUses: redemption.currentUses + 1, updatedAt: new Date() })
+      .where(eq(redemptionCodes.id, redemption.id));
+    
+    return { 
+      success: true, 
+      message: `${redemption.pointAmount.toLocaleString()} 포인트가 지급되었습니다!`,
+      pointsAwarded: redemption.pointAmount 
+    };
+  }
+
+  async getRedemptionHistory(userId: string): Promise<RedemptionHistory[]> {
+    return db
+      .select()
+      .from(redemptionHistory)
+      .where(eq(redemptionHistory.userId, userId))
+      .orderBy(desc(redemptionHistory.redeemedAt));
   }
 }
 

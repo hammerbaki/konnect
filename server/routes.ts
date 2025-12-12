@@ -1725,6 +1725,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== SYSTEM SETTINGS ROUTES ====================
+  
+  // Get all system settings (admin only)
+  app.get('/api/admin/system-settings', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const settings = await storage.getAllSystemSettings();
+      
+      // Merge with defaults for any missing settings
+      const { DEFAULT_SYSTEM_SETTINGS } = await import("@shared/schema");
+      const result: Record<string, { value: string; description: string | null }> = {};
+      
+      // Add defaults first
+      for (const [key, config] of Object.entries(DEFAULT_SYSTEM_SETTINGS)) {
+        result[key] = { value: config.value, description: config.description };
+      }
+      
+      // Override with DB values
+      for (const setting of settings) {
+        result[setting.key] = { value: setting.value, description: setting.description };
+      }
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error fetching system settings:", error);
+      res.status(500).json({ message: "시스템 설정 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Update system setting (admin only)
+  app.patch('/api/admin/system-settings/:key', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const { key } = req.params;
+      const { value, description } = req.body;
+      
+      if (value === undefined) {
+        return res.status(400).json({ message: "값이 필요합니다." });
+      }
+      
+      const setting = await storage.upsertSystemSetting(key, String(value), description ?? null, req.user.id);
+      res.json(setting);
+    } catch (error: any) {
+      console.error("Error updating system setting:", error);
+      res.status(500).json({ message: "시스템 설정 수정 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get signup bonus (public for display)
+  app.get('/api/signup-bonus', async (_req, res) => {
+    try {
+      const bonus = await storage.getSystemSetting('signup_bonus');
+      res.json({ amount: parseInt(bonus || '1000', 10) });
+    } catch (error: any) {
+      console.error("Error fetching signup bonus:", error);
+      res.json({ amount: 1000 }); // Default fallback
+    }
+  });
+
+  // ==================== REDEMPTION CODE ROUTES ====================
+  
+  // Get all redemption codes (admin/staff only)
+  app.get('/api/admin/redemption-codes', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const codes = await storage.getAllRedemptionCodes();
+      res.json(codes);
+    } catch (error: any) {
+      console.error("Error fetching redemption codes:", error);
+      res.status(500).json({ message: "쿠폰 코드 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Create redemption code (admin/staff only)
+  app.post('/api/admin/redemption-codes', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const { createRedemptionCodeSchema } = await import("@shared/schema");
+      const parsed = createRedemptionCodeSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        const errorMessage = parsed.error.errors.map(e => e.message).join(', ');
+        return res.status(400).json({ message: errorMessage || "유효하지 않은 쿠폰 정보입니다." });
+      }
+      
+      // Check for duplicate code
+      const existing = await storage.getRedemptionCodeByCode(parsed.data.code);
+      if (existing) {
+        return res.status(400).json({ message: "이미 존재하는 쿠폰 코드입니다." });
+      }
+      
+      const code = await storage.createRedemptionCode(parsed.data, req.user.id);
+      res.json(code);
+    } catch (error: any) {
+      console.error("Error creating redemption code:", error);
+      res.status(500).json({ message: "쿠폰 코드 생성 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Update redemption code (admin/staff only)
+  app.patch('/api/admin/redemption-codes/:id', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { createRedemptionCodeSchema } = await import("@shared/schema");
+      const parsed = createRedemptionCodeSchema.partial().safeParse(req.body);
+      
+      if (!parsed.success) {
+        const errorMessage = parsed.error.errors.map(e => e.message).join(', ');
+        return res.status(400).json({ message: errorMessage || "유효하지 않은 쿠폰 정보입니다." });
+      }
+      
+      // Check for duplicate code if changing code
+      if (parsed.data.code) {
+        const existing = await storage.getRedemptionCodeByCode(parsed.data.code);
+        if (existing && existing.id !== id) {
+          return res.status(400).json({ message: "이미 존재하는 쿠폰 코드입니다." });
+        }
+      }
+      
+      const code = await storage.updateRedemptionCode(id, parsed.data);
+      res.json(code);
+    } catch (error: any) {
+      console.error("Error updating redemption code:", error);
+      res.status(500).json({ message: "쿠폰 코드 수정 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Delete redemption code (admin/staff only)
+  app.delete('/api/admin/redemption-codes/:id', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteRedemptionCode(id);
+      res.json({ message: "쿠폰 코드가 삭제되었습니다." });
+    } catch (error: any) {
+      console.error("Error deleting redemption code:", error);
+      res.status(500).json({ message: "쿠폰 코드 삭제 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Redeem a code (authenticated users)
+  app.post('/api/redeem-code', isAuthenticated, async (req: any, res) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code || typeof code !== 'string') {
+        return res.status(400).json({ success: false, message: "쿠폰 코드를 입력해주세요." });
+      }
+      
+      const result = await storage.redeemCode(req.user.id, code.trim());
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error: any) {
+      console.error("Error redeeming code:", error);
+      res.status(500).json({ success: false, message: "쿠폰 사용 중 오류가 발생했습니다." });
+    }
+  });
+
   // ==================== PAYMENT ROUTES (Toss Payments) ====================
   
   // Get Toss client key for frontend

@@ -529,7 +529,7 @@ export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema
 export type PointTransaction = typeof pointTransactions.$inferSelect;
 
 // ===== SERVICE PRICING TABLE (Configurable point costs for AI services) =====
-export type ServiceType = 'analysis' | 'essay' | 'essay_revision' | 'goal_strategic';
+export type ServiceType = 'analysis' | 'essay' | 'essay_revision' | 'goal_yearly' | 'goal_half_yearly' | 'goal_monthly' | 'goal_weekly' | 'goal_daily';
 
 export const servicePricing = pgTable("service_pricing", {
   id: varchar("id").primaryKey(), // Service type key (e.g., 'analysis', 'essay')
@@ -561,5 +561,88 @@ export const DEFAULT_SERVICE_PRICING: Record<ServiceType, { name: string; descri
   analysis: { name: '진로 분석', description: 'AI 기반 진로 분석 1회', pointCost: 100 },
   essay: { name: '자기소개서 생성', description: 'AI 자기소개서 작성 1회', pointCost: 100 },
   essay_revision: { name: '자기소개서 수정', description: 'AI 자기소개서 수정 1회', pointCost: 30 },
-  goal_strategic: { name: '전략 목표 생성', description: '연간/반기 목표 AI 생성', pointCost: 100 },
+  goal_yearly: { name: '연간 목표 생성', description: 'AI 연간 목표 생성', pointCost: 100 },
+  goal_half_yearly: { name: '반기 목표 생성', description: 'AI 반기 목표 생성', pointCost: 80 },
+  goal_monthly: { name: '월간 목표 생성', description: 'AI 월간 목표 생성', pointCost: 50 },
+  goal_weekly: { name: '주간 목표 생성', description: 'AI 주간 목표 생성', pointCost: 30 },
+  goal_daily: { name: '일간 목표 생성', description: 'AI 일간 목표 생성', pointCost: 20 },
 };
+
+// ===== SYSTEM SETTINGS TABLE (Configurable system values) =====
+export const systemSettings = pgTable("system_settings", {
+  key: varchar("key").primaryKey(),
+  value: text("value").notNull(),
+  description: text("description"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: varchar("updated_by").references(() => users.id),
+});
+
+export const insertSystemSettingsSchema = createInsertSchema(systemSettings).omit({
+  updatedAt: true,
+});
+
+export type InsertSystemSettings = z.infer<typeof insertSystemSettingsSchema>;
+export type SystemSettings = typeof systemSettings.$inferSelect;
+
+// Default system settings
+export const DEFAULT_SYSTEM_SETTINGS: Record<string, { value: string; description: string }> = {
+  signup_bonus: { value: '1000', description: '신규 가입 시 지급되는 포인트' },
+};
+
+// ===== REDEMPTION CODES TABLE (Coupon codes for points) =====
+export const redemptionCodes = pgTable("redemption_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  pointAmount: integer("point_amount").notNull(),
+  maxUses: integer("max_uses"), // null = unlimited
+  currentUses: integer("current_uses").notNull().default(0),
+  isActive: integer("is_active").notNull().default(1),
+  expiresAt: timestamp("expires_at"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_redemption_codes_code").on(table.code),
+]);
+
+export const insertRedemptionCodeSchema = createInsertSchema(redemptionCodes).omit({
+  id: true,
+  currentUses: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const createRedemptionCodeSchema = z.object({
+  code: z.string().min(1, "코드는 필수입니다").max(50),
+  pointAmount: z.coerce.number().int().positive("포인트는 양수여야 합니다"),
+  maxUses: z.coerce.number().int().positive().nullable().optional(),
+  isActive: z.coerce.number().int().min(0).max(1).default(1),
+  expiresAt: z.preprocess(
+    (val) => (typeof val === 'string' && val ? new Date(val) : val),
+    z.union([z.date(), z.null()]).optional()
+  ),
+});
+
+export type InsertRedemptionCode = z.infer<typeof insertRedemptionCodeSchema>;
+export type CreateRedemptionCode = z.infer<typeof createRedemptionCodeSchema>;
+export type RedemptionCode = typeof redemptionCodes.$inferSelect;
+
+// ===== REDEMPTION HISTORY TABLE (Track who used which codes) =====
+export const redemptionHistory = pgTable("redemption_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  codeId: varchar("code_id").notNull().references(() => redemptionCodes.id),
+  pointsAwarded: integer("points_awarded").notNull(),
+  redeemedAt: timestamp("redeemed_at").defaultNow(),
+}, (table) => [
+  index("IDX_redemption_history_user").on(table.userId),
+  index("IDX_redemption_history_code").on(table.codeId),
+]);
+
+export const insertRedemptionHistorySchema = createInsertSchema(redemptionHistory).omit({
+  id: true,
+  redeemedAt: true,
+});
+
+export type InsertRedemptionHistory = z.infer<typeof insertRedemptionHistorySchema>;
+export type RedemptionHistory = typeof redemptionHistory.$inferSelect;

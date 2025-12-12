@@ -109,11 +109,28 @@ interface ServicePricing {
   updatedBy: string | null;
 }
 
+interface RedemptionCode {
+  id: string;
+  code: string;
+  pointAmount: number;
+  maxUses: number | null;
+  currentUses: number;
+  isActive: number;
+  expiresAt: string | null;
+  createdBy: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
 const DEFAULT_SERVICE_PRICING: Record<string, { name: string; description: string; pointCost: number }> = {
   analysis: { name: '진로 분석', description: 'AI 기반 진로 분석 1회', pointCost: 100 },
   essay: { name: '자기소개서 생성', description: 'AI 자기소개서 작성 1회', pointCost: 100 },
   essay_revision: { name: '자기소개서 수정', description: 'AI 자기소개서 수정 1회', pointCost: 30 },
-  goal_strategic: { name: '전략 목표 생성', description: '연간/반기 목표 AI 생성', pointCost: 100 },
+  goal_yearly: { name: '연간 목표 생성', description: 'AI 연간 목표 생성', pointCost: 100 },
+  goal_half_yearly: { name: '반기 목표 생성', description: 'AI 반기 목표 생성', pointCost: 80 },
+  goal_monthly: { name: '월간 목표 생성', description: 'AI 월간 목표 생성', pointCost: 50 },
+  goal_weekly: { name: '주간 목표 생성', description: 'AI 주간 목표 생성', pointCost: 30 },
+  goal_daily: { name: '일간 목표 생성', description: 'AI 일간 목표 생성', pointCost: 20 },
 };
 
 const COLORS = ['#3182F6', '#7C3AED', '#059669', '#D97706', '#EC4899', '#6B7280'];
@@ -127,6 +144,9 @@ export default function Admin() {
   const [editingPackage, setEditingPackage] = useState<PointPackage | null>(null);
   const [newPackage, setNewPackage] = useState<Partial<PointPackage> | null>(null);
   const [editingPricing, setEditingPricing] = useState<{ id: string; pointCost: number } | null>(null);
+  const [editingSignupBonus, setEditingSignupBonus] = useState<number | null>(null);
+  const [newCoupon, setNewCoupon] = useState<{code: string; pointAmount: number; maxUses: number | null; expiresAt: string | null} | null>(null);
+  const [editingCoupon, setEditingCoupon] = useState<RedemptionCode | null>(null);
 
   const { user: currentUser, isLoading: userLoading } = useAuth();
 
@@ -182,11 +202,25 @@ export default function Admin() {
     retry: false,
   });
 
+  const { data: systemSettings = {}, refetch: refetchSettings } = useQuery<Record<string, { value: string; description: string | null }>>({
+    queryKey: ['/api/admin/system-settings'],
+    enabled: isStaffOrAdmin,
+    retry: false,
+  });
+
+  const { data: redemptionCodes = [], refetch: refetchCoupons } = useQuery<RedemptionCode[]>({
+    queryKey: ['/api/admin/redemption-codes'],
+    enabled: isStaffOrAdmin,
+    retry: false,
+  });
+
   // Merge database pricing with defaults for display
   const servicePricing = Object.entries(DEFAULT_SERVICE_PRICING).map(([id, defaults]) => {
     const dbPricing = servicePricingData.find(p => p.id === id);
     return dbPricing || { id, ...defaults, isActive: 1, updatedAt: null, updatedBy: null };
   });
+
+  const signupBonus = parseInt(systemSettings.signup_bonus?.value || '1000', 10);
 
   const initServicePricingMutation = useMutation({
     mutationFn: async () => {
@@ -228,6 +262,68 @@ export default function Admin() {
         description: "서비스 가격 업데이트에 실패했습니다.",
         variant: "destructive",
       });
+    },
+  });
+
+  const updateSignupBonusMutation = useMutation({
+    mutationFn: async (amount: number) => {
+      const res = await apiRequest('PATCH', '/api/admin/system-settings/signup_bonus', { 
+        value: amount.toString(), 
+        description: '신규 가입 시 지급되는 포인트' 
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/system-settings'] });
+      setEditingSignupBonus(null);
+      toast({ title: "업데이트 완료", description: "신규 가입 보너스가 변경되었습니다." });
+    },
+    onError: () => {
+      toast({ title: "오류", description: "보너스 업데이트에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
+  const createCouponMutation = useMutation({
+    mutationFn: async (data: { code: string; pointAmount: number; maxUses: number | null; expiresAt: string | null }) => {
+      const res = await apiRequest('POST', '/api/admin/redemption-codes', data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/redemption-codes'] });
+      setNewCoupon(null);
+      toast({ title: "쿠폰 생성 완료", description: "새 쿠폰이 생성되었습니다." });
+    },
+    onError: (error: any) => {
+      toast({ title: "오류", description: error?.message || "쿠폰 생성에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
+  const updateCouponMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<RedemptionCode> }) => {
+      const res = await apiRequest('PATCH', `/api/admin/redemption-codes/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/redemption-codes'] });
+      setEditingCoupon(null);
+      toast({ title: "쿠폰 업데이트 완료", description: "쿠폰이 수정되었습니다." });
+    },
+    onError: () => {
+      toast({ title: "오류", description: "쿠폰 수정에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
+  const deleteCouponMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest('DELETE', `/api/admin/redemption-codes/${id}`, {});
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/redemption-codes'] });
+      toast({ title: "삭제 완료", description: "쿠폰이 삭제되었습니다." });
+    },
+    onError: () => {
+      toast({ title: "오류", description: "쿠폰 삭제에 실패했습니다.", variant: "destructive" });
     },
   });
 
@@ -841,9 +937,59 @@ export default function Admin() {
                     ))}
                   </div>
                   <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                    <p className="font-bold text-[#191F28] mb-2">신규 가입 혜택</p>
-                    <p className="text-2xl font-bold text-[#059669]">1,000 포인트</p>
-                    <p className="text-sm text-[#8B95A1]">신규 가입 시 무료 제공</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-bold text-[#191F28]">신규 가입 혜택</p>
+                      {editingSignupBonus === null && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingSignupBonus(signupBonus)}
+                          className="text-[#3182F6] hover:text-[#1B64DA]"
+                          data-testid="button-edit-signup-bonus"
+                        >
+                          수정
+                        </Button>
+                      )}
+                    </div>
+                    {editingSignupBonus !== null ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            value={editingSignupBonus}
+                            onChange={(e) => setEditingSignupBonus(parseInt(e.target.value) || 0)}
+                            className="w-32"
+                            min={0}
+                            data-testid="input-signup-bonus"
+                          />
+                          <span className="text-[#191F28] font-bold">포인트</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => updateSignupBonusMutation.mutate(editingSignupBonus)}
+                            disabled={updateSignupBonusMutation.isPending}
+                            className="bg-[#3182F6] hover:bg-[#1B64DA] text-white"
+                            data-testid="button-save-signup-bonus"
+                          >
+                            저장
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingSignupBonus(null)}
+                            data-testid="button-cancel-signup-bonus"
+                          >
+                            취소
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold text-[#059669]">{signupBonus.toLocaleString()} 포인트</p>
+                        <p className="text-sm text-[#8B95A1]">신규 가입 시 무료 제공</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -1149,6 +1295,218 @@ export default function Admin() {
                     )}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            <Card className="toss-card">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Coins className="h-5 w-5 text-[#7C3AED]" />
+                  쿠폰 코드 관리
+                </CardTitle>
+                <Button
+                  onClick={() => setNewCoupon({ code: '', pointAmount: 500, maxUses: null, expiresAt: null })}
+                  className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl"
+                  data-testid="button-add-coupon"
+                >
+                  새 쿠폰 추가
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {newCoupon && (
+                    <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl space-y-4" data-testid="form-new-coupon">
+                      <p className="font-bold text-[#191F28]">새 쿠폰 추가</p>
+                      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                          <label className="text-sm text-[#8B95A1]">쿠폰 코드</label>
+                          <Input
+                            value={newCoupon.code}
+                            onChange={(e) => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })}
+                            placeholder="예: WELCOME2024"
+                            className="mt-1"
+                            data-testid="input-new-coupon-code"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm text-[#8B95A1]">포인트</label>
+                          <Input
+                            type="number"
+                            value={newCoupon.pointAmount}
+                            onChange={(e) => setNewCoupon({ ...newCoupon, pointAmount: parseInt(e.target.value) || 0 })}
+                            className="mt-1"
+                            data-testid="input-new-coupon-points"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm text-[#8B95A1]">최대 사용 횟수 (빈칸=무제한)</label>
+                          <Input
+                            type="number"
+                            value={newCoupon.maxUses ?? ''}
+                            onChange={(e) => setNewCoupon({ ...newCoupon, maxUses: e.target.value ? parseInt(e.target.value) : null })}
+                            placeholder="무제한"
+                            className="mt-1"
+                            data-testid="input-new-coupon-max-uses"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm text-[#8B95A1]">만료일 (선택)</label>
+                          <Input
+                            type="date"
+                            value={newCoupon.expiresAt ?? ''}
+                            onChange={(e) => setNewCoupon({ ...newCoupon, expiresAt: e.target.value || null })}
+                            className="mt-1"
+                            data-testid="input-new-coupon-expires"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => createCouponMutation.mutate(newCoupon)}
+                          disabled={createCouponMutation.isPending || !newCoupon.code || newCoupon.pointAmount <= 0}
+                          className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white"
+                          data-testid="button-save-new-coupon"
+                        >
+                          {createCouponMutation.isPending ? '생성 중...' : '쿠폰 생성'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setNewCoupon(null)}
+                          data-testid="button-cancel-new-coupon"
+                        >
+                          취소
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {redemptionCodes.length === 0 ? (
+                    <div className="p-8 text-center text-[#8B95A1]">
+                      등록된 쿠폰이 없습니다.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {redemptionCodes.map((coupon) => (
+                        <div
+                          key={coupon.id}
+                          className={`p-4 rounded-xl border ${coupon.isActive === 1 ? 'bg-white border-[#E5E8EB]' : 'bg-gray-100 border-gray-200'}`}
+                          data-testid={`card-coupon-${coupon.id}`}
+                        >
+                          {editingCoupon?.id === coupon.id ? (
+                            <div className="space-y-4">
+                              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div>
+                                  <label className="text-sm text-[#8B95A1]">쿠폰 코드</label>
+                                  <Input
+                                    value={editingCoupon.code}
+                                    onChange={(e) => setEditingCoupon({ ...editingCoupon, code: e.target.value.toUpperCase() })}
+                                    className="mt-1"
+                                    data-testid={`input-edit-coupon-code-${coupon.id}`}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-sm text-[#8B95A1]">포인트</label>
+                                  <Input
+                                    type="number"
+                                    value={editingCoupon.pointAmount}
+                                    onChange={(e) => setEditingCoupon({ ...editingCoupon, pointAmount: parseInt(e.target.value) || 0 })}
+                                    className="mt-1"
+                                    data-testid={`input-edit-coupon-points-${coupon.id}`}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-sm text-[#8B95A1]">최대 사용 횟수</label>
+                                  <Input
+                                    type="number"
+                                    value={editingCoupon.maxUses ?? ''}
+                                    onChange={(e) => setEditingCoupon({ ...editingCoupon, maxUses: e.target.value ? parseInt(e.target.value) : null })}
+                                    placeholder="무제한"
+                                    className="mt-1"
+                                    data-testid={`input-edit-coupon-max-uses-${coupon.id}`}
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2 mt-6">
+                                  <label className="flex items-center gap-2 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      checked={editingCoupon.isActive === 1}
+                                      onChange={(e) => setEditingCoupon({ ...editingCoupon, isActive: e.target.checked ? 1 : 0 })}
+                                      className="rounded"
+                                      data-testid={`input-edit-coupon-active-${coupon.id}`}
+                                    />
+                                    활성화
+                                  </label>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => updateCouponMutation.mutate({ id: coupon.id, data: editingCoupon })}
+                                  disabled={updateCouponMutation.isPending}
+                                  className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white"
+                                  data-testid={`button-save-edit-coupon-${coupon.id}`}
+                                >
+                                  {updateCouponMutation.isPending ? '저장 중...' : '저장'}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setEditingCoupon(null)}
+                                  data-testid={`button-cancel-edit-coupon-${coupon.id}`}
+                                >
+                                  취소
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-bold text-[#191F28] font-mono">{coupon.code}</p>
+                                  {coupon.isActive === 0 && (
+                                    <Badge variant="outline" className="text-[#8B95A1]">비활성</Badge>
+                                  )}
+                                  {coupon.expiresAt && new Date(coupon.expiresAt) < new Date() && (
+                                    <Badge variant="outline" className="text-red-500 border-red-200">만료됨</Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-4 mt-1 text-sm text-[#8B95A1]">
+                                  <span className="text-[#7C3AED] font-bold">{coupon.pointAmount.toLocaleString()} 포인트</span>
+                                  <span>사용: {coupon.currentUses}{coupon.maxUses ? `/${coupon.maxUses}` : ''}</span>
+                                  {coupon.expiresAt && (
+                                    <span>만료: {new Date(coupon.expiresAt).toLocaleDateString('ko-KR')}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setEditingCoupon(coupon)}
+                                  className="rounded-lg"
+                                  data-testid={`button-edit-coupon-${coupon.id}`}
+                                >
+                                  수정
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (confirm('이 쿠폰을 삭제하시겠습니까?')) {
+                                      deleteCouponMutation.mutate(coupon.id);
+                                    }
+                                  }}
+                                  className="rounded-lg text-red-500 border-red-200 hover:bg-red-50"
+                                  data-testid={`button-delete-coupon-${coupon.id}`}
+                                >
+                                  삭제
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
