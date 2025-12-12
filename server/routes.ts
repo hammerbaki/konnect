@@ -1372,8 +1372,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user credits (admin only - write operation)
-  app.patch('/api/admin/users/:id/credits', isAuthenticated, requireAdmin, async (req: any, res) => {
+  // Update user credits (staff and admin can add points)
+  app.patch('/api/admin/users/:id/credits', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
     try {
       const targetUserId = req.params.id;
       const parsed = updateCreditsSchema.safeParse(req.body);
@@ -1448,13 +1448,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update page visibility (admin only)
-  app.patch('/api/admin/page-visibility/:slug', isAuthenticated, async (req: any, res) => {
+  // Update page visibility (staff and admin)
+  app.patch('/api/admin/page-visibility/:slug', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (!user || user.role !== 'admin') {
-        return res.status(403).json({ message: "관리자만 페이지 가시성을 변경할 수 있습니다." });
-      }
 
       const slug = decodeURIComponent(req.params.slug);
       const { allowedRoles } = req.body;
@@ -1481,13 +1478,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Reset page visibility to defaults (admin only)
-  app.post('/api/admin/page-visibility/:slug/reset', isAuthenticated, async (req: any, res) => {
+  // Reset page visibility to defaults (staff and admin)
+  app.post('/api/admin/page-visibility/:slug/reset', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (!user || user.role !== 'admin') {
-        return res.status(403).json({ message: "관리자만 페이지 설정을 초기화할 수 있습니다." });
-      }
 
       const slug = decodeURIComponent(req.params.slug);
       await storage.resetPageSettings(slug);

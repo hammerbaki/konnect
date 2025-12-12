@@ -417,7 +417,7 @@ export default function Admin() {
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            {isAdmin && editingCredits?.userId === user.id ? (
+                            {isStaffOrAdmin && editingCredits?.userId === user.id ? (
                               <div className="flex items-center gap-2">
                                 <Input
                                   type="number"
@@ -443,8 +443,8 @@ export default function Admin() {
                               </div>
                             ) : (
                               <p 
-                                className={`font-bold text-[#3182F6] ${isAdmin ? 'cursor-pointer hover:underline' : ''}`}
-                                onClick={() => isAdmin && setEditingCredits({ userId: user.id, credits: user.credits })}
+                                className={`font-bold text-[#3182F6] ${isStaffOrAdmin ? 'cursor-pointer hover:underline' : ''}`}
+                                onClick={() => isStaffOrAdmin && setEditingCredits({ userId: user.id, credits: user.credits })}
                                 data-testid={`text-credits-${user.id}`}
                               >
                                 {user.credits.toLocaleString()} 포인트
@@ -923,7 +923,7 @@ export default function Admin() {
                                 <Badge className="bg-amber-100 text-amber-700 text-xs">수정됨</Badge>
                               )}
                             </div>
-                            {isModified && !page.isLocked && isAdmin && (
+                            {isModified && !page.isLocked && isStaffOrAdmin && (
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -949,7 +949,7 @@ export default function Admin() {
                                   variant={isActive ? "default" : "outline"}
                                   size="sm"
                                   onClick={() => toggleRole(page, role)}
-                                  disabled={page.isLocked === 1 || !isAdmin || updatePageVisibilityMutation.isPending}
+                                  disabled={page.isLocked === 1 || !isStaffOrAdmin || updatePageVisibilityMutation.isPending}
                                   className={`text-xs ${
                                     isActive 
                                       ? 'bg-[#3182F6] hover:bg-[#1B64DA] text-white' 
@@ -976,12 +976,12 @@ export default function Admin() {
               </CardContent>
             </Card>
 
-            {!isAdmin && (
+            {!isStaffOrAdmin && (
               <Card className="toss-card border-amber-200 bg-amber-50">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 text-amber-700">
                     <AlertTriangle className="h-5 w-5" />
-                    <span className="text-sm">페이지 권한 수정은 관리자만 가능합니다.</span>
+                    <span className="text-sm">페이지 권한 수정은 관리자 또는 스태프만 가능합니다.</span>
                   </div>
                 </CardContent>
               </Card>
