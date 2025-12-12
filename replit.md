@@ -26,6 +26,7 @@ The database schema includes `users`, `profiles`, `career_analyses`, `personal_e
 - **Rate Limiting Strategy**: Combines client-side concurrency limits with server-side exponential backoff retry logic to manage Claude API rate limits effectively.
 - **Career Explorer Performance**: Uses server-side stats caching (7-day expiry in `career_stats` table), skeleton loaders, and progressive loading (30 items with load-more).
 - **Visitor Analytics**: Uses Redis for real-time page view/visitor counting with hourly PostgreSQL aggregation. Frontend tracks route changes via `usePageTracking` hook. Admin dashboard displays traffic stats with line charts showing daily trends.
+- **Redis Usage Optimization**: Development environment uses in-memory fallback for rate limiting and job queues to conserve Redis commands. AI worker polling interval is 30 seconds (idle) / 2 seconds (active) to minimize Redis usage. Production uses Upstash Redis for rate limiting and job queue management.
 
 ## External Dependencies
 
