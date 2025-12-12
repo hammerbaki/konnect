@@ -1,6 +1,22 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Express, RequestHandler } from "express";
+import type { Express, RequestHandler, Request } from "express";
 import { storage } from "./storage";
+
+// Extend Express Request to include user property
+export interface AuthenticatedUser {
+  id: string;
+  email?: string;
+  user_metadata?: Record<string, any>;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthenticatedUser;
+      userRole?: string;
+    }
+  }
+}
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -44,7 +60,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
       profileImageUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
     });
     
-    (req as any).user = {
+    req.user = {
       id: user.id,
       email: user.email,
       user_metadata: user.user_metadata,

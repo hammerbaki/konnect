@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import helmet from "helmet";
+import compression from "compression";
 
 // Validate critical environment variables (log warnings but don't exit)
 function validateEnvironment() {
@@ -27,6 +29,18 @@ validateEnvironment();
 
 const app = express();
 const httpServer = createServer(app);
+
+// Security: Disable X-Powered-By header
+app.disable('x-powered-by');
+
+// Security: Add Helmet for security headers (CSP relaxed for dev)
+app.use(helmet({
+  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+  crossOriginEmbedderPolicy: false,
+}));
+
+// Performance: Enable gzip compression
+app.use(compression());
 
 declare module "http" {
   interface IncomingMessage {

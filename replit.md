@@ -6,6 +6,13 @@ Konnect is a Korean-language AI-powered career guidance platform that provides p
 
 ## Recent Changes
 
+### December 12, 2024 - Security & Performance Improvements
+- **Helmet middleware** added for security HTTP headers (XSS protection, clickjacking prevention, etc.)
+- **Gzip compression** enabled for all responses (up to 70% payload reduction)
+- **X-Powered-By header disabled** to hide Express framework fingerprint
+- **TypeScript type safety improved** with global Express Request type declarations
+- **Zod schema validation** added to admin PATCH endpoints for strict input validation
+
 ### December 11, 2024 - Admin Dashboard + Role-Based Access Control
 - **User roles system** added with three levels: `user`, `staff`, `admin`
 - **Admin Dashboard** at `/admin` with three tabs:
