@@ -221,6 +221,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get pre-computed career statistics (or compute if not cached)
+  app.get('/api/careers/stats/overview', async (_req, res) => {
+    try {
+      // Try to get cached stats first
+      let cached = await storage.getCareerStats('overview');
+      
+      // If stats don't exist or are older than 7 days, recompute
+      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      if (!cached || (cached.computedAt && cached.computedAt < oneWeekAgo)) {
+        // Compute stats from careers data
+        const allCareers = await storage.getAllCareers();
+        
+        // Process career data for statistics
+        const processedData: { title: string; salary: number; satisfaction: number; largeClass: string }[] = [];
+        
+        for (const career of allCareers) {
+          const detail = career.detailData as any;
+          let salaryNum = 0;
+          let satisfaction = 0;
+          let largeClass = "기타";
+          
+          try {
+            const jobSum = detail?.tabs?.['1']?.data?.jobSum;
+            if (jobSum?.jobLrclNm) largeClass = jobSum.jobLrclNm;
+            
+            const salData = detail?.tabs?.['4']?.data?.salProspect;
+            if (salData?.sal) {
+              const match = salData.sal.match(/평균\(50%\)\s*(\d+)/);
+              if (match && match[1]) salaryNum = parseInt(match[1]);
+            }
+            if (salData?.jobSatis) {
+              satisfaction = parseFloat(salData.jobSatis);
+            }
+          } catch (e) {
+            // Skip errors
+          }
+          
+          processedData.push({
+            title: career.name,
+            salary: salaryNum,
+            satisfaction,
+            largeClass
+          });
+        }
+        
+        // Top 5 highest paying careers
+        const topSalary = [...processedData]
+          .filter(c => c.salary > 0)
+          .sort((a, b) => b.salary - a.salary)
+          .slice(0, 5)
+          .map(c => ({ name: c.title.slice(0, 8), salary: c.salary }));
+        
+        // Top 5 most satisfying careers
+        const topSatisfaction = [...processedData]
+          .filter(c => c.satisfaction > 0)
+          .sort((a, b) => b.satisfaction - a.satisfaction)
+          .slice(0, 5)
+          .map(c => ({ name: c.title.slice(0, 8), satisfaction: c.satisfaction }));
+        
+        // Careers by category
+        const categoryCount = new Map<string, number>();
+        processedData.forEach(c => {
+          categoryCount.set(c.largeClass, (categoryCount.get(c.largeClass) || 0) + 1);
+        });
+        const categoryData = Array.from(categoryCount.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6)
+          .map(([name, value]) => ({ name: name.replace('직', ''), value }));
+        
+        // Average satisfaction
+        const validSatisfaction = processedData.filter(c => c.satisfaction > 0);
+        const avgSatisfaction = validSatisfaction.length > 0
+          ? (validSatisfaction.reduce((sum, c) => sum + c.satisfaction, 0) / validSatisfaction.length).toFixed(1)
+          : "0";
+        
+        // Build hierarchy
+        const hierarchyMap = new Map<string, Set<string>>();
+        for (const career of allCareers) {
+          const detail = career.detailData as any;
+          try {
+            const jobSum = detail?.tabs?.['1']?.data?.jobSum;
+            const largeClass = jobSum?.jobLrclNm || "기타";
+            const mediumClass = jobSum?.jobMdclNm || "기타";
+            
+            if (!hierarchyMap.has(largeClass)) {
+              hierarchyMap.set(largeClass, new Set());
+            }
+            hierarchyMap.get(largeClass)!.add(mediumClass);
+          } catch (e) {
+            // Skip errors
+          }
+        }
+        
+        const hierarchy: Record<string, string[]> = {};
+        Array.from(hierarchyMap.keys()).sort().forEach(key => {
+          hierarchy[key] = Array.from(hierarchyMap.get(key) || []).sort();
+        });
+        
+        const statsData = {
+          totalCareers: allCareers.length,
+          totalCategories: Object.keys(hierarchy).length,
+          topSalary,
+          topSatisfaction,
+          categoryData,
+          avgSatisfaction,
+          hierarchy
+        };
+        
+        // Cache the computed stats
+        cached = await storage.upsertCareerStats('overview', statsData);
+      }
+      
+      res.json(cached.statsData);
+    } catch (error) {
+      console.error("Error fetching career stats:", error);
+      res.status(500).json({ message: "Failed to fetch career stats" });
+    }
+  });
+
   app.get('/api/profiles', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;

@@ -5,6 +5,7 @@ import {
   personalEssays,
   kompassGoals,
   careers,
+  careerStats,
   aiJobs,
   type User,
   type UpsertUser,
@@ -17,6 +18,7 @@ import {
   type KompassGoal,
   type InsertKompassGoal,
   type Career,
+  type CareerStats,
   type UpdateUserIdentity,
   type AiJob,
   type InsertAiJob,
@@ -60,6 +62,10 @@ export interface IStorage {
   getCareerById(id: string): Promise<Career | undefined>;
   searchCareers(query: string): Promise<Career[]>;
   getCareersByCategory(category: string): Promise<Career[]>;
+  
+  // Career Stats
+  getCareerStats(key: string): Promise<CareerStats | undefined>;
+  upsertCareerStats(key: string, data: any): Promise<CareerStats>;
 
   // AI Jobs
   createAiJob(job: InsertAiJob): Promise<AiJob>;
@@ -309,6 +315,27 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(careers)
       .where(eq(careers.category, category));
+  }
+
+  // Career Stats implementation
+  async getCareerStats(key: string): Promise<CareerStats | undefined> {
+    const [stats] = await db
+      .select()
+      .from(careerStats)
+      .where(eq(careerStats.statsKey, key));
+    return stats;
+  }
+
+  async upsertCareerStats(key: string, data: any): Promise<CareerStats> {
+    const [stats] = await db
+      .insert(careerStats)
+      .values({ statsKey: key, statsData: data })
+      .onConflictDoUpdate({
+        target: careerStats.statsKey,
+        set: { statsData: data, computedAt: new Date() },
+      })
+      .returning();
+    return stats;
   }
 
   // AI Jobs implementation

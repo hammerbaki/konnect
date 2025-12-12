@@ -3,9 +3,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Filter, ArrowRight, Building2, Briefcase, X, DollarSign, GraduationCap, TrendingUp, Smile, Activity, Star, Loader2, Users, Award, BookOpen, Link2 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useState, useMemo, useEffect } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import {
   Select,
   SelectContent,
@@ -314,11 +315,22 @@ function ResponsiveCareerDetail({ career, open, onOpenChange }: { career: Proces
     );
 }
 
+// Server-computed stats type
+interface ServerStats {
+    totalCareers: number;
+    totalCategories: number;
+    topSalary: { name: string; salary: number }[];
+    topSatisfaction: { name: string; satisfaction: number }[];
+    categoryData: { name: string; value: number }[];
+    avgSatisfaction: string;
+    hierarchy: Record<string, string[]>;
+}
+
 export default function Explorer() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedLargeClass, setSelectedLargeClass] = useState<string>("all");
     const [selectedMediumClass, setSelectedMediumClass] = useState<string>("all");
-    const [visibleCount, setVisibleCount] = useState(20);
+    const [visibleCount, setVisibleCount] = useState(30);
     
     // Modal State
     const [selectedCareer, setSelectedCareer] = useState<ProcessedCareer | null>(null);
@@ -328,8 +340,23 @@ export default function Explorer() {
     const [rawData, setRawData] = useState<CareerApiItem[] | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
+    
+    // Server-computed stats (loads fast, separate from heavy career data)
+    const [serverStats, setServerStats] = useState<ServerStats | null>(null);
+    const [statsLoading, setStatsLoading] = useState(true);
 
-    // Load career data from API
+    // Load pre-computed stats first (fast)
+    useEffect(() => {
+        fetch('/api/careers/stats/overview')
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                setServerStats(data);
+                setStatsLoading(false);
+            })
+            .catch(() => setStatsLoading(false));
+    }, []);
+
+    // Load career data from API (slower, but skeleton shows immediately)
     useEffect(() => {
         fetch('/api/careers')
             .then(res => {
@@ -532,46 +559,11 @@ export default function Explorer() {
         return { careers: processed, hierarchy: sortedHierarchy };
     }, [rawData]);
 
-    // Statistics calculations
-    const stats = useMemo(() => {
-        if (careers.length === 0) return null;
-        
-        // Top 5 highest paying careers
-        const topSalary = [...careers]
-            .filter(c => (c.salaryNum || 0) > 0)
-            .sort((a, b) => (b.salaryNum || 0) - (a.salaryNum || 0))
-            .slice(0, 5)
-            .map(c => ({ name: c.title.slice(0, 8), salary: c.salaryNum || 0 }));
-        
-        // Top 5 most satisfying careers
-        const topSatisfaction = [...careers]
-            .filter(c => (c.satisfaction || 0) > 0)
-            .sort((a, b) => (b.satisfaction || 0) - (a.satisfaction || 0))
-            .slice(0, 5)
-            .map(c => ({ name: c.title.slice(0, 8), satisfaction: c.satisfaction || 0 }));
-        
-        // Careers by category
-        const categoryCount = new Map<string, number>();
-        careers.forEach(c => {
-            categoryCount.set(c.largeClass, (categoryCount.get(c.largeClass) || 0) + 1);
-        });
-        const categoryData = Array.from(categoryCount.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 6)
-            .map(([name, value]) => ({ name: name.replace('직', ''), value }));
-        
-        // Average satisfaction
-        const avgSatisfaction = careers.reduce((sum, c) => sum + (c.satisfaction || 0), 0) / 
-            careers.filter(c => (c.satisfaction || 0) > 0).length || 0;
-        
-        return {
-            totalCareers: careers.length,
-            topSalary,
-            topSatisfaction,
-            categoryData,
-            avgSatisfaction: avgSatisfaction.toFixed(1)
-        };
-    }, [careers]);
+    // Use server-computed stats (pre-calculated, fast)
+    const stats = serverStats;
+    
+    // Use hierarchy from server stats (fallback to computed if not available)
+    const displayHierarchy = serverStats?.hierarchy || hierarchy;
 
     const CHART_COLORS = ['#3182F6', '#00BFA5', '#9852F8', '#FFB300', '#E44E48', '#8B95A1'];
 
@@ -603,17 +595,114 @@ export default function Explorer() {
 
     // Pagination
     const visibleCareers = filteredCareers.slice(0, visibleCount);
-    const handleLoadMore = () => setVisibleCount(prev => prev + 20);
+    const handleLoadMore = () => setVisibleCount(prev => prev + 30);
 
-    const availableMediumClasses = selectedLargeClass !== "all" ? hierarchy[selectedLargeClass] : [];
+    const availableMediumClasses = selectedLargeClass !== "all" ? displayHierarchy[selectedLargeClass] : [];
 
-    // Loading state
+    // Skeleton card component for loading state
+    const SkeletonCard = () => (
+        <Card className="border-[#E5E8EB] shadow-sm animate-pulse">
+            <CardContent className="p-5">
+                <div className="flex gap-4">
+                    <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
+                    <div className="flex-1 space-y-3">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-full" />
+                        <div className="flex gap-2">
+                            <Skeleton className="h-6 w-16 rounded-full" />
+                            <Skeleton className="h-6 w-16 rounded-full" />
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    // Show skeleton UI while loading (shows stats if available, skeleton cards for careers)
     if (isLoading) {
         return (
             <Layout>
-                <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                    <Loader2 className="h-12 w-12 text-[#3182F6] animate-spin mb-4" />
-                    <p className="text-[#4E5968] text-lg">직업 데이터를 불러오는 중...</p>
+                <div className="max-w-6xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-6 px-4">
+                    {/* Header */}
+                    <div className="mb-8 text-center space-y-3">
+                        <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-blue-50 mb-2">
+                            <Building2 className="h-7 w-7 text-[#3182F6]" />
+                        </div>
+                        <h2 className="text-[28px] font-bold text-[#191F28] leading-tight">
+                            직업 정보 탐색
+                        </h2>
+                        <p className="text-[#4E5968] text-base">
+                            {stats?.totalCareers ? `${stats.totalCareers}개의 직업 정보를 불러오는 중...` : '직업 정보를 불러오는 중...'}
+                        </p>
+                    </div>
+                    
+                    {/* Stats skeleton or real stats (loads first) */}
+                    {statsLoading ? (
+                        <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {[1,2,3,4].map(i => (
+                                <Card key={i} className="border-[#E5E8EB] shadow-sm">
+                                    <CardContent className="p-4 text-center space-y-2">
+                                        <Skeleton className="h-10 w-10 rounded-full mx-auto" />
+                                        <Skeleton className="h-7 w-16 mx-auto" />
+                                        <Skeleton className="h-3 w-12 mx-auto" />
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    ) : stats && (
+                        <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <Card className="border-[#E5E8EB] shadow-sm">
+                                <CardContent className="p-4 text-center">
+                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 mb-2">
+                                        <Briefcase className="h-5 w-5 text-[#3182F6]" />
+                                    </div>
+                                    <div className="text-2xl font-bold text-[#191F28]">{stats.totalCareers}</div>
+                                    <div className="text-xs text-[#8B95A1]">총 직업 수</div>
+                                </CardContent>
+                            </Card>
+                            <Card className="border-[#E5E8EB] shadow-sm">
+                                <CardContent className="p-4 text-center">
+                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-green-50 mb-2">
+                                        <Smile className="h-5 w-5 text-green-600" />
+                                    </div>
+                                    <div className="text-2xl font-bold text-[#191F28]">{stats.avgSatisfaction}</div>
+                                    <div className="text-xs text-[#8B95A1]">평균 만족도</div>
+                                </CardContent>
+                            </Card>
+                            <Card className="border-[#E5E8EB] shadow-sm">
+                                <CardContent className="p-4 text-center">
+                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-purple-50 mb-2">
+                                        <DollarSign className="h-5 w-5 text-purple-600" />
+                                    </div>
+                                    <div className="text-2xl font-bold text-[#191F28]">
+                                        {stats.topSalary[0]?.salary >= 10000 
+                                            ? `${(stats.topSalary[0].salary / 10000).toFixed(1)}억`
+                                            : `${stats.topSalary[0]?.salary?.toLocaleString() || 0}만`}
+                                    </div>
+                                    <div className="text-xs text-[#8B95A1]">최고 연봉</div>
+                                </CardContent>
+                            </Card>
+                            <Card className="border-[#E5E8EB] shadow-sm">
+                                <CardContent className="p-4 text-center">
+                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-orange-50 mb-2">
+                                        <Users className="h-5 w-5 text-orange-600" />
+                                    </div>
+                                    <div className="text-2xl font-bold text-[#191F28]">{stats.totalCategories}</div>
+                                    <div className="text-xs text-[#8B95A1]">직군 분류</div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+                    
+                    {/* Career cards skeleton */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <Skeleton className="h-6 w-32" />
+                        </div>
+                        <div className="grid gap-4">
+                            {[1,2,3,4,5,6].map(i => <SkeletonCard key={i} />)}
+                        </div>
+                    </div>
                 </div>
             </Layout>
         );
@@ -696,7 +785,7 @@ export default function Explorer() {
                                     <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-orange-50 mb-2">
                                         <Users className="h-5 w-5 text-orange-600" />
                                     </div>
-                                    <div className="text-2xl font-bold text-[#191F28]">{Object.keys(hierarchy).length}</div>
+                                    <div className="text-2xl font-bold text-[#191F28]">{stats.totalCategories || Object.keys(displayHierarchy).length}</div>
                                     <div className="text-xs text-[#8B95A1]">직군 분류</div>
                                 </CardContent>
                             </Card>
@@ -783,7 +872,7 @@ export default function Explorer() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all" className="font-bold">전체 직군</SelectItem>
-                                    {Object.keys(hierarchy).map((large) => (
+                                    {Object.keys(displayHierarchy).map((large) => (
                                         <SelectItem key={large} value={large}>{large}</SelectItem>
                                     ))}
                                 </SelectContent>

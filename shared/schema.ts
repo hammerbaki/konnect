@@ -86,6 +86,22 @@ export const insertCareerSchema = createInsertSchema(careers).omit({
 export type InsertCareer = z.infer<typeof insertCareerSchema>;
 export type Career = typeof careers.$inferSelect;
 
+// ===== CAREER STATS TABLE (Pre-computed statistics) =====
+export const careerStats = pgTable("career_stats", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  statsKey: varchar("stats_key", { length: 50 }).notNull().unique(),
+  statsData: jsonb("stats_data").notNull(),
+  computedAt: timestamp("computed_at").defaultNow(),
+});
+
+export const insertCareerStatsSchema = createInsertSchema(careerStats).omit({
+  id: true,
+  computedAt: true,
+});
+
+export type InsertCareerStats = z.infer<typeof insertCareerStatsSchema>;
+export type CareerStats = typeof careerStats.$inferSelect;
+
 // ===== PROFILES TABLE =====
 export const profiles = pgTable("profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
