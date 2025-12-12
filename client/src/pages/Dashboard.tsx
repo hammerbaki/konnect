@@ -112,7 +112,7 @@ export default function Dashboard() {
       icon: Compass,
       color: "#FFB300",
       bgColor: "bg-amber-50",
-      href: "/kompass",
+      href: "/goals",
       stat: kompassCount > 0 ? `${kompassCount}개 목표` : "목표 설정",
     },
     {
@@ -121,7 +121,7 @@ export default function Dashboard() {
       icon: FileText,
       color: "#9852F8",
       bgColor: "bg-purple-50",
-      href: "/essays",
+      href: "/personal-statement",
       stat: essayCount > 0 ? `${essayCount}개 작성` : "작성하기",
     },
   ];
@@ -326,7 +326,7 @@ export default function Dashboard() {
                 <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
                   <FileText className="h-5 w-5 text-[#9852F8]" /> 자기소개서
                 </CardTitle>
-                <Link href="/essays">
+                <Link href="/personal-statement">
                   <Button variant="ghost" size="sm" className="text-[#9852F8] font-bold">
                     전체보기 <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
@@ -342,7 +342,7 @@ export default function Dashboard() {
                       {essayCount}개의 자기소개서가 있습니다.
                     </p>
                   </div>
-                  <Link href="/essays">
+                  <Link href="/personal-statement">
                     <Button variant="outline" className="w-full rounded-xl h-11 border-[#9852F8] text-[#9852F8] font-bold hover:bg-[#9852F8]/10" data-testid="button-view-essays">
                       에세이 보기
                     </Button>
@@ -353,7 +353,7 @@ export default function Dashboard() {
                   <p className="text-sm text-[#8B95A1]">
                     AI가 도와주는 자기소개서 작성으로 취업 준비를 시작해보세요.
                   </p>
-                  <Link href="/essays">
+                  <Link href="/personal-statement">
                     <Button className="w-full rounded-xl h-11 bg-[#9852F8] font-bold hover:bg-[#9852F8]/90" data-testid="button-write-essay">
                       자기소개서 작성 (100 포인트)
                     </Button>
