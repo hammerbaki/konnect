@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "./AuthContext";
+import { getAuthHeaders } from "./queryClient";
 
 export interface PageVisibility {
   userRole: string;
@@ -12,7 +13,9 @@ export function usePageAccess() {
   const { data: visibility, isLoading, isFetching } = useQuery<PageVisibility>({
     queryKey: ['page-visibility', user?.id],
     queryFn: async () => {
+      const authHeaders = await getAuthHeaders();
       const res = await fetch('/api/page-visibility', {
+        headers: authHeaders,
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to fetch page visibility');
