@@ -50,6 +50,13 @@ function inMemoryRateLimit(
 // Track Redis connection status
 let redisAvailable = true;
 
+// In development, use in-memory rate limiting to conserve Redis commands
+const isDevelopment = process.env.NODE_ENV !== "production";
+if (isDevelopment) {
+  console.log("Development mode: Using in-memory rate limiting to conserve Redis");
+  redisAvailable = false;
+}
+
 // Different rate limiters for different use cases
 // AI Analysis: 10 requests per minute per user (expensive operations)
 export const aiAnalysisLimiter = new Ratelimit({
