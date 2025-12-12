@@ -77,14 +77,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const user = await storage.getUser(userId);
       
-      // Track login session (create session if not exists for this user today)
+      // Track login session
       try {
         const existingSession = await storage.getActiveSessionByUser(userId);
-        if (!existingSession) {
+        const now = new Date();
+        
+        if (existingSession) {
+          // Check if session is stale (more than 6 hours old)
+          const sessionAge = now.getTime() - new Date(existingSession.loginAt).getTime();
+          const SIX_HOURS = 6 * 60 * 60 * 1000;
+          
+          if (sessionAge > SIX_HOURS) {
+            // Auto-close the stale session
+            await storage.updateUserSessionLogout(existingSession.id);
+            // Create a new session
+            await storage.createUserSession({
+              userId,
+              eventType: 'login',
+              loginAt: now,
+              ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || null,
+              userAgent: req.headers['user-agent'] || null,
+            });
+          }
+          // If session is still fresh, don't create a new one (same browsing session)
+        } else {
+          // No active session, create a new one
           await storage.createUserSession({
             userId,
             eventType: 'login',
-            loginAt: new Date(),
+            loginAt: now,
             ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || null,
             userAgent: req.headers['user-agent'] || null,
           });

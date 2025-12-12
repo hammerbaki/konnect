@@ -38,7 +38,7 @@ import {
   NEW_PAGE_DEFAULT_ROLES,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, ilike, and, inArray, sql, count, gte, lte, sum } from "drizzle-orm";
+import { eq, desc, ilike, and, inArray, sql, count, gte, lte, sum, isNull } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -733,7 +733,8 @@ export class DatabaseStorage implements IStorage {
       .from(userSessions)
       .where(and(
         eq(userSessions.userId, userId),
-        eq(userSessions.eventType, 'login')
+        eq(userSessions.eventType, 'login'),
+        isNull(userSessions.logoutAt)
       ))
       .orderBy(desc(userSessions.loginAt))
       .limit(1);
