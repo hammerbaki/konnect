@@ -131,13 +131,15 @@ export default function Login() {
           <div className="text-center mb-8">
             <button 
               onClick={() => setLocation("/")}
-              className="inline-flex items-center justify-center h-16 w-16 rounded-[22px] bg-[#3182F6] text-white mb-6 shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform"
+              className="inline-block hover:scale-105 transition-transform"
               data-testid="button-home"
             >
-              <span className="text-3xl font-bold">K</span>
+              <img 
+                src="/konnect-logo.png" 
+                alt="Konnect - Your AI Career Solution" 
+                className="h-16 w-auto mx-auto"
+              />
             </button>
-            <h1 className="text-3xl font-bold tracking-tight text-[#191F28]">Konnect</h1>
-            <p className="text-[#8B95A1] mt-2">AI 기반 커리어 인텔리전스 플랫폼</p>
           </div>
 
           <Card className="toss-card border-none shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-[24px] overflow-hidden bg-white">

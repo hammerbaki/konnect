@@ -42,7 +42,7 @@ export function Sidebar() {
   return (
     <div className="h-full flex flex-col bg-white border-r border-[#E5E8EB]">
       <div className="flex h-16 items-center px-6 mb-6">
-        <img src="/logo.png" alt="Konnect Logo" className="h-8 w-auto" />
+        <img src="/konnect-logo.png" alt="Konnect Logo" className="h-8 w-auto" />
       </div>
 
       <div className="flex-1 px-4 flex flex-col">

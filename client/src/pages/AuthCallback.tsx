@@ -31,7 +31,12 @@ export default function AuthCallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F2F4F6]">
       <div className="text-center">
-        <Loader2 className="h-12 w-12 animate-spin text-[#3182F6] mx-auto mb-4" />
+        <img 
+          src="/konnect-logo.png" 
+          alt="Konnect" 
+          className="h-12 w-auto mx-auto mb-6"
+        />
+        <Loader2 className="h-8 w-8 animate-spin text-[#3182F6] mx-auto mb-4" />
         <p className="text-[#4E5968]">로그인 중...</p>
       </div>
     </div>

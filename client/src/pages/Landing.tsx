@@ -75,11 +75,11 @@ export default function Landing() {
         className="z-10 w-full max-w-md px-4"
       >
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-[22px] bg-[#3182F6] text-white mb-6 shadow-lg shadow-blue-500/20">
-            <span className="text-3xl font-bold">K</span>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#191F28]">Konnect</h1>
-          <p className="text-[#8B95A1] mt-2 text-lg">AI 기반 커리어 인텔리전스 플랫폼</p>
+          <img 
+            src="/konnect-logo.png" 
+            alt="Konnect - Your AI Career Solution" 
+            className="h-16 w-auto mx-auto mb-4"
+          />
         </div>
 
         <Card className="toss-card border-none shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-[24px] overflow-hidden">
