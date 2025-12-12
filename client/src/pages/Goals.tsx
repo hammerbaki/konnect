@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, ChevronRight, Compass, Sparkles, FolderOpen, Users, Heart, Loader2, Trash2 } from "lucide-react";
 import { generateLightTree, VisionGoal } from "@/lib/mockData";
 import { useLocation } from "wouter";
@@ -239,8 +240,31 @@ export default function Goals() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="toss-card min-h-[240px]">
+                <CardContent className="p-6 flex flex-col h-full justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <Skeleton className="h-6 w-24 rounded-full" />
+                      <Skeleton className="h-5 w-5 rounded" />
+                    </div>
+                    <Skeleton className="h-7 w-3/4 mb-2" />
+                    <Skeleton className="h-5 w-full mb-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-2 flex-1 rounded-full" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-5 w-24" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

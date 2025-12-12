@@ -2,6 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { 
     Brain, Sparkles, Loader2, ArrowRight, 
@@ -204,8 +205,16 @@ export default function Analysis() {
             
             <div className="flex-1 overflow-y-auto px-3 space-y-2">
                 {isLoadingProfiles ? (
-                    <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-6 w-6 text-[#3182F6] animate-spin" />
+                    <div className="space-y-2 py-2">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="flex items-start gap-3 p-3 rounded-xl border border-[#E5E8EB]">
+                                <Skeleton className="h-9 w-9 rounded-lg shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <Skeleton className="h-4 w-24 mb-1.5" />
+                                    <Skeleton className="h-3 w-16" />
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : profiles && profiles.length > 0 ? (
                     profiles.map((profile: any) => {
@@ -639,8 +648,38 @@ export default function Analysis() {
                                     `}</style>
                                 </div>
                             ) : isLoadingProfiles || isLoadingAnalyses ? (
-                                <div className="flex items-center justify-center py-20">
-                                    <Loader2 className="h-8 w-8 text-[#3182F6] animate-spin" />
+                                <div className="max-w-3xl mx-auto py-8 space-y-6">
+                                    <Card className="toss-card p-6">
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <Skeleton className="h-12 w-12 rounded-xl" />
+                                            <div className="flex-1">
+                                                <Skeleton className="h-6 w-48 mb-2" />
+                                                <Skeleton className="h-4 w-32" />
+                                            </div>
+                                        </div>
+                                        <Skeleton className="h-4 w-full mb-2" />
+                                        <Skeleton className="h-4 w-3/4" />
+                                    </Card>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {[1, 2].map((i) => (
+                                            <Card key={i} className="toss-card p-5">
+                                                <Skeleton className="h-5 w-32 mb-3" />
+                                                <Skeleton className="h-4 w-full mb-2" />
+                                                <Skeleton className="h-4 w-2/3" />
+                                            </Card>
+                                        ))}
+                                    </div>
+                                    <Card className="toss-card p-6">
+                                        <Skeleton className="h-6 w-40 mb-4" />
+                                        <div className="space-y-3">
+                                            {[1, 2, 3].map((i) => (
+                                                <div key={i} className="p-4 border border-[#E5E8EB] rounded-xl">
+                                                    <Skeleton className="h-5 w-48 mb-2" />
+                                                    <Skeleton className="h-4 w-full" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Card>
                                 </div>
                             ) : !activeProfile ? (
                                 <div className="flex flex-col items-center justify-center py-16">

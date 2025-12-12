@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Send,
     Sparkles,
@@ -634,8 +635,32 @@ export default function PersonalStatement() {
     if (isLoadingProfiles) {
         return (
             <Layout>
-                <div className="flex items-center justify-center h-[calc(100vh-80px)]">
-                    <Loader2 className="h-8 w-8 text-[#3182F6] animate-spin" />
+                <div className="max-w-6xl mx-auto h-[calc(100vh-40px)] md:h-[calc(100vh-80px)] flex md:rounded-2xl md:shadow-sm md:border border-[#E5E8EB] overflow-hidden bg-white">
+                    <div className="hidden md:flex w-[260px] border-r border-[#E5E8EB] bg-white flex-col">
+                        <div className="p-4 border-b border-[#E5E8EB] flex items-center gap-2">
+                            <Skeleton className="h-4 w-4" />
+                            <Skeleton className="h-5 w-16" />
+                        </div>
+                        <div className="p-3 space-y-2">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="p-3 rounded-xl border border-[#E5E8EB]">
+                                    <Skeleton className="h-4 w-3/4 mb-2" />
+                                    <Skeleton className="h-3 w-1/2" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex-1 flex flex-col">
+                        <div className="px-6 py-4 border-b border-[#F2F4F6]">
+                            <Skeleton className="h-8 w-48" />
+                        </div>
+                        <div className="flex-1 p-6 space-y-4">
+                            <Skeleton className="h-6 w-32" />
+                            <Skeleton className="h-24 w-full rounded-xl" />
+                            <Skeleton className="h-6 w-24 mt-4" />
+                            <Skeleton className="h-48 w-full rounded-xl" />
+                        </div>
+                    </div>
                 </div>
             </Layout>
         );

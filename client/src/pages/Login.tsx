@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/AuthContext";
 import { Loader2, Sparkles, Mail, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
@@ -82,8 +83,32 @@ export default function Login() {
   if (isLoading) {
     return (
       <Layout hideNav>
-        <div className="min-h-screen flex items-center justify-center bg-[#F2F4F6]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
+        <div className="min-h-screen flex items-center justify-center bg-[#F2F4F6] relative overflow-hidden font-sans py-8">
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+            <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-[#3182F6]/5 blur-3xl" />
+            <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] rounded-full bg-[#3182F6]/5 blur-3xl" />
+          </div>
+          <div className="z-10 w-full max-w-md px-4">
+            <div className="text-center mb-8">
+              <Skeleton className="h-16 w-16 rounded-[22px] mx-auto mb-6" />
+              <Skeleton className="h-9 w-32 mx-auto mb-2" />
+              <Skeleton className="h-5 w-48 mx-auto" />
+            </div>
+            <div className="bg-white rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] p-8">
+              <Skeleton className="h-8 w-20 mb-2" />
+              <Skeleton className="h-5 w-32 mb-6" />
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full rounded-xl" />
+                <Skeleton className="h-12 w-full rounded-xl" />
+                <div className="flex items-center gap-3 py-2">
+                  <Skeleton className="h-px flex-1" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-px flex-1" />
+                </div>
+                <Skeleton className="h-12 w-full rounded-xl" />
+              </div>
+            </div>
+          </div>
         </div>
       </Layout>
     );

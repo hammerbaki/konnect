@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, Sparkles, Target, FileText, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/AuthContext";
@@ -18,8 +19,26 @@ export default function Landing() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F2F4F6]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3182F6]"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F2F4F6] relative overflow-hidden font-sans">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+          <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-[#3182F6]/5 blur-3xl" />
+          <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] rounded-full bg-[#3182F6]/5 blur-3xl" />
+        </div>
+        <div className="z-10 w-full max-w-md px-4">
+          <div className="text-center mb-10">
+            <Skeleton className="h-16 w-16 rounded-[22px] mx-auto mb-6" />
+            <Skeleton className="h-9 w-32 mx-auto mb-2" />
+            <Skeleton className="h-5 w-48 mx-auto" />
+          </div>
+          <div className="bg-white rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] p-8">
+            <Skeleton className="h-8 w-28 mb-2" />
+            <Skeleton className="h-5 w-40 mb-6" />
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-full rounded-xl" />
+              <Skeleton className="h-12 w-full rounded-xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
