@@ -8,6 +8,7 @@ import {
   insertPersonalEssaySchema,
   insertKompassGoalSchema,
   updateUserIdentitySchema,
+  updateUserSettingsSchema,
   type AiJobType,
 } from "@shared/schema";
 import { z } from "zod";
@@ -130,6 +131,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error updating user identity:", error);
       res.status(500).json({ message: "Failed to update user identity" });
+    }
+  });
+
+  // Get user settings
+  app.get('/api/user-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const settings = await storage.getUserSettings(userId);
+      
+      if (!settings) {
+        return res.status(404).json({ message: "User settings not found" });
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching user settings:", error);
+      res.status(500).json({ message: "Failed to fetch user settings" });
+    }
+  });
+
+  // Update user settings
+  app.patch('/api/user-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const data = updateUserSettingsSchema.parse(req.body);
+      
+      const user = await storage.updateUserSettings(userId, data);
+      
+      res.json({
+        phone: user.phone,
+        marketingConsent: user.marketingConsent === 1,
+        emailNotifications: user.emailNotifications === 1,
+        pushNotifications: user.pushNotifications === 1,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      console.error("Error updating user settings:", error);
+      res.status(500).json({ message: "Failed to update user settings" });
     }
   });
 
