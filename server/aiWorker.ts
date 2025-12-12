@@ -33,7 +33,13 @@ export async function processJob(job: AiJob): Promise<any> {
     switch (type) {
       case "analysis": {
         await storage.updateAiJobStatus(job.id, "processing", 30);
-        result = await generateCareerAnalysis(payload.profileData, payload.profileType);
+        // Construct a profile-like object for the AI function
+        const profileForAnalysis = {
+          type: payload.profileType,
+          title: payload.profileTitle || "프로필",
+          profileData: payload.profileData || {},
+        };
+        result = await generateCareerAnalysis(profileForAnalysis as any, payload.userIdentity);
         
         // Save analysis to analyses table so frontend query can fetch it
         if (job.profileId) {

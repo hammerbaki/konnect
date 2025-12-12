@@ -164,6 +164,7 @@ export default function Analysis() {
             await aiJob.submitJob("analysis", profileId, {
                 profileData: activeProfile.profileData,
                 profileType: activeProfile.type,
+                profileTitle: activeProfile.title,
             });
         } catch (error) {
             // onError in useAIJob will handle restoring credits using the ref flag
