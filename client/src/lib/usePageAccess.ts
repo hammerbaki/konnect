@@ -28,7 +28,14 @@ export function usePageAccess() {
     if (!visibility) {
       return true;
     }
-    return visibility.pages[slug] ?? true;
+    // For unknown pages, default to restricted (staff/admin only)
+    // If page exists in visibility map, use its value
+    // If not, assume it's a new page - deny access for regular users
+    if (slug in visibility.pages) {
+      return visibility.pages[slug];
+    }
+    // Unknown page - only staff/admin can access by default
+    return visibility.userRole === 'staff' || visibility.userRole === 'admin';
   };
 
   const userRole = visibility?.userRole ?? 'user';

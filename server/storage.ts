@@ -31,6 +31,7 @@ import {
   type PageSettings,
   type InsertPageSettings,
   DEFAULT_PAGE_CONFIGS,
+  NEW_PAGE_DEFAULT_ROLES,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, and, inArray, sql, count, gte, lte, sum } from "drizzle-orm";
@@ -686,7 +687,7 @@ export class DatabaseStorage implements IStorage {
     
     if (setting) return setting;
     
-    // Return default if exists
+    // Return default if exists in known pages
     const config = DEFAULT_PAGE_CONFIGS[slug];
     if (config) {
       return {
@@ -701,7 +702,17 @@ export class DatabaseStorage implements IStorage {
       };
     }
     
-    return undefined;
+    // For unknown pages, default to staff/admin only
+    return {
+      slug,
+      title: slug,
+      description: null,
+      defaultRoles: NEW_PAGE_DEFAULT_ROLES,
+      allowedRoles: null,
+      isLocked: 0,
+      updatedBy: null,
+      updatedAt: null,
+    };
   }
 
   async upsertPageSettings(settings: InsertPageSettings): Promise<PageSettings> {

@@ -329,6 +329,7 @@ export type PageSettings = typeof pageSettings.$inferSelect;
 export type UpdatePageSettings = z.infer<typeof updatePageSettingsSchema>;
 
 // Default page configurations (used when no DB record exists)
+// New pages default to staff/admin only - explicitly add 'user' role in config to make visible to all
 export const DEFAULT_PAGE_CONFIGS: Record<string, { title: string; defaultRoles: UserRole[]; isLocked?: boolean }> = {
   '/dashboard': { title: '대시보드', defaultRoles: ['user', 'staff', 'admin'] },
   '/profile': { title: '프로필', defaultRoles: ['user', 'staff', 'admin'] },
@@ -341,3 +342,6 @@ export const DEFAULT_PAGE_CONFIGS: Record<string, { title: string; defaultRoles:
   '/recharge': { title: '포인트 충전', defaultRoles: ['user', 'staff', 'admin'] },
   '/admin': { title: '관리자', defaultRoles: ['staff', 'admin'], isLocked: true },
 };
+
+// Default roles for newly created pages not in DEFAULT_PAGE_CONFIGS
+export const NEW_PAGE_DEFAULT_ROLES: UserRole[] = ['staff', 'admin'];
