@@ -20,7 +20,7 @@ import {
     History,
     Plus,
     MessageSquare,
-    Menu,
+    FolderOpen,
     Trash2,
     Loader2,
     User,
@@ -714,7 +714,7 @@ export default function PersonalStatement() {
                                         size="icon"
                                         className="md:hidden -ml-2"
                                     >
-                                        <Menu className="h-5 w-5 text-[#4E5968]" />
+                                        <FolderOpen className="h-5 w-5 text-[#4E5968]" />
                                     </Button>
                                 </SheetTrigger>
                                 <SheetContent

@@ -17,7 +17,7 @@ export function Layout({ children, hideNav }: LayoutProps) {
   }
   
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#F2F4F6]">
+    <div className="flex h-screen-dvh w-full overflow-hidden bg-[#F2F4F6]">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex h-full w-[280px] flex-col border-r border-transparent">
          <Sidebar />
@@ -25,7 +25,7 @@ export function Layout({ children, hideNav }: LayoutProps) {
       
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6 md:p-10 pb-[120px] md:pb-10 scroll-smooth">
+        <main className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-5 md:p-10 pb-[100px] md:pb-10 scroll-smooth">
           {children}
         </main>
         <MobileNav />

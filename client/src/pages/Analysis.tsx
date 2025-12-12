@@ -10,7 +10,7 @@ import {
     Target, Award, Star, Compass,
     ChevronRight, Plus, LayoutDashboard, History,
     CheckCircle2, AlertTriangle, Zap, User, ExternalLink,
-    FolderOpen, Users, Heart, Lightbulb, Menu
+    FolderOpen, Users, Heart, Lightbulb, LayoutGrid
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -573,7 +573,7 @@ export default function Analysis() {
                                     <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
                                         <SheetTrigger asChild>
                                             <Button variant="ghost" size="icon" className="shrink-0">
-                                                <Menu className="h-5 w-5" />
+                                                <LayoutGrid className="h-5 w-5" />
                                             </Button>
                                         </SheetTrigger>
                                         <SheetContent side="left" className="w-72 p-0">

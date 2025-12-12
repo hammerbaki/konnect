@@ -118,6 +118,22 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Compact safe area - reduced padding for iOS */
+.safe-area-bottom-compact {
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+}
+
+/* Dynamic viewport height support for iOS Safari */
+.h-screen-dvh {
+  height: 100vh;
+  height: 100dvh;
+}
+
+.min-h-screen-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 /* Better mobile tap highlight */
 @media (hover: none) and (pointer: coarse) {
   button, a, [role="button"] {

@@ -28,7 +28,7 @@ export function MobileNav() {
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
       <div className="absolute inset-0 bg-white/90 backdrop-blur-xl border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] rounded-t-[24px]" />
       
-      <div className="relative min-h-[72px] px-4 sm:px-6 pt-2 flex items-start justify-around safe-area-bottom">
+      <div className="relative min-h-[64px] px-4 sm:px-6 pt-2 pb-1 flex items-start justify-around safe-area-bottom-compact">
         {navItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = location === item.href;
