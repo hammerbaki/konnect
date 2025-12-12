@@ -881,11 +881,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.getUser(userId);
-      if (!user || user.credits < 100) {
-        return res.status(402).json({ message: "포인트가 부족합니다. 분석을 생성하려면 최소 100 포인트가 필요합니다." });
+      const analysisCost = await storage.getServiceCost('analysis');
+      if (!user || user.credits < analysisCost) {
+        return res.status(402).json({ message: `포인트가 부족합니다. 분석을 생성하려면 최소 ${analysisCost} 포인트가 필요합니다.` });
       }
 
-      const deducted = await storage.deductUserCredits(userId, 100);
+      const deducted = await storage.deductUserCredits(userId, analysisCost);
       if (!deducted) {
         return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
       }
@@ -951,11 +952,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.getUser(userId);
-      if (!user || user.credits < 100) {
-        return res.status(402).json({ message: "포인트가 부족합니다. 자기소개서 생성을 위해 최소 100 포인트가 필요합니다." });
+      const essayCost = await storage.getServiceCost('essay');
+      if (!user || user.credits < essayCost) {
+        return res.status(402).json({ message: `포인트가 부족합니다. 자기소개서 생성을 위해 최소 ${essayCost} 포인트가 필요합니다.` });
       }
 
-      const deducted = await storage.deductUserCredits(userId, 100);
+      const deducted = await storage.deductUserCredits(userId, essayCost);
       if (!deducted) {
         return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
       }
@@ -1107,20 +1109,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Strategic levels (year, half) require 100 credits
+      // Strategic levels (year, half) require credits
       const isStrategicLevel = level === 'year' || level === 'half';
+      let goalCost = 0;
       
       if (isStrategicLevel) {
+        goalCost = await storage.getServiceCost('goal_strategic');
         const user = await storage.getUser(userId);
-        if (!user || user.credits < 100) {
+        if (!user || user.credits < goalCost) {
           return res.status(402).json({ 
-            message: "포인트가 부족합니다. 연도/반기 목표 생성을 위해 최소 100 포인트가 필요합니다.",
-            requiredCredits: 100,
+            message: `포인트가 부족합니다. 연도/반기 목표 생성을 위해 최소 ${goalCost} 포인트가 필요합니다.`,
+            requiredCredits: goalCost,
             currentCredits: user?.credits || 0,
           });
         }
 
-        const deducted = await storage.deductUserCredits(userId, 100);
+        const deducted = await storage.deductUserCredits(userId, goalCost);
         if (!deducted) {
           return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
         }
@@ -1141,7 +1145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         suggestions: result.suggestions,
-        creditsUsed: isStrategicLevel ? 100 : 0,
+        creditsUsed: goalCost,
         remainingCredits: updatedCredits,
       });
     } catch (error: any) {
@@ -1176,57 +1180,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Check credits for expensive operations (100 credits each)
-      if (type === 'analysis' || type === 'essay') {
-        const user = await storage.getUser(userId);
-        if (!user || user.credits < 100) {
-          return res.status(402).json({ 
-            message: "포인트가 부족합니다.",
-            requiredCredits: 100,
-            currentCredits: user?.credits || 0,
-          });
-        }
-        
-        const deducted = await storage.deductUserCredits(userId, 100);
-        if (!deducted) {
-          return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
-        }
-      }
-      
-      // Essay revision costs 30 credits
-      if (type === 'essay_revision') {
-        const user = await storage.getUser(userId);
-        if (!user || user.credits < 30) {
-          return res.status(402).json({ 
-            message: "포인트가 부족합니다. 수정을 위해 30 포인트가 필요합니다.",
-            requiredCredits: 30,
-            currentCredits: user?.credits || 0,
-          });
-        }
-        
-        const deducted = await storage.deductUserCredits(userId, 30);
-        if (!deducted) {
-          return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
-        }
-      }
-      
-      // For goals, check if strategic level requires credits (100 credits)
-      if (type === 'goal' && payload?.level) {
+      // Determine cost based on job type
+      let requiredCredits = 0;
+      if (type === 'analysis') {
+        requiredCredits = await storage.getServiceCost('analysis');
+      } else if (type === 'essay') {
+        requiredCredits = await storage.getServiceCost('essay');
+      } else if (type === 'essay_revision') {
+        requiredCredits = await storage.getServiceCost('essay_revision');
+      } else if (type === 'goal' && payload?.level) {
         const isStrategicLevel = payload.level === 'year' || payload.level === 'half';
         if (isStrategicLevel) {
-          const user = await storage.getUser(userId);
-          if (!user || user.credits < 100) {
-            return res.status(402).json({ 
-              message: "포인트가 부족합니다. 연도/반기 목표 생성을 위해 최소 100 포인트가 필요합니다.",
-              requiredCredits: 100,
-              currentCredits: user?.credits || 0,
-            });
-          }
-          
-          const deducted = await storage.deductUserCredits(userId, 100);
-          if (!deducted) {
-            return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
-          }
+          requiredCredits = await storage.getServiceCost('goal_strategic');
+        }
+      }
+      
+      // Check and deduct credits if required
+      if (requiredCredits > 0) {
+        const user = await storage.getUser(userId);
+        if (!user || user.credits < requiredCredits) {
+          return res.status(402).json({ 
+            message: `포인트가 부족합니다. ${requiredCredits} 포인트가 필요합니다.`,
+            requiredCredits,
+            currentCredits: user?.credits || 0,
+          });
+        }
+        
+        const deducted = await storage.deductUserCredits(userId, requiredCredits);
+        if (!deducted) {
+          return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
         }
       }
       
@@ -1674,6 +1656,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error deleting package:", error);
       res.status(500).json({ message: "패키지 삭제 중 오류가 발생했습니다." });
+    }
+  });
+
+  // ==================== ADMIN SERVICE PRICING MANAGEMENT ====================
+
+  // Get all service pricing (public for display, admin for editing)
+  app.get('/api/service-pricing', async (_req, res) => {
+    try {
+      const pricing = await storage.getAllServicePricing();
+      res.json(pricing);
+    } catch (error: any) {
+      console.error("Error fetching service pricing:", error);
+      res.status(500).json({ message: "서비스 가격 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Initialize default service pricing (admin only)
+  app.post('/api/admin/service-pricing/init', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const { DEFAULT_SERVICE_PRICING } = await import("@shared/schema");
+      const results = [];
+      
+      for (const [id, config] of Object.entries(DEFAULT_SERVICE_PRICING)) {
+        const pricing = await storage.upsertServicePricing({
+          id,
+          name: config.name,
+          description: config.description,
+          pointCost: config.pointCost,
+          isActive: 1,
+          updatedBy: req.user.id,
+        });
+        results.push(pricing);
+      }
+      
+      res.json(results);
+    } catch (error: any) {
+      console.error("Error initializing service pricing:", error);
+      res.status(500).json({ message: "서비스 가격 초기화 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Update service pricing (admin only)
+  app.patch('/api/admin/service-pricing/:id', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const serviceId = req.params.id;
+      const { updateServicePricingSchema } = await import("@shared/schema");
+      
+      const parsed = updateServicePricingSchema.safeParse(req.body);
+      if (!parsed.success) {
+        const errorMessage = parsed.error.errors.map(e => e.message).join(', ');
+        return res.status(400).json({ message: errorMessage || "유효하지 않은 가격 정보입니다." });
+      }
+      
+      const updateData = Object.fromEntries(
+        Object.entries(parsed.data).filter(([_, v]) => v !== undefined)
+      );
+      
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "수정할 내용이 없습니다." });
+      }
+      
+      const updatedPricing = await storage.updateServicePricing(serviceId, updateData, req.user.id);
+      res.json(updatedPricing);
+    } catch (error: any) {
+      console.error("Error updating service pricing:", error);
+      res.status(500).json({ message: "서비스 가격 수정 중 오류가 발생했습니다." });
     }
   });
 
