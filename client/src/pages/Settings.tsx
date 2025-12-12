@@ -9,6 +9,15 @@ import { Bell, Shield, Lock, UserX, Smartphone, ChevronRight, Loader2 } from "lu
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+
+interface UserSettings {
+    phone: string | null;
+    marketingConsent: boolean;
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+}
 
 function SettingsSkeleton() {
     return (
@@ -51,7 +60,7 @@ function SettingsSkeleton() {
                                             <Skeleton className="h-5 w-32 mb-1" />
                                             <Skeleton className="h-4 w-48" />
                                         </div>
-                                        <Skeleton className="h-6 w-10 rounded-full" />
+                                        <Skeleton className="h-5 w-8 rounded-full" />
                                     </div>
                                 ))}
                             </CardContent>
@@ -86,62 +95,83 @@ function SettingsSkeleton() {
 export default function Settings() {
     const { toast } = useToast();
     const { user, isLoading } = useAuth();
+    const queryClient = useQueryClient();
     
     const [phone, setPhone] = useState("");
     const [marketingConsent, setMarketingConsent] = useState(false);
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [pushNotifications, setPushNotifications] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
 
+    // Fetch settings from database
+    const { data: settings, isLoading: settingsLoading } = useQuery<UserSettings>({
+        queryKey: ['/api/user-settings'],
+        queryFn: async () => {
+            const response = await apiRequest('GET', '/api/user-settings');
+            return response.json();
+        },
+        enabled: !!user,
+    });
+
+    // Initialize state from fetched settings
     useEffect(() => {
-        const savedSettings = localStorage.getItem('userSettings');
-        if (savedSettings) {
-            try {
-                const settings = JSON.parse(savedSettings);
-                setPhone(settings.phone || "");
-                setMarketingConsent(settings.marketingConsent ?? false);
-                setEmailNotifications(settings.emailNotifications ?? true);
-                setPushNotifications(settings.pushNotifications ?? true);
-            } catch (e) {
-                console.error("Failed to parse settings:", e);
-            }
+        if (settings) {
+            setPhone(settings.phone || "");
+            setMarketingConsent(settings.marketingConsent);
+            setEmailNotifications(settings.emailNotifications);
+            setPushNotifications(settings.pushNotifications);
         }
-    }, []);
+    }, [settings]);
 
-    const handleSave = async () => {
-        setIsSaving(true);
-        try {
-            const settings = {
-                phone,
+    // Track changes
+    useEffect(() => {
+        if (settings) {
+            const changed = 
+                phone !== (settings.phone || "") ||
+                marketingConsent !== settings.marketingConsent ||
+                emailNotifications !== settings.emailNotifications ||
+                pushNotifications !== settings.pushNotifications;
+            setHasChanges(changed);
+        }
+    }, [phone, marketingConsent, emailNotifications, pushNotifications, settings]);
+
+    // Save settings mutation
+    const saveMutation = useMutation({
+        mutationFn: async () => {
+            const response = await apiRequest('PATCH', '/api/user-settings', {
+                phone: phone || null,
                 marketingConsent,
                 emailNotifications,
                 pushNotifications,
-            };
-            localStorage.setItem('userSettings', JSON.stringify(settings));
-            
+            });
+            return response.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['/api/user-settings'] });
             toast({
                 title: "설정 저장 완료",
                 description: "변경사항이 저장되었습니다.",
             });
-        } catch (error) {
+            setHasChanges(false);
+        },
+        onError: () => {
             toast({
                 title: "저장 실패",
                 description: "설정을 저장하는 중 오류가 발생했습니다.",
                 variant: "destructive",
             });
-        } finally {
-            setIsSaving(false);
-        }
+        },
+    });
+
+    const handleSave = () => {
+        saveMutation.mutate();
     };
 
-    if (isLoading) {
+    if (isLoading || settingsLoading) {
         return <SettingsSkeleton />;
     }
 
     const userEmail = user?.email || "";
-    const displayName = user?.firstName && user?.lastName 
-        ? `${user.lastName}${user.firstName}`
-        : user?.firstName || user?.lastName || "";
 
     return (
         <Layout>
@@ -206,35 +236,38 @@ export default function Settings() {
                         <Card className="toss-card">
                             <CardContent className="p-0">
                                 <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#F2F4F6]">
-                                    <div className="flex-1 mr-3">
-                                        <p className="font-bold text-[#191F28] text-sm sm:text-base">마케팅 정보 수신 동의</p>
+                                    <div className="flex-1 mr-4">
+                                        <p className="font-medium text-[#191F28] text-sm sm:text-base">마케팅 정보 수신</p>
                                         <p className="text-xs sm:text-sm text-[#8B95A1]">이벤트 및 혜택 정보를 받습니다.</p>
                                     </div>
                                     <Switch 
                                         checked={marketingConsent}
                                         onCheckedChange={setMarketingConsent}
+                                        className="h-[18px] w-8 data-[state=checked]:bg-[#3182F6] data-[state=unchecked]:bg-[#D1D6DB]"
                                         data-testid="switch-marketing"
                                     />
                                 </div>
                                 <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#F2F4F6]">
-                                    <div className="flex-1 mr-3">
-                                        <p className="font-bold text-[#191F28] text-sm sm:text-base">이메일 알림</p>
+                                    <div className="flex-1 mr-4">
+                                        <p className="font-medium text-[#191F28] text-sm sm:text-base">이메일 알림</p>
                                         <p className="text-xs sm:text-sm text-[#8B95A1]">주요 공지사항을 메일로 받습니다.</p>
                                     </div>
                                     <Switch 
                                         checked={emailNotifications}
                                         onCheckedChange={setEmailNotifications}
+                                        className="h-[18px] w-8 data-[state=checked]:bg-[#3182F6] data-[state=unchecked]:bg-[#D1D6DB]"
                                         data-testid="switch-email-notifications"
                                     />
                                 </div>
                                 <div className="flex items-center justify-between p-4 sm:p-5">
-                                    <div className="flex-1 mr-3">
-                                        <p className="font-bold text-[#191F28] text-sm sm:text-base">앱 푸시 알림</p>
+                                    <div className="flex-1 mr-4">
+                                        <p className="font-medium text-[#191F28] text-sm sm:text-base">앱 푸시 알림</p>
                                         <p className="text-xs sm:text-sm text-[#8B95A1]">서비스 알림을 앱으로 받습니다.</p>
                                     </div>
                                     <Switch 
                                         checked={pushNotifications}
                                         onCheckedChange={setPushNotifications}
+                                        className="h-[18px] w-8 data-[state=checked]:bg-[#3182F6] data-[state=unchecked]:bg-[#D1D6DB]"
                                         data-testid="switch-push-notifications"
                                     />
                                 </div>
@@ -275,11 +308,11 @@ export default function Settings() {
 
                     <Button 
                         onClick={handleSave} 
-                        disabled={isSaving}
-                        className="w-full h-12 sm:h-14 text-base sm:text-lg font-bold rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] active:scale-[0.98] transition-all"
+                        disabled={saveMutation.isPending || !hasChanges}
+                        className="w-full h-12 sm:h-14 text-base sm:text-lg font-bold rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] active:scale-[0.98] transition-all disabled:opacity-50"
                         data-testid="button-save-settings"
                     >
-                        {isSaving ? (
+                        {saveMutation.isPending ? (
                             <>
                                 <Loader2 className="h-5 w-5 animate-spin mr-2" />
                                 저장 중...

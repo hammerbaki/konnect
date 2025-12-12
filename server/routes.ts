@@ -140,11 +140,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const settings = await storage.getUserSettings(userId);
       
-      if (!settings) {
-        return res.status(404).json({ message: "User settings not found" });
-      }
-      
-      res.json(settings);
+      // Return defaults if settings not found (shouldn't happen, but defensive)
+      res.json(settings || {
+        phone: null,
+        marketingConsent: false,
+        emailNotifications: true,
+        pushNotifications: true,
+      });
     } catch (error) {
       console.error("Error fetching user settings:", error);
       res.status(500).json({ message: "Failed to fetch user settings" });
