@@ -12,7 +12,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { generateCareerAnalysis, generatePersonalEssay, generateGoals, type GoalLevel, checkAIRateLimit } from "./ai";
-import { createRateLimitMiddleware, checkRedisConnection } from "./rateLimiter";
+import { createRateLimitMiddleware, checkRedisConnection, redis } from "./rateLimiter";
 import { startWorker, submitJobWithFastPath } from "./aiWorker";
 import { getQueueStats, estimateProgress } from "./jobQueue";
 
@@ -1307,6 +1307,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get traffic stats (admin/staff can view)
+  app.get('/api/admin/stats/traffic', isAuthenticated, requireStaffOrAdmin, async (_req, res) => {
+    try {
+      const trafficData = await storage.getTrafficOverview();
+      res.json(trafficData);
+    } catch (error: any) {
+      console.error("Error fetching traffic stats:", error);
+      res.status(500).json({ message: "트래픽 통계 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Track page view (public endpoint for analytics, uses Redis for efficient counting)
+  app.post('/api/track/pageview', async (req: any, res) => {
+    try {
+      const now = new Date();
+      const date = now.toISOString().split('T')[0];
+      const hour = now.getHours();
+      const userId = req.user?.id;
+      
+      // Use Redis for real-time counting if available
+      if (redis) {
+        const pageViewKey = `pageviews:${date}:${hour}`;
+        const uniqueVisitorKey = `visitors:${date}`;
+        const visitorId = userId || req.ip || 'anonymous';
+        
+        // Increment page views
+        await redis.incr(pageViewKey);
+        
+        // Track unique visitors with set
+        const isNew = await redis.sadd(uniqueVisitorKey, visitorId);
+        
+        // Set TTL for keys (48 hours)
+        await redis.expire(pageViewKey, 48 * 60 * 60);
+        await redis.expire(uniqueVisitorKey, 48 * 60 * 60);
+        
+        res.json({ tracked: true });
+      } else {
+        // Fallback: direct database insert (less efficient)
+        await storage.upsertVisitorMetrics(date, hour, 1, 1, 0);
+        res.json({ tracked: true });
+      }
+    } catch (error: any) {
+      console.error("Error tracking pageview:", error);
+      res.status(200).json({ tracked: false }); // Silent fail
+    }
+  });
+
   // Get recent AI jobs for monitoring (admin/staff can view)
   app.get('/api/admin/jobs', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
     try {
@@ -1321,6 +1368,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Start the AI worker
   startWorker();
+
+  // Background task to flush Redis visitor metrics to PostgreSQL hourly
+  async function flushRedisMetricsToDB() {
+    try {
+      const now = new Date();
+      const currentHour = now.getHours();
+      
+      // Flush metrics from the previous hour
+      for (let hoursAgo = 1; hoursAgo <= 24; hoursAgo++) {
+        const pastTime = new Date(now.getTime() - hoursAgo * 60 * 60 * 1000);
+        const date = pastTime.toISOString().split('T')[0];
+        const hour = pastTime.getHours();
+        
+        const pageViewKey = `pageviews:${date}:${hour}`;
+        const uniqueVisitorKey = `visitors:${date}`;
+        
+        try {
+          const pageViews = await redis.get(pageViewKey);
+          const uniqueVisitors = await redis.scard(uniqueVisitorKey);
+          
+          if (pageViews && Number(pageViews) > 0) {
+            await storage.upsertVisitorMetrics(date, hour, Number(pageViews), 0, 0);
+            await redis.del(pageViewKey);
+          }
+          
+          // Update unique visitors count for the day (only on last hour check)
+          if (hoursAgo === 1 && uniqueVisitors && Number(uniqueVisitors) > 0) {
+            await storage.upsertVisitorMetrics(date, 0, 0, Number(uniqueVisitors), 0);
+          }
+        } catch (err) {
+          console.error(`Failed to flush metrics for ${date}:${hour}`, err);
+        }
+      }
+      
+      console.log(`✓ Visitor metrics flushed to database at ${now.toISOString()}`);
+    } catch (error) {
+      console.error("Error flushing visitor metrics:", error);
+    }
+  }
+
+  // Flush metrics every hour
+  setInterval(flushRedisMetricsToDB, 60 * 60 * 1000);
+  
+  // Initial flush after 1 minute
+  setTimeout(flushRedisMetricsToDB, 60 * 1000);
 
   const httpServer = createServer(app);
   return httpServer;

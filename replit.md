@@ -15,7 +15,7 @@ The frontend is built with React 18, TypeScript, and Vite. It utilizes Radix UI 
 The backend is an Express.js application running on Node.js with TypeScript. It integrates Supabase Auth for user authentication, supporting social logins and email OTP. Data persistence is managed by PostgreSQL, accessed via Drizzle ORM. AI integration uses the Anthropic Claude API (via Replit AI Integrations) for career analysis and essay generation, incorporating custom rate limiting and retry logic. The API is RESTful, with Zod for request validation and comprehensive error handling.
 
 ### Data Architecture
-The database schema includes `users`, `profiles`, `career_analyses`, `personal_essays`, and `kompass_goals`. A multi-profile system allows users to manage different career personas (elementary, middle, high, university, general job seeker), storing flexible structured data in JSONB fields. This design enables type-specific fields without extensive schema migrations.
+The database schema includes `users`, `profiles`, `career_analyses`, `personal_essays`, `kompass_goals`, and `visitor_metrics`. A multi-profile system allows users to manage different career personas (elementary, middle, high, university, general job seeker), storing flexible structured data in JSONB fields. The `visitor_metrics` table stores hourly aggregated analytics with a unique constraint on (date, hour) for upsert operations.
 
 ### Key Architectural Decisions
 - **Multi-Profile System**: Allows a single user to manage multiple distinct career profiles using flexible JSONB storage.
@@ -25,6 +25,7 @@ The database schema includes `users`, `profiles`, `career_analyses`, `personal_e
 - **AI Response Storage**: Stores both processed AI results and raw responses to enable instant display, historical tracking, and potential re-processing without re-running expensive AI calls.
 - **Rate Limiting Strategy**: Combines client-side concurrency limits with server-side exponential backoff retry logic to manage Claude API rate limits effectively.
 - **Career Explorer Performance**: Uses server-side stats caching (7-day expiry in `career_stats` table), skeleton loaders, and progressive loading (30 items with load-more).
+- **Visitor Analytics**: Uses Redis for real-time page view/visitor counting with hourly PostgreSQL aggregation. Frontend tracks route changes via `usePageTracking` hook. Admin dashboard displays traffic stats with line charts showing daily trends.
 
 ## External Dependencies
 

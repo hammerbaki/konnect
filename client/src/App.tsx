@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { TokenProvider } from "@/lib/TokenContext";
 import { MobileActionProvider } from "@/lib/MobileActionContext";
 import { AuthProvider, useAuth } from "@/lib/AuthContext";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
@@ -27,13 +27,11 @@ const Admin = lazy(() => import("./pages/Admin"));
 function LoadingSpinner() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F2F4F6] gap-4">
-      <div className="w-14 h-14 rounded-[18px] bg-[#3182F6] flex items-center justify-center shadow-lg shadow-blue-500/20">
-        <span className="text-white text-2xl font-bold">K</span>
-      </div>
+      <div className="w-14 h-14 rounded-[18px] bg-gray-200 animate-pulse"></div>
       <div className="flex items-center gap-2">
-        <div className="w-2 h-2 rounded-full bg-[#3182F6] animate-bounce" style={{ animationDelay: "0ms" }}></div>
-        <div className="w-2 h-2 rounded-full bg-[#3182F6] animate-bounce" style={{ animationDelay: "150ms" }}></div>
-        <div className="w-2 h-2 rounded-full bg-[#3182F6] animate-bounce" style={{ animationDelay: "300ms" }}></div>
+        <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse"></div>
+        <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" style={{ animationDelay: "150ms" }}></div>
+        <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" style={{ animationDelay: "300ms" }}></div>
       </div>
     </div>
   );
@@ -41,6 +39,18 @@ function LoadingSpinner() {
 
 function PageLoader() {
   return null;
+}
+
+function usePageTracking() {
+  const [location] = useLocation();
+  
+  useEffect(() => {
+    fetch('/api/track/pageview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    }).catch(() => {});
+  }, [location]);
 }
 
 function ProtectedRoute({ component: Component, ...rest }: { component: React.ComponentType<any>; [key: string]: any }) {
@@ -58,6 +68,8 @@ function ProtectedRoute({ component: Component, ...rest }: { component: React.Co
 }
 
 function Router() {
+  usePageTracking();
+  
   return (
     <Suspense fallback={<PageLoader />}>
       <Switch>

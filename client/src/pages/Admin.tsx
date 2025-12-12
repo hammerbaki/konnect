@@ -9,12 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Users, Settings, Coins, Activity, 
   RefreshCw, Search, Shield, User, Crown,
-  BarChart3, Clock, CheckCircle, XCircle, AlertTriangle
+  BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -51,6 +51,14 @@ interface CurrentUser {
   role?: string;
 }
 
+interface TrafficStats {
+  today: { pageViews: number; uniqueVisitors: number; newUsers: number };
+  yesterday: { pageViews: number; uniqueVisitors: number; newUsers: number };
+  last7Days: { pageViews: number; uniqueVisitors: number; newUsers: number };
+  last30Days: { pageViews: number; uniqueVisitors: number; newUsers: number };
+  dailyData: Array<{ date: string; pageViews: number; uniqueVisitors: number }>;
+}
+
 const COLORS = ['#3182F6', '#7C3AED', '#059669', '#D97706', '#EC4899', '#6B7280'];
 
 export default function Admin() {
@@ -81,6 +89,12 @@ export default function Admin() {
 
   const { data: aiStats, refetch: refetchAiStats } = useQuery<AiStats>({
     queryKey: ['/api/admin/stats/ai'],
+    enabled: isStaffOrAdmin,
+    retry: false,
+  });
+
+  const { data: trafficStats, refetch: refetchTraffic } = useQuery<TrafficStats>({
+    queryKey: ['/api/admin/stats/traffic'],
     enabled: isStaffOrAdmin,
     retry: false,
   });
@@ -228,6 +242,7 @@ export default function Admin() {
               refetchUsers();
               refetchStats();
               refetchAiStats();
+              refetchTraffic();
             }}
             className="rounded-xl"
             data-testid="button-refresh-admin"
@@ -250,6 +265,10 @@ export default function Admin() {
             <TabsTrigger value="tokens" className="rounded-lg px-4" data-testid="tab-tokens">
               <Coins className="h-4 w-4 mr-2" />
               토큰 시스템
+            </TabsTrigger>
+            <TabsTrigger value="traffic" className="rounded-lg px-4" data-testid="tab-traffic">
+              <TrendingUp className="h-4 w-4 mr-2" />
+              트래픽
             </TabsTrigger>
           </TabsList>
 
@@ -532,6 +551,128 @@ export default function Admin() {
                     </p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="traffic" className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="toss-card">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Eye className="h-5 w-5 text-[#3182F6]" />
+                    <span className="text-sm text-[#8B95A1]">오늘 방문</span>
+                  </div>
+                  <p className="text-2xl font-bold text-[#191F28]">
+                    {trafficStats?.today.pageViews.toLocaleString() || 0}
+                  </p>
+                  <p className="text-xs text-[#8B95A1]">
+                    순 방문자 {trafficStats?.today.uniqueVisitors || 0}명
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="toss-card">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Eye className="h-5 w-5 text-[#7C3AED]" />
+                    <span className="text-sm text-[#8B95A1]">어제 방문</span>
+                  </div>
+                  <p className="text-2xl font-bold text-[#191F28]">
+                    {trafficStats?.yesterday.pageViews.toLocaleString() || 0}
+                  </p>
+                  <p className="text-xs text-[#8B95A1]">
+                    순 방문자 {trafficStats?.yesterday.uniqueVisitors || 0}명
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="toss-card">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-5 w-5 text-[#059669]" />
+                    <span className="text-sm text-[#8B95A1]">7일 합계</span>
+                  </div>
+                  <p className="text-2xl font-bold text-[#191F28]">
+                    {trafficStats?.last7Days.pageViews.toLocaleString() || 0}
+                  </p>
+                  <p className="text-xs text-[#8B95A1]">
+                    순 방문자 {trafficStats?.last7Days.uniqueVisitors || 0}명
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="toss-card">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-5 w-5 text-[#D97706]" />
+                    <span className="text-sm text-[#8B95A1]">30일 합계</span>
+                  </div>
+                  <p className="text-2xl font-bold text-[#191F28]">
+                    {trafficStats?.last30Days.pageViews.toLocaleString() || 0}
+                  </p>
+                  <p className="text-xs text-[#8B95A1]">
+                    순 방문자 {trafficStats?.last30Days.uniqueVisitors || 0}명
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="toss-card">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-[#3182F6]" />
+                  일별 트래픽 추이
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {trafficStats?.dailyData && trafficStats.dailyData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={trafficStats.dailyData.slice(-14)}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E8EB" />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getMonth() + 1}/${date.getDate()}`;
+                        }}
+                      />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip 
+                        labelFormatter={(value) => new Date(value).toLocaleDateString('ko-KR')}
+                        formatter={(value, name) => [
+                          value.toLocaleString(),
+                          name === 'pageViews' ? '페이지뷰' : '순 방문자'
+                        ]}
+                      />
+                      <Legend 
+                        formatter={(value) => value === 'pageViews' ? '페이지뷰' : '순 방문자'}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="pageViews" 
+                        stroke="#3182F6" 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="uniqueVisitors" 
+                        stroke="#7C3AED" 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center text-[#8B95A1]">
+                    <div className="text-center">
+                      <TrendingUp className="h-12 w-12 mx-auto mb-4 text-[#E5E8EB]" />
+                      <p>아직 트래픽 데이터가 없습니다</p>
+                      <p className="text-sm">방문자가 생기면 이곳에 차트가 표시됩니다</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

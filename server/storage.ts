@@ -7,6 +7,7 @@ import {
   careers,
   careerStats,
   aiJobs,
+  visitorMetrics,
   type User,
   type UpsertUser,
   type Profile,
@@ -24,9 +25,11 @@ import {
   type InsertAiJob,
   type AiJobStatus,
   type UserRole,
+  type VisitorMetrics,
+  type InsertVisitorMetrics,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, ilike, and, inArray, sql, count } from "drizzle-orm";
+import { eq, desc, ilike, and, inArray, sql, count, gte, lte, sum } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -95,6 +98,18 @@ export interface IStorage {
     failedJobs: number;
     avgTokensPerJob: number;
     jobsByType: Record<string, number>;
+  }>;
+
+  // Visitor Metrics
+  upsertVisitorMetrics(date: string, hour: number, pageViews: number, uniqueVisitors: number, newUsers?: number): Promise<VisitorMetrics>;
+  getVisitorMetricsByDateRange(startDate: string, endDate: string): Promise<VisitorMetrics[]>;
+  getTodayMetrics(): Promise<{ pageViews: number; uniqueVisitors: number; newUsers: number }>;
+  getTrafficOverview(): Promise<{
+    today: { pageViews: number; uniqueVisitors: number; newUsers: number };
+    yesterday: { pageViews: number; uniqueVisitors: number; newUsers: number };
+    last7Days: { pageViews: number; uniqueVisitors: number; newUsers: number };
+    last30Days: { pageViews: number; uniqueVisitors: number; newUsers: number };
+    dailyData: Array<{ date: string; pageViews: number; uniqueVisitors: number }>;
   }>;
 }
 
@@ -518,6 +533,110 @@ export class DatabaseStorage implements IStorage {
       failedJobs: failed.length,
       avgTokensPerJob: tokenCount > 0 ? Math.round(totalTokens / tokenCount) : 0,
       jobsByType,
+    };
+  }
+
+  // Visitor Metrics implementation
+  async upsertVisitorMetrics(date: string, hour: number, pageViews: number, uniqueVisitors: number, newUsers: number = 0): Promise<VisitorMetrics> {
+    const [metrics] = await db
+      .insert(visitorMetrics)
+      .values({ date, hour, pageViews, uniqueVisitors, newUsers })
+      .onConflictDoUpdate({
+        target: [visitorMetrics.date, visitorMetrics.hour],
+        set: { 
+          pageViews: sql`${visitorMetrics.pageViews} + ${pageViews}`,
+          uniqueVisitors: sql`${visitorMetrics.uniqueVisitors} + ${uniqueVisitors}`,
+          newUsers: sql`${visitorMetrics.newUsers} + ${newUsers}`,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return metrics;
+  }
+
+  async getVisitorMetricsByDateRange(startDate: string, endDate: string): Promise<VisitorMetrics[]> {
+    return db
+      .select()
+      .from(visitorMetrics)
+      .where(and(
+        gte(visitorMetrics.date, startDate),
+        lte(visitorMetrics.date, endDate)
+      ))
+      .orderBy(desc(visitorMetrics.date), visitorMetrics.hour);
+  }
+
+  async getTodayMetrics(): Promise<{ pageViews: number; uniqueVisitors: number; newUsers: number }> {
+    const today = new Date().toISOString().split('T')[0];
+    const metrics = await db
+      .select()
+      .from(visitorMetrics)
+      .where(eq(visitorMetrics.date, today));
+    
+    return metrics.reduce((acc, m) => ({
+      pageViews: acc.pageViews + m.pageViews,
+      uniqueVisitors: acc.uniqueVisitors + m.uniqueVisitors,
+      newUsers: acc.newUsers + m.newUsers,
+    }), { pageViews: 0, uniqueVisitors: 0, newUsers: 0 });
+  }
+
+  async getTrafficOverview(): Promise<{
+    today: { pageViews: number; uniqueVisitors: number; newUsers: number };
+    yesterday: { pageViews: number; uniqueVisitors: number; newUsers: number };
+    last7Days: { pageViews: number; uniqueVisitors: number; newUsers: number };
+    last30Days: { pageViews: number; uniqueVisitors: number; newUsers: number };
+    dailyData: Array<{ date: string; pageViews: number; uniqueVisitors: number }>;
+  }> {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const allMetrics = await db
+      .select()
+      .from(visitorMetrics)
+      .where(gte(visitorMetrics.date, thirtyDaysAgo))
+      .orderBy(visitorMetrics.date, visitorMetrics.hour);
+
+    const aggregateByDates = (metrics: VisitorMetrics[], dates: string[]) => {
+      return metrics
+        .filter(m => dates.includes(m.date))
+        .reduce((acc, m) => ({
+          pageViews: acc.pageViews + m.pageViews,
+          uniqueVisitors: acc.uniqueVisitors + m.uniqueVisitors,
+          newUsers: acc.newUsers + m.newUsers,
+        }), { pageViews: 0, uniqueVisitors: 0, newUsers: 0 });
+    };
+
+    // Group by date for daily data
+    const dailyMap = new Map<string, { pageViews: number; uniqueVisitors: number }>();
+    for (const m of allMetrics) {
+      const existing = dailyMap.get(m.date) || { pageViews: 0, uniqueVisitors: 0 };
+      dailyMap.set(m.date, {
+        pageViews: existing.pageViews + m.pageViews,
+        uniqueVisitors: existing.uniqueVisitors + m.uniqueVisitors,
+      });
+    }
+    
+    const dailyData = Array.from(dailyMap.entries())
+      .map(([date, data]) => ({ date, ...data }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Get date ranges
+    const last7Dates: string[] = [];
+    const last30Dates: string[] = [];
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      last30Dates.push(d);
+      if (i < 7) last7Dates.push(d);
+    }
+
+    return {
+      today: aggregateByDates(allMetrics, [today]),
+      yesterday: aggregateByDates(allMetrics, [yesterday]),
+      last7Days: aggregateByDates(allMetrics, last7Dates),
+      last30Days: aggregateByDates(allMetrics, last30Dates),
+      dailyData,
     };
   }
 }

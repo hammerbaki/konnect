@@ -9,6 +9,7 @@ import {
   index,
   integer,
   real,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -271,3 +272,27 @@ export type InsertAiJob = z.infer<typeof insertAiJobSchema>;
 export type AiJob = typeof aiJobs.$inferSelect;
 export type AiJobType = 'analysis' | 'essay' | 'essay_revision' | 'goal';
 export type AiJobStatus = 'queued' | 'processing' | 'completed' | 'failed';
+
+// ===== VISITOR METRICS TABLE (Hourly aggregated analytics) =====
+export const visitorMetrics = pgTable("visitor_metrics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD format
+  hour: integer("hour").notNull(), // 0-23
+  pageViews: integer("page_views").notNull().default(0),
+  uniqueVisitors: integer("unique_visitors").notNull().default(0),
+  newUsers: integer("new_users").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_visitor_metrics_date").on(table.date),
+  uniqueIndex("IDX_visitor_metrics_date_hour_unique").on(table.date, table.hour),
+]);
+
+export const insertVisitorMetricsSchema = createInsertSchema(visitorMetrics).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertVisitorMetrics = z.infer<typeof insertVisitorMetricsSchema>;
+export type VisitorMetrics = typeof visitorMetrics.$inferSelect;

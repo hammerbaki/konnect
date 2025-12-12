@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Filter, ArrowRight, Building2, Briefcase, X, DollarSign, GraduationCap, TrendingUp, Smile, Activity, Star, Loader2, Users, Award, BookOpen, Link2 } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
+import { Search, Filter, ArrowRight, Building2, Briefcase, X, DollarSign, GraduationCap, TrendingUp, Smile, Activity, Star, Users, Award, BookOpen, Link2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import {
   Select,
@@ -336,43 +337,19 @@ export default function Explorer() {
     const [selectedCareer, setSelectedCareer] = useState<ProcessedCareer | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     
-    // Data loading state
-    const [rawData, setRawData] = useState<CareerApiItem[] | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [loadError, setLoadError] = useState<string | null>(null);
-    
-    // Server-computed stats (loads fast, separate from heavy career data)
-    const [serverStats, setServerStats] = useState<ServerStats | null>(null);
-    const [statsLoading, setStatsLoading] = useState(true);
+    // Server-computed stats (loads fast, cached for 10 minutes)
+    const { data: serverStats, isLoading: statsLoading } = useQuery<ServerStats>({
+        queryKey: ['/api/careers/stats/overview'],
+        staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+        gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    });
 
-    // Load pre-computed stats first (fast)
-    useEffect(() => {
-        fetch('/api/careers/stats/overview')
-            .then(res => res.ok ? res.json() : null)
-            .then(data => {
-                setServerStats(data);
-                setStatsLoading(false);
-            })
-            .catch(() => setStatsLoading(false));
-    }, []);
-
-    // Load career data from API (slower, but skeleton shows immediately)
-    useEffect(() => {
-        fetch('/api/careers')
-            .then(res => {
-                if (!res.ok) throw new Error('Failed to load career data');
-                return res.json();
-            })
-            .then(data => {
-                setRawData(data);
-                setIsLoading(false);
-            })
-            .catch(err => {
-                console.error('Failed to load career data:', err);
-                setLoadError('직업 데이터를 불러오는데 실패했습니다.');
-                setIsLoading(false);
-            });
-    }, []);
+    // Career data (cached for 10 minutes)
+    const { data: rawData, isLoading, error: loadError } = useQuery<CareerApiItem[]>({
+        queryKey: ['/api/careers'],
+        staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+        gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    });
 
     const handleCardClick = (career: ProcessedCareer) => {
         setSelectedCareer(career);
@@ -717,7 +694,7 @@ export default function Explorer() {
                         <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-red-50 mb-2">
                             <X className="h-8 w-8 text-red-500" />
                         </div>
-                        <h2 className="text-xl font-bold text-[#191F28]">{loadError}</h2>
+                        <h2 className="text-xl font-bold text-[#191F28]">직업 데이터를 불러오는데 실패했습니다.</h2>
                         <Button onClick={() => window.location.reload()} variant="outline">
                             다시 시도
                         </Button>
