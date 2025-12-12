@@ -6,7 +6,10 @@ Konnect is a Korean-language AI-powered career guidance platform that provides p
 
 ## Recent Changes
 
-### December 12, 2024 - Security & Performance Improvements
+### December 12, 2024 - Optimistic UI + Security Improvements
+- **Optimistic UI for essay deletion**: Clicking delete instantly removes the item from the list; if the server fails, it rolls back
+- **Optimistic UI for credit deduction**: Tokens decrease immediately when AI jobs start (essay, revision, analysis); restored on failure
+- **Industry best practice**: TanStack Query `onMutate`/`onError`/`onSettled` pattern for cache manipulation
 - **Helmet middleware** added for security HTTP headers (XSS protection, clickjacking prevention, etc.)
 - **Gzip compression** enabled for all responses (up to 70% payload reduction)
 - **X-Powered-By header disabled** to hide Express framework fingerprint
