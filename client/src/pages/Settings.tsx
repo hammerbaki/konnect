@@ -4,10 +4,84 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Bell, Shield, Lock, UserX, Smartphone, ChevronRight, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import { useState, useEffect } from "react";
+
+function SettingsSkeleton() {
+    return (
+        <Layout>
+            <div className="max-w-2xl mx-auto pb-20">
+                <Skeleton className="h-8 w-24 mb-6" />
+
+                <div className="space-y-5 sm:space-y-6">
+                    {/* Contact Information Skeleton */}
+                    <section>
+                        <Skeleton className="h-6 w-32 mb-3" />
+                        <Card className="toss-card">
+                            <CardContent className="p-4 sm:p-6 space-y-4">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-16" />
+                                    <div className="flex gap-2">
+                                        <Skeleton className="h-12 flex-1 rounded-xl" />
+                                        <Skeleton className="h-12 w-16 rounded-xl" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-20" />
+                                    <div className="flex gap-2">
+                                        <Skeleton className="h-12 flex-1 rounded-xl" />
+                                        <Skeleton className="h-12 w-16 rounded-xl" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </section>
+
+                    {/* Notifications Skeleton */}
+                    <section>
+                        <Skeleton className="h-6 w-24 mb-3" />
+                        <Card className="toss-card">
+                            <CardContent className="p-0">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="flex items-center justify-between p-4 sm:p-5 border-b border-[#F2F4F6] last:border-b-0">
+                                        <div className="flex-1 mr-3">
+                                            <Skeleton className="h-5 w-32 mb-1" />
+                                            <Skeleton className="h-4 w-48" />
+                                        </div>
+                                        <Skeleton className="h-6 w-10 rounded-full" />
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    </section>
+
+                    {/* Security Skeleton */}
+                    <section>
+                        <Skeleton className="h-6 w-28 mb-3" />
+                        <Card className="toss-card">
+                            <CardContent className="p-0">
+                                {[1, 2].map((i) => (
+                                    <div key={i} className="flex items-center justify-between p-4 sm:p-5 border-b border-[#F2F4F6] last:border-b-0">
+                                        <div className="flex items-center gap-3">
+                                            <Skeleton className="h-5 w-5 rounded" />
+                                            <Skeleton className="h-5 w-24" />
+                                        </div>
+                                        <Skeleton className="h-5 w-5" />
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    </section>
+
+                    <Skeleton className="h-14 w-full rounded-xl" />
+                </div>
+            </div>
+        </Layout>
+    );
+}
 
 export default function Settings() {
     const { toast } = useToast();
@@ -61,13 +135,7 @@ export default function Settings() {
     };
 
     if (isLoading) {
-        return (
-            <Layout>
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
-                </div>
-            </Layout>
-        );
+        return <SettingsSkeleton />;
     }
 
     const userEmail = user?.email || "";
