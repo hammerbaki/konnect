@@ -18,24 +18,36 @@ export function usePageAccess() {
       if (!res.ok) throw new Error('Failed to fetch page visibility');
       return res.json();
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !!user?.id,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
   });
 
+  // Use user's role from auth context as fallback when visibility not loaded
+  const userRole = visibility?.userRole ?? user?.role ?? 'user';
+  const isStaffOrAdmin = userRole === 'staff' || userRole === 'admin';
+
   const canAccess = (slug: string): boolean => {
+    // If visibility data not loaded yet, use role-based defaults
     if (!visibility) {
-      return false;
+      // While loading, allow access based on user's actual role from auth
+      // Admin page is always admin/staff only
+      if (slug === '/admin') {
+        return isStaffOrAdmin;
+      }
+      // For other pages, allow access while loading (route protection will handle it)
+      return true;
     }
+    
     if (slug in visibility.pages) {
       return visibility.pages[slug];
     }
-    return visibility.userRole === 'staff' || visibility.userRole === 'admin';
+    
+    // Unknown pages default to staff/admin only
+    return isStaffOrAdmin;
   };
-
-  const userRole = visibility?.userRole ?? 'user';
 
   return {
     canAccess,
