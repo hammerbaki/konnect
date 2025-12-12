@@ -67,7 +67,6 @@ export default function Landing() {
         <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-[#3182F6]/5 blur-3xl" />
         <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] rounded-full bg-[#3182F6]/5 blur-3xl" />
       </div>
-
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -120,7 +119,7 @@ export default function Landing() {
 
             <div className="flex items-center justify-center gap-2 text-xs text-[#8B95A1]">
               <Mail className="w-4 h-4" />
-              <span>Google, Apple 또는 이메일로 시작</span>
+              <span>Google 또는 이메일로 시작</span>
             </div>
           </CardContent>
         </Card>
