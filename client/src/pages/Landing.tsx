@@ -86,9 +86,7 @@ export default function Landing() {
             <CardTitle className="text-2xl font-bold text-[#191F28]">
               반가워요 👋
             </CardTitle>
-            <CardDescription className="text-[#8B95A1] text-base">
-              커리어 대시보드에 접속하세요.
-            </CardDescription>
+            <CardDescription className="text-[#8B95A1] text-base">컨넥트 커리어 대시보드에 접속하세요.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 px-8 pb-8">
             <div className="space-y-3">
