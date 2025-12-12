@@ -277,11 +277,12 @@ export default function TokenRecharge() {
             </div>
           ) : (
             displayPackages.map((pkg) => {
-              const isPopular = pkg.description === "인기" || pkg.bonusPoints > 0;
+              const hasBadge = pkg.description && pkg.description.trim() !== '';
+              const isHighlighted = hasBadge || pkg.bonusPoints > 0;
               return (
                 <Card 
                   key={pkg.id} 
-                  className={`toss-card cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isPopular ? 'border-[#3182F6] ring-1 ring-[#3182F6]' : ''}`}
+                  className={`toss-card cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isHighlighted ? 'border-[#3182F6] ring-1 ring-[#3182F6]' : ''}`}
                   onClick={() => handleRecharge(pkg)}
                   data-testid={`card-package-${pkg.id}`}
                 >
@@ -294,9 +295,9 @@ export default function TokenRecharge() {
                             +{pkg.bonusPoints.toLocaleString()} 보너스
                           </Badge>
                         )}
-                        {isPopular && (
+                        {hasBadge && (
                           <Badge className="bg-[#3182F6] text-white border-none hover:bg-[#3182F6]">
-                            인기
+                            {pkg.description}
                           </Badge>
                         )}
                       </div>
@@ -305,7 +306,7 @@ export default function TokenRecharge() {
                     <div className="flex items-center gap-4">
                       <span className="text-lg font-bold text-[#333D4B]">{formatPrice(pkg.price)}</span>
                       <Button 
-                        className={`rounded-full h-10 px-5 font-bold ${isPopular ? 'bg-[#3182F6] hover:bg-[#2b72d7]' : 'bg-[#F2F4F6] text-[#3182F6] hover:bg-[#E5E8EB]'}`}
+                        className={`rounded-full h-10 px-5 font-bold ${isHighlighted ? 'bg-[#3182F6] hover:bg-[#2b72d7]' : 'bg-[#F2F4F6] text-[#3182F6] hover:bg-[#E5E8EB]'}`}
                         disabled={isProcessing}
                         data-testid={`button-buy-${pkg.id}`}
                       >
