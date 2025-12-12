@@ -39,9 +39,9 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.tosspayments.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       connectSrc: [
         "'self'",
@@ -49,8 +49,10 @@ app.use(helmet({
         "wss://*.supabase.co",
         "https://accounts.google.com",
         "https://apis.google.com",
+        "https://api.tosspayments.com",
+        "https://*.tosspayments.com",
       ],
-      frameSrc: ["'self'", "https://*.supabase.co", "https://accounts.google.com"],
+      frameSrc: ["'self'", "https://*.supabase.co", "https://accounts.google.com", "https://*.tosspayments.com"],
       formAction: ["'self'"],
       upgradeInsecureRequests: [],
     },
