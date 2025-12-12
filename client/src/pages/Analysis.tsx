@@ -22,7 +22,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useAIJob } from "@/hooks/useAIJob";
+import { useTokens } from "@/lib/TokenContext";
 import { Bot } from "lucide-react";
+
+const ANALYSIS_CREDIT_COST = 100;
 
 interface CareerActions {
     portfolio: string[];
@@ -88,6 +91,7 @@ export default function Analysis() {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [, navigate] = useLocation();
+    const { deductCredit, restoreCredits } = useTokens();
     
     const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -120,13 +124,22 @@ export default function Analysis() {
     const latestAnalysis = analyses && analyses.length > 0 ? analyses[0] : null;
     const activeProfile = profiles?.find((p: any) => p.id === activeProfileId);
 
+    // Track optimistic credit deduction for safe restoration
+    const analysisCreditsDeductedRef = useRef(false);
+
     const aiJob = useAIJob({
         onSuccess: () => {
+            analysisCreditsDeductedRef.current = false; // Clear flag on success
             queryClient.invalidateQueries({ queryKey: ['/api/profiles', activeProfileId, 'analyses'] });
             queryClient.invalidateQueries({ queryKey: ['/api/user-identity'] });
             toast({ title: "분석 완료", description: "AI 커리어 분석이 완료되었습니다." });
         },
         onError: (error: string) => {
+            // Only restore if we actually deducted
+            if (analysisCreditsDeductedRef.current) {
+                restoreCredits(ANALYSIS_CREDIT_COST);
+                analysisCreditsDeductedRef.current = false;
+            }
             toast({ 
                 variant: "destructive", 
                 title: "분석 실패", 
@@ -138,10 +151,22 @@ export default function Analysis() {
     const handleGenerateAnalysis = async (profileId: string) => {
         if (!activeProfile) return;
         
-        await aiJob.submitJob("analysis", profileId, {
-            profileData: activeProfile.profileData,
-            profileType: activeProfile.type,
-        });
+        // Optimistically deduct credits immediately
+        const deducted = deductCredit(ANALYSIS_CREDIT_COST);
+        if (!deducted) {
+            toast({ variant: "destructive", description: "크레딧이 부족합니다. 분석에 100 크레딧이 필요합니다." });
+            return;
+        }
+        analysisCreditsDeductedRef.current = true; // Track deduction for safe restoration
+        
+        try {
+            await aiJob.submitJob("analysis", profileId, {
+                profileData: activeProfile.profileData,
+                profileType: activeProfile.type,
+            });
+        } catch (error) {
+            // onError in useAIJob will handle restoring credits using the ref flag
+        }
     };
 
     useEffect(() => {

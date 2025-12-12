@@ -6,8 +6,9 @@ interface TokenContextType {
   credits: number;
   isLoading: boolean;
   refreshCredits: () => Promise<void>;
-  deductCredit: () => boolean;
+  deductCredit: (amount?: number) => boolean;
   addCredits: (amount: number) => void;
+  restoreCredits: (amount: number) => void;
 }
 
 const TokenContext = createContext<TokenContextType | undefined>(undefined);
@@ -56,13 +57,17 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const deductCredit = useCallback(() => {
-    if (credits > 0) {
-      setCredits(prev => prev - 1);
+  const deductCredit = useCallback((amount: number = 100) => {
+    if (credits >= amount) {
+      setCredits(prev => prev - amount);
       return true;
     }
     return false;
   }, [credits]);
+  
+  const restoreCredits = useCallback((amount: number) => {
+    setCredits(prev => prev + amount);
+  }, []);
 
   const addCredits = useCallback((amount: number) => {
     setCredits(prev => prev + amount);
@@ -73,7 +78,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
   }, [toast]);
 
   return (
-    <TokenContext.Provider value={{ credits, isLoading, refreshCredits, deductCredit, addCredits }}>
+    <TokenContext.Provider value={{ credits, isLoading, refreshCredits, deductCredit, addCredits, restoreCredits }}>
       {children}
     </TokenContext.Provider>
   );

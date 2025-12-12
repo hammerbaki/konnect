@@ -33,8 +33,12 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAIJob } from "@/hooks/useAIJob";
+import { useTokens } from "@/lib/TokenContext";
 import type { Profile, PersonalEssay } from "@shared/schema";
 import { Link } from "wouter";
+
+const ESSAY_CREDIT_COST = 100;
+const REVISION_CREDIT_COST = 30;
 
 // Profile type mappings for categories
 const profileTypeToCategoryId: Record<string, CategoryId> = {
@@ -209,6 +213,7 @@ export default function PersonalStatement() {
     const { toast } = useToast();
     const scrollRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
+    const { deductCredit, restoreCredits, refreshCredits } = useTokens();
 
     // API Queries
     const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery<Profile[]>({
@@ -242,9 +247,14 @@ export default function PersonalStatement() {
         enabled: !!activeProfileId,
     });
 
+    // Track optimistic credit deductions for safe restoration
+    const essayCreditsDeductedRef = useRef(false);
+    const revisionCreditsDeductedRef = useRef(false);
+
     // AI Job integration for essay generation
     const aiJob = useAIJob({
         onSuccess: async (result: any, jobId: string) => {
+            essayCreditsDeductedRef.current = false; // Clear flag on success
             // Save the completed essay to database
             try {
                 const res = await apiRequest("POST", `/api/ai/jobs/${jobId}/complete-essay`);
@@ -268,6 +278,11 @@ export default function PersonalStatement() {
             }
         },
         onError: (error: string) => {
+            // Only restore if we actually deducted
+            if (essayCreditsDeductedRef.current) {
+                restoreCredits(ESSAY_CREDIT_COST);
+                essayCreditsDeductedRef.current = false;
+            }
             toast({ variant: "destructive", description: error || "생성 중 오류가 발생했습니다." });
         },
     });
@@ -276,6 +291,7 @@ export default function PersonalStatement() {
     // Note: We use a ref (currentSessionRef defined below) to track the current session for the callback
     const revisionJob = useAIJob({
         onSuccess: async (result: any, jobId: string) => {
+            revisionCreditsDeductedRef.current = false; // Clear flag on success
             try {
                 const res = await apiRequest("POST", `/api/ai/jobs/${jobId}/complete-essay-revision`);
                 if (res.ok) {
@@ -307,6 +323,11 @@ export default function PersonalStatement() {
             }
         },
         onError: (error: string) => {
+            // Only restore if we actually deducted
+            if (revisionCreditsDeductedRef.current) {
+                restoreCredits(REVISION_CREDIT_COST);
+                revisionCreditsDeductedRef.current = false;
+            }
             toast({ variant: "destructive", description: error || "수정 중 오류가 발생했습니다." });
         },
     });
@@ -379,20 +400,43 @@ export default function PersonalStatement() {
     // Track which essay is being deleted for spinner display
     const [deletingEssayId, setDeletingEssayId] = useState<string | null>(null);
 
-    // Delete essay from database
+    // Delete essay from database with optimistic UI update
     const deleteEssayMutation = useMutation({
         mutationFn: async (essayId: string) => {
             const res = await apiRequest("DELETE", `/api/essays/${essayId}`);
             if (!res.ok) throw new Error("삭제 실패");
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/profiles", activeProfileId, "essays"] });
+        onMutate: async (essayId: string) => {
+            // Cancel any outgoing refetches
+            await queryClient.cancelQueries({ queryKey: ["/api/profiles", activeProfileId, "essays"] });
+            
+            // Snapshot previous value for rollback
+            const previousEssays = queryClient.getQueryData(["/api/profiles", activeProfileId, "essays"]);
+            
+            // Optimistically remove from cache immediately
+            queryClient.setQueryData(
+                ["/api/profiles", activeProfileId, "essays"],
+                (old: any[] | undefined) => old?.filter(e => e.id !== essayId) ?? []
+            );
+            
             toast({ description: "기록이 삭제되었습니다." });
             setDeletingEssayId(null);
+            
+            return { previousEssays };
         },
-        onError: () => {
-            toast({ variant: "destructive", description: "삭제 중 오류가 발생했습니다." });
-            setDeletingEssayId(null);
+        onError: (_err, _essayId, context) => {
+            // Rollback on error
+            if (context?.previousEssays) {
+                queryClient.setQueryData(
+                    ["/api/profiles", activeProfileId, "essays"],
+                    context.previousEssays
+                );
+            }
+            toast({ variant: "destructive", description: "삭제 중 오류가 발생했습니다. 다시 시도해주세요." });
+        },
+        onSettled: () => {
+            // Sync with server data
+            queryClient.invalidateQueries({ queryKey: ["/api/profiles", activeProfileId, "essays"] });
         },
     });
 
@@ -432,8 +476,15 @@ export default function PersonalStatement() {
 
         setMessages([initialMsg]);
 
-        // Submit job to queue for AI generation (costs 1 credit)
-        // Note: Credits are deducted by the backend before job submission
+        // Optimistically deduct credits immediately (100 credits for essay)
+        const deducted = deductCredit(ESSAY_CREDIT_COST);
+        if (!deducted) {
+            toast({ variant: "destructive", description: "크레딧이 부족합니다. 자소서 생성에 100 크레딧이 필요합니다." });
+            return;
+        }
+        essayCreditsDeductedRef.current = true; // Track deduction for safe restoration
+
+        // Submit job to queue for AI generation
         try {
             await aiJob.submitJob("essay", activeProfileId, {
                 profileType: activeProfile.type,
@@ -444,6 +495,7 @@ export default function PersonalStatement() {
             });
         } catch (error) {
             console.error("Failed to submit essay job:", error);
+            // onError in useAIJob will handle restoring credits using the ref flag
         }
     };
 
@@ -479,7 +531,15 @@ export default function PersonalStatement() {
         const revisionRequest = input;
         setInput("");
 
-        // Submit essay_revision job (costs 30 credits)
+        // Optimistically deduct credits immediately (30 credits for revision)
+        const deducted = deductCredit(REVISION_CREDIT_COST);
+        if (!deducted) {
+            toast({ variant: "destructive", description: "크레딧이 부족합니다. 수정을 위해 30 크레딧이 필요합니다." });
+            return;
+        }
+        revisionCreditsDeductedRef.current = true; // Track deduction for safe restoration
+
+        // Submit essay_revision job
         try {
             await revisionJob.submitJob("essay_revision", activeProfileId, {
                 essayId: currentSessionId,
@@ -489,11 +549,7 @@ export default function PersonalStatement() {
             });
         } catch (error: any) {
             console.error("Failed to submit revision job:", error);
-            if (error.message?.includes("크레딧")) {
-                toast({ variant: "destructive", description: "크레딧이 부족합니다. 수정을 위해 30 크레딧이 필요합니다." });
-            } else {
-                toast({ variant: "destructive", description: "수정 요청 중 오류가 발생했습니다." });
-            }
+            // onError in useAIJob will handle restoring credits using the ref flag
         }
     };
 
