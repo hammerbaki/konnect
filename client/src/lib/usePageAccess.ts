@@ -10,10 +10,14 @@ export interface PageVisibility {
 export function usePageAccess() {
   const { isAuthenticated, user } = useAuth();
 
-  const { data: visibility, isLoading, isFetching } = useQuery<PageVisibility>({
+  const { data: visibility, isLoading, isFetching, error } = useQuery<PageVisibility>({
     queryKey: ['page-visibility', user?.id],
     queryFn: async () => {
       const authHeaders = await getAuthHeaders();
+      // Skip if no auth headers available
+      if (!authHeaders.Authorization) {
+        throw new Error('No auth token available');
+      }
       const res = await fetch('/api/page-visibility', {
         headers: authHeaders,
         credentials: 'include',
@@ -22,10 +26,12 @@ export function usePageAccess() {
       return res.json();
     },
     enabled: isAuthenticated && !!user?.id,
-    staleTime: 30 * 1000,
+    staleTime: 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    refetchOnMount: false, // Don't refetch on every mount
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    retry: 2, // Retry twice on failure
+    retryDelay: 500,
   });
 
   // Use user's role from auth context as fallback when visibility not loaded
@@ -55,7 +61,10 @@ export function usePageAccess() {
   return {
     canAccess,
     userRole,
-    isLoading: isLoading || isFetching,
+    // Only show loading if we're actually fetching and don't have data yet
+    // Don't block on retries if we already have visibility data or user role
+    isLoading: (isLoading || isFetching) && !visibility && !error,
     visibility,
+    error,
   };
 }
