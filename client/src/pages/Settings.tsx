@@ -1,48 +1,129 @@
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { Bell, Mail, Shield, Lock, UserX, Smartphone, ChevronRight } from "lucide-react";
+import { Bell, Shield, Lock, UserX, Smartphone, ChevronRight, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/AuthContext";
+import { useState, useEffect } from "react";
 
 export default function Settings() {
     const { toast } = useToast();
+    const { user, isLoading } = useAuth();
+    
+    const [phone, setPhone] = useState("");
+    const [marketingConsent, setMarketingConsent] = useState(false);
+    const [emailNotifications, setEmailNotifications] = useState(true);
+    const [pushNotifications, setPushNotifications] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
-    const handleSave = () => {
-        toast({
-            title: "설정 저장 완료",
-            description: "변경사항이 저장되었습니다.",
-        });
+    useEffect(() => {
+        const savedSettings = localStorage.getItem('userSettings');
+        if (savedSettings) {
+            try {
+                const settings = JSON.parse(savedSettings);
+                setPhone(settings.phone || "");
+                setMarketingConsent(settings.marketingConsent ?? false);
+                setEmailNotifications(settings.emailNotifications ?? true);
+                setPushNotifications(settings.pushNotifications ?? true);
+            } catch (e) {
+                console.error("Failed to parse settings:", e);
+            }
+        }
+    }, []);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const settings = {
+                phone,
+                marketingConsent,
+                emailNotifications,
+                pushNotifications,
+            };
+            localStorage.setItem('userSettings', JSON.stringify(settings));
+            
+            toast({
+                title: "설정 저장 완료",
+                description: "변경사항이 저장되었습니다.",
+            });
+        } catch (error) {
+            toast({
+                title: "저장 실패",
+                description: "설정을 저장하는 중 오류가 발생했습니다.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
+        }
     };
+
+    if (isLoading) {
+        return (
+            <Layout>
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
+                </div>
+            </Layout>
+        );
+    }
+
+    const userEmail = user?.email || "";
+    const displayName = user?.firstName && user?.lastName 
+        ? `${user.lastName}${user.firstName}`
+        : user?.firstName || user?.lastName || "";
 
     return (
         <Layout>
             <div className="max-w-2xl mx-auto pb-20">
-                <h2 className="text-[28px] font-bold text-[#191F28] mb-6">설정</h2>
+                <h2 className="text-xl sm:text-[28px] font-bold text-[#191F28] mb-4 sm:mb-6">설정</h2>
 
-                <div className="space-y-6">
+                <div className="space-y-5 sm:space-y-6">
                     {/* Contact Information */}
                     <section>
-                        <h3 className="text-lg font-bold text-[#191F28] mb-3 flex items-center gap-2">
+                        <h3 className="text-base sm:text-lg font-bold text-[#191F28] mb-3 flex items-center gap-2">
                             <Smartphone className="h-5 w-5 text-[#3182F6]" /> 연락처 정보
                         </h3>
                         <Card className="toss-card">
-                            <CardContent className="p-6 space-y-4">
+                            <CardContent className="p-4 sm:p-6 space-y-4">
                                 <div className="space-y-2">
-                                    <Label className="text-[#4E5968]">이메일</Label>
+                                    <Label className="text-[#4E5968] text-sm">이메일</Label>
                                     <div className="flex gap-2">
-                                        <Input defaultValue="john.doe@example.com" disabled className="bg-[#F2F4F6] border-none rounded-xl h-12" />
-                                        <Button variant="outline" className="h-12 px-4 rounded-xl border-[#E5E8EB]">변경</Button>
+                                        <Input 
+                                            value={userEmail}
+                                            placeholder="이메일 없음"
+                                            disabled 
+                                            className="bg-[#F2F4F6] border-none rounded-xl h-11 sm:h-12 text-sm sm:text-base" 
+                                            data-testid="input-email"
+                                        />
+                                        <Button 
+                                            variant="outline" 
+                                            className="h-11 sm:h-12 px-3 sm:px-4 rounded-xl border-[#E5E8EB] text-sm"
+                                            data-testid="button-change-email"
+                                        >
+                                            변경
+                                        </Button>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-[#4E5968]">휴대폰 번호</Label>
+                                    <Label className="text-[#4E5968] text-sm">휴대폰 번호</Label>
                                     <div className="flex gap-2">
-                                        <Input defaultValue="010-1234-5678" className="bg-[#F2F4F6] border-none rounded-xl h-12" />
-                                        <Button variant="outline" className="h-12 px-4 rounded-xl border-[#E5E8EB]">인증</Button>
+                                        <Input 
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                            placeholder="휴대폰 번호를 입력하세요"
+                                            className="bg-[#F2F4F6] border-none rounded-xl h-11 sm:h-12 text-sm sm:text-base" 
+                                            data-testid="input-phone"
+                                        />
+                                        <Button 
+                                            variant="outline" 
+                                            className="h-11 sm:h-12 px-3 sm:px-4 rounded-xl border-[#E5E8EB] text-sm"
+                                            data-testid="button-verify-phone"
+                                        >
+                                            인증
+                                        </Button>
                                     </div>
                                 </div>
                             </CardContent>
@@ -51,31 +132,43 @@ export default function Settings() {
 
                     {/* Notifications */}
                     <section>
-                        <h3 className="text-lg font-bold text-[#191F28] mb-3 flex items-center gap-2">
+                        <h3 className="text-base sm:text-lg font-bold text-[#191F28] mb-3 flex items-center gap-2">
                             <Bell className="h-5 w-5 text-[#FFB300]" /> 알림 설정
                         </h3>
                         <Card className="toss-card">
                             <CardContent className="p-0">
-                                <div className="flex items-center justify-between p-5 border-b border-[#F2F4F6]">
-                                    <div>
-                                        <p className="font-bold text-[#191F28]">마케팅 정보 수신 동의</p>
-                                        <p className="text-sm text-[#8B95A1]">이벤트 및 혜택 정보를 받습니다.</p>
+                                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#F2F4F6]">
+                                    <div className="flex-1 mr-3">
+                                        <p className="font-bold text-[#191F28] text-sm sm:text-base">마케팅 정보 수신 동의</p>
+                                        <p className="text-xs sm:text-sm text-[#8B95A1]">이벤트 및 혜택 정보를 받습니다.</p>
                                     </div>
-                                    <Switch />
+                                    <Switch 
+                                        checked={marketingConsent}
+                                        onCheckedChange={setMarketingConsent}
+                                        data-testid="switch-marketing"
+                                    />
                                 </div>
-                                <div className="flex items-center justify-between p-5 border-b border-[#F2F4F6]">
-                                    <div>
-                                        <p className="font-bold text-[#191F28]">이메일 알림</p>
-                                        <p className="text-sm text-[#8B95A1]">주요 공지사항을 메일로 받습니다.</p>
+                                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#F2F4F6]">
+                                    <div className="flex-1 mr-3">
+                                        <p className="font-bold text-[#191F28] text-sm sm:text-base">이메일 알림</p>
+                                        <p className="text-xs sm:text-sm text-[#8B95A1]">주요 공지사항을 메일로 받습니다.</p>
                                     </div>
-                                    <Switch defaultChecked />
+                                    <Switch 
+                                        checked={emailNotifications}
+                                        onCheckedChange={setEmailNotifications}
+                                        data-testid="switch-email-notifications"
+                                    />
                                 </div>
-                                <div className="flex items-center justify-between p-5">
-                                    <div>
-                                        <p className="font-bold text-[#191F28]">앱 푸시 알림</p>
-                                        <p className="text-sm text-[#8B95A1]">서비스 알림을 앱으로 받습니다.</p>
+                                <div className="flex items-center justify-between p-4 sm:p-5">
+                                    <div className="flex-1 mr-3">
+                                        <p className="font-bold text-[#191F28] text-sm sm:text-base">앱 푸시 알림</p>
+                                        <p className="text-xs sm:text-sm text-[#8B95A1]">서비스 알림을 앱으로 받습니다.</p>
                                     </div>
-                                    <Switch defaultChecked />
+                                    <Switch 
+                                        checked={pushNotifications}
+                                        onCheckedChange={setPushNotifications}
+                                        data-testid="switch-push-notifications"
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
@@ -83,22 +176,28 @@ export default function Settings() {
 
                     {/* Security & Account */}
                     <section>
-                        <h3 className="text-lg font-bold text-[#191F28] mb-3 flex items-center gap-2">
+                        <h3 className="text-base sm:text-lg font-bold text-[#191F28] mb-3 flex items-center gap-2">
                             <Shield className="h-5 w-5 text-[#333D4B]" /> 보안 및 계정
                         </h3>
                         <Card className="toss-card">
                             <CardContent className="p-0 divide-y divide-[#F2F4F6]">
-                                <button className="w-full flex items-center justify-between p-5 hover:bg-[#F9FAFB] transition-colors text-left">
+                                <button 
+                                    className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-[#F9FAFB] active:bg-[#F2F4F6] transition-colors text-left"
+                                    data-testid="button-change-password"
+                                >
                                     <div className="flex items-center gap-3">
                                         <Lock className="h-5 w-5 text-[#8B95A1]" />
-                                        <span className="font-medium text-[#333D4B]">비밀번호 변경</span>
+                                        <span className="font-medium text-[#333D4B] text-sm sm:text-base">비밀번호 변경</span>
                                     </div>
                                     <ChevronRight className="h-5 w-5 text-[#B0B8C1]" />
                                 </button>
-                                <button className="w-full flex items-center justify-between p-5 hover:bg-[#F9FAFB] transition-colors text-left">
+                                <button 
+                                    className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-[#F9FAFB] active:bg-[#F2F4F6] transition-colors text-left"
+                                    data-testid="button-delete-account"
+                                >
                                     <div className="flex items-center gap-3">
                                         <UserX className="h-5 w-5 text-[#8B95A1]" />
-                                        <span className="font-medium text-[#8B95A1]">회원 탈퇴</span>
+                                        <span className="font-medium text-[#8B95A1] text-sm sm:text-base">회원 탈퇴</span>
                                     </div>
                                     <ChevronRight className="h-5 w-5 text-[#B0B8C1]" />
                                 </button>
@@ -106,8 +205,20 @@ export default function Settings() {
                         </Card>
                     </section>
 
-                    <Button onClick={handleSave} className="w-full h-14 text-lg font-bold rounded-xl bg-[#3182F6] hover:bg-[#2b72d7]">
-                        설정 저장하기
+                    <Button 
+                        onClick={handleSave} 
+                        disabled={isSaving}
+                        className="w-full h-12 sm:h-14 text-base sm:text-lg font-bold rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] active:scale-[0.98] transition-all"
+                        data-testid="button-save-settings"
+                    >
+                        {isSaving ? (
+                            <>
+                                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                                저장 중...
+                            </>
+                        ) : (
+                            "설정 저장하기"
+                        )}
                     </Button>
                 </div>
             </div>
