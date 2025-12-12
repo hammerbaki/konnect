@@ -41,6 +41,11 @@ export const users = pgTable("users", {
   displayName: varchar("display_name", { length: 100 }),
   gender: varchar("gender", { length: 20 }),
   birthDate: timestamp("birth_date"),
+  // User settings fields
+  phone: varchar("phone", { length: 20 }),
+  marketingConsent: integer("marketing_consent").notNull().default(0), // 0 = false, 1 = true
+  emailNotifications: integer("email_notifications").notNull().default(1), // 0 = false, 1 = true
+  pushNotifications: integer("push_notifications").notNull().default(1), // 0 = false, 1 = true
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -59,6 +64,15 @@ export const updateUserIdentitySchema = z.object({
     z.union([z.date(), z.null()]).optional()
   ),
 });
+
+export const updateUserSettingsSchema = z.object({
+  phone: z.string().optional(),
+  marketingConsent: z.boolean().optional(),
+  emailNotifications: z.boolean().optional(),
+  pushNotifications: z.boolean().optional(),
+});
+
+export type UpdateUserSettings = z.infer<typeof updateUserSettingsSchema>;
 
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type User = typeof users.$inferSelect;

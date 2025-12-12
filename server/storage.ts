@@ -22,6 +22,7 @@ import {
   type Career,
   type CareerStats,
   type UpdateUserIdentity,
+  type UpdateUserSettings,
   type AiJob,
   type InsertAiJob,
   type AiJobStatus,
@@ -42,6 +43,8 @@ export interface IStorage {
   updateUserCredits(userId: string, credits: number): Promise<void>;
   deductUserCredits(userId: string, amount: number): Promise<boolean>;
   updateUserIdentity(userId: string, data: UpdateUserIdentity): Promise<User>;
+  updateUserSettings(userId: string, settings: UpdateUserSettings): Promise<User>;
+  getUserSettings(userId: string): Promise<{ phone: string | null; marketingConsent: boolean; emailNotifications: boolean; pushNotifications: boolean } | undefined>;
 
   getProfilesByUser(userId: string): Promise<Profile[]>;
   getProfile(id: string): Promise<Profile | undefined>;
@@ -180,6 +183,39 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  async updateUserSettings(userId: string, settings: UpdateUserSettings): Promise<User> {
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+    if (settings.phone !== undefined) updateData.phone = settings.phone;
+    if (settings.marketingConsent !== undefined) updateData.marketingConsent = settings.marketingConsent ? 1 : 0;
+    if (settings.emailNotifications !== undefined) updateData.emailNotifications = settings.emailNotifications ? 1 : 0;
+    if (settings.pushNotifications !== undefined) updateData.pushNotifications = settings.pushNotifications ? 1 : 0;
+    
+    const [user] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async getUserSettings(userId: string): Promise<{ phone: string | null; marketingConsent: boolean; emailNotifications: boolean; pushNotifications: boolean } | undefined> {
+    const [user] = await db.select({
+      phone: users.phone,
+      marketingConsent: users.marketingConsent,
+      emailNotifications: users.emailNotifications,
+      pushNotifications: users.pushNotifications,
+    }).from(users).where(eq(users.id, userId));
+    
+    if (!user) return undefined;
+    
+    return {
+      phone: user.phone,
+      marketingConsent: user.marketingConsent === 1,
+      emailNotifications: user.emailNotifications === 1,
+      pushNotifications: user.pushNotifications === 1,
+    };
   }
 
   async getProfilesByUser(userId: string): Promise<Profile[]> {
