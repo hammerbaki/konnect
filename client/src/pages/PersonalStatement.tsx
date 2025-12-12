@@ -930,7 +930,7 @@ export default function PersonalStatement() {
                                                     <Card className="border-[#E5E8EB] shadow-sm overflow-hidden bg-white">
                                                         <CardContent className="p-6 bg-white relative">
                                                             <Quote className="absolute top-4 left-4 h-8 w-8 text-gray-100 -z-10" />
-                                                            <div className="text-[15px] leading-8 text-[#191F28] whitespace-pre-wrap font-medium font-serif">
+                                                            <div className="text-[15px] leading-[1.9] text-[#191F28] whitespace-pre-wrap font-normal">
                                                                 {msg.content}
                                                             </div>
                                                         </CardContent>
