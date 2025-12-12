@@ -71,7 +71,7 @@ export function Header() {
       <div className="flex items-center gap-2 md:gap-3">
         <div className="hidden md:flex items-center gap-2 mr-2 bg-white px-4 py-2 rounded-full shadow-sm">
           <Coins className="h-5 w-5 text-[#FFB300]" />
-          <span className="text-sm font-bold text-[#191F28]">{credits} 토큰</span>
+          <span className="text-sm font-bold text-[#191F28]">{credits} 포인트</span>
         </div>
         {/* Mobile Token Display Compact */}
         <div className="md:hidden flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm">
@@ -109,7 +109,7 @@ export function Header() {
             <div className="md:hidden">
                 <RedeemDialog>
                   <button className="w-full text-left rounded-lg px-3 py-2.5 font-medium cursor-pointer text-[#4E5968] hover:bg-[#F2F4F6] hover:text-[#191F28] text-sm">
-                      토큰 충전
+                      포인트 충전
                   </button>
                 </RedeemDialog>
                  <DropdownMenuSeparator className="bg-[#F2F4F6]" />
@@ -127,7 +127,7 @@ export function Header() {
             </DropdownMenuItem>
             <RedeemDialog>
               <button className="w-full text-left rounded-lg px-3 py-2.5 text-[#4E5968] hover:bg-[#F2F4F6] hover:text-[#191F28] font-medium cursor-pointer text-sm">
-                토큰 충전
+                포인트 충전
               </button>
             </RedeemDialog>
             <DropdownMenuSeparator className="bg-[#F2F4F6]" />

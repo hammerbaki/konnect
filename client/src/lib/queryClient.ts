@@ -18,7 +18,7 @@ async function throwIfResNotOk(res: Response) {
       if (res.status === 401) {
         message = "로그인이 필요합니다.";
       } else if (res.status === 402) {
-        message = "크레딧이 부족합니다.";
+        message = "포인트가 부족합니다.";
       } else if (res.status === 403) {
         message = "접근 권한이 없습니다.";
       } else if (res.status === 404) {

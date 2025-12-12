@@ -299,7 +299,7 @@ export default function Login() {
                 <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#F9FAFB]">
                   <Sparkles className="h-5 w-5 text-[#3182F6]" />
                   <span className="text-sm text-[#4E5968]">
-                    신규 가입 시 무료 크레딧 <span className="font-bold text-[#3182F6]">1000개</span> 제공
+                    신규 가입 시 무료 포인트 <span className="font-bold text-[#3182F6]">1000개</span> 제공
                   </span>
                 </div>
               </div>

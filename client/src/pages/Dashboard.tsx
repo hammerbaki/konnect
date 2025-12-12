@@ -146,7 +146,7 @@ export default function Dashboard() {
               <Coins className="h-5 w-5 text-[#FFB300]" />
             </div>
             <div>
-              <p className="text-sm text-[#8B95A1] font-medium">보유 크레딧</p>
+              <p className="text-sm text-[#8B95A1] font-medium">보유 포인트</p>
               <p className="text-xl font-bold text-[#191F28]">{credits}개</p>
             </div>
           </Card>
@@ -273,7 +273,7 @@ export default function Dashboard() {
                   </p>
                   <Link href="/analysis">
                     <Button className="w-full rounded-xl h-11 bg-[#00BFA5] font-bold hover:bg-[#00BFA5]/90" data-testid="button-start-analysis">
-                      AI 분석 시작 (100 크레딧)
+                      AI 분석 시작 (100 포인트)
                     </Button>
                   </Link>
                 </div>
@@ -355,7 +355,7 @@ export default function Dashboard() {
                   </p>
                   <Link href="/essays">
                     <Button className="w-full rounded-xl h-11 bg-[#9852F8] font-bold hover:bg-[#9852F8]/90" data-testid="button-write-essay">
-                      자기소개서 작성 (100 크레딧)
+                      자기소개서 작성 (100 포인트)
                     </Button>
                   </Link>
                 </div>

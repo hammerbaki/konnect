@@ -14,7 +14,7 @@ export default function TokenRecharge() {
         // Mock payment process
         toast({
             title: "결제 성공",
-            description: `${amount} 토큰이 충전되었습니다.`,
+            description: `${amount} 포인트가 충전되었습니다.`,
         });
         addCredits(amount);
     };
@@ -29,13 +29,13 @@ export default function TokenRecharge() {
     return (
         <Layout>
             <div className="max-w-2xl mx-auto pb-20">
-                <h2 className="text-[28px] font-bold text-[#191F28] mb-6">토큰 충전</h2>
+                <h2 className="text-[28px] font-bold text-[#191F28] mb-6">포인트 충전</h2>
 
                 {/* Current Balance */}
                 <Card className="bg-[#3182F6] text-white border-none mb-8 shadow-lg shadow-blue-500/30">
                     <CardContent className="p-6 flex justify-between items-center">
                         <div>
-                            <p className="text-blue-100 font-medium mb-1">현재 보유 토큰</p>
+                            <p className="text-blue-100 font-medium mb-1">현재 보유 포인트</p>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-bold">{credits}</span>
                                 <span className="text-xl font-medium text-blue-100">Tokens</span>
@@ -61,7 +61,7 @@ export default function TokenRecharge() {
                             <CardContent className="p-5 flex justify-between items-center">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xl font-bold text-[#191F28]">{pkg.tokens} 토큰</span>
+                                        <span className="text-xl font-bold text-[#191F28]">{pkg.tokens} 포인트</span>
                                         {pkg.bonus > 0 && (
                                             <Badge className="bg-green-100 text-green-600 border-none hover:bg-green-100">
                                                 +{pkg.bonus} 보너스
@@ -99,7 +99,7 @@ export default function TokenRecharge() {
                                         <Coins className="h-5 w-5 text-[#3182F6]" />
                                     </div>
                                     <div>
-                                        <p className="font-bold text-[#333D4B]">토큰 충전</p>
+                                        <p className="font-bold text-[#333D4B]">포인트 충전</p>
                                         <p className="text-sm text-[#8B95A1]">2024.05.{20-i}</p>
                                     </div>
                                 </div>

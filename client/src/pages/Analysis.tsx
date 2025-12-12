@@ -155,7 +155,7 @@ export default function Analysis() {
         // Optimistically deduct credits immediately
         const deducted = deductCredit(ANALYSIS_CREDIT_COST);
         if (!deducted) {
-            toast({ variant: "destructive", description: "크레딧이 부족합니다. 분석에 100 크레딧이 필요합니다." });
+            toast({ variant: "destructive", description: "포인트가 부족합니다. 분석에 100 포인트가 필요합니다." });
             return;
         }
         analysisCreditsDeductedRef.current = true; // Track deduction for safe restoration
@@ -483,7 +483,7 @@ export default function Analysis() {
                         className="h-12 px-8 rounded-xl bg-[#3182F6] text-white font-bold"
                         data-testid="button-generate-analysis"
                     >
-                        <Sparkles className="h-5 w-5 mr-2" /> AI 분석 시작 (100 크레딧)
+                        <Sparkles className="h-5 w-5 mr-2" /> AI 분석 시작 (100 포인트)
                     </Button>
                 </div>
             );

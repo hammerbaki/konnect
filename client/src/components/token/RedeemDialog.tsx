@@ -41,8 +41,8 @@ export function RedeemDialog({ children }: RedeemDialogProps) {
       setOpen(false);
       setCode("");
       toast({
-        title: "토큰 충전 완료",
-        description: data.message || `${data.creditsAdded} 크레딧이 충전되었습니다.`,
+        title: "포인트 충전 완료",
+        description: data.message || `${data.creditsAdded} 포인트가 충전되었습니다.`,
       });
     } catch (error: any) {
       toast({
@@ -61,21 +61,21 @@ export function RedeemDialog({ children }: RedeemDialogProps) {
         {children || (
           <Button size="sm" className="bg-[#FFB300] hover:bg-[#FFCA28] text-white border-none shadow-sm gap-2 rounded-lg font-bold">
             <Ticket className="h-4 w-4" />
-            토큰 충전
+            포인트 충전
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.12)] border-none">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-[#191F28]">액세스 토큰 등록</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-[#191F28]">액세스 포인트 등록</DialogTitle>
           <DialogDescription className="text-[#8B95A1] mt-2">
-            관리자로부터 발급받은 코드를 입력하여<br/>분석 크레딧을 충전하세요.
+            관리자로부터 발급받은 코드를 입력하여<br/>분석 포인트을 충전하세요.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleRedeem}>
           <div className="grid gap-5 py-6">
             <div className="space-y-2">
-              <Label htmlFor="code" className="text-[#4E5968] font-semibold">토큰 코드</Label>
+              <Label htmlFor="code" className="text-[#4E5968] font-semibold">포인트 코드</Label>
               <Input
                 id="code"
                 placeholder="예: KNC-8829-XJ"

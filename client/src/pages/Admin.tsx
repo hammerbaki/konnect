@@ -191,10 +191,10 @@ export default function Admin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       setEditingCredits(null);
-      toast({ title: "크레딧 변경 완료", description: "사용자 크레딧이 변경되었습니다." });
+      toast({ title: "포인트 변경 완료", description: "사용자 포인트가 변경되었습니다." });
     },
     onError: () => {
-      toast({ title: "오류", description: "크레딧 변경에 실패했습니다.", variant: "destructive" });
+      toast({ title: "오류", description: "포인트 변경에 실패했습니다.", variant: "destructive" });
     },
   });
 
@@ -264,7 +264,7 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger value="tokens" className="rounded-lg px-4" data-testid="tab-tokens">
               <Coins className="h-4 w-4 mr-2" />
-              토큰 시스템
+              포인트 시스템
             </TabsTrigger>
             <TabsTrigger value="traffic" className="rounded-lg px-4" data-testid="tab-traffic">
               <TrendingUp className="h-4 w-4 mr-2" />
@@ -340,7 +340,7 @@ export default function Admin() {
                                 onClick={() => isAdmin && setEditingCredits({ userId: user.id, credits: user.credits })}
                                 data-testid={`text-credits-${user.id}`}
                               >
-                                {user.credits.toLocaleString()} 크레딧
+                                {user.credits.toLocaleString()} 포인트
                               </p>
                             )}
                           </div>
@@ -412,7 +412,7 @@ export default function Admin() {
                 <CardContent className="p-4 text-center">
                   <Coins className="h-6 w-6 mx-auto mb-2 text-[#6B7280]" />
                   <p className="text-2xl font-bold text-[#191F28]">{aiStats?.avgTokensPerJob?.toLocaleString() || 0}</p>
-                  <p className="text-xs text-[#8B95A1]">평균 토큰</p>
+                  <p className="text-xs text-[#8B95A1]">평균 포인트</p>
                 </CardContent>
               </Card>
             </div>
@@ -490,7 +490,7 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Coins className="h-5 w-5 text-[#3182F6]" />
-                  크레딧 가격 정책
+                  포인트 가격 정책
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -498,28 +498,28 @@ export default function Admin() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="p-4 bg-[#F2F4F6] rounded-xl">
                       <p className="font-bold text-[#191F28] mb-2">진로 분석</p>
-                      <p className="text-2xl font-bold text-[#3182F6]">100 크레딧</p>
+                      <p className="text-2xl font-bold text-[#3182F6]">100 포인트</p>
                       <p className="text-sm text-[#8B95A1]">AI 기반 진로 분석 1회</p>
                     </div>
                     <div className="p-4 bg-[#F2F4F6] rounded-xl">
                       <p className="font-bold text-[#191F28] mb-2">자기소개서 생성</p>
-                      <p className="text-2xl font-bold text-[#3182F6]">100 크레딧</p>
+                      <p className="text-2xl font-bold text-[#3182F6]">100 포인트</p>
                       <p className="text-sm text-[#8B95A1]">AI 자기소개서 작성 1회</p>
                     </div>
                     <div className="p-4 bg-[#F2F4F6] rounded-xl">
                       <p className="font-bold text-[#191F28] mb-2">자기소개서 수정</p>
-                      <p className="text-2xl font-bold text-[#7C3AED]">30 크레딧</p>
+                      <p className="text-2xl font-bold text-[#7C3AED]">30 포인트</p>
                       <p className="text-sm text-[#8B95A1]">AI 자기소개서 수정 1회</p>
                     </div>
                     <div className="p-4 bg-[#F2F4F6] rounded-xl">
                       <p className="font-bold text-[#191F28] mb-2">전략 목표 생성</p>
-                      <p className="text-2xl font-bold text-[#3182F6]">100 크레딧</p>
+                      <p className="text-2xl font-bold text-[#3182F6]">100 포인트</p>
                       <p className="text-sm text-[#8B95A1]">연간/반기 목표 AI 생성</p>
                     </div>
                   </div>
                   <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                     <p className="font-bold text-[#191F28] mb-2">신규 가입 혜택</p>
-                    <p className="text-2xl font-bold text-[#059669]">1,000 크레딧</p>
+                    <p className="text-2xl font-bold text-[#059669]">1,000 포인트</p>
                     <p className="text-sm text-[#8B95A1]">신규 가입 시 무료 제공</p>
                   </div>
                 </div>
@@ -528,24 +528,24 @@ export default function Admin() {
 
             <Card className="toss-card">
               <CardHeader>
-                <CardTitle className="text-lg">크레딧 통계</CardTitle>
+                <CardTitle className="text-lg">포인트 통계</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="p-4 bg-[#F2F4F6] rounded-xl text-center">
-                    <p className="text-sm text-[#8B95A1]">전체 발행 크레딧</p>
+                    <p className="text-sm text-[#8B95A1]">전체 발행 포인트</p>
                     <p className="text-2xl font-bold text-[#191F28]">
                       {users.reduce((sum, u) => sum + u.credits, 0).toLocaleString()}
                     </p>
                   </div>
                   <div className="p-4 bg-[#F2F4F6] rounded-xl text-center">
-                    <p className="text-sm text-[#8B95A1]">평균 보유 크레딧</p>
+                    <p className="text-sm text-[#8B95A1]">평균 보유 포인트</p>
                     <p className="text-2xl font-bold text-[#191F28]">
                       {users.length > 0 ? Math.round(users.reduce((sum, u) => sum + u.credits, 0) / users.length).toLocaleString() : 0}
                     </p>
                   </div>
                   <div className="p-4 bg-[#F2F4F6] rounded-xl text-center">
-                    <p className="text-sm text-[#8B95A1]">소진된 크레딧 (추정)</p>
+                    <p className="text-sm text-[#8B95A1]">소진된 포인트 (추정)</p>
                     <p className="text-2xl font-bold text-[#191F28]">
                       {((aiStats?.completedJobs || 0) * 100).toLocaleString()}
                     </p>

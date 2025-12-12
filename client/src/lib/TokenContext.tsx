@@ -72,8 +72,8 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
   const addCredits = useCallback((amount: number) => {
     setCredits(prev => prev + amount);
     toast({
-      title: "토큰 충전 완료",
-      description: `${amount} 토큰이 성공적으로 충전되었습니다.`,
+      title: "포인트 충전 완료",
+      description: `${amount} 포인트가 성공적으로 충전되었습니다.`,
     });
   }, [toast]);
 

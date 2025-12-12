@@ -167,7 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserCredits(userId, newCredits);
       
       res.json({ 
-        message: `${creditsToAdd} 크레딧이 충전되었습니다.`,
+        message: `${creditsToAdd} 포인트가 충전되었습니다.`,
         creditsAdded: creditsToAdd,
         totalCredits: newCredits,
       });
@@ -772,12 +772,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.getUser(userId);
       if (!user || user.credits < 100) {
-        return res.status(402).json({ message: "크레딧이 부족합니다. 분석을 생성하려면 최소 100 크레딧이 필요합니다." });
+        return res.status(402).json({ message: "포인트가 부족합니다. 분석을 생성하려면 최소 100 포인트가 필요합니다." });
       }
 
       const deducted = await storage.deductUserCredits(userId, 100);
       if (!deducted) {
-        return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+        return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
       }
 
       // Get user identity for comprehensive profile data
@@ -842,12 +842,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.getUser(userId);
       if (!user || user.credits < 100) {
-        return res.status(402).json({ message: "크레딧이 부족합니다. 자기소개서 생성을 위해 최소 100 크레딧이 필요합니다." });
+        return res.status(402).json({ message: "포인트가 부족합니다. 자기소개서 생성을 위해 최소 100 포인트가 필요합니다." });
       }
 
       const deducted = await storage.deductUserCredits(userId, 100);
       if (!deducted) {
-        return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+        return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
       }
 
       // Submit job to queue instead of processing directly
@@ -1004,7 +1004,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(userId);
         if (!user || user.credits < 100) {
           return res.status(402).json({ 
-            message: "크레딧이 부족합니다. 연도/반기 목표 생성을 위해 최소 100 크레딧이 필요합니다.",
+            message: "포인트가 부족합니다. 연도/반기 목표 생성을 위해 최소 100 포인트가 필요합니다.",
             requiredCredits: 100,
             currentCredits: user?.credits || 0,
           });
@@ -1012,7 +1012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const deducted = await storage.deductUserCredits(userId, 100);
         if (!deducted) {
-          return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+          return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
         }
       }
 
@@ -1071,7 +1071,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(userId);
         if (!user || user.credits < 100) {
           return res.status(402).json({ 
-            message: "크레딧이 부족합니다.",
+            message: "포인트가 부족합니다.",
             requiredCredits: 100,
             currentCredits: user?.credits || 0,
           });
@@ -1079,7 +1079,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const deducted = await storage.deductUserCredits(userId, 100);
         if (!deducted) {
-          return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+          return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
         }
       }
       
@@ -1088,7 +1088,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(userId);
         if (!user || user.credits < 30) {
           return res.status(402).json({ 
-            message: "크레딧이 부족합니다. 수정을 위해 30 크레딧이 필요합니다.",
+            message: "포인트가 부족합니다. 수정을 위해 30 포인트가 필요합니다.",
             requiredCredits: 30,
             currentCredits: user?.credits || 0,
           });
@@ -1096,7 +1096,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const deducted = await storage.deductUserCredits(userId, 30);
         if (!deducted) {
-          return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+          return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
         }
       }
       
@@ -1107,7 +1107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const user = await storage.getUser(userId);
           if (!user || user.credits < 100) {
             return res.status(402).json({ 
-              message: "크레딧이 부족합니다. 연도/반기 목표 생성을 위해 최소 100 크레딧이 필요합니다.",
+              message: "포인트가 부족합니다. 연도/반기 목표 생성을 위해 최소 100 포인트가 필요합니다.",
               requiredCredits: 100,
               currentCredits: user?.credits || 0,
             });
@@ -1115,7 +1115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           const deducted = await storage.deductUserCredits(userId, 100);
           if (!deducted) {
-            return res.status(402).json({ message: "크레딧 차감 중 오류가 발생했습니다." });
+            return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
           }
         }
       }
@@ -1274,14 +1274,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const parsed = updateCreditsSchema.safeParse(req.body);
       
       if (!parsed.success) {
-        return res.status(400).json({ message: "유효하지 않은 크레딧 값입니다.", errors: parsed.error.errors });
+        return res.status(400).json({ message: "유효하지 않은 포인트 값입니다.", errors: parsed.error.errors });
       }
       
       const user = await storage.updateUserCreditsAdmin(targetUserId, parsed.data.credits);
       res.json(user);
     } catch (error: any) {
       console.error("Error updating user credits:", error);
-      res.status(500).json({ message: "크레딧 변경 중 오류가 발생했습니다." });
+      res.status(500).json({ message: "포인트 변경 중 오류가 발생했습니다." });
     }
   });
 

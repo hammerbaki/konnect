@@ -34,7 +34,7 @@ export function Sidebar() {
   ];
 
   const bottomItems = [
-      { href: "/recharge", icon: Coins, label: "토큰 충전" },
+      { href: "/recharge", icon: Coins, label: "포인트 충전" },
       { href: "/settings", icon: Settings, label: "설정" },
       ...(isAdminOrStaff ? [{ href: "/admin", icon: Shield, label: "관리자" }] : []),
   ];
