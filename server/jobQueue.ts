@@ -2,10 +2,26 @@ import { Redis } from "@upstash/redis";
 import { storage } from "./storage";
 import type { AiJob, AiJobType } from "@shared/schema";
 
-const redis = new Redis({
+// Check if we're in development mode to use in-memory queue
+const isDevelopment = process.env.NODE_ENV !== "production";
+
+// Redis instance for production
+const redis = isDevelopment ? null : new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
+
+// In-memory queue for development
+const memoryQueues: Record<string, string[]> = {
+  "ai:queue:goal": [],
+  "ai:queue:essay": [],
+  "ai:queue:analysis": [],
+};
+const memoryProcessing: Record<string, string> = {};
+
+if (isDevelopment) {
+  console.log("Development mode: Using in-memory job queue to conserve Redis");
+}
 
 const QUEUE_KEYS: Record<AiJobType, string> = {
   goal: "ai:queue:goal",
@@ -35,30 +51,53 @@ export interface QueueStats {
 
 export async function enqueueJob(jobId: string, type: AiJobType): Promise<void> {
   const queueKey = QUEUE_KEYS[type];
-  await redis.rpush(queueKey, jobId);
+  if (isDevelopment) {
+    memoryQueues[queueKey].push(jobId);
+  } else {
+    await redis!.rpush(queueKey, jobId);
+  }
 }
 
 export async function dequeueJob(type: AiJobType): Promise<string | null> {
   const queueKey = QUEUE_KEYS[type];
-  const jobId = await redis.lpop<string>(queueKey);
+  if (isDevelopment) {
+    return memoryQueues[queueKey].shift() || null;
+  }
+  const jobId = await redis!.lpop<string>(queueKey);
   return jobId;
 }
 
 export async function getQueueLength(type: AiJobType): Promise<number> {
   const queueKey = QUEUE_KEYS[type];
-  return await redis.llen(queueKey);
+  if (isDevelopment) {
+    return memoryQueues[queueKey].length;
+  }
+  return await redis!.llen(queueKey);
 }
 
 export async function markJobProcessing(jobId: string, type: AiJobType): Promise<void> {
-  await redis.hset(PROCESSING_KEY, { [jobId]: type });
+  if (isDevelopment) {
+    memoryProcessing[jobId] = type;
+  } else {
+    await redis!.hset(PROCESSING_KEY, { [jobId]: type });
+  }
 }
 
 export async function markJobDone(jobId: string): Promise<void> {
-  await redis.hdel(PROCESSING_KEY, jobId);
+  if (isDevelopment) {
+    delete memoryProcessing[jobId];
+  } else {
+    await redis!.hdel(PROCESSING_KEY, jobId);
+  }
 }
 
 export async function getProcessingCount(type?: AiJobType): Promise<number> {
-  const processing = await redis.hgetall<Record<string, string>>(PROCESSING_KEY);
+  let processing: Record<string, string>;
+  if (isDevelopment) {
+    processing = memoryProcessing;
+  } else {
+    processing = await redis!.hgetall<Record<string, string>>(PROCESSING_KEY) || {};
+  }
   if (!processing) return 0;
   
   if (type) {
@@ -74,7 +113,12 @@ export async function getQueueStats(): Promise<QueueStats> {
     getQueueLength("analysis"),
   ]);
   
-  const processing = await redis.hgetall<Record<string, string>>(PROCESSING_KEY) || {};
+  let processing: Record<string, string>;
+  if (isDevelopment) {
+    processing = memoryProcessing;
+  } else {
+    processing = await redis!.hgetall<Record<string, string>>(PROCESSING_KEY) || {};
+  }
   const processingTypes = Object.values(processing);
   
   // Count essay_revision in the essay processing count since they share the same queue
@@ -118,7 +162,12 @@ export async function canProcessImmediately(type: AiJobType): Promise<boolean> {
 
 export async function getJobPosition(jobId: string, type: AiJobType): Promise<number> {
   const queueKey = QUEUE_KEYS[type];
-  const queue = await redis.lrange<string>(queueKey, 0, -1);
+  let queue: string[];
+  if (isDevelopment) {
+    queue = memoryQueues[queueKey];
+  } else {
+    queue = await redis!.lrange<string>(queueKey, 0, -1);
+  }
   const position = queue.indexOf(jobId);
   return position === -1 ? 0 : position + 1;
 }

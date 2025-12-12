@@ -57,12 +57,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply global rate limiting unconditionally (uses in-memory fallback if Redis is down)
   app.use('/api', createRateLimitMiddleware());
   
-  // Check Redis connection for logging purposes
-  const redisConnected = await checkRedisConnection();
-  if (redisConnected) {
-    console.log("✓ Redis connected - global rate limiting enabled");
+  // In development, skip Redis connection check to conserve commands
+  const isDevelopment = process.env.NODE_ENV !== "production";
+  if (isDevelopment) {
+    console.log("✓ Development mode: Using in-memory rate limiting (Redis commands conserved)");
   } else {
-    console.log("⚠ Redis not connected - using in-memory rate limiting fallback");
+    // Check Redis connection for logging purposes (production only)
+    const redisConnected = await checkRedisConnection();
+    if (redisConnected) {
+      console.log("✓ Redis connected - global rate limiting enabled");
+    } else {
+      console.log("⚠ Redis not connected - using in-memory rate limiting fallback");
+    }
   }
 
   app.get('/api/config', (_req, res) => {
