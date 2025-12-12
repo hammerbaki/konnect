@@ -13,46 +13,40 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
-import { useQuery } from "@tanstack/react-query";
-
-interface UserData {
-  id: string;
-  role?: string;
-}
+import { usePageAccess } from "@/lib/usePageAccess";
 
 export function Sidebar() {
   const [location, setLocation] = useLocation();
   const { logout } = useAuth();
+  const { canAccess, userRole } = usePageAccess();
 
-  const { data: user } = useQuery<UserData>({
-    queryKey: ["/api/auth/user"],
-  });
-
-  const isAdminOrStaff = user?.role === "admin" || user?.role === "staff";
+  const isAdminOrStaff = userRole === "admin" || userRole === "staff";
 
   const handleLogout = async () => {
     await logout();
     setLocation("/");
   };
 
-  const navItems = [
-    { href: "/dashboard", icon: LayoutDashboard, label: "대시보드" },
-    { href: "/profile", icon: User, label: "내 프로필" },
-    { href: "/analysis", icon: PieChart, label: "커리어 분석" },
-    { href: "/goals", icon: Target, label: "목표 관리" },
-    { href: "/personal-statement", icon: FileText, label: "자기소개서" },
-    { href: "/explorer", icon: Search, label: "직업 탐색" },
+  const allNavItems = [
+    { href: "/dashboard", slug: "/dashboard", icon: LayoutDashboard, label: "대시보드" },
+    { href: "/profile", slug: "/profile", icon: User, label: "내 프로필" },
+    { href: "/analysis", slug: "/analysis", icon: PieChart, label: "커리어 분석" },
+    { href: "/goals", slug: "/goals", icon: Target, label: "목표 관리" },
+    { href: "/personal-statement", slug: "/essays", icon: FileText, label: "자기소개서" },
+    { href: "/explorer", slug: "/explorer", icon: Search, label: "직업 탐색" },
   ];
 
-  const bottomItems = [
-    ...(isAdminOrStaff
-      ? [{ href: "/recharge", icon: Coins, label: "포인트 충전" }]
-      : []),
-    { href: "/settings", icon: Settings, label: "설정" },
-    ...(isAdminOrStaff
-      ? [{ href: "/admin", icon: Shield, label: "관리자" }]
-      : []),
+  const allBottomItems = [
+    { href: "/recharge", slug: "/recharge", icon: Coins, label: "포인트 충전" },
+    { href: "/settings", slug: "/settings", icon: Settings, label: "설정" },
+    { href: "/admin", slug: "/admin", icon: Shield, label: "관리자", adminOnly: true },
   ];
+
+  const navItems = allNavItems.filter(item => canAccess(item.slug));
+  const bottomItems = allBottomItems.filter(item => {
+    if (item.adminOnly && !isAdminOrStaff) return false;
+    return canAccess(item.slug);
+  });
 
   return (
     <div className="h-full flex flex-col bg-white border-r border-[#E5E8EB]">
