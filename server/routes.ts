@@ -76,10 +76,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const user = await storage.getUser(userId);
+      
+      // Track login session (create session if not exists for this user today)
+      try {
+        const existingSession = await storage.getActiveSessionByUser(userId);
+        if (!existingSession) {
+          await storage.createUserSession({
+            userId,
+            eventType: 'login',
+            loginAt: new Date(),
+            ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || null,
+            userAgent: req.headers['user-agent'] || null,
+          });
+        }
+      } catch (sessionError) {
+        console.error("Error tracking session:", sessionError);
+      }
+      
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Logout endpoint - marks session as ended
+  app.post('/api/auth/logout', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Find active session and mark it as logged out
+      const activeSession = await storage.getActiveSessionByUser(userId);
+      if (activeSession) {
+        await storage.updateUserSessionLogout(activeSession.id);
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error logging out:", error);
+      res.status(500).json({ message: "Failed to logout" });
     }
   });
 
@@ -1364,6 +1399,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching traffic stats:", error);
       res.status(500).json({ message: "트래픽 통계 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get user session history (admin/staff can view)
+  app.get('/api/admin/sessions', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const sessions = await storage.getUserSessionHistory(limit);
+      res.json(sessions);
+    } catch (error: any) {
+      console.error("Error fetching session history:", error);
+      res.status(500).json({ message: "세션 기록 조회 중 오류가 발생했습니다." });
     }
   });
 

@@ -311,6 +311,37 @@ export const insertVisitorMetricsSchema = createInsertSchema(visitorMetrics).omi
 export type InsertVisitorMetrics = z.infer<typeof insertVisitorMetricsSchema>;
 export type VisitorMetrics = typeof visitorMetrics.$inferSelect;
 
+// ===== USER SESSIONS TABLE (Login/Logout tracking) =====
+export const userSessions = pgTable("user_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  eventType: varchar("event_type", { length: 20 }).notNull(), // 'login' | 'logout'
+  loginAt: timestamp("login_at").notNull().defaultNow(),
+  logoutAt: timestamp("logout_at"),
+  sessionDuration: integer("session_duration"), // Duration in seconds
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_user_sessions_user_id").on(table.userId),
+  index("IDX_user_sessions_login_at").on(table.loginAt),
+]);
+
+export const userSessionsRelations = relations(userSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [userSessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertUserSessionSchema = createInsertSchema(userSessions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
+export type UserSession = typeof userSessions.$inferSelect;
+
 // ===== PAGE SETTINGS TABLE (Role-based page visibility) =====
 export const pageSettings = pgTable("page_settings", {
   slug: varchar("slug", { length: 100 }).primaryKey(), // e.g., "/dashboard", "/admin"

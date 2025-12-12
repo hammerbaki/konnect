@@ -70,6 +70,24 @@ interface PageSettings {
   updatedAt: string | null;
 }
 
+interface UserSession {
+  id: string;
+  userId: string;
+  eventType: string;
+  loginAt: string;
+  logoutAt: string | null;
+  sessionDuration: number | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  user: {
+    id: string;
+    email: string | null;
+    displayName: string | null;
+    firstName: string | null;
+    lastName: string | null;
+  } | null;
+}
+
 const COLORS = ['#3182F6', '#7C3AED', '#059669', '#D97706', '#EC4899', '#6B7280'];
 
 export default function Admin() {
@@ -107,6 +125,12 @@ export default function Admin() {
 
   const { data: trafficStats, refetch: refetchTraffic } = useQuery<TrafficStats>({
     queryKey: ['/api/admin/stats/traffic'],
+    enabled: isStaffOrAdmin,
+    retry: false,
+  });
+
+  const { data: userSessions = [], refetch: refetchSessions } = useQuery<UserSession[]>({
+    queryKey: ['/api/admin/sessions'],
     enabled: isStaffOrAdmin,
     retry: false,
   });
@@ -755,6 +779,104 @@ export default function Admin() {
                       <p>아직 트래픽 데이터가 없습니다</p>
                       <p className="text-sm">방문자가 생기면 이곳에 차트가 표시됩니다</p>
                     </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* User Sessions History */}
+            <Card className="toss-card">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-[#059669]" />
+                  사용자 세션 기록
+                </CardTitle>
+                <p className="text-sm text-[#8B95A1]">
+                  로그인/로그아웃 기록 및 체류 시간
+                </p>
+              </CardHeader>
+              <CardContent className="p-0">
+                {userSessions.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-[#F9FAFB] border-b border-[#E5E8EB]">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-[#4E5968] font-medium">사용자</th>
+                          <th className="px-4 py-3 text-left text-[#4E5968] font-medium">상태</th>
+                          <th className="px-4 py-3 text-left text-[#4E5968] font-medium">로그인 시간</th>
+                          <th className="px-4 py-3 text-left text-[#4E5968] font-medium">로그아웃 시간</th>
+                          <th className="px-4 py-3 text-left text-[#4E5968] font-medium">체류 시간</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#F2F4F6]">
+                        {userSessions.slice(0, 20).map((session) => {
+                          const userName = session.user?.displayName 
+                            || (session.user?.lastName && session.user?.firstName 
+                              ? `${session.user.lastName}${session.user.firstName}` 
+                              : session.user?.email?.split('@')[0] || '알 수 없음');
+                          
+                          const formatDuration = (seconds: number | null) => {
+                            if (!seconds) return '-';
+                            if (seconds < 60) return `${seconds}초`;
+                            if (seconds < 3600) return `${Math.floor(seconds / 60)}분`;
+                            const hours = Math.floor(seconds / 3600);
+                            const mins = Math.floor((seconds % 3600) / 60);
+                            return `${hours}시간 ${mins}분`;
+                          };
+                          
+                          const formatTime = (dateStr: string | null) => {
+                            if (!dateStr) return '-';
+                            const date = new Date(dateStr);
+                            return date.toLocaleString('ko-KR', {
+                              month: 'numeric',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            });
+                          };
+
+                          return (
+                            <tr key={session.id} className="hover:bg-[#F9FAFB]">
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="h-8 w-8 rounded-full bg-[#3182F6]/10 flex items-center justify-center">
+                                    <User className="h-4 w-4 text-[#3182F6]" />
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-[#191F28]">{userName}</p>
+                                    <p className="text-xs text-[#8B95A1]">{session.user?.email || '-'}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                {session.eventType === 'login' ? (
+                                  <Badge className="bg-green-100 text-green-700">활성</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[#8B95A1]">종료</Badge>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-[#4E5968]">
+                                {formatTime(session.loginAt)}
+                              </td>
+                              <td className="px-4 py-3 text-[#4E5968]">
+                                {formatTime(session.logoutAt)}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={session.sessionDuration ? "font-medium text-[#059669]" : "text-[#8B95A1]"}>
+                                  {formatDuration(session.sessionDuration)}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-[#8B95A1]">
+                    <Clock className="h-12 w-12 mx-auto mb-4 text-[#E5E8EB]" />
+                    <p>아직 세션 기록이 없습니다</p>
+                    <p className="text-sm">사용자가 로그인하면 이곳에 기록이 표시됩니다</p>
                   </div>
                 )}
               </CardContent>

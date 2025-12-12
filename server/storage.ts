@@ -8,6 +8,7 @@ import {
   careerStats,
   aiJobs,
   visitorMetrics,
+  userSessions,
   pageSettings,
   type User,
   type UpsertUser,
@@ -29,6 +30,8 @@ import {
   type UserRole,
   type VisitorMetrics,
   type InsertVisitorMetrics,
+  type UserSession,
+  type InsertUserSession,
   type PageSettings,
   type InsertPageSettings,
   DEFAULT_PAGE_CONFIGS,
@@ -119,6 +122,13 @@ export interface IStorage {
     last30Days: { pageViews: number; uniqueVisitors: number; newUsers: number };
     dailyData: Array<{ date: string; pageViews: number; uniqueVisitors: number }>;
   }>;
+
+  // User Sessions (Login/Logout tracking)
+  createUserSession(session: InsertUserSession): Promise<UserSession>;
+  updateUserSessionLogout(sessionId: string): Promise<UserSession>;
+  getActiveSessionByUser(userId: string): Promise<UserSession | undefined>;
+  getUserSessionHistory(limit?: number): Promise<Array<UserSession & { user: User | null }>>;
+  getUserSessionsByUser(userId: string, limit?: number): Promise<UserSession[]>;
 
   // Page Settings (Role-based visibility)
   getAllPageSettings(): Promise<PageSettings[]>;
@@ -686,6 +696,78 @@ export class DatabaseStorage implements IStorage {
       last30Days: aggregateByDates(allMetrics, last30Dates),
       dailyData,
     };
+  }
+
+  // User Sessions
+  async createUserSession(sessionData: InsertUserSession): Promise<UserSession> {
+    const [session] = await db
+      .insert(userSessions)
+      .values(sessionData)
+      .returning();
+    return session;
+  }
+
+  async updateUserSessionLogout(sessionId: string): Promise<UserSession> {
+    const session = await db.select().from(userSessions).where(eq(userSessions.id, sessionId));
+    if (!session[0]) throw new Error("Session not found");
+    
+    const loginAt = session[0].loginAt;
+    const logoutAt = new Date();
+    const durationSeconds = Math.floor((logoutAt.getTime() - loginAt.getTime()) / 1000);
+
+    const [updated] = await db
+      .update(userSessions)
+      .set({ 
+        logoutAt, 
+        sessionDuration: durationSeconds,
+        eventType: 'logout'
+      })
+      .where(eq(userSessions.id, sessionId))
+      .returning();
+    return updated;
+  }
+
+  async getActiveSessionByUser(userId: string): Promise<UserSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(userSessions)
+      .where(and(
+        eq(userSessions.userId, userId),
+        eq(userSessions.eventType, 'login')
+      ))
+      .orderBy(desc(userSessions.loginAt))
+      .limit(1);
+    return session;
+  }
+
+  async getUserSessionHistory(limit: number = 50): Promise<Array<UserSession & { user: User | null }>> {
+    const sessionsData = await db
+      .select()
+      .from(userSessions)
+      .orderBy(desc(userSessions.loginAt))
+      .limit(limit);
+
+    // Fetch users for sessions
+    const userIds = Array.from(new Set(sessionsData.map(s => s.userId)));
+    const usersData = userIds.length > 0 
+      ? await db.select().from(users).where(inArray(users.id, userIds))
+      : [];
+    
+    const userMap = new Map(usersData.map(u => [u.id, u]));
+    
+    return sessionsData.map(s => ({
+      ...s,
+      user: userMap.get(s.userId) || null,
+    }));
+  }
+
+  async getUserSessionsByUser(userId: string, limit: number = 20): Promise<UserSession[]> {
+    return db
+      .select()
+      .from(userSessions)
+      .where(eq(userSessions.userId, userId))
+      .orderBy(desc(userSessions.loginAt))
+      .limit(limit);
   }
 
   // Page Settings

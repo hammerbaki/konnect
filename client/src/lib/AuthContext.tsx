@@ -101,6 +101,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchUserData]);
 
   const logout = async () => {
+    // Track logout in backend
+    if (session?.access_token) {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+      } catch (error) {
+        console.error("Error tracking logout:", error);
+      }
+    }
+    
     if (supabaseClient) {
       await supabaseClient.auth.signOut();
     }
