@@ -1249,14 +1249,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     credits: z.number().int().min(0).max(10000000),
   });
 
-  // Update user role (admin only - write operation)
-  app.patch('/api/admin/users/:id/role', isAuthenticated, requireAdmin, async (req: any, res) => {
+  // Update user role (admin/staff - staff cannot promote to admin)
+  app.patch('/api/admin/users/:id/role', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
     try {
       const targetUserId = req.params.id;
+      const currentUserRole = req.userRole;
       const parsed = updateRoleSchema.safeParse(req.body);
       
       if (!parsed.success) {
         return res.status(400).json({ message: "유효하지 않은 역할입니다.", errors: parsed.error.errors });
+      }
+      
+      // Staff cannot promote users to admin
+      if (currentUserRole === 'staff' && parsed.data.role === 'admin') {
+        return res.status(403).json({ message: "스태프는 관리자 역할을 부여할 수 없습니다." });
       }
       
       const user = await storage.updateUserRole(targetUserId, parsed.data.role);

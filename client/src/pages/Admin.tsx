@@ -73,7 +73,8 @@ export default function Admin() {
   });
 
   const isAdmin = currentUser?.role === 'admin';
-  const isStaffOrAdmin = currentUser?.role === 'admin' || currentUser?.role === 'staff';
+  const isStaff = currentUser?.role === 'staff';
+  const isStaffOrAdmin = isAdmin || isStaff;
 
   const { data: users = [], isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useQuery<AdminUser[]>({
     queryKey: ['/api/admin/users'],
@@ -346,10 +347,11 @@ export default function Admin() {
                           </div>
                           <div className="flex items-center gap-2">
                             {getRoleBadge(user.role)}
-                            {isAdmin ? (
+                            {(isAdmin || isStaff) ? (
                               <Select
                                 value={user.role}
                                 onValueChange={(role) => updateRoleMutation.mutate({ userId: user.id, role })}
+                                disabled={!isAdmin && user.role === 'admin'}
                               >
                                 <SelectTrigger className="w-24 h-8" data-testid={`select-role-${user.id}`}>
                                   <SelectValue />
@@ -357,7 +359,7 @@ export default function Admin() {
                                 <SelectContent>
                                   <SelectItem value="user">일반</SelectItem>
                                   <SelectItem value="staff">스태프</SelectItem>
-                                  <SelectItem value="admin">관리자</SelectItem>
+                                  {isAdmin && <SelectItem value="admin">관리자</SelectItem>}
                                 </SelectContent>
                               </Select>
                             ) : null}
