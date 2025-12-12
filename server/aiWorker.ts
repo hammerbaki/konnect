@@ -16,7 +16,9 @@ import {
 import type { AiJobType, AiJob } from "@shared/schema";
 
 let isWorkerRunning = false;
-const POLL_INTERVAL = 1000;
+const POLL_INTERVAL = 30000; // 30 seconds to reduce Redis usage
+const FAST_POLL_INTERVAL = 2000; // 2 seconds when there are active jobs
+let lastHadWork = false;
 
 export async function processJob(job: AiJob): Promise<any> {
   const type = job.type as AiJobType;
@@ -121,12 +123,16 @@ async function processNextJob(type: AiJobType): Promise<boolean> {
   return true;
 }
 
-async function workerLoop(): Promise<void> {
+async function workerLoop(): Promise<boolean> {
   const types: AiJobType[] = ["goal", "essay", "essay_revision", "analysis"];
+  let didWork = false;
   
   for (const type of types) {
-    await processNextJob(type);
+    const processed = await processNextJob(type);
+    if (processed) didWork = true;
   }
+  
+  return didWork;
 }
 
 export function startWorker(): void {
@@ -141,12 +147,15 @@ export function startWorker(): void {
     if (!isWorkerRunning) return;
     
     try {
-      await workerLoop();
+      const didWork = await workerLoop();
+      lastHadWork = didWork;
     } catch (error) {
       console.error("Worker loop error:", error);
     }
     
-    setTimeout(poll, POLL_INTERVAL);
+    // Use faster polling when there's active work, slower when idle
+    const interval = lastHadWork ? FAST_POLL_INTERVAL : POLL_INTERVAL;
+    setTimeout(poll, interval);
   };
   
   poll();
