@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/lib/AuthContext";
 
 interface AdminUser {
   id: string;
@@ -46,10 +47,6 @@ interface AiStats {
   jobsByType: Record<string, number>;
 }
 
-interface CurrentUser {
-  id: string;
-  role?: string;
-}
 
 interface TrafficStats {
   today: { pageViews: number; uniqueVisitors: number; newUsers: number };
@@ -97,9 +94,7 @@ export default function Admin() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingCredits, setEditingCredits] = useState<{ userId: string; credits: number } | null>(null);
 
-  const { data: currentUser, isLoading: userLoading } = useQuery<CurrentUser>({
-    queryKey: ['/api/auth/user'],
-  });
+  const { user: currentUser, isLoading: userLoading } = useAuth();
 
   const isAdmin = currentUser?.role === 'admin';
   const isStaff = currentUser?.role === 'staff';
