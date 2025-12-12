@@ -11,7 +11,7 @@ import {
     CheckCircle2, AlertTriangle, Zap, User, ExternalLink,
     FolderOpen, Users, Heart, Lightbulb, Menu
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { Link, useLocation } from "wouter";
