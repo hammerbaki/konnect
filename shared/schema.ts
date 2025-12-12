@@ -527,3 +527,39 @@ export const insertPointTransactionSchema = createInsertSchema(pointTransactions
 
 export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema>;
 export type PointTransaction = typeof pointTransactions.$inferSelect;
+
+// ===== SERVICE PRICING TABLE (Configurable point costs for AI services) =====
+export type ServiceType = 'analysis' | 'essay' | 'essay_revision' | 'goal_strategic';
+
+export const servicePricing = pgTable("service_pricing", {
+  id: varchar("id").primaryKey(), // Service type key (e.g., 'analysis', 'essay')
+  name: varchar("name", { length: 100 }).notNull(), // Display name in Korean
+  description: text("description"), // Short description
+  pointCost: integer("point_cost").notNull().default(100),
+  isActive: integer("is_active").notNull().default(1),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: varchar("updated_by").references(() => users.id),
+});
+
+export const insertServicePricingSchema = createInsertSchema(servicePricing).omit({
+  updatedAt: true,
+});
+
+export const updateServicePricingSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().nullable().optional(),
+  pointCost: z.coerce.number().int().min(0).optional(),
+  isActive: z.coerce.number().int().min(0).max(1).optional(),
+});
+
+export type InsertServicePricing = z.infer<typeof insertServicePricingSchema>;
+export type UpdateServicePricing = z.infer<typeof updateServicePricingSchema>;
+export type ServicePricing = typeof servicePricing.$inferSelect;
+
+// Default service pricing configurations
+export const DEFAULT_SERVICE_PRICING: Record<ServiceType, { name: string; description: string; pointCost: number }> = {
+  analysis: { name: '진로 분석', description: 'AI 기반 진로 분석 1회', pointCost: 100 },
+  essay: { name: '자기소개서 생성', description: 'AI 자기소개서 작성 1회', pointCost: 100 },
+  essay_revision: { name: '자기소개서 수정', description: 'AI 자기소개서 수정 1회', pointCost: 30 },
+  goal_strategic: { name: '전략 목표 생성', description: '연간/반기 목표 AI 생성', pointCost: 100 },
+};
