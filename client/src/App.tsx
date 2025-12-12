@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { TokenProvider } from "@/lib/TokenContext";
 import { MobileActionProvider } from "@/lib/MobileActionContext";
 import { AuthProvider, useAuth } from "@/lib/AuthContext";
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
 import { Suspense, lazy, useEffect } from "react";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -77,37 +78,77 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route path="/auth/callback" component={AuthCallback} />
         <Route path="/dashboard">
-          {(params) => <ProtectedRoute component={Dashboard} params={params} />}
+          {(params) => (
+            <RoleProtectedRoute slug="/dashboard">
+              <Dashboard {...params} />
+            </RoleProtectedRoute>
+          )}
         </Route>
         <Route path="/analysis">
-          {(params) => <ProtectedRoute component={Analysis} params={params} />}
+          {(params) => (
+            <RoleProtectedRoute slug="/analysis">
+              <Analysis {...params} />
+            </RoleProtectedRoute>
+          )}
         </Route>
         <Route path="/goals">
-          {(params) => <ProtectedRoute component={Goals} params={params} />}
+          {(params) => (
+            <RoleProtectedRoute slug="/goals">
+              <Goals {...params} />
+            </RoleProtectedRoute>
+          )}
         </Route>
         <Route path="/goals/:id">
-          {(params) => <ProtectedRoute component={KompassDetail} params={params} />}
+          {() => (
+            <RoleProtectedRoute slug="/kompass">
+              <KompassDetail />
+            </RoleProtectedRoute>
+          )}
         </Route>
         <Route path="/profile">
-          {(params) => <ProtectedRoute component={Profile} params={params} />}
+          {(params) => (
+            <RoleProtectedRoute slug="/profile">
+              <Profile {...params} />
+            </RoleProtectedRoute>
+          )}
         </Route>
         <Route path="/personal-statement">
-          {(params) => <ProtectedRoute component={PersonalStatement} params={params} />}
+          {(params) => (
+            <RoleProtectedRoute slug="/essays">
+              <PersonalStatement {...params} />
+            </RoleProtectedRoute>
+          )}
         </Route>
         <Route path="/report">
           {(params) => <ProtectedRoute component={Report} params={params} />}
         </Route>
         <Route path="/explorer">
-          {(params) => <ProtectedRoute component={Explorer} params={params} />}
+          {(params) => (
+            <RoleProtectedRoute slug="/explorer">
+              <Explorer {...params} />
+            </RoleProtectedRoute>
+          )}
         </Route>
         <Route path="/settings">
-          {(params) => <ProtectedRoute component={Settings} params={params} />}
+          {(params) => (
+            <RoleProtectedRoute slug="/settings">
+              <Settings {...params} />
+            </RoleProtectedRoute>
+          )}
         </Route>
         <Route path="/recharge">
-          {(params) => <ProtectedRoute component={TokenRecharge} params={params} />}
+          {(params) => (
+            <RoleProtectedRoute slug="/recharge">
+              <TokenRecharge {...params} />
+            </RoleProtectedRoute>
+          )}
         </Route>
         <Route path="/admin">
-          {(params) => <ProtectedRoute component={Admin} params={params} />}
+          {(params) => (
+            <RoleProtectedRoute slug="/admin">
+              <Admin {...params} />
+            </RoleProtectedRoute>
+          )}
         </Route>
         <Route component={NotFound} />
       </Switch>

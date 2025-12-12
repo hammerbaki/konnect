@@ -9,6 +9,7 @@ interface User {
   lastName: string | null;
   profileImageUrl: string | null;
   credits: number;
+  role: 'user' | 'staff' | 'admin';
 }
 
 interface AuthContextType {
