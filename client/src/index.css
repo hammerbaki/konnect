@@ -60,15 +60,36 @@
   * {
     @apply border-border outline-ring/50;
   }
+  
+  html {
+    /* iOS safe areas support */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  
   body {
     @apply font-sans antialiased bg-background text-foreground;
     word-break: keep-all;
     overflow-wrap: break-word;
+    /* Prevent rubber-band scrolling on iOS */
+    overscroll-behavior: none;
+    /* Smooth scrolling */
+    -webkit-overflow-scrolling: touch;
   }
   
   /* Toss-like smooth font rendering */
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight text-[#191F28] font-bold;
+  }
+  
+  /* Better touch targets for mobile */
+  button, a, [role="button"] {
+    @apply touch-manipulation;
+  }
+  
+  /* Prevent text selection on UI elements */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
   }
 }
 
@@ -84,4 +105,34 @@
 
 .dashboard-grid {
   @apply grid gap-6 md:grid-cols-2 lg:grid-cols-4;
+}
+
+/* Mobile-optimized scrolling containers */
+.mobile-scroll {
+  @apply overflow-x-auto overflow-y-hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.mobile-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* iOS safe area bottom padding for fixed elements */
+.safe-area-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 20px);
+}
+
+/* Better mobile tap highlight */
+@media (hover: none) and (pointer: coarse) {
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: rgba(49, 130, 246, 0.1);
+  }
+}
+
+/* Prevent zoom on input focus (iOS) */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }

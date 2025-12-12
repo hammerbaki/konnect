@@ -25,7 +25,7 @@ export function Layout({ children, hideNav }: LayoutProps) {
       
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto px-4 py-6 md:p-10 pb-[100px] md:pb-10">
+        <main className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6 md:p-10 pb-[120px] md:pb-10 scroll-smooth">
           {children}
         </main>
         <MobileNav />

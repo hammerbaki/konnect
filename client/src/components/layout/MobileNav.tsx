@@ -25,10 +25,10 @@ export function MobileNav() {
   };
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
-      <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-t border-white/20 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] rounded-t-[24px]" />
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
+      <div className="absolute inset-0 bg-white/90 backdrop-blur-xl border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] rounded-t-[28px]" />
       
-      <div className="relative h-[84px] px-6 pb-5 pt-2 flex items-center justify-between">
+      <div className="relative h-[72px] px-4 sm:px-6 pb-2 pt-2 flex items-center justify-around">
         {navItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = location === item.href;

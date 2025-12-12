@@ -128,20 +128,20 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="space-y-8 pb-10">
+      <div className="space-y-5 sm:space-y-8 pb-6 sm:pb-10">
         {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
           <div>
-            <h2 className="text-[28px] font-bold text-[#191F28]">
+            <h2 className="text-xl sm:text-[28px] font-bold text-[#191F28]">
               안녕하세요, {userName}님
             </h2>
-            <p className="text-[#8B95A1] mt-1 text-lg">
+            <p className="text-[#8B95A1] mt-0.5 sm:mt-1 text-sm sm:text-lg">
               오늘도 커리어 성장을 위한 한 걸음을 시작해보세요.
             </p>
           </div>
           
-          {/* Credits Display */}
-          <Card className="toss-card px-5 py-4 flex items-center gap-3 w-fit">
+          {/* Credits Display - Hidden on mobile (shown in header) */}
+          <Card className="hidden md:flex toss-card px-5 py-4 items-center gap-3 w-fit">
             <div className="p-2.5 bg-amber-50 rounded-xl">
               <Coins className="h-5 w-5 text-[#FFB300]" />
             </div>
@@ -152,24 +152,24 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Quick Actions Grid */}
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        {/* Quick Actions Grid - Horizontal scroll on small screens */}
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
               <Link key={action.title} href={action.href}>
-                <Card className="toss-card p-5 hover:scale-[1.02] transition-all cursor-pointer group h-full" data-testid={`card-action-${action.title}`}>
+                <Card className="toss-card p-3 sm:p-5 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer group h-full" data-testid={`card-action-${action.title}`}>
                   <div className="flex flex-col h-full">
-                    <div className={`p-3 ${action.bgColor} rounded-xl w-fit mb-4`}>
-                      <Icon className="h-6 w-6" style={{ color: action.color }} />
+                    <div className={`p-2 sm:p-3 ${action.bgColor} rounded-lg sm:rounded-xl w-fit mb-2 sm:mb-4`}>
+                      <Icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: action.color }} />
                     </div>
-                    <h3 className="text-lg font-bold text-[#191F28] mb-1">{action.title}</h3>
-                    <p className="text-sm text-[#8B95A1] mb-3">{action.description}</p>
+                    <h3 className="text-sm sm:text-lg font-bold text-[#191F28] mb-0.5 sm:mb-1">{action.title}</h3>
+                    <p className="text-xs sm:text-sm text-[#8B95A1] mb-2 sm:mb-3 hidden sm:block">{action.description}</p>
                     <div className="mt-auto flex items-center justify-between">
-                      <span className="text-sm font-semibold" style={{ color: action.color }}>
+                      <span className="text-xs sm:text-sm font-semibold" style={{ color: action.color }}>
                         {action.stat}
                       </span>
-                      <ChevronRight className="h-5 w-5 text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
+                      <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
                     </div>
                   </div>
                 </Card>
