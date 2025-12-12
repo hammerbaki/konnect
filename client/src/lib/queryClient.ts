@@ -94,22 +94,20 @@ export const getQueryFn: <T>(options: {
   };
 
 // Cache time constants (in milliseconds)
-const ONE_MINUTE = 1000 * 60;
-const FIVE_MINUTES = ONE_MINUTE * 5;
-const THIRTY_MINUTES = ONE_MINUTE * 30;
-const ONE_HOUR = ONE_MINUTE * 60;
+const TEN_MINUTES = 1000 * 60 * 10;
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      // Data stays fresh for 5 minutes - no refetch during this time
-      staleTime: FIVE_MINUTES,
-      // Keep data in cache for 30 minutes after component unmounts
-      gcTime: THIRTY_MINUTES,
+      // Data never goes stale automatically - prevents skeleton loaders on navigation
+      // Manual invalidation is used after mutations (create/update/delete)
+      staleTime: Infinity,
+      // Keep data in cache for 10 minutes after component unmounts
+      gcTime: TEN_MINUTES,
       // Don't refetch on window focus - reduces unnecessary requests
       refetchOnWindowFocus: false,
-      // Don't refetch on mount if data is fresh
+      // Don't refetch on mount - data will be served from cache
       refetchOnMount: false,
       // Don't refetch when reconnecting
       refetchOnReconnect: false,
