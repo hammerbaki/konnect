@@ -34,6 +34,25 @@ export async function processJob(job: AiJob): Promise<any> {
       case "analysis": {
         await storage.updateAiJobStatus(job.id, "processing", 30);
         result = await generateCareerAnalysis(payload.profileData, payload.profileType);
+        
+        // Save analysis to analyses table so frontend query can fetch it
+        if (job.profileId) {
+          await storage.createAnalysis({
+            profileId: job.profileId,
+            summary: result.summary,
+            stats: result.stats,
+            chartData: null,
+            recommendations: {
+              careers: result.careerRecommendations,
+            },
+            aiRawResponse: result.rawResponse,
+          });
+          
+          // Update profile lastAnalyzed timestamp
+          await storage.updateProfile(job.profileId, {
+            lastAnalyzed: new Date(),
+          });
+        }
         break;
       }
       case "essay": {
