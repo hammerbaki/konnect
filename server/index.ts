@@ -33,10 +33,30 @@ const httpServer = createServer(app);
 // Security: Disable X-Powered-By header
 app.disable('x-powered-by');
 
-// Security: Add Helmet for security headers (CSP relaxed for dev)
+// Security: Add Helmet for security headers
+// CSP configured to allow Supabase auth and necessary resources
 app.use(helmet({
-  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: [
+        "'self'",
+        "https://*.supabase.co",
+        "wss://*.supabase.co",
+        "https://accounts.google.com",
+        "https://apis.google.com",
+      ],
+      frameSrc: ["'self'", "https://*.supabase.co", "https://accounts.google.com"],
+      formAction: ["'self'"],
+      upgradeInsecureRequests: [],
+    },
+  },
   crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
 }));
 
 // Performance: Enable gzip compression
