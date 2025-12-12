@@ -725,6 +725,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePageAllowedRoles(slug: string, allowedRoles: string[] | null, updatedBy: string): Promise<PageSettings> {
+    // Prevent empty arrays - fall back to null (use defaults)
+    const rolesValue = allowedRoles && allowedRoles.length > 0 ? allowedRoles : null;
+    
     // First check if page exists in DB
     const [existing] = await db.select().from(pageSettings).where(eq(pageSettings.slug, slug));
     
@@ -732,7 +735,7 @@ export class DatabaseStorage implements IStorage {
       // Update existing
       const [result] = await db
         .update(pageSettings)
-        .set({ allowedRoles, updatedBy, updatedAt: new Date() })
+        .set({ allowedRoles: rolesValue, updatedBy, updatedAt: new Date() })
         .where(eq(pageSettings.slug, slug))
         .returning();
       return result;
@@ -749,7 +752,7 @@ export class DatabaseStorage implements IStorage {
           slug,
           title: config.title,
           defaultRoles: config.defaultRoles,
-          allowedRoles,
+          allowedRoles: rolesValue,
           isLocked: config.isLocked ? 1 : 0,
           updatedBy,
         })

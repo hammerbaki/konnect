@@ -59,6 +59,17 @@ interface TrafficStats {
   dailyData: Array<{ date: string; pageViews: number; uniqueVisitors: number }>;
 }
 
+interface PageSettings {
+  slug: string;
+  title: string;
+  description: string | null;
+  defaultRoles: string[];
+  allowedRoles: string[] | null;
+  isLocked: number;
+  updatedBy: string | null;
+  updatedAt: string | null;
+}
+
 const COLORS = ['#3182F6', '#7C3AED', '#059669', '#D97706', '#EC4899', '#6B7280'];
 
 export default function Admin() {
@@ -99,6 +110,72 @@ export default function Admin() {
     enabled: isStaffOrAdmin,
     retry: false,
   });
+
+  const { data: pageSettings = [], isLoading: pagesLoading, refetch: refetchPages } = useQuery<PageSettings[]>({
+    queryKey: ['/api/admin/page-visibility'],
+    enabled: isStaffOrAdmin,
+    retry: false,
+  });
+
+  const updatePageVisibilityMutation = useMutation({
+    mutationFn: async ({ slug, allowedRoles }: { slug: string; allowedRoles: string[] | null }) => {
+      const res = await apiRequest('PATCH', `/api/admin/page-visibility/${encodeURIComponent(slug)}`, { allowedRoles });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/page-visibility'] });
+      queryClient.invalidateQueries({ queryKey: ['page-visibility'] });
+      toast({
+        title: "페이지 설정 업데이트",
+        description: "페이지 가시성이 변경되었습니다.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "페이지 설정 업데이트에 실패했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetPageSettingsMutation = useMutation({
+    mutationFn: async (slug: string) => {
+      const res = await apiRequest('POST', `/api/admin/page-visibility/${encodeURIComponent(slug)}/reset`, {});
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/page-visibility'] });
+      queryClient.invalidateQueries({ queryKey: ['page-visibility'] });
+      toast({
+        title: "초기화 완료",
+        description: "페이지 설정이 기본값으로 초기화되었습니다.",
+      });
+    },
+  });
+
+  const toggleRole = (page: PageSettings, role: string) => {
+    if (page.isLocked) return;
+    const currentRoles = page.allowedRoles || page.defaultRoles;
+    let newRoles: string[];
+    
+    if (currentRoles.includes(role)) {
+      newRoles = currentRoles.filter(r => r !== role);
+    } else {
+      newRoles = [...currentRoles, role];
+    }
+
+    if (newRoles.length === 0) {
+      toast({
+        title: "최소 1개 역할 필요",
+        description: "최소 1개의 역할이 페이지에 접근할 수 있어야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updatePageVisibilityMutation.mutate({ slug: page.slug, allowedRoles: newRoles });
+  };
 
   if (userLoading) {
     return (
@@ -244,6 +321,7 @@ export default function Admin() {
               refetchStats();
               refetchAiStats();
               refetchTraffic();
+              refetchPages();
             }}
             className="rounded-xl"
             data-testid="button-refresh-admin"
@@ -270,6 +348,10 @@ export default function Admin() {
             <TabsTrigger value="traffic" className="rounded-lg px-4" data-testid="tab-traffic">
               <TrendingUp className="h-4 w-4 mr-2" />
               트래픽
+            </TabsTrigger>
+            <TabsTrigger value="pages" className="rounded-lg px-4" data-testid="tab-pages">
+              <Eye className="h-4 w-4 mr-2" />
+              페이지 관리
             </TabsTrigger>
           </TabsList>
 
@@ -677,6 +759,111 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="pages" className="space-y-6">
+            <Card className="toss-card">
+              <CardHeader>
+                <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                  <Eye className="h-5 w-5 text-[#3182F6]" />
+                  페이지별 접근 권한 관리
+                </CardTitle>
+                <p className="text-sm text-[#8B95A1]">
+                  각 페이지에 접근할 수 있는 역할을 설정합니다. 관리자만 수정할 수 있습니다.
+                </p>
+              </CardHeader>
+              <CardContent className="p-0">
+                {pagesLoading ? (
+                  <div className="p-8 text-center text-[#8B95A1]">로딩 중...</div>
+                ) : (
+                  <div className="divide-y divide-[#F2F4F6]">
+                    {pageSettings.map((page) => {
+                      const effectiveRoles = page.allowedRoles || page.defaultRoles;
+                      const isModified = page.allowedRoles !== null;
+                      
+                      return (
+                        <div 
+                          key={page.slug} 
+                          className={`p-4 ${page.isLocked ? 'bg-[#F9FAFB]' : ''}`}
+                          data-testid={`row-page-${page.slug.replace('/', '-')}`}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-[#191F28]">{page.title}</h4>
+                              <code className="text-xs bg-[#F2F4F6] px-2 py-0.5 rounded text-[#8B95A1]">{page.slug}</code>
+                              {page.isLocked === 1 && (
+                                <Badge variant="outline" className="text-xs">
+                                  <Shield className="h-3 w-3 mr-1" />
+                                  잠금
+                                </Badge>
+                              )}
+                              {isModified && !page.isLocked && (
+                                <Badge className="bg-amber-100 text-amber-700 text-xs">수정됨</Badge>
+                              )}
+                            </div>
+                            {isModified && !page.isLocked && isAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => resetPageSettingsMutation.mutate(page.slug)}
+                                className="text-xs text-[#8B95A1] hover:text-[#191F28]"
+                                data-testid={`button-reset-${page.slug.replace('/', '-')}`}
+                              >
+                                <RefreshCw className="h-3 w-3 mr-1" />
+                                초기화
+                              </Button>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-[#8B95A1] mr-2">접근 권한:</span>
+                            {['user', 'staff', 'admin'].map((role) => {
+                              const isActive = effectiveRoles.includes(role);
+                              const roleLabel = role === 'user' ? '일반 사용자' : role === 'staff' ? '스태프' : '관리자';
+                              const roleIcon = role === 'user' ? <User className="h-3 w-3" /> : role === 'staff' ? <Shield className="h-3 w-3" /> : <Crown className="h-3 w-3" />;
+                              
+                              return (
+                                <Button
+                                  key={role}
+                                  variant={isActive ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => toggleRole(page, role)}
+                                  disabled={page.isLocked === 1 || !isAdmin || updatePageVisibilityMutation.isPending}
+                                  className={`text-xs ${
+                                    isActive 
+                                      ? 'bg-[#3182F6] hover:bg-[#1B64DA] text-white' 
+                                      : 'border-[#E5E8EB] text-[#8B95A1]'
+                                  } ${page.isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                                  data-testid={`toggle-${page.slug.replace('/', '-')}-${role}`}
+                                >
+                                  {roleIcon}
+                                  <span className="ml-1">{roleLabel}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                          {page.updatedAt && (
+                            <p className="text-xs text-[#8B95A1] mt-2">
+                              마지막 수정: {new Date(page.updatedAt).toLocaleString('ko-KR')}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {!isAdmin && (
+              <Card className="toss-card border-amber-200 bg-amber-50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 text-amber-700">
+                    <AlertTriangle className="h-5 w-5" />
+                    <span className="text-sm">페이지 권한 수정은 관리자만 가능합니다.</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

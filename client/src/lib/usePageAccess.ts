@@ -26,9 +26,9 @@ export function usePageAccess() {
 
   const canAccess = (slug: string): boolean => {
     if (!visibility) {
-      return false;
+      return true;
     }
-    return visibility.pages[slug] ?? false;
+    return visibility.pages[slug] ?? true;
   };
 
   const userRole = visibility?.userRole ?? 'user';
