@@ -10,12 +10,15 @@ import {
   updateUserIdentitySchema,
   updateUserSettingsSchema,
   type AiJobType,
+  payments,
 } from "@shared/schema";
 import { z } from "zod";
 import { generateCareerAnalysis, generatePersonalEssay, generateGoals, type GoalLevel, checkAIRateLimit } from "./ai";
 import { createRateLimitMiddleware, checkRedisConnection, redis } from "./rateLimiter";
 import { startWorker, submitJobWithFastPath } from "./aiWorker";
 import { getQueueStats, estimateProgress } from "./jobQueue";
+import { db } from "./db";
+import { desc } from "drizzle-orm";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -1598,6 +1601,221 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // ==================== PAYMENT ROUTES (Toss Payments) ====================
+  
+  // Get Toss client key for frontend
+  app.get('/api/payments/config', isAuthenticated, async (req: any, res) => {
+    res.json({
+      clientKey: process.env.TOSS_TEST_CLIENT_KEY,
+    });
+  });
+
+  // Get available point packages
+  app.get('/api/payments/packages', isAuthenticated, async (req: any, res) => {
+    try {
+      const packages = await storage.getActivePointPackages();
+      res.json(packages);
+    } catch (error: any) {
+      console.error("Error fetching packages:", error);
+      res.status(500).json({ message: "패키지 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Initialize payment (create order)
+  app.post('/api/payments/init', isAuthenticated, async (req: any, res) => {
+    try {
+      const { packageId, amount, pointsToAdd, orderName } = req.body;
+      const userId = req.user.id;
+      
+      // Generate unique order ID
+      const orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Create pending payment record
+      const payment = await storage.createPayment({
+        userId,
+        packageId: packageId || null,
+        orderId,
+        orderName: orderName || '포인트 충전',
+        amount,
+        pointsToAdd,
+        status: 'pending',
+      });
+      
+      res.json({
+        paymentId: payment.id,
+        orderId: payment.orderId,
+        orderName: payment.orderName,
+        amount: payment.amount,
+      });
+    } catch (error: any) {
+      console.error("Error initializing payment:", error);
+      res.status(500).json({ message: "결제 초기화 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Confirm payment (called after Toss success redirect)
+  app.post('/api/payments/confirm', isAuthenticated, async (req: any, res) => {
+    try {
+      const { paymentKey, orderId, amount } = req.body;
+      const userId = req.user.id;
+      
+      // Find pending payment
+      const payment = await storage.getPaymentByOrderId(orderId);
+      if (!payment) {
+        return res.status(404).json({ message: "결제 정보를 찾을 수 없습니다." });
+      }
+      
+      if (payment.userId !== userId) {
+        return res.status(403).json({ message: "권한이 없습니다." });
+      }
+      
+      if (payment.status !== 'pending') {
+        return res.status(400).json({ message: "이미 처리된 결제입니다." });
+      }
+      
+      // Verify amount matches
+      if (payment.amount !== Number(amount)) {
+        return res.status(400).json({ message: "결제 금액이 일치하지 않습니다." });
+      }
+      
+      // Call Toss Payments confirm API
+      const secretKey = process.env.TOSS_TEST_SECRET_KEY;
+      const authorization = Buffer.from(`${secretKey}:`).toString('base64');
+      
+      const tossResponse = await fetch('https://api.tosspayments.com/v1/payments/confirm', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${authorization}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentKey,
+          orderId,
+          amount: Number(amount),
+        }),
+      });
+      
+      const tossResult = await tossResponse.json();
+      
+      if (!tossResponse.ok) {
+        // Payment failed
+        await storage.updatePaymentStatus(payment.id, 'failed', {
+          paymentKey,
+          failReason: tossResult.message || 'Unknown error',
+          rawResponse: tossResult,
+        });
+        return res.status(400).json({ 
+          message: tossResult.message || "결제 승인에 실패했습니다.",
+          code: tossResult.code,
+        });
+      }
+      
+      // Payment successful - update payment record
+      await storage.updatePaymentStatus(payment.id, 'done', {
+        paymentKey,
+        method: tossResult.method,
+        approvedAt: tossResult.approvedAt ? new Date(tossResult.approvedAt) : new Date(),
+        receiptUrl: tossResult.receipt?.url || null,
+        rawResponse: tossResult,
+      });
+      
+      // Add points to user
+      await storage.addUserPoints(
+        userId,
+        payment.pointsToAdd,
+        'purchase',
+        `${payment.orderName} 결제`,
+        undefined,
+        payment.id
+      );
+      
+      // Get updated user
+      const user = await storage.getUser(userId);
+      
+      res.json({
+        success: true,
+        payment: {
+          id: payment.id,
+          amount: payment.amount,
+          pointsAdded: payment.pointsToAdd,
+          method: tossResult.method,
+          receiptUrl: tossResult.receipt?.url,
+        },
+        newBalance: user?.credits || 0,
+      });
+    } catch (error: any) {
+      console.error("Error confirming payment:", error);
+      res.status(500).json({ message: "결제 승인 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Handle payment failure
+  app.post('/api/payments/fail', isAuthenticated, async (req: any, res) => {
+    try {
+      const { orderId, code, message } = req.body;
+      
+      const payment = await storage.getPaymentByOrderId(orderId);
+      if (payment) {
+        await storage.updatePaymentStatus(payment.id, 'failed', {
+          failReason: `${code}: ${message}`,
+        });
+      }
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error handling payment failure:", error);
+      res.status(500).json({ message: "결제 실패 처리 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get user's payment history
+  app.get('/api/payments/history', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const payments = await storage.getPaymentsByUser(userId);
+      res.json(payments);
+    } catch (error: any) {
+      console.error("Error fetching payment history:", error);
+      res.status(500).json({ message: "결제 내역 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get user's point transaction history
+  app.get('/api/points/history', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const transactions = await storage.getPointTransactionsByUser(userId, limit);
+      res.json(transactions);
+    } catch (error: any) {
+      console.error("Error fetching point history:", error);
+      res.status(500).json({ message: "포인트 내역 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Create point package
+  app.post('/api/admin/packages', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const pkg = await storage.createPointPackage(req.body);
+      res.json(pkg);
+    } catch (error: any) {
+      console.error("Error creating package:", error);
+      res.status(500).json({ message: "패키지 생성 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Get all payments
+  app.get('/api/admin/payments', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      // For now, just get all payments (can be optimized later with pagination)
+      const allPayments = await db.select().from(payments).orderBy(desc(payments.createdAt)).limit(100);
+      res.json(allPayments);
+    } catch (error: any) {
+      console.error("Error fetching all payments:", error);
+      res.status(500).json({ message: "결제 내역 조회 중 오류가 발생했습니다." });
+    }
+  });
+
   // Start the AI worker
   startWorker();
 
