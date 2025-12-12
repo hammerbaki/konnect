@@ -390,3 +390,118 @@ export const DEFAULT_PAGE_CONFIGS: Record<string, { title: string; defaultRoles:
 
 // Default roles for newly created pages not in DEFAULT_PAGE_CONFIGS
 export const NEW_PAGE_DEFAULT_ROLES: UserRole[] = ['staff', 'admin'];
+
+// ===== POINT PACKAGES TABLE (Available point packages for purchase) =====
+export const pointPackages = pgTable("point_packages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(),
+  points: integer("points").notNull(),
+  price: integer("price").notNull(), // Price in KRW
+  bonusPoints: integer("bonus_points").notNull().default(0),
+  description: text("description"),
+  isActive: integer("is_active").notNull().default(1),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPointPackageSchema = createInsertSchema(pointPackages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPointPackage = z.infer<typeof insertPointPackageSchema>;
+export type PointPackage = typeof pointPackages.$inferSelect;
+
+// Payment status type
+export type PaymentStatus = 'pending' | 'ready' | 'done' | 'canceled' | 'partial_canceled' | 'aborted' | 'expired' | 'failed';
+
+// ===== PAYMENTS TABLE (Toss Payments transactions) =====
+export const payments = pgTable("payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  packageId: varchar("package_id")
+    .references(() => pointPackages.id),
+  orderId: varchar("order_id", { length: 100 }).notNull().unique(),
+  orderName: varchar("order_name", { length: 200 }).notNull(),
+  amount: integer("amount").notNull(), // Amount in KRW
+  pointsToAdd: integer("points_to_add").notNull(),
+  status: varchar("status", { length: 30 }).notNull().default('pending'), // PaymentStatus
+  paymentKey: varchar("payment_key", { length: 200 }),
+  method: varchar("method", { length: 50 }), // 카드, 가상계좌, etc.
+  approvedAt: timestamp("approved_at"),
+  receiptUrl: text("receipt_url"),
+  failReason: text("fail_reason"),
+  rawResponse: jsonb("raw_response"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_payments_user_id").on(table.userId),
+  index("IDX_payments_order_id").on(table.orderId),
+  index("IDX_payments_status").on(table.status),
+]);
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  user: one(users, {
+    fields: [payments.userId],
+    references: [users.id],
+  }),
+  package: one(pointPackages, {
+    fields: [payments.packageId],
+    references: [pointPackages.id],
+  }),
+}));
+
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Payment = typeof payments.$inferSelect;
+
+// ===== POINT TRANSACTIONS TABLE (Point change history) =====
+export const pointTransactions = pgTable("point_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  paymentId: varchar("payment_id")
+    .references(() => payments.id),
+  amount: integer("amount").notNull(), // Positive for credit, negative for debit
+  balanceAfter: integer("balance_after").notNull(),
+  type: varchar("type", { length: 30 }).notNull(), // 'purchase' | 'usage' | 'admin_add' | 'admin_deduct' | 'refund' | 'bonus'
+  description: text("description"),
+  createdBy: varchar("created_by").references(() => users.id), // For admin operations
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_point_transactions_user_id").on(table.userId),
+  index("IDX_point_transactions_type").on(table.type),
+]);
+
+export const pointTransactionsRelations = relations(pointTransactions, ({ one }) => ({
+  user: one(users, {
+    fields: [pointTransactions.userId],
+    references: [users.id],
+  }),
+  payment: one(payments, {
+    fields: [pointTransactions.paymentId],
+    references: [payments.id],
+  }),
+  creator: one(users, {
+    fields: [pointTransactions.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const insertPointTransactionSchema = createInsertSchema(pointTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema>;
+export type PointTransaction = typeof pointTransactions.$inferSelect;

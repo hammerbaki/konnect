@@ -10,6 +10,9 @@ import {
   visitorMetrics,
   userSessions,
   pageSettings,
+  pointPackages,
+  payments,
+  pointTransactions,
   type User,
   type UpsertUser,
   type Profile,
@@ -34,6 +37,13 @@ import {
   type InsertUserSession,
   type PageSettings,
   type InsertPageSettings,
+  type PointPackage,
+  type InsertPointPackage,
+  type Payment,
+  type InsertPayment,
+  type PaymentStatus,
+  type PointTransaction,
+  type InsertPointTransaction,
   DEFAULT_PAGE_CONFIGS,
   NEW_PAGE_DEFAULT_ROLES,
 } from "@shared/schema";
@@ -136,6 +146,24 @@ export interface IStorage {
   upsertPageSettings(settings: InsertPageSettings): Promise<PageSettings>;
   updatePageAllowedRoles(slug: string, allowedRoles: string[] | null, updatedBy: string): Promise<PageSettings>;
   resetPageSettings(slug: string): Promise<void>;
+
+  // Point Packages
+  getActivePointPackages(): Promise<PointPackage[]>;
+  getPointPackage(id: string): Promise<PointPackage | undefined>;
+  createPointPackage(pkg: InsertPointPackage): Promise<PointPackage>;
+  updatePointPackage(id: string, data: Partial<InsertPointPackage>): Promise<PointPackage>;
+
+  // Payments
+  createPayment(payment: InsertPayment): Promise<Payment>;
+  getPayment(id: string): Promise<Payment | undefined>;
+  getPaymentByOrderId(orderId: string): Promise<Payment | undefined>;
+  updatePaymentStatus(id: string, status: PaymentStatus, data?: Partial<Payment>): Promise<Payment>;
+  getPaymentsByUser(userId: string): Promise<Payment[]>;
+
+  // Point Transactions
+  createPointTransaction(transaction: InsertPointTransaction): Promise<PointTransaction>;
+  getPointTransactionsByUser(userId: string, limit?: number): Promise<PointTransaction[]>;
+  addUserPoints(userId: string, amount: number, type: string, description: string, createdBy?: string, paymentId?: string): Promise<PointTransaction>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -894,6 +922,117 @@ export class DatabaseStorage implements IStorage {
   async resetPageSettings(slug: string): Promise<void> {
     // Delete from DB to reset to defaults
     await db.delete(pageSettings).where(eq(pageSettings.slug, slug));
+  }
+
+  // Point Packages
+  async getActivePointPackages(): Promise<PointPackage[]> {
+    return db
+      .select()
+      .from(pointPackages)
+      .where(eq(pointPackages.isActive, 1))
+      .orderBy(pointPackages.sortOrder);
+  }
+
+  async getPointPackage(id: string): Promise<PointPackage | undefined> {
+    const [pkg] = await db.select().from(pointPackages).where(eq(pointPackages.id, id));
+    return pkg;
+  }
+
+  async createPointPackage(pkg: InsertPointPackage): Promise<PointPackage> {
+    const [result] = await db.insert(pointPackages).values(pkg).returning();
+    return result;
+  }
+
+  async updatePointPackage(id: string, data: Partial<InsertPointPackage>): Promise<PointPackage> {
+    const [result] = await db
+      .update(pointPackages)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(pointPackages.id, id))
+      .returning();
+    return result;
+  }
+
+  // Payments
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const [result] = await db.insert(payments).values(payment).returning();
+    return result;
+  }
+
+  async getPayment(id: string): Promise<Payment | undefined> {
+    const [payment] = await db.select().from(payments).where(eq(payments.id, id));
+    return payment;
+  }
+
+  async getPaymentByOrderId(orderId: string): Promise<Payment | undefined> {
+    const [payment] = await db.select().from(payments).where(eq(payments.orderId, orderId));
+    return payment;
+  }
+
+  async updatePaymentStatus(id: string, status: PaymentStatus, data?: Partial<Payment>): Promise<Payment> {
+    const updateData: any = { status, updatedAt: new Date() };
+    if (data) {
+      Object.assign(updateData, data);
+    }
+    const [result] = await db
+      .update(payments)
+      .set(updateData)
+      .where(eq(payments.id, id))
+      .returning();
+    return result;
+  }
+
+  async getPaymentsByUser(userId: string): Promise<Payment[]> {
+    return db
+      .select()
+      .from(payments)
+      .where(eq(payments.userId, userId))
+      .orderBy(desc(payments.createdAt));
+  }
+
+  // Point Transactions
+  async createPointTransaction(transaction: InsertPointTransaction): Promise<PointTransaction> {
+    const [result] = await db.insert(pointTransactions).values(transaction).returning();
+    return result;
+  }
+
+  async getPointTransactionsByUser(userId: string, limit: number = 50): Promise<PointTransaction[]> {
+    return db
+      .select()
+      .from(pointTransactions)
+      .where(eq(pointTransactions.userId, userId))
+      .orderBy(desc(pointTransactions.createdAt))
+      .limit(limit);
+  }
+
+  async addUserPoints(
+    userId: string, 
+    amount: number, 
+    type: string, 
+    description: string, 
+    createdBy?: string, 
+    paymentId?: string
+  ): Promise<PointTransaction> {
+    // Get current balance
+    const user = await this.getUser(userId);
+    if (!user) throw new Error("User not found");
+
+    const newBalance = user.credits + amount;
+    
+    // Update user credits
+    await this.updateUserCredits(userId, newBalance);
+    
+    // Create transaction record
+    const transaction = await this.createPointTransaction({
+      userId,
+      paymentId: paymentId || null,
+      amount,
+      balanceAfter: newBalance,
+      type,
+      description,
+      createdBy: createdBy || null,
+    });
+    
+    return transaction;
   }
 }
 
