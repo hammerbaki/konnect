@@ -9,8 +9,8 @@ export interface PageVisibility {
 export function usePageAccess() {
   const { isAuthenticated, user } = useAuth();
 
-  const { data: visibility, isLoading } = useQuery<PageVisibility>({
-    queryKey: ['page-visibility'],
+  const { data: visibility, isLoading, isFetching } = useQuery<PageVisibility>({
+    queryKey: ['page-visibility', user?.id],
     queryFn: async () => {
       const res = await fetch('/api/page-visibility', {
         credentials: 'include',
@@ -19,22 +19,19 @@ export function usePageAccess() {
       return res.json();
     },
     enabled: isAuthenticated,
-    staleTime: Infinity,
-    gcTime: 10 * 60 * 1000,
-    refetchOnMount: false,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const canAccess = (slug: string): boolean => {
     if (!visibility) {
-      return true;
+      return false;
     }
-    // For unknown pages, default to restricted (staff/admin only)
-    // If page exists in visibility map, use its value
-    // If not, assume it's a new page - deny access for regular users
     if (slug in visibility.pages) {
       return visibility.pages[slug];
     }
-    // Unknown page - only staff/admin can access by default
     return visibility.userRole === 'staff' || visibility.userRole === 'admin';
   };
 
@@ -43,7 +40,7 @@ export function usePageAccess() {
   return {
     canAccess,
     userRole,
-    isLoading,
+    isLoading: isLoading || isFetching,
     visibility,
   };
 }

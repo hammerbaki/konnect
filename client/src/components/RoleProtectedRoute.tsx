@@ -56,7 +56,7 @@ export function RoleProtectedRoute({ children, slug, fallback }: RoleProtectedRo
   }
 
   if (accessLoading) {
-    return <>{children}</>;
+    return <LoadingSpinner />;
   }
 
   if (!canAccess(slug)) {
