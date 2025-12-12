@@ -243,7 +243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Redeem token code for credits
+  // Redeem token code for credits (uses database-backed redemption codes)
   app.post('/api/redeem', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -253,33 +253,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "유효한 코드를 입력해 주세요." });
       }
       
-      const normalizedCode = code.trim().toUpperCase();
+      // Use database-backed redemption system
+      const result = await storage.redeemCode(userId, code.trim());
       
-      // Simple demo codes - in production, this would check a database table
-      let creditsToAdd = 0;
-      if (normalizedCode === "DEMO" || normalizedCode === "KONNECT") {
-        creditsToAdd = 500;
-      } else if (normalizedCode.startsWith("KNC-") && normalizedCode.length >= 8) {
-        creditsToAdd = 500;
-      } else if (normalizedCode.length >= 10) {
-        creditsToAdd = 1000;
-      } else {
-        return res.status(400).json({ message: "유효하지 않은 코드입니다. 다시 확인해 주세요." });
+      if (!result.success) {
+        return res.status(400).json({ message: result.message });
       }
       
-      // Get current user credits and add new ones
+      // Get updated user credits
       const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
-      }
-      
-      const newCredits = (user.credits || 0) + creditsToAdd;
-      await storage.updateUserCredits(userId, newCredits);
       
       res.json({ 
-        message: `${creditsToAdd} 포인트가 충전되었습니다.`,
-        creditsAdded: creditsToAdd,
-        totalCredits: newCredits,
+        message: result.message,
+        creditsAdded: result.pointsAwarded,
+        totalCredits: user?.credits || 0,
       });
     } catch (error) {
       console.error("Error redeeming code:", error);
