@@ -601,51 +601,36 @@ export default function Analysis() {
                         <div className="p-4 lg:p-8 max-w-4xl mx-auto">
                             {aiJob.isLoading ? (
                                 <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-300">
-                                    <div className="bg-white rounded-2xl border border-[#E5E8EB] shadow-sm p-6 max-w-md w-full">
-                                        <div className="flex items-start gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3182F6] to-[#1e6cd6] flex items-center justify-center flex-shrink-0">
-                                                <Bot className="w-5 h-5 text-white" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium text-[#191F28] mb-2">AI 어시스턴트</p>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex items-center gap-1">
-                                                        <span 
-                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
-                                                            style={{
-                                                                animation: 'thinking-pulse 1.4s ease-in-out infinite',
-                                                                animationDelay: '0s'
-                                                            }}
-                                                        />
-                                                        <span 
-                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
-                                                            style={{
-                                                                animation: 'thinking-pulse 1.4s ease-in-out infinite',
-                                                                animationDelay: '0.2s'
-                                                            }}
-                                                        />
-                                                        <span 
-                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
-                                                            style={{
-                                                                animation: 'thinking-pulse 1.4s ease-in-out infinite',
-                                                                animationDelay: '0.4s'
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <span className="text-sm text-[#4E5968]">프로필을 분석하고 있어요</span>
+                                    <Card className="bg-white rounded-2xl border border-[#E5E8EB] shadow-lg p-8 max-w-md w-full">
+                                        <div className="flex flex-col items-center text-center">
+                                            <div className="relative mb-6">
+                                                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#3182F6]/20 to-[#3182F6]/5 flex items-center justify-center">
+                                                    <Loader2 className="h-10 w-10 text-[#3182F6] animate-spin" />
                                                 </div>
-                                                <p className="text-xs text-[#8B95A1] mt-3">
-                                                    맞춤형 진로 분석을 준비하고 있습니다. 잠시만 기다려주세요.
-                                                </p>
+                                                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#3182F6] flex items-center justify-center shadow-lg">
+                                                    <Brain className="h-4 w-4 text-white" />
+                                                </div>
                                             </div>
+                                            
+                                            <h3 className="text-lg font-bold text-[#191F28] mb-2">AI 분석 진행 중</h3>
+                                            <p className="text-sm text-[#8B95A1] mb-6">
+                                                프로필 정보를 바탕으로 맞춤형 진로를 분석하고 있습니다
+                                            </p>
+                                            
+                                            <div className="w-full bg-[#F2F4F6] rounded-full h-2 mb-3">
+                                                <div 
+                                                    className="bg-gradient-to-r from-[#3182F6] to-[#1565C0] h-2 rounded-full transition-all duration-500"
+                                                    style={{ width: `${Math.max(aiJob.progress, 10)}%` }}
+                                                />
+                                            </div>
+                                            <p className="text-xs text-[#8B95A1]">
+                                                {aiJob.progress < 30 ? "프로필 정보 분석 중..." : 
+                                                 aiJob.progress < 60 ? "AI가 추천 진로를 생성 중..." : 
+                                                 aiJob.progress < 90 ? "결과를 정리하고 있습니다..." : 
+                                                 "거의 완료되었습니다!"}
+                                            </p>
                                         </div>
-                                    </div>
-                                    <style>{`
-                                        @keyframes thinking-pulse {
-                                            0%, 100% { opacity: 0.4; transform: scale(0.8); }
-                                            50% { opacity: 1; transform: scale(1); }
-                                        }
-                                    `}</style>
+                                    </Card>
                                 </div>
                             ) : isLoadingProfiles || isLoadingAnalyses ? (
                                 <div className="max-w-3xl mx-auto py-8 space-y-6">
