@@ -188,41 +188,23 @@ export default function Settings() {
                             <CardContent className="p-4 sm:p-6 space-y-4">
                                 <div className="space-y-2">
                                     <Label className="text-[#4E5968] text-sm">이메일</Label>
-                                    <div className="flex gap-2">
-                                        <Input 
-                                            value={userEmail}
-                                            placeholder="이메일 없음"
-                                            disabled 
-                                            className="bg-[#F2F4F6] border-none rounded-xl h-11 sm:h-12 text-sm sm:text-base" 
-                                            data-testid="input-email"
-                                        />
-                                        <Button 
-                                            variant="outline" 
-                                            className="h-11 sm:h-12 px-3 sm:px-4 rounded-xl border-[#E5E8EB] text-sm"
-                                            data-testid="button-change-email"
-                                        >
-                                            변경
-                                        </Button>
-                                    </div>
+                                    <Input 
+                                        value={userEmail}
+                                        placeholder="이메일 없음"
+                                        disabled 
+                                        className="bg-[#F2F4F6] border-none rounded-xl h-11 sm:h-12 text-sm sm:text-base" 
+                                        data-testid="input-email"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[#4E5968] text-sm">휴대폰 번호</Label>
-                                    <div className="flex gap-2">
-                                        <Input 
-                                            value={phone}
-                                            onChange={(e) => setPhone(e.target.value)}
-                                            placeholder="휴대폰 번호를 입력하세요"
-                                            className="bg-[#F2F4F6] border-none rounded-xl h-11 sm:h-12 text-sm sm:text-base" 
-                                            data-testid="input-phone"
-                                        />
-                                        <Button 
-                                            variant="outline" 
-                                            className="h-11 sm:h-12 px-3 sm:px-4 rounded-xl border-[#E5E8EB] text-sm"
-                                            data-testid="button-verify-phone"
-                                        >
-                                            인증
-                                        </Button>
-                                    </div>
+                                    <Input 
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        placeholder="휴대폰 번호를 입력하세요"
+                                        className="bg-[#F2F4F6] border-none rounded-xl h-11 sm:h-12 text-sm sm:text-base" 
+                                        data-testid="input-phone"
+                                    />
                                 </div>
                             </CardContent>
                         </Card>

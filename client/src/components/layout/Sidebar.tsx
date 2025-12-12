@@ -1,5 +1,16 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, PieChart, Target, LogOut, User, FileText, Search, Settings, Coins, Shield } from "lucide-react";
+import {
+  LayoutDashboard,
+  PieChart,
+  Target,
+  LogOut,
+  User,
+  FileText,
+  Search,
+  Settings,
+  Coins,
+  Shield,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -14,10 +25,10 @@ export function Sidebar() {
   const { logout } = useAuth();
 
   const { data: user } = useQuery<UserData>({
-    queryKey: ['/api/auth/user'],
+    queryKey: ["/api/auth/user"],
   });
 
-  const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
+  const isAdminOrStaff = user?.role === "admin" || user?.role === "staff";
 
   const handleLogout = async () => {
     await logout();
@@ -34,15 +45,23 @@ export function Sidebar() {
   ];
 
   const bottomItems = [
-      { href: "/recharge", icon: Coins, label: "포인트 충전" },
-      { href: "/settings", icon: Settings, label: "설정" },
-      ...(isAdminOrStaff ? [{ href: "/admin", icon: Shield, label: "관리자" }] : []),
+    ...(isAdminOrStaff
+      ? [{ href: "/recharge", icon: Coins, label: "포인트 충전" }]
+      : []),
+    { href: "/settings", icon: Settings, label: "설정" },
+    ...(isAdminOrStaff
+      ? [{ href: "/admin", icon: Shield, label: "관리자" }]
+      : []),
   ];
 
   return (
     <div className="h-full flex flex-col bg-white border-r border-[#E5E8EB]">
       <div className="flex h-16 items-center px-6 mb-6">
-        <img src="/konnect-logo.png" alt="Konnect Logo" className="h-8 w-auto" />
+        <img
+          src="/konnect-logo.png"
+          alt="Konnect Logo"
+          className="h-8 w-auto"
+        />
       </div>
 
       <div className="flex-1 px-4 flex flex-col">
@@ -58,16 +77,21 @@ export function Sidebar() {
                   "flex items-center gap-4 rounded-xl px-5 py-4 text-base font-semibold transition-all duration-200",
                   isActive
                     ? "bg-white text-[#3182F6] shadow-sm scale-[1.02]"
-                    : "text-[#8B95A1] hover:bg-white/50 hover:text-[#4E5968]"
+                    : "text-[#8B95A1] hover:bg-white/50 hover:text-[#4E5968]",
                 )}
               >
-                <Icon className={cn("h-5 w-5", isActive ? "text-[#3182F6]" : "text-[#B0B8C1]")} />
+                <Icon
+                  className={cn(
+                    "h-5 w-5",
+                    isActive ? "text-[#3182F6]" : "text-[#B0B8C1]",
+                  )}
+                />
                 {item.label}
               </Link>
             );
           })}
         </nav>
-        
+
         <div className="mt-auto pt-4 border-t border-[#F2F4F6] space-y-2 mb-2">
           {bottomItems.map((item) => {
             const Icon = item.icon;
@@ -80,10 +104,15 @@ export function Sidebar() {
                   "flex items-center gap-4 rounded-xl px-5 py-3 text-sm font-medium transition-all duration-200",
                   isActive
                     ? "bg-blue-50 text-[#3182F6]"
-                    : "text-[#8B95A1] hover:bg-gray-50 hover:text-[#4E5968]"
+                    : "text-[#8B95A1] hover:bg-gray-50 hover:text-[#4E5968]",
                 )}
               >
-                <Icon className={cn("h-4 w-4", isActive ? "text-[#3182F6]" : "text-[#B0B8C1]")} />
+                <Icon
+                  className={cn(
+                    "h-4 w-4",
+                    isActive ? "text-[#3182F6]" : "text-[#B0B8C1]",
+                  )}
+                />
                 {item.label}
               </Link>
             );

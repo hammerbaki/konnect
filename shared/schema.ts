@@ -66,7 +66,7 @@ export const updateUserIdentitySchema = z.object({
 });
 
 export const updateUserSettingsSchema = z.object({
-  phone: z.string().optional(),
+  phone: z.string().nullable().optional(),
   marketingConsent: z.boolean().optional(),
   emailNotifications: z.boolean().optional(),
   pushNotifications: z.boolean().optional(),
