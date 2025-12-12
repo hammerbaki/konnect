@@ -107,9 +107,11 @@ export function Header() {
             
             {/* Mobile Only Items */}
             <div className="md:hidden">
-                <DropdownMenuItem className="rounded-lg px-3 py-2.5 font-medium cursor-pointer">
-                    토큰 충전
-                </DropdownMenuItem>
+                <RedeemDialog>
+                  <button className="w-full text-left rounded-lg px-3 py-2.5 font-medium cursor-pointer text-[#4E5968] hover:bg-[#F2F4F6] hover:text-[#191F28] text-sm">
+                      토큰 충전
+                  </button>
+                </RedeemDialog>
                  <DropdownMenuSeparator className="bg-[#F2F4F6]" />
             </div>
 
@@ -118,9 +120,16 @@ export function Header() {
                 프로필 설정
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-lg px-3 py-2.5 text-[#4E5968] focus:bg-[#F2F4F6] focus:text-[#191F28] font-medium cursor-pointer">
-              환경설정
+            <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 text-[#4E5968] focus:bg-[#F2F4F6] focus:text-[#191F28] font-medium cursor-pointer">
+              <Link href="/settings">
+                환경설정
+              </Link>
             </DropdownMenuItem>
+            <RedeemDialog>
+              <button className="w-full text-left rounded-lg px-3 py-2.5 text-[#4E5968] hover:bg-[#F2F4F6] hover:text-[#191F28] font-medium cursor-pointer text-sm">
+                토큰 충전
+              </button>
+            </RedeemDialog>
             <DropdownMenuSeparator className="bg-[#F2F4F6]" />
             <DropdownMenuItem 
               onClick={handleLogout}

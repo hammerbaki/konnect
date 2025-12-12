@@ -108,21 +108,38 @@ export default function Goals() {
     mutationFn: async (kompassId: string) => {
       await apiRequest('DELETE', `/api/kompass/${kompassId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/kompass'] });
-      toast({ 
-        title: "삭제 완료", 
-        description: "Kompass가 삭제되었습니다." 
-      });
+    onMutate: async (kompassId: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/kompass'] });
+      
+      // Snapshot previous value for rollback
+      const previousKompass = queryClient.getQueryData(['/api/kompass']);
+      
+      // Optimistically remove from cache immediately
+      queryClient.setQueryData(
+        ['/api/kompass'],
+        (old: any[] | undefined) => old?.filter(k => k.id !== kompassId) ?? []
+      );
+      
+      toast({ title: "삭제 완료", description: "Kompass가 삭제되었습니다." });
       setDeletingKompassId(null);
+      
+      return { previousKompass };
     },
-    onError: (error: any) => {
+    onError: (error: any, _kompassId, context) => {
+      // Rollback on error
+      if (context?.previousKompass) {
+        queryClient.setQueryData(['/api/kompass'], context.previousKompass);
+      }
       toast({
         title: "삭제 실패",
-        description: error.message || "Kompass 삭제 중 오류가 발생했습니다.",
+        description: error.message || "Kompass 삭제 중 오류가 발생했습니다. 다시 시도해주세요.",
         variant: "destructive",
       });
-      setDeletingKompassId(null);
+    },
+    onSettled: () => {
+      // Sync with server data
+      queryClient.invalidateQueries({ queryKey: ['/api/kompass'] });
     },
   });
 

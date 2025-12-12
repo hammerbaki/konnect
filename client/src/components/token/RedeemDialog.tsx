@@ -11,12 +11,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Ticket, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { useTokens } from "@/lib/TokenContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-export function RedeemDialog() {
+interface RedeemDialogProps {
+  children?: ReactNode;
+}
+
+export function RedeemDialog({ children }: RedeemDialogProps) {
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -54,10 +58,12 @@ export function RedeemDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-[#FFB300] hover:bg-[#FFCA28] text-white border-none shadow-sm gap-2 rounded-lg font-bold">
-          <Ticket className="h-4 w-4" />
-          토큰 충전
-        </Button>
+        {children || (
+          <Button size="sm" className="bg-[#FFB300] hover:bg-[#FFCA28] text-white border-none shadow-sm gap-2 rounded-lg font-bold">
+            <Ticket className="h-4 w-4" />
+            토큰 충전
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.12)] border-none">
         <DialogHeader>

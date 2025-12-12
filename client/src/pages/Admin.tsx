@@ -15,6 +15,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AdminUser {
   id: string;
@@ -116,12 +117,7 @@ export default function Admin() {
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const res = await fetch(`/api/admin/users/${userId}/role`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ role }),
-      });
+      const res = await apiRequest('PATCH', `/api/admin/users/${userId}/role`, { role });
       if (!res.ok) throw new Error('Failed to update role');
       return res.json();
     },
@@ -136,12 +132,7 @@ export default function Admin() {
 
   const updateCreditsMutation = useMutation({
     mutationFn: async ({ userId, credits }: { userId: string; credits: number }) => {
-      const res = await fetch(`/api/admin/users/${userId}/credits`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ credits }),
-      });
+      const res = await apiRequest('PATCH', `/api/admin/users/${userId}/credits`, { credits });
       if (!res.ok) throw new Error('Failed to update credits');
       return res.json();
     },
