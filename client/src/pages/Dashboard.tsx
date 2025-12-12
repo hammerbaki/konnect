@@ -187,7 +187,7 @@ export default function Dashboard() {
                 <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
                   <Target className="h-5 w-5 text-[#3182F6]" /> Kompass 목표
                 </CardTitle>
-                <Link href="/kompass">
+                <Link href="/goals">
                   <Button variant="ghost" size="sm" className="text-[#3182F6] font-bold">
                     전체보기 <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
@@ -198,20 +198,52 @@ export default function Dashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent className="px-0 pb-0 mt-4 space-y-4">
-              <div className="p-4 bg-[#F9FAFB] rounded-xl">
-                <div className="flex items-center gap-3 mb-3">
-                  <Calendar className="h-5 w-5 text-[#3182F6]" />
-                  <span className="font-bold text-[#191F28]">오늘의 할 일</span>
+              {kompass && kompass.length > 0 ? (
+                <div className="space-y-3">
+                  {kompass.slice(0, 3).map((goal: any) => (
+                    <div key={goal.id} className="p-4 bg-[#F9FAFB] rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-[#191F28] text-sm truncate flex-1">
+                          {goal.title}
+                        </span>
+                      </div>
+                      <Link href={`/goals/${goal.id}`}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full rounded-lg border-[#3182F6] text-[#3182F6] font-semibold hover:bg-[#3182F6]/10"
+                          data-testid={`button-today-goal-${goal.id}`}
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          오늘의 목표 보기
+                        </Button>
+                      </Link>
+                    </div>
+                  ))}
+                  {kompass.length > 3 && (
+                    <Link href="/goals">
+                      <Button variant="ghost" className="w-full text-[#8B95A1] text-sm">
+                        +{kompass.length - 3}개 더 보기
+                      </Button>
+                    </Link>
+                  )}
                 </div>
-                <p className="text-sm text-[#8B95A1]">
-                  Kompass에서 오늘의 목표를 설정해보세요.
-                </p>
-                <Link href="/kompass">
-                  <Button className="w-full mt-4 rounded-xl h-11 bg-[#3182F6] font-bold" data-testid="button-go-to-kompass">
-                    목표 설정하기
-                  </Button>
-                </Link>
-              </div>
+              ) : (
+                <div className="p-4 bg-[#F9FAFB] rounded-xl">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Calendar className="h-5 w-5 text-[#3182F6]" />
+                    <span className="font-bold text-[#191F28]">목표 설정하기</span>
+                  </div>
+                  <p className="text-sm text-[#8B95A1]">
+                    Kompass에서 커리어 목표를 설정해보세요.
+                  </p>
+                  <Link href="/goals">
+                    <Button className="w-full mt-4 rounded-xl h-11 bg-[#3182F6] font-bold" data-testid="button-go-to-kompass">
+                      새 목표 만들기
+                    </Button>
+                  </Link>
+                </div>
+              )}
               
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
