@@ -13,6 +13,7 @@ import {
   pointPackages,
   payments,
   pointTransactions,
+  servicePricing,
   type User,
   type UpsertUser,
   type Profile,
@@ -44,8 +45,11 @@ import {
   type PaymentStatus,
   type PointTransaction,
   type InsertPointTransaction,
+  type ServicePricing,
+  type InsertServicePricing,
   DEFAULT_PAGE_CONFIGS,
   NEW_PAGE_DEFAULT_ROLES,
+  DEFAULT_SERVICE_PRICING,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, and, inArray, sql, count, gte, lte, sum, isNull } from "drizzle-orm";
@@ -165,6 +169,13 @@ export interface IStorage {
   createPointTransaction(transaction: InsertPointTransaction): Promise<PointTransaction>;
   getPointTransactionsByUser(userId: string, limit?: number): Promise<PointTransaction[]>;
   addUserPoints(userId: string, amount: number, type: string, description: string, createdBy?: string, paymentId?: string): Promise<PointTransaction>;
+
+  // Service Pricing
+  getAllServicePricing(): Promise<ServicePricing[]>;
+  getServicePricing(id: string): Promise<ServicePricing | undefined>;
+  upsertServicePricing(pricing: InsertServicePricing): Promise<ServicePricing>;
+  updateServicePricing(id: string, data: Partial<ServicePricing>, updatedBy: string): Promise<ServicePricing>;
+  getServiceCost(serviceType: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1041,6 +1052,54 @@ export class DatabaseStorage implements IStorage {
     });
     
     return transaction;
+  }
+
+  // Service Pricing
+  async getAllServicePricing(): Promise<ServicePricing[]> {
+    return db.select().from(servicePricing);
+  }
+
+  async getServicePricing(id: string): Promise<ServicePricing | undefined> {
+    const [pricing] = await db.select().from(servicePricing).where(eq(servicePricing.id, id));
+    return pricing;
+  }
+
+  async upsertServicePricing(pricing: InsertServicePricing): Promise<ServicePricing> {
+    const [result] = await db
+      .insert(servicePricing)
+      .values(pricing)
+      .onConflictDoUpdate({
+        target: servicePricing.id,
+        set: {
+          name: pricing.name,
+          description: pricing.description,
+          pointCost: pricing.pointCost,
+          isActive: pricing.isActive,
+          updatedAt: new Date(),
+          updatedBy: pricing.updatedBy,
+        },
+      })
+      .returning();
+    return result;
+  }
+
+  async updateServicePricing(id: string, data: Partial<ServicePricing>, updatedBy: string): Promise<ServicePricing> {
+    const [result] = await db
+      .update(servicePricing)
+      .set({ ...data, updatedAt: new Date(), updatedBy })
+      .where(eq(servicePricing.id, id))
+      .returning();
+    return result;
+  }
+
+  async getServiceCost(serviceType: string): Promise<number> {
+    const pricing = await this.getServicePricing(serviceType);
+    if (pricing) {
+      return pricing.pointCost;
+    }
+    // Fallback to defaults if not in database
+    const defaults = DEFAULT_SERVICE_PRICING as Record<string, { pointCost: number }>;
+    return defaults[serviceType]?.pointCost ?? 100;
   }
 }
 
