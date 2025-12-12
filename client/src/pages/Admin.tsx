@@ -98,6 +98,23 @@ interface PointPackage {
   updatedAt: string | null;
 }
 
+interface ServicePricing {
+  id: string;
+  name: string;
+  description: string | null;
+  pointCost: number;
+  isActive: number;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+const DEFAULT_SERVICE_PRICING: Record<string, { name: string; description: string; pointCost: number }> = {
+  analysis: { name: '진로 분석', description: 'AI 기반 진로 분석 1회', pointCost: 100 },
+  essay: { name: '자기소개서 생성', description: 'AI 자기소개서 작성 1회', pointCost: 100 },
+  essay_revision: { name: '자기소개서 수정', description: 'AI 자기소개서 수정 1회', pointCost: 30 },
+  goal_strategic: { name: '전략 목표 생성', description: '연간/반기 목표 AI 생성', pointCost: 100 },
+};
+
 const COLORS = ['#3182F6', '#7C3AED', '#059669', '#D97706', '#EC4899', '#6B7280'];
 
 export default function Admin() {
@@ -108,6 +125,7 @@ export default function Admin() {
   const [editingCredits, setEditingCredits] = useState<{ userId: string; credits: number } | null>(null);
   const [editingPackage, setEditingPackage] = useState<PointPackage | null>(null);
   const [newPackage, setNewPackage] = useState<Partial<PointPackage> | null>(null);
+  const [editingPricing, setEditingPricing] = useState<{ id: string; pointCost: number } | null>(null);
 
   const { user: currentUser, isLoading: userLoading } = useAuth();
 
@@ -155,6 +173,61 @@ export default function Admin() {
     queryKey: ['/api/admin/packages'],
     enabled: isStaffOrAdmin,
     retry: false,
+  });
+
+  const { data: servicePricingData = [], refetch: refetchPricing } = useQuery<ServicePricing[]>({
+    queryKey: ['/api/service-pricing'],
+    enabled: isStaffOrAdmin,
+    retry: false,
+  });
+
+  // Merge database pricing with defaults for display
+  const servicePricing = Object.entries(DEFAULT_SERVICE_PRICING).map(([id, defaults]) => {
+    const dbPricing = servicePricingData.find(p => p.id === id);
+    return dbPricing || { id, ...defaults, isActive: 1, updatedAt: null, updatedBy: null };
+  });
+
+  const initServicePricingMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', '/api/admin/service-pricing/init', {});
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/service-pricing'] });
+      toast({
+        title: "초기화 완료",
+        description: "서비스 가격이 초기화되었습니다.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "서비스 가격 초기화에 실패했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateServicePricingMutation = useMutation({
+    mutationFn: async ({ id, pointCost }: { id: string; pointCost: number }) => {
+      const res = await apiRequest('PATCH', `/api/admin/service-pricing/${id}`, { pointCost });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/service-pricing'] });
+      setEditingPricing(null);
+      toast({
+        title: "업데이트 완료",
+        description: "서비스 가격이 변경되었습니다.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "서비스 가격 업데이트에 실패했습니다.",
+        variant: "destructive",
+      });
+    },
   });
 
   const updatePageVisibilityMutation = useMutation({
@@ -659,35 +732,88 @@ export default function Admin() {
 
           <TabsContent value="tokens" className="space-y-6">
             <Card className="toss-card">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Coins className="h-5 w-5 text-[#3182F6]" />
                   포인트 가격 정책
                 </CardTitle>
+                {servicePricingData.length === 0 && (
+                  <Button
+                    onClick={() => initServicePricingMutation.mutate()}
+                    disabled={initServicePricingMutation.isPending}
+                    className="bg-[#3182F6] hover:bg-[#1B64DA] text-white rounded-xl"
+                    data-testid="button-init-pricing"
+                  >
+                    {initServicePricingMutation.isPending ? "초기화 중..." : "가격 초기화"}
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-[#F2F4F6] rounded-xl">
-                      <p className="font-bold text-[#191F28] mb-2">진로 분석</p>
-                      <p className="text-2xl font-bold text-[#3182F6]">100 포인트</p>
-                      <p className="text-sm text-[#8B95A1]">AI 기반 진로 분석 1회</p>
-                    </div>
-                    <div className="p-4 bg-[#F2F4F6] rounded-xl">
-                      <p className="font-bold text-[#191F28] mb-2">자기소개서 생성</p>
-                      <p className="text-2xl font-bold text-[#3182F6]">100 포인트</p>
-                      <p className="text-sm text-[#8B95A1]">AI 자기소개서 작성 1회</p>
-                    </div>
-                    <div className="p-4 bg-[#F2F4F6] rounded-xl">
-                      <p className="font-bold text-[#191F28] mb-2">자기소개서 수정</p>
-                      <p className="text-2xl font-bold text-[#7C3AED]">30 포인트</p>
-                      <p className="text-sm text-[#8B95A1]">AI 자기소개서 수정 1회</p>
-                    </div>
-                    <div className="p-4 bg-[#F2F4F6] rounded-xl">
-                      <p className="font-bold text-[#191F28] mb-2">전략 목표 생성</p>
-                      <p className="text-2xl font-bold text-[#3182F6]">100 포인트</p>
-                      <p className="text-sm text-[#8B95A1]">연간/반기 목표 AI 생성</p>
-                    </div>
+                    {servicePricing.map((pricing) => (
+                      <div
+                        key={pricing.id}
+                        className="p-4 bg-[#F2F4F6] rounded-xl"
+                        data-testid={`card-pricing-${pricing.id}`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-bold text-[#191F28]">{pricing.name}</p>
+                          {editingPricing?.id !== pricing.id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingPricing({ id: pricing.id, pointCost: pricing.pointCost })}
+                              className="text-[#3182F6] hover:text-[#1B64DA]"
+                              data-testid={`button-edit-pricing-${pricing.id}`}
+                            >
+                              수정
+                            </Button>
+                          )}
+                        </div>
+                        {editingPricing?.id === pricing.id ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                value={editingPricing.pointCost}
+                                onChange={(e) => setEditingPricing({ ...editingPricing, pointCost: parseInt(e.target.value) || 0 })}
+                                className="w-24"
+                                min={0}
+                                data-testid={`input-pricing-${pricing.id}`}
+                              />
+                              <span className="text-[#191F28] font-bold">포인트</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => updateServicePricingMutation.mutate({ id: pricing.id, pointCost: editingPricing.pointCost })}
+                                disabled={updateServicePricingMutation.isPending}
+                                className="bg-[#3182F6] hover:bg-[#1B64DA] text-white"
+                                data-testid={`button-save-pricing-${pricing.id}`}
+                              >
+                                저장
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditingPricing(null)}
+                                data-testid={`button-cancel-pricing-${pricing.id}`}
+                              >
+                                취소
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p className={`text-2xl font-bold ${pricing.id === 'essay_revision' ? 'text-[#7C3AED]' : 'text-[#3182F6]'}`}>
+                              {pricing.pointCost.toLocaleString()} 포인트
+                            </p>
+                            <p className="text-sm text-[#8B95A1]">{pricing.description}</p>
+                          </>
+                        )}
+                      </div>
+                    ))}
                   </div>
                   <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                     <p className="font-bold text-[#191F28] mb-2">신규 가입 혜택</p>
