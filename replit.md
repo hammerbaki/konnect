@@ -24,6 +24,7 @@ The database schema includes `users`, `profiles`, `career_analyses`, `personal_e
 - **Mobile-First Design**: Prioritizes mobile user experience with responsive components and touch-friendly interactions, aligning with the target market's device usage.
 - **AI Response Storage**: Stores both processed AI results and raw responses to enable instant display, historical tracking, and potential re-processing without re-running expensive AI calls.
 - **Rate Limiting Strategy**: Combines client-side concurrency limits with server-side exponential backoff retry logic to manage Claude API rate limits effectively.
+- **Career Explorer Performance**: Uses server-side stats caching (7-day expiry in `career_stats` table), skeleton loaders, and progressive loading (30 items with load-more).
 
 ## External Dependencies
 
