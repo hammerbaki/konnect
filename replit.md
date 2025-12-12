@@ -15,7 +15,7 @@ The frontend is built with React 18, TypeScript, and Vite. It utilizes Radix UI 
 The backend is an Express.js application running on Node.js with TypeScript. It integrates Supabase Auth for user authentication, supporting social logins and email OTP. Data persistence is managed by PostgreSQL, accessed via Drizzle ORM. AI integration uses the Anthropic Claude API (via Replit AI Integrations) for career analysis and essay generation, incorporating custom rate limiting and retry logic. The API is RESTful, with Zod for request validation and comprehensive error handling.
 
 ### Data Architecture
-The database schema includes `users`, `profiles`, `career_analyses`, `personal_essays`, `kompass_goals`, and `visitor_metrics`. A multi-profile system allows users to manage different career personas (elementary, middle, high, university, general job seeker), storing flexible structured data in JSONB fields. The `visitor_metrics` table stores hourly aggregated analytics with a unique constraint on (date, hour) for upsert operations.
+The database schema includes `users`, `profiles`, `career_analyses`, `personal_essays`, `kompass_goals`, `visitor_metrics`, `service_pricing`, `system_settings`, `redemption_codes`, and `redemption_history`. A multi-profile system allows users to manage different career personas (elementary, middle, high, university, general job seeker), storing flexible structured data in JSONB fields. The `visitor_metrics` table stores hourly aggregated analytics with a unique constraint on (date, hour) for upsert operations.
 
 ### Key Architectural Decisions
 - **Multi-Profile System**: Allows a single user to manage multiple distinct career profiles using flexible JSONB storage.
@@ -27,6 +27,9 @@ The database schema includes `users`, `profiles`, `career_analyses`, `personal_e
 - **Career Explorer Performance**: Uses server-side stats caching (7-day expiry in `career_stats` table), skeleton loaders, and progressive loading (30 items with load-more).
 - **Visitor Analytics**: Uses Redis for real-time page view/visitor counting with hourly PostgreSQL aggregation. Frontend tracks route changes via `usePageTracking` hook. Admin dashboard displays traffic stats with line charts showing daily trends.
 - **Redis Usage Optimization**: Development environment uses in-memory fallback for rate limiting and job queues to conserve Redis commands. AI worker polling interval is 30 seconds (idle) / 2 seconds (active) to minimize Redis usage. Production uses Upstash Redis for rate limiting and job queue management.
+- **Service Pricing System**: Configurable point costs for AI services via `service_pricing` table. Supports goal-level pricing (yearly, half-yearly, monthly, weekly, daily) with admin UI for editing. Falls back to defaults if not initialized.
+- **System Settings**: Key-value store for configurable settings like signup bonus amount, managed via `system_settings` table with admin UI.
+- **Redemption Code System**: Admin-managed coupon system via `redemption_codes` table with max uses, expiration dates, and usage tracking. Supports CRUD operations and user redemption with duplicate prevention via `redemption_history`.
 
 ## External Dependencies
 
