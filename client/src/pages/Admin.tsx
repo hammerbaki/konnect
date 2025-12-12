@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Users, Settings, Coins, Activity, 
   RefreshCw, Search, Shield, User, Crown,
-  BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye
+  BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
+  ChevronUp, ChevronDown
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -436,6 +437,30 @@ export default function Admin() {
     },
   });
 
+  // Sort packages by sortOrder for display
+  const sortedPackages = [...pointPackages].sort((a, b) => a.sortOrder - b.sortOrder);
+
+  // Reorder packages by swapping with adjacent item
+  const handleReorderPackage = async (pkgId: string, direction: 'up' | 'down') => {
+    const currentIndex = sortedPackages.findIndex(p => p.id === pkgId);
+    if (currentIndex === -1) return;
+    
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= sortedPackages.length) return;
+    
+    const currentPkg = sortedPackages[currentIndex];
+    const targetPkg = sortedPackages[targetIndex];
+    
+    // Swap sortOrder values
+    try {
+      await apiRequest('PATCH', `/api/admin/packages/${currentPkg.id}`, { sortOrder: targetPkg.sortOrder });
+      await apiRequest('PATCH', `/api/admin/packages/${targetPkg.id}`, { sortOrder: currentPkg.sortOrder });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/packages'] });
+    } catch {
+      toast({ title: "오류", description: "순서 변경에 실패했습니다.", variant: "destructive" });
+    }
+  };
+
   const filteredUsers = users.filter(user => 
     user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -859,7 +884,7 @@ export default function Admin() {
                   충전 패키지 관리
                 </CardTitle>
                 <Button
-                  onClick={() => setNewPackage({ name: '', points: 100, price: 5000, bonusPoints: 0, isActive: 1, sortOrder: pointPackages.length })}
+                  onClick={() => setNewPackage({ name: '', points: 100, price: 5000, bonusPoints: 0, isActive: 1, sortOrder: sortedPackages.length + 1 })}
                   className="bg-[#3182F6] hover:bg-[#1B64DA] text-white rounded-xl"
                   data-testid="button-add-package"
                 >
@@ -925,16 +950,6 @@ export default function Admin() {
                               data-testid="input-new-package-description"
                             />
                           </div>
-                          <div>
-                            <label className="text-sm text-[#8B95A1]">정렬 순서</label>
-                            <Input
-                              type="number"
-                              value={newPackage.sortOrder || 0}
-                              onChange={(e) => setNewPackage({ ...newPackage, sortOrder: parseInt(e.target.value) || 0 })}
-                              className="mt-1"
-                              data-testid="input-new-package-order"
-                            />
-                          </div>
                         </div>
                         <div className="flex gap-2">
                           <Button
@@ -956,11 +971,11 @@ export default function Admin() {
                       </div>
                     )}
 
-                    {pointPackages.length === 0 ? (
+                    {sortedPackages.length === 0 ? (
                       <div className="p-8 text-center text-[#8B95A1]">등록된 패키지가 없습니다.</div>
                     ) : (
                       <div className="divide-y divide-[#F2F4F6]">
-                        {pointPackages.map((pkg) => (
+                        {sortedPackages.map((pkg, index) => (
                           <div key={pkg.id} className="py-4" data-testid={`row-package-${pkg.id}`}>
                             {editingPackage?.id === pkg.id ? (
                               <div className="space-y-4 p-4 bg-[#F2F4F6] rounded-xl">
@@ -1013,16 +1028,6 @@ export default function Admin() {
                                       data-testid={`input-edit-description-${pkg.id}`}
                                     />
                                   </div>
-                                  <div>
-                                    <label className="text-sm text-[#8B95A1]">정렬 순서</label>
-                                    <Input
-                                      type="number"
-                                      value={editingPackage.sortOrder}
-                                      onChange={(e) => setEditingPackage({ ...editingPackage, sortOrder: parseInt(e.target.value) || 0 })}
-                                      className="mt-1"
-                                      data-testid={`input-edit-order-${pkg.id}`}
-                                    />
-                                  </div>
                                 </div>
                                 <div className="flex items-center gap-4">
                                   <label className="flex items-center gap-2 text-sm">
@@ -1056,23 +1061,47 @@ export default function Admin() {
                               </div>
                             ) : (
                               <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-bold text-[#191F28]">{pkg.name}</p>
-                                    {pkg.description && (
-                                      <Badge className="bg-[#3182F6] text-white text-xs">{pkg.description}</Badge>
-                                    )}
-                                    {pkg.isActive === 0 && (
-                                      <Badge variant="outline" className="text-[#8B95A1]">비활성</Badge>
-                                    )}
+                                <div className="flex items-center gap-3">
+                                  <div className="flex flex-col gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleReorderPackage(pkg.id, 'up')}
+                                      disabled={index === 0}
+                                      className="h-6 w-6 p-0"
+                                      data-testid={`button-move-up-${pkg.id}`}
+                                    >
+                                      <ChevronUp className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleReorderPackage(pkg.id, 'down')}
+                                      disabled={index === sortedPackages.length - 1}
+                                      className="h-6 w-6 p-0"
+                                      data-testid={`button-move-down-${pkg.id}`}
+                                    >
+                                      <ChevronDown className="h-4 w-4" />
+                                    </Button>
                                   </div>
-                                  <div className="flex items-center gap-4 mt-1 text-sm text-[#8B95A1]">
-                                    <span className="text-[#3182F6] font-bold">{pkg.points.toLocaleString()} 포인트</span>
-                                    <span>₩{pkg.price.toLocaleString()}</span>
-                                    {pkg.bonusPoints > 0 && (
-                                      <span className="text-[#059669]">+{pkg.bonusPoints} 보너스</span>
-                                    )}
-                                    <span>순서: {pkg.sortOrder}</span>
+                                  <span className="text-sm text-[#8B95A1] font-medium w-6 text-center">{index + 1}</span>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-bold text-[#191F28]">{pkg.name}</p>
+                                      {pkg.description && (
+                                        <Badge className="bg-[#3182F6] text-white text-xs">{pkg.description}</Badge>
+                                      )}
+                                      {pkg.isActive === 0 && (
+                                        <Badge variant="outline" className="text-[#8B95A1]">비활성</Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-4 mt-1 text-sm text-[#8B95A1]">
+                                      <span className="text-[#3182F6] font-bold">{pkg.points.toLocaleString()} 포인트</span>
+                                      <span>₩{pkg.price.toLocaleString()}</span>
+                                      {pkg.bonusPoints > 0 && (
+                                        <span className="text-[#059669]">+{pkg.bonusPoints} 보너스</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                                 <div className="flex gap-2">
