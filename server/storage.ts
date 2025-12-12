@@ -8,6 +8,7 @@ import {
   careerStats,
   aiJobs,
   visitorMetrics,
+  pageSettings,
   type User,
   type UpsertUser,
   type Profile,
@@ -27,6 +28,9 @@ import {
   type UserRole,
   type VisitorMetrics,
   type InsertVisitorMetrics,
+  type PageSettings,
+  type InsertPageSettings,
+  DEFAULT_PAGE_CONFIGS,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, and, inArray, sql, count, gte, lte, sum } from "drizzle-orm";
@@ -111,6 +115,13 @@ export interface IStorage {
     last30Days: { pageViews: number; uniqueVisitors: number; newUsers: number };
     dailyData: Array<{ date: string; pageViews: number; uniqueVisitors: number }>;
   }>;
+
+  // Page Settings (Role-based visibility)
+  getAllPageSettings(): Promise<PageSettings[]>;
+  getPageSettings(slug: string): Promise<PageSettings | undefined>;
+  upsertPageSettings(settings: InsertPageSettings): Promise<PageSettings>;
+  updatePageAllowedRoles(slug: string, allowedRoles: string[] | null, updatedBy: string): Promise<PageSettings>;
+  resetPageSettings(slug: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -638,6 +649,118 @@ export class DatabaseStorage implements IStorage {
       last30Days: aggregateByDates(allMetrics, last30Dates),
       dailyData,
     };
+  }
+
+  // Page Settings
+  async getAllPageSettings(): Promise<PageSettings[]> {
+    const dbSettings = await db.select().from(pageSettings);
+    
+    // Merge with defaults for pages not in DB
+    const result: PageSettings[] = [];
+    const slugsInDb = new Set(dbSettings.map(s => s.slug));
+    
+    // Add DB records
+    result.push(...dbSettings);
+    
+    // Add defaults for pages not in DB
+    for (const [slug, config] of Object.entries(DEFAULT_PAGE_CONFIGS)) {
+      if (!slugsInDb.has(slug)) {
+        result.push({
+          slug,
+          title: config.title,
+          description: null,
+          defaultRoles: config.defaultRoles,
+          allowedRoles: null,
+          isLocked: config.isLocked ? 1 : 0,
+          updatedBy: null,
+          updatedAt: null,
+        });
+      }
+    }
+    
+    return result;
+  }
+
+  async getPageSettings(slug: string): Promise<PageSettings | undefined> {
+    const [setting] = await db.select().from(pageSettings).where(eq(pageSettings.slug, slug));
+    
+    if (setting) return setting;
+    
+    // Return default if exists
+    const config = DEFAULT_PAGE_CONFIGS[slug];
+    if (config) {
+      return {
+        slug,
+        title: config.title,
+        description: null,
+        defaultRoles: config.defaultRoles,
+        allowedRoles: null,
+        isLocked: config.isLocked ? 1 : 0,
+        updatedBy: null,
+        updatedAt: null,
+      };
+    }
+    
+    return undefined;
+  }
+
+  async upsertPageSettings(settings: InsertPageSettings): Promise<PageSettings> {
+    const [result] = await db
+      .insert(pageSettings)
+      .values(settings)
+      .onConflictDoUpdate({
+        target: pageSettings.slug,
+        set: {
+          title: settings.title,
+          description: settings.description,
+          defaultRoles: settings.defaultRoles,
+          allowedRoles: settings.allowedRoles,
+          isLocked: settings.isLocked,
+          updatedBy: settings.updatedBy,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result;
+  }
+
+  async updatePageAllowedRoles(slug: string, allowedRoles: string[] | null, updatedBy: string): Promise<PageSettings> {
+    // First check if page exists in DB
+    const [existing] = await db.select().from(pageSettings).where(eq(pageSettings.slug, slug));
+    
+    if (existing) {
+      // Update existing
+      const [result] = await db
+        .update(pageSettings)
+        .set({ allowedRoles, updatedBy, updatedAt: new Date() })
+        .where(eq(pageSettings.slug, slug))
+        .returning();
+      return result;
+    } else {
+      // Insert from defaults
+      const config = DEFAULT_PAGE_CONFIGS[slug];
+      if (!config) {
+        throw new Error(`Page ${slug} not found`);
+      }
+      
+      const [result] = await db
+        .insert(pageSettings)
+        .values({
+          slug,
+          title: config.title,
+          defaultRoles: config.defaultRoles,
+          allowedRoles,
+          isLocked: config.isLocked ? 1 : 0,
+          updatedBy,
+        })
+        .returning();
+      return result;
+    }
+  }
+
+  async resetPageSettings(slug: string): Promise<void> {
+    // Delete from DB to reset to defaults
+    await db.delete(pageSettings).where(eq(pageSettings.slug, slug));
   }
 }
 

@@ -1324,6 +1324,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== PAGE VISIBILITY ENDPOINTS =====
+
+  // Get all page visibility settings (for admin dashboard)
+  app.get('/api/admin/page-visibility', isAuthenticated, requireStaffOrAdmin, async (_req, res) => {
+    try {
+      const settings = await storage.getAllPageSettings();
+      res.json(settings);
+    } catch (error: any) {
+      console.error("Error fetching page settings:", error);
+      res.status(500).json({ message: "페이지 설정 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Update page visibility (admin only)
+  app.patch('/api/admin/page-visibility/:slug', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "관리자만 페이지 가시성을 변경할 수 있습니다." });
+      }
+
+      const slug = decodeURIComponent(req.params.slug);
+      const { allowedRoles } = req.body;
+
+      // Validate allowedRoles
+      if (allowedRoles !== null && !Array.isArray(allowedRoles)) {
+        return res.status(400).json({ message: "allowedRoles must be an array or null" });
+      }
+
+      if (allowedRoles) {
+        const validRoles = ['user', 'staff', 'admin'];
+        for (const role of allowedRoles) {
+          if (!validRoles.includes(role)) {
+            return res.status(400).json({ message: `Invalid role: ${role}` });
+          }
+        }
+      }
+
+      const result = await storage.updatePageAllowedRoles(slug, allowedRoles, user.id);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error updating page visibility:", error);
+      res.status(500).json({ message: "페이지 설정 업데이트 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Reset page visibility to defaults (admin only)
+  app.post('/api/admin/page-visibility/:slug/reset', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "관리자만 페이지 설정을 초기화할 수 있습니다." });
+      }
+
+      const slug = decodeURIComponent(req.params.slug);
+      await storage.resetPageSettings(slug);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error resetting page settings:", error);
+      res.status(500).json({ message: "페이지 설정 초기화 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get page visibility for a specific page (authenticated users)
+  app.get('/api/page-visibility/:slug', isAuthenticated, async (req: any, res) => {
+    try {
+      const slug = decodeURIComponent(req.params.slug);
+      const settings = await storage.getPageSettings(slug);
+      
+      if (!settings) {
+        return res.status(404).json({ message: "Page not found" });
+      }
+
+      // Get effective roles (allowedRoles if set, otherwise defaultRoles)
+      const effectiveRoles = settings.allowedRoles || settings.defaultRoles;
+      
+      res.json({
+        slug: settings.slug,
+        title: settings.title,
+        allowedRoles: effectiveRoles,
+        isLocked: settings.isLocked === 1,
+      });
+    } catch (error: any) {
+      console.error("Error fetching page visibility:", error);
+      res.status(500).json({ message: "페이지 설정 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get all page visibility settings for current user (to cache on frontend)
+  app.get('/api/page-visibility', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      const allSettings = await storage.getAllPageSettings();
+      
+      // Return simplified visibility map for the user
+      const visibilityMap: Record<string, boolean> = {};
+      for (const setting of allSettings) {
+        const effectiveRoles = setting.allowedRoles || setting.defaultRoles;
+        visibilityMap[setting.slug] = effectiveRoles.includes(user.role);
+      }
+
+      res.json({
+        userRole: user.role,
+        pages: visibilityMap,
+      });
+    } catch (error: any) {
+      console.error("Error fetching page visibility map:", error);
+      res.status(500).json({ message: "페이지 설정 조회 중 오류가 발생했습니다." });
+    }
+  });
+
   // Track page view (public endpoint for analytics, uses Redis for efficient counting)
   app.post('/api/track/pageview', async (req: any, res) => {
     try {

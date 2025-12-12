@@ -296,3 +296,48 @@ export const insertVisitorMetricsSchema = createInsertSchema(visitorMetrics).omi
 
 export type InsertVisitorMetrics = z.infer<typeof insertVisitorMetricsSchema>;
 export type VisitorMetrics = typeof visitorMetrics.$inferSelect;
+
+// ===== PAGE SETTINGS TABLE (Role-based page visibility) =====
+export const pageSettings = pgTable("page_settings", {
+  slug: varchar("slug", { length: 100 }).primaryKey(), // e.g., "/dashboard", "/admin"
+  title: varchar("title", { length: 100 }).notNull(), // Display name e.g., "대시보드"
+  description: text("description"), // Optional description
+  defaultRoles: text("default_roles").array().notNull(), // Default roles that can access ['user', 'staff', 'admin']
+  allowedRoles: text("allowed_roles").array(), // Override roles (null = use defaultRoles)
+  isLocked: integer("is_locked").notNull().default(0), // 1 = cannot be changed by admin UI
+  updatedBy: varchar("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const pageSettingsRelations = relations(pageSettings, ({ one }) => ({
+  updater: one(users, {
+    fields: [pageSettings.updatedBy],
+    references: [users.id],
+  }),
+}));
+
+export const insertPageSettingsSchema = createInsertSchema(pageSettings).omit({
+  updatedAt: true,
+});
+
+export const updatePageSettingsSchema = z.object({
+  allowedRoles: z.array(z.enum(['user', 'staff', 'admin'])).nullable(),
+});
+
+export type InsertPageSettings = z.infer<typeof insertPageSettingsSchema>;
+export type PageSettings = typeof pageSettings.$inferSelect;
+export type UpdatePageSettings = z.infer<typeof updatePageSettingsSchema>;
+
+// Default page configurations (used when no DB record exists)
+export const DEFAULT_PAGE_CONFIGS: Record<string, { title: string; defaultRoles: UserRole[]; isLocked?: boolean }> = {
+  '/dashboard': { title: '대시보드', defaultRoles: ['user', 'staff', 'admin'] },
+  '/profile': { title: '프로필', defaultRoles: ['user', 'staff', 'admin'] },
+  '/analysis': { title: 'AI 분석', defaultRoles: ['user', 'staff', 'admin'] },
+  '/goals': { title: '목표 관리', defaultRoles: ['user', 'staff', 'admin'] },
+  '/kompass': { title: 'Kompass', defaultRoles: ['user', 'staff', 'admin'] },
+  '/essays': { title: '자기소개서', defaultRoles: ['user', 'staff', 'admin'] },
+  '/explorer': { title: '직업 탐색', defaultRoles: ['user', 'staff', 'admin'] },
+  '/settings': { title: '설정', defaultRoles: ['user', 'staff', 'admin'] },
+  '/recharge': { title: '포인트 충전', defaultRoles: ['user', 'staff', 'admin'] },
+  '/admin': { title: '관리자', defaultRoles: ['staff', 'admin'], isLocked: true },
+};
