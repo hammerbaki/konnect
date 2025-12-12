@@ -411,7 +411,29 @@ export const insertPointPackageSchema = createInsertSchema(pointPackages).omit({
   updatedAt: true,
 });
 
+export const createPointPackageSchema = z.object({
+  name: z.string().min(1, "이름은 필수입니다"),
+  points: z.coerce.number().int().positive("포인트는 양수여야 합니다"),
+  price: z.coerce.number().int().positive("가격은 양수여야 합니다"),
+  bonusPoints: z.coerce.number().int().min(0).default(0),
+  description: z.string().nullable().optional(),
+  isActive: z.coerce.number().int().min(0).max(1).default(1),
+  sortOrder: z.coerce.number().int().min(0).default(0),
+});
+
+export const updatePointPackageSchema = z.object({
+  name: z.string().min(1).optional(),
+  points: z.coerce.number().int().positive().optional(),
+  price: z.coerce.number().int().positive().optional(),
+  bonusPoints: z.coerce.number().int().min(0).optional(),
+  description: z.string().nullable().optional(),
+  isActive: z.coerce.number().int().min(0).max(1).optional(),
+  sortOrder: z.coerce.number().int().min(0).optional(),
+});
+
 export type InsertPointPackage = z.infer<typeof insertPointPackageSchema>;
+export type CreatePointPackage = z.infer<typeof createPointPackageSchema>;
+export type UpdatePointPackage = z.infer<typeof updatePointPackageSchema>;
 export type PointPackage = typeof pointPackages.$inferSelect;
 
 // Payment status type

@@ -9,6 +9,8 @@ import {
   insertKompassGoalSchema,
   updateUserIdentitySchema,
   updateUserSettingsSchema,
+  createPointPackageSchema,
+  updatePointPackageSchema,
   type AiJobType,
   payments,
 } from "@shared/schema";
@@ -1461,6 +1463,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/admin/page-visibility/:slug', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
 
       const slug = decodeURIComponent(req.params.slug);
       const { allowedRoles } = req.body;
@@ -1601,6 +1606,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // ==================== ADMIN POINT PACKAGE MANAGEMENT ====================
+
+  // Get all point packages (including inactive) for admin
+  app.get('/api/admin/packages', isAuthenticated, requireStaffOrAdmin, async (_req, res) => {
+    try {
+      const packages = await storage.getAllPointPackages();
+      res.json(packages);
+    } catch (error: any) {
+      console.error("Error fetching admin packages:", error);
+      res.status(500).json({ message: "패키지 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Create a new point package
+  app.post('/api/admin/packages', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const parsed = createPointPackageSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        const errorMessage = parsed.error.errors.map(e => e.message).join(', ');
+        return res.status(400).json({ message: errorMessage || "유효하지 않은 패키지 정보입니다." });
+      }
+      
+      const newPackage = await storage.createPointPackage(parsed.data);
+      res.json(newPackage);
+    } catch (error: any) {
+      console.error("Error creating package:", error);
+      res.status(500).json({ message: "패키지 생성 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Update a point package
+  app.patch('/api/admin/packages/:id', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const packageId = req.params.id;
+      const parsed = updatePointPackageSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        const errorMessage = parsed.error.errors.map(e => e.message).join(', ');
+        return res.status(400).json({ message: errorMessage || "유효하지 않은 패키지 정보입니다." });
+      }
+      
+      // Filter out undefined values
+      const updateData = Object.fromEntries(
+        Object.entries(parsed.data).filter(([_, v]) => v !== undefined)
+      );
+      
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "수정할 내용이 없습니다." });
+      }
+      
+      const updatedPackage = await storage.updatePointPackage(packageId, updateData);
+      res.json(updatedPackage);
+    } catch (error: any) {
+      console.error("Error updating package:", error);
+      res.status(500).json({ message: "패키지 수정 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Delete (deactivate) a point package
+  app.delete('/api/admin/packages/:id', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const packageId = req.params.id;
+      await storage.updatePointPackage(packageId, { isActive: 0 });
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting package:", error);
+      res.status(500).json({ message: "패키지 삭제 중 오류가 발생했습니다." });
+    }
+  });
+
   // ==================== PAYMENT ROUTES (Toss Payments) ====================
   
   // Get Toss client key for frontend

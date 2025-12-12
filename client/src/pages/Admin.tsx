@@ -85,6 +85,19 @@ interface UserSession {
   } | null;
 }
 
+interface PointPackage {
+  id: string;
+  name: string;
+  points: number;
+  price: number;
+  bonusPoints: number;
+  description: string | null;
+  isActive: number;
+  sortOrder: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
 const COLORS = ['#3182F6', '#7C3AED', '#059669', '#D97706', '#EC4899', '#6B7280'];
 
 export default function Admin() {
@@ -93,6 +106,8 @@ export default function Admin() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [editingCredits, setEditingCredits] = useState<{ userId: string; credits: number } | null>(null);
+  const [editingPackage, setEditingPackage] = useState<PointPackage | null>(null);
+  const [newPackage, setNewPackage] = useState<Partial<PointPackage> | null>(null);
 
   const { user: currentUser, isLoading: userLoading } = useAuth();
 
@@ -132,6 +147,12 @@ export default function Admin() {
 
   const { data: pageSettings = [], isLoading: pagesLoading, refetch: refetchPages } = useQuery<PageSettings[]>({
     queryKey: ['/api/admin/page-visibility'],
+    enabled: isStaffOrAdmin,
+    retry: false,
+  });
+
+  const { data: pointPackages = [], isLoading: packagesLoading, refetch: refetchPackages } = useQuery<PointPackage[]>({
+    queryKey: ['/api/admin/packages'],
     enabled: isStaffOrAdmin,
     retry: false,
   });
@@ -295,6 +316,53 @@ export default function Admin() {
     },
   });
 
+  const createPackageMutation = useMutation({
+    mutationFn: async (pkg: Partial<PointPackage>) => {
+      const res = await apiRequest('POST', '/api/admin/packages', pkg);
+      if (!res.ok) throw new Error('Failed to create package');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/packages'] });
+      setNewPackage(null);
+      toast({ title: "패키지 생성 완료", description: "새 포인트 패키지가 생성되었습니다." });
+    },
+    onError: () => {
+      toast({ title: "오류", description: "패키지 생성에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
+  const updatePackageMutation = useMutation({
+    mutationFn: async ({ id, ...data }: Partial<PointPackage> & { id: string }) => {
+      const res = await apiRequest('PATCH', `/api/admin/packages/${id}`, data);
+      if (!res.ok) throw new Error('Failed to update package');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/packages'] });
+      setEditingPackage(null);
+      toast({ title: "패키지 수정 완료", description: "포인트 패키지가 수정되었습니다." });
+    },
+    onError: () => {
+      toast({ title: "오류", description: "패키지 수정에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
+  const deletePackageMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest('DELETE', `/api/admin/packages/${id}`);
+      if (!res.ok) throw new Error('Failed to delete package');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/packages'] });
+      toast({ title: "패키지 비활성화", description: "포인트 패키지가 비활성화되었습니다." });
+    },
+    onError: () => {
+      toast({ title: "오류", description: "패키지 삭제에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
   const filteredUsers = users.filter(user => 
     user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -341,6 +409,7 @@ export default function Admin() {
               refetchAiStats();
               refetchTraffic();
               refetchPages();
+              refetchPackages();
             }}
             className="rounded-xl"
             data-testid="button-refresh-admin"
@@ -654,6 +723,277 @@ export default function Admin() {
                     </p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="toss-card">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Coins className="h-5 w-5 text-[#059669]" />
+                  충전 패키지 관리
+                </CardTitle>
+                <Button
+                  onClick={() => setNewPackage({ name: '', points: 100, price: 5000, bonusPoints: 0, isActive: 1, sortOrder: pointPackages.length })}
+                  className="bg-[#3182F6] hover:bg-[#1B64DA] text-white rounded-xl"
+                  data-testid="button-add-package"
+                >
+                  새 패키지 추가
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {packagesLoading ? (
+                  <div className="p-8 text-center text-[#8B95A1]">로딩 중...</div>
+                ) : (
+                  <div className="space-y-4">
+                    {newPackage && (
+                      <div className="p-4 bg-green-50 border border-green-200 rounded-xl space-y-4" data-testid="form-new-package">
+                        <p className="font-bold text-[#191F28]">새 패키지 추가</p>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <div>
+                            <label className="text-sm text-[#8B95A1]">패키지 이름</label>
+                            <Input
+                              value={newPackage.name || ''}
+                              onChange={(e) => setNewPackage({ ...newPackage, name: e.target.value })}
+                              placeholder="예: 스타터"
+                              className="mt-1"
+                              data-testid="input-new-package-name"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm text-[#8B95A1]">포인트</label>
+                            <Input
+                              type="number"
+                              value={newPackage.points || 0}
+                              onChange={(e) => setNewPackage({ ...newPackage, points: parseInt(e.target.value) || 0 })}
+                              className="mt-1"
+                              data-testid="input-new-package-points"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm text-[#8B95A1]">가격 (원)</label>
+                            <Input
+                              type="number"
+                              value={newPackage.price || 0}
+                              onChange={(e) => setNewPackage({ ...newPackage, price: parseInt(e.target.value) || 0 })}
+                              className="mt-1"
+                              data-testid="input-new-package-price"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm text-[#8B95A1]">보너스 포인트</label>
+                            <Input
+                              type="number"
+                              value={newPackage.bonusPoints || 0}
+                              onChange={(e) => setNewPackage({ ...newPackage, bonusPoints: parseInt(e.target.value) || 0 })}
+                              className="mt-1"
+                              data-testid="input-new-package-bonus"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm text-[#8B95A1]">설명 (태그)</label>
+                            <Input
+                              value={newPackage.description || ''}
+                              onChange={(e) => setNewPackage({ ...newPackage, description: e.target.value })}
+                              placeholder="예: 인기"
+                              className="mt-1"
+                              data-testid="input-new-package-description"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm text-[#8B95A1]">정렬 순서</label>
+                            <Input
+                              type="number"
+                              value={newPackage.sortOrder || 0}
+                              onChange={(e) => setNewPackage({ ...newPackage, sortOrder: parseInt(e.target.value) || 0 })}
+                              className="mt-1"
+                              data-testid="input-new-package-order"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => createPackageMutation.mutate(newPackage)}
+                            disabled={!newPackage.name || !newPackage.points || !newPackage.price || createPackageMutation.isPending}
+                            className="bg-[#059669] hover:bg-[#047857] text-white"
+                            data-testid="button-save-new-package"
+                          >
+                            {createPackageMutation.isPending ? '저장 중...' : '저장'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setNewPackage(null)}
+                            data-testid="button-cancel-new-package"
+                          >
+                            취소
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {pointPackages.length === 0 ? (
+                      <div className="p-8 text-center text-[#8B95A1]">등록된 패키지가 없습니다.</div>
+                    ) : (
+                      <div className="divide-y divide-[#F2F4F6]">
+                        {pointPackages.map((pkg) => (
+                          <div key={pkg.id} className="py-4" data-testid={`row-package-${pkg.id}`}>
+                            {editingPackage?.id === pkg.id ? (
+                              <div className="space-y-4 p-4 bg-[#F2F4F6] rounded-xl">
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  <div>
+                                    <label className="text-sm text-[#8B95A1]">패키지 이름</label>
+                                    <Input
+                                      value={editingPackage.name}
+                                      onChange={(e) => setEditingPackage({ ...editingPackage, name: e.target.value })}
+                                      className="mt-1"
+                                      data-testid={`input-edit-name-${pkg.id}`}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-sm text-[#8B95A1]">포인트</label>
+                                    <Input
+                                      type="number"
+                                      value={editingPackage.points}
+                                      onChange={(e) => setEditingPackage({ ...editingPackage, points: parseInt(e.target.value) || 0 })}
+                                      className="mt-1"
+                                      data-testid={`input-edit-points-${pkg.id}`}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-sm text-[#8B95A1]">가격 (원)</label>
+                                    <Input
+                                      type="number"
+                                      value={editingPackage.price}
+                                      onChange={(e) => setEditingPackage({ ...editingPackage, price: parseInt(e.target.value) || 0 })}
+                                      className="mt-1"
+                                      data-testid={`input-edit-price-${pkg.id}`}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-sm text-[#8B95A1]">보너스 포인트</label>
+                                    <Input
+                                      type="number"
+                                      value={editingPackage.bonusPoints}
+                                      onChange={(e) => setEditingPackage({ ...editingPackage, bonusPoints: parseInt(e.target.value) || 0 })}
+                                      className="mt-1"
+                                      data-testid={`input-edit-bonus-${pkg.id}`}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-sm text-[#8B95A1]">설명 (태그)</label>
+                                    <Input
+                                      value={editingPackage.description || ''}
+                                      onChange={(e) => setEditingPackage({ ...editingPackage, description: e.target.value })}
+                                      className="mt-1"
+                                      data-testid={`input-edit-description-${pkg.id}`}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-sm text-[#8B95A1]">정렬 순서</label>
+                                    <Input
+                                      type="number"
+                                      value={editingPackage.sortOrder}
+                                      onChange={(e) => setEditingPackage({ ...editingPackage, sortOrder: parseInt(e.target.value) || 0 })}
+                                      className="mt-1"
+                                      data-testid={`input-edit-order-${pkg.id}`}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  <label className="flex items-center gap-2 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      checked={editingPackage.isActive === 1}
+                                      onChange={(e) => setEditingPackage({ ...editingPackage, isActive: e.target.checked ? 1 : 0 })}
+                                      className="rounded"
+                                      data-testid={`input-edit-active-${pkg.id}`}
+                                    />
+                                    활성화
+                                  </label>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={() => updatePackageMutation.mutate(editingPackage)}
+                                    disabled={updatePackageMutation.isPending}
+                                    className="bg-[#3182F6] hover:bg-[#1B64DA] text-white"
+                                    data-testid={`button-save-edit-${pkg.id}`}
+                                  >
+                                    {updatePackageMutation.isPending ? '저장 중...' : '저장'}
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setEditingPackage(null)}
+                                    data-testid={`button-cancel-edit-${pkg.id}`}
+                                  >
+                                    취소
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-bold text-[#191F28]">{pkg.name}</p>
+                                    {pkg.description && (
+                                      <Badge className="bg-[#3182F6] text-white text-xs">{pkg.description}</Badge>
+                                    )}
+                                    {pkg.isActive === 0 && (
+                                      <Badge variant="outline" className="text-[#8B95A1]">비활성</Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-4 mt-1 text-sm text-[#8B95A1]">
+                                    <span className="text-[#3182F6] font-bold">{pkg.points.toLocaleString()} 포인트</span>
+                                    <span>₩{pkg.price.toLocaleString()}</span>
+                                    {pkg.bonusPoints > 0 && (
+                                      <span className="text-[#059669]">+{pkg.bonusPoints} 보너스</span>
+                                    )}
+                                    <span>순서: {pkg.sortOrder}</span>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setEditingPackage(pkg)}
+                                    className="rounded-lg"
+                                    data-testid={`button-edit-package-${pkg.id}`}
+                                  >
+                                    수정
+                                  </Button>
+                                  {pkg.isActive === 1 && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (confirm('이 패키지를 비활성화 하시겠습니까?')) {
+                                          deletePackageMutation.mutate(pkg.id);
+                                        }
+                                      }}
+                                      className="rounded-lg text-red-500 border-red-200 hover:bg-red-50"
+                                      data-testid={`button-delete-package-${pkg.id}`}
+                                    >
+                                      비활성화
+                                    </Button>
+                                  )}
+                                  {pkg.isActive === 0 && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => updatePackageMutation.mutate({ id: pkg.id, isActive: 1 })}
+                                      className="rounded-lg text-[#059669] border-green-200 hover:bg-green-50"
+                                      data-testid={`button-activate-package-${pkg.id}`}
+                                    >
+                                      활성화
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

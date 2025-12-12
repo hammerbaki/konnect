@@ -149,6 +149,7 @@ export interface IStorage {
 
   // Point Packages
   getActivePointPackages(): Promise<PointPackage[]>;
+  getAllPointPackages(): Promise<PointPackage[]>;
   getPointPackage(id: string): Promise<PointPackage | undefined>;
   createPointPackage(pkg: InsertPointPackage): Promise<PointPackage>;
   updatePointPackage(id: string, data: Partial<InsertPointPackage>): Promise<PointPackage>;
@@ -930,6 +931,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(pointPackages)
       .where(eq(pointPackages.isActive, 1))
+      .orderBy(pointPackages.sortOrder);
+  }
+
+  async getAllPointPackages(): Promise<PointPackage[]> {
+    return db
+      .select()
+      .from(pointPackages)
       .orderBy(pointPackages.sortOrder);
   }
 
