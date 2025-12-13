@@ -251,6 +251,18 @@ export default function Landing() {
                 <span>분석 3분 완료</span>
               </div>
             </motion.div>
+
+            {/* Company Credit */}
+            <motion.div 
+              className="mt-10 pt-8 border-t border-white/10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+            >
+              <p className="text-sm text-white/40">
+                대한민국 AI 고용·취업 대표기업 <span className="text-white/70 font-semibold">케이잡스</span>가 만들었습니다
+              </p>
+            </motion.div>
           </motion.div>
 
           {/* Scroll Indicator */}
