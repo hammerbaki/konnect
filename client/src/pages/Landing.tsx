@@ -124,7 +124,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-[#0D1117] font-sans overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0D1117] via-[#161B22] to-[#0D1117]" />
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-bl from-[#3182F6]/20 to-transparent rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3" />
