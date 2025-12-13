@@ -83,10 +83,12 @@ export default function Landing() {
 
         <Card className="toss-card border-none shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-[24px] overflow-hidden">
           <CardHeader className="space-y-2 pt-8 px-8">
-            <CardTitle className="text-2xl font-bold text-[#191F28]">
-              반가워요 👋
+            <CardTitle className="text-2xl font-bold text-[#191F28] leading-tight">
+              당신의 커리어,<br />AI가 설계합니다
             </CardTitle>
-            <CardDescription className="text-[#8B95A1] text-base">컨넥트 커리어 대시보드에 접속하세요.</CardDescription>
+            <CardDescription className="text-[#8B95A1] text-base">
+              맞춤 분석부터 자기소개서까지, 3분이면 끝
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 px-8 pb-8">
             <div className="space-y-3">
