@@ -184,7 +184,7 @@ export default function Landing() {
 
             {/* Subheadline */}
             <p className="text-lg md:text-xl text-[#6B7684] max-w-2xl mx-auto mb-8 leading-relaxed">
-              3분 만에 받는 맞춤형 커리어 분석<br className="md:hidden" />
+              빠르고 정밀한 맞춤형 커리어 분석<br className="md:hidden" />
               <span className="hidden md:inline"> · </span>
               AI 목표 설정<span className="hidden md:inline"> · </span><br className="md:hidden" />
               자기소개서 자동 생성
