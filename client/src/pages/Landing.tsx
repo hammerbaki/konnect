@@ -260,7 +260,16 @@ export default function Landing() {
               transition={{ delay: 1 }}
             >
               <p className="text-sm text-white/40">
-                대한민국 AI 고용·취업 대표기업 <span className="text-white/70 font-semibold">케이잡스</span>가 만들었습니다
+                대한민국 AI 고용·취업 대표기업{" "}
+                <a 
+                  href="https://kjobs.co.kr/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white/70 font-semibold hover:text-[#3182F6] transition-colors underline underline-offset-2"
+                >
+                  케이잡스
+                </a>
+                가 만들었습니다
               </p>
             </motion.div>
           </motion.div>
