@@ -509,10 +509,6 @@ export default function Landing() {
               무료로 시작하기
               <ArrowRight className="ml-2 h-6 w-6" />
             </Button>
-            
-            <p className="mt-6 text-sm text-white/40">
-              신용카드 없이 바로 시작 · 언제든 해지 가능
-            </p>
           </motion.div>
         </div>
       </section>
