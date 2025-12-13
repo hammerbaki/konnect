@@ -19,7 +19,7 @@ import {
   Briefcase,
   BookOpen
 } from "lucide-react";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { useAuth } from "@/lib/AuthContext";
 
 const fadeInUp = {
@@ -40,11 +40,6 @@ export default function Landing() {
   const [, setLocation] = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
   const featuresRef = useRef<HTMLDivElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
-  const testimonialsRef = useRef<HTMLDivElement>(null);
-  const featuresInView = useInView(featuresRef, { once: true, margin: "-100px" });
-  const statsInView = useInView(statsRef, { once: true, margin: "-100px" });
-  const testimonialsInView = useInView(testimonialsRef, { once: true, margin: "-100px" });
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -346,17 +341,15 @@ export default function Landing() {
             </p>
           </motion.div>
 
-          <motion.div 
-            className="grid md:grid-cols-3 gap-8"
-            variants={staggerContainer}
-            initial="initial"
-            animate={featuresInView ? "animate" : "initial"}
-          >
+          <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, idx) => (
               <motion.div
                 key={idx}
                 className="relative p-8 rounded-3xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all hover:-translate-y-1"
-                variants={fadeInUp}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
               >
                 <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.gradient} shadow-lg mb-6`}>
                   <feature.icon className="w-8 h-8 text-white" />
@@ -365,31 +358,29 @@ export default function Landing() {
                 <p className="text-white/60 leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section ref={statsRef} className="py-20 bg-gradient-to-r from-[#3182F6] to-blue-600">
+      <section className="py-20 bg-gradient-to-r from-[#3182F6] to-blue-600">
         <div className="max-w-6xl mx-auto px-4">
-          <motion.div 
-            className="grid grid-cols-2 md:grid-cols-4 gap-8"
-            variants={staggerContainer}
-            initial="initial"
-            animate={statsInView ? "animate" : "initial"}
-          >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, idx) => (
               <motion.div 
                 key={idx} 
                 className="text-center text-white"
-                variants={fadeInUp}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
               >
                 <stat.icon className="w-8 h-8 mx-auto mb-3 opacity-80" />
                 <div className="text-4xl md:text-5xl font-bold mb-2">{stat.number}</div>
                 <div className="text-blue-100">{stat.label}</div>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -447,7 +438,7 @@ export default function Landing() {
       </section>
 
       {/* Testimonials */}
-      <section ref={testimonialsRef} className="py-24 bg-[#0D1117]">
+      <section className="py-24 bg-[#0D1117]">
         <div className="max-w-6xl mx-auto px-4">
           <motion.div 
             className="text-center mb-16"
@@ -463,17 +454,15 @@ export default function Landing() {
             </p>
           </motion.div>
 
-          <motion.div 
-            className="grid md:grid-cols-3 gap-8"
-            variants={staggerContainer}
-            initial="initial"
-            animate={testimonialsInView ? "animate" : "initial"}
-          >
+          <div className="grid md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, idx) => (
               <motion.div
                 key={idx}
                 className="bg-white/5 backdrop-blur-sm p-8 rounded-2xl border border-white/10"
-                variants={fadeInUp}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
               >
                 <div className="flex items-center gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
@@ -490,7 +479,7 @@ export default function Landing() {
                 </div>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
