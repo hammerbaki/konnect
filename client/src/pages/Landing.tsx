@@ -54,11 +54,11 @@ export default function Landing() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-[#F2F4F6]">
+      <div className="min-h-screen flex items-center justify-center bg-[#0D1117]">
         <div className="text-center">
-          <Skeleton className="h-16 w-16 rounded-[22px] mx-auto mb-6" />
-          <Skeleton className="h-9 w-32 mx-auto mb-2" />
-          <Skeleton className="h-5 w-48 mx-auto" />
+          <Skeleton className="h-16 w-16 rounded-[22px] mx-auto mb-6 bg-white/10" />
+          <Skeleton className="h-9 w-32 mx-auto mb-2 bg-white/10" />
+          <Skeleton className="h-5 w-48 mx-auto bg-white/10" />
         </div>
       </div>
     );
@@ -69,22 +69,19 @@ export default function Landing() {
       icon: Brain,
       title: "AI 커리어 분석",
       description: "당신의 경험, 관심사, 강점을 분석하여 최적의 진로를 추천합니다. 시장 경쟁력과 성공 확률까지 한눈에 파악하세요.",
-      gradient: "from-blue-500 to-cyan-400",
-      bgGradient: "from-blue-50 to-cyan-50"
+      gradient: "from-blue-500 to-cyan-400"
     },
     {
       icon: Target,
       title: "Kompass 목표 관리",
       description: "연간 비전부터 일일 할 일까지 체계적으로 관리하세요. AI가 실현 가능한 단계별 목표를 자동으로 생성해드립니다.",
-      gradient: "from-violet-500 to-purple-400",
-      bgGradient: "from-violet-50 to-purple-50"
+      gradient: "from-violet-500 to-purple-400"
     },
     {
       icon: FileText,
       title: "AI 자기소개서",
       description: "입시, 취업, 이직에 맞는 완벽한 자기소개서를 AI가 작성합니다. 수정 요청도 무제한으로 가능합니다.",
-      gradient: "from-orange-500 to-amber-400",
-      bgGradient: "from-orange-50 to-amber-50"
+      gradient: "from-orange-500 to-amber-400"
     }
   ];
 
@@ -130,27 +127,28 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-[#0D1117] font-sans overflow-x-hidden">
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#3182F6]/5 via-white to-violet-50" />
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-bl from-[#3182F6]/10 to-transparent rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-violet-500/10 to-transparent rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0D1117] via-[#161B22] to-[#0D1117]" />
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-bl from-[#3182F6]/20 to-transparent rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-violet-600/20 to-transparent rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3" />
+        <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2" />
         
         {/* Floating Elements */}
         <motion.div 
-          className="absolute top-20 left-[15%] w-16 h-16 bg-gradient-to-br from-blue-400 to-cyan-300 rounded-2xl shadow-lg shadow-blue-400/30"
+          className="absolute top-20 left-[15%] w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl shadow-lg shadow-blue-500/40 opacity-80"
           animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div 
-          className="absolute top-40 right-[20%] w-12 h-12 bg-gradient-to-br from-violet-400 to-purple-300 rounded-xl shadow-lg shadow-violet-400/30"
+          className="absolute top-40 right-[20%] w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-400 rounded-xl shadow-lg shadow-violet-500/40 opacity-80"
           animate={{ y: [0, 15, 0], rotate: [0, -5, 0] }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
         />
         <motion.div 
-          className="absolute bottom-32 right-[25%] w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-300 rounded-lg shadow-lg shadow-orange-400/30"
+          className="absolute bottom-32 right-[25%] w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-400 rounded-lg shadow-lg shadow-orange-500/40 opacity-80"
           animate={{ y: [0, -15, 0], rotate: [0, 10, 0] }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
         />
@@ -163,27 +161,27 @@ export default function Landing() {
           >
             {/* Badge */}
             <motion.div 
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm border border-[#E5E8EB] mb-8"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full border border-white/10 mb-8"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <Sparkles className="w-4 h-4 text-[#3182F6]" />
-              <span className="text-sm font-medium text-[#4E5968]">
-                가입 시 <span className="text-[#3182F6] font-bold">1,000P</span> 무료 지급
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span className="text-sm font-medium text-white/80">
+                가입 시 <span className="text-amber-400 font-bold">1,000P</span> 무료 지급
               </span>
             </motion.div>
 
             {/* Main Headline */}
-            <h1 className="text-4xl md:text-6xl font-bold text-[#191F28] leading-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
               진로 고민,<br />
-              <span className="bg-gradient-to-r from-[#3182F6] to-violet-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#3182F6] via-cyan-400 to-violet-400 bg-clip-text text-transparent">
                 AI가 대신 고민합니다
               </span>
             </h1>
 
             {/* Subheadline */}
-            <p className="text-lg md:text-xl text-[#6B7684] max-w-2xl mx-auto mb-8 leading-relaxed">
+            <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-8 leading-relaxed">
               빠르고 정밀한 맞춤형 커리어 분석<br className="md:hidden" />
               <span className="hidden md:inline"> · </span>
               AI 목표 설정<span className="hidden md:inline"> · </span><br className="md:hidden" />
@@ -195,14 +193,14 @@ export default function Landing() {
               {targetAudiences.map((audience, idx) => (
                 <motion.div
                   key={idx}
-                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-[#E5E8EB]"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full border border-white/10"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 + idx * 0.1 }}
                 >
                   <audience.icon className="w-4 h-4 text-[#3182F6]" />
-                  <span className="text-sm font-medium text-[#4E5968]">{audience.label}</span>
-                  <span className="text-xs text-[#8B95A1]">{audience.desc}</span>
+                  <span className="text-sm font-medium text-white/80">{audience.label}</span>
+                  <span className="text-xs text-white/50">{audience.desc}</span>
                 </motion.div>
               ))}
             </div>
@@ -215,7 +213,7 @@ export default function Landing() {
               transition={{ delay: 0.6 }}
             >
               <Button 
-                className="w-full sm:w-auto h-14 px-8 text-lg rounded-2xl bg-gradient-to-r from-[#3182F6] to-blue-600 hover:from-[#2b72d7] hover:to-blue-700 shadow-xl shadow-blue-500/30 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/40" 
+                className="w-full sm:w-auto h-14 px-8 text-lg rounded-2xl bg-gradient-to-r from-[#3182F6] to-blue-500 hover:from-[#2b72d7] hover:to-blue-600 shadow-xl shadow-blue-500/30 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/40 text-white font-semibold" 
                 onClick={() => setLocation("/login")}
                 data-testid="button-login-hero"
               >
@@ -224,7 +222,7 @@ export default function Landing() {
               </Button>
               <Button 
                 variant="outline"
-                className="w-full sm:w-auto h-14 px-8 text-lg rounded-2xl border-2 border-[#E5E8EB] hover:border-[#3182F6] hover:bg-[#3182F6]/5 transition-all"
+                className="w-full sm:w-auto h-14 px-8 text-lg rounded-2xl border-2 border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/30 text-white transition-all"
                 onClick={scrollToFeatures}
                 data-testid="button-learn-more"
               >
@@ -235,21 +233,21 @@ export default function Landing() {
 
             {/* Trust Indicators */}
             <motion.div 
-              className="flex flex-wrap justify-center items-center gap-6 text-sm text-[#8B95A1]"
+              className="flex flex-wrap justify-center items-center gap-6 text-sm text-white/50"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
             >
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span>가입 즉시 사용 가능</span>
               </div>
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-green-500" />
+                <Shield className="w-4 h-4 text-emerald-400" />
                 <span>개인정보 안전 보호</span>
               </div>
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-green-500" />
+                <Zap className="w-4 h-4 text-emerald-400" />
                 <span>분석 3분 완료</span>
               </div>
             </motion.div>
@@ -261,13 +259,13 @@ export default function Landing() {
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <ChevronDown className="w-8 h-8 text-[#B0B8C1]" />
+            <ChevronDown className="w-8 h-8 text-white/30" />
           </motion.div>
         </div>
       </section>
 
       {/* Problem Agitation Section */}
-      <section className="py-20 bg-gradient-to-b from-[#F9FAFB] to-white">
+      <section className="py-20 bg-[#161B22]">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -275,7 +273,7 @@ export default function Landing() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-[#191F28] mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">
               이런 고민, 혼자 하고 계신가요?
             </h2>
             <div className="grid md:grid-cols-3 gap-6 mt-10">
@@ -286,19 +284,19 @@ export default function Landing() {
               ].map((item, idx) => (
                 <motion.div
                   key={idx}
-                  className="p-6 bg-white rounded-2xl shadow-sm border border-[#E5E8EB]"
+                  className="p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1 }}
                 >
                   <div className="text-4xl mb-4">{item.emoji}</div>
-                  <p className="text-[#4E5968] font-medium">{item.text}</p>
+                  <p className="text-white/80 font-medium">{item.text}</p>
                 </motion.div>
               ))}
             </div>
             <motion.p 
-              className="mt-10 text-xl text-[#3182F6] font-semibold"
+              className="mt-10 text-xl font-semibold bg-gradient-to-r from-[#3182F6] to-cyan-400 bg-clip-text text-transparent"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
@@ -311,7 +309,7 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section ref={featuresRef} className="py-24 bg-white">
+      <section ref={featuresRef} className="py-24 bg-[#0D1117]">
         <div className="max-w-6xl mx-auto px-4">
           <motion.div 
             className="text-center mb-16"
@@ -319,16 +317,15 @@ export default function Landing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-[#191F28] mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               핵심 기능
             </h2>
-            <p className="text-lg text-[#6B7684]">
+            <p className="text-lg text-white/50">
               AI가 당신의 커리어 전문 컨설턴트가 됩니다
             </p>
           </motion.div>
 
           <motion.div 
-            ref={featuresRef}
             className="grid md:grid-cols-3 gap-8"
             variants={staggerContainer}
             initial="initial"
@@ -337,14 +334,14 @@ export default function Landing() {
             {features.map((feature, idx) => (
               <motion.div
                 key={idx}
-                className={`relative p-8 rounded-3xl bg-gradient-to-br ${feature.bgGradient} border border-white/50 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1`}
+                className="relative p-8 rounded-3xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all hover:-translate-y-1"
                 variants={fadeInUp}
               >
                 <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.gradient} shadow-lg mb-6`}>
                   <feature.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-[#191F28] mb-3">{feature.title}</h3>
-                <p className="text-[#4E5968] leading-relaxed">{feature.description}</p>
+                <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
+                <p className="text-white/60 leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -376,7 +373,7 @@ export default function Landing() {
       </section>
 
       {/* How It Works */}
-      <section className="py-24 bg-[#F9FAFB]">
+      <section className="py-24 bg-[#161B22]">
         <div className="max-w-6xl mx-auto px-4">
           <motion.div 
             className="text-center mb-16"
@@ -384,10 +381,10 @@ export default function Landing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-[#191F28] mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               시작은 간단합니다
             </h2>
-            <p className="text-lg text-[#6B7684]">
+            <p className="text-lg text-white/50">
               3단계로 나만의 커리어 로드맵을 받아보세요
             </p>
           </motion.div>
@@ -406,19 +403,19 @@ export default function Landing() {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.15 }}
               >
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#E5E8EB] h-full">
+                <div className="bg-white/5 backdrop-blur-sm p-8 rounded-2xl border border-white/10 h-full">
                   <div className={`text-5xl font-bold bg-gradient-to-r ${
-                    item.color === 'blue' ? 'from-blue-500 to-cyan-400' :
-                    item.color === 'violet' ? 'from-violet-500 to-purple-400' :
-                    'from-green-500 to-emerald-400'
+                    item.color === 'blue' ? 'from-blue-400 to-cyan-400' :
+                    item.color === 'violet' ? 'from-violet-400 to-purple-400' :
+                    'from-emerald-400 to-green-400'
                   } bg-clip-text text-transparent mb-4`}>
                     {item.step}
                   </div>
-                  <h3 className="text-xl font-bold text-[#191F28] mb-2">{item.title}</h3>
-                  <p className="text-[#6B7684]">{item.desc}</p>
+                  <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
+                  <p className="text-white/60">{item.desc}</p>
                 </div>
                 {idx < 2 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-[#B0B8C1]">
+                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-white/30">
                     <ArrowRight className="w-8 h-8" />
                   </div>
                 )}
@@ -429,7 +426,7 @@ export default function Landing() {
       </section>
 
       {/* Testimonials */}
-      <section ref={testimonialsRef} className="py-24 bg-white">
+      <section ref={testimonialsRef} className="py-24 bg-[#0D1117]">
         <div className="max-w-6xl mx-auto px-4">
           <motion.div 
             className="text-center mb-16"
@@ -437,10 +434,10 @@ export default function Landing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-[#191F28] mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               실제 사용자 후기
             </h2>
-            <p className="text-lg text-[#6B7684]">
+            <p className="text-lg text-white/50">
               Konnect와 함께 커리어를 설계한 분들의 이야기
             </p>
           </motion.div>
@@ -454,7 +451,7 @@ export default function Landing() {
             {testimonials.map((testimonial, idx) => (
               <motion.div
                 key={idx}
-                className="bg-[#F9FAFB] p-8 rounded-2xl border border-[#E5E8EB]"
+                className="bg-white/5 backdrop-blur-sm p-8 rounded-2xl border border-white/10"
                 variants={fadeInUp}
               >
                 <div className="flex items-center gap-1 mb-4">
@@ -462,12 +459,12 @@ export default function Landing() {
                     <Star key={i} className="w-4 h-4 text-amber-400 fill-current" />
                   ))}
                 </div>
-                <p className="text-[#4E5968] mb-6 leading-relaxed">"{testimonial.content}"</p>
+                <p className="text-white/70 mb-6 leading-relaxed">"{testimonial.content}"</p>
                 <div className="flex items-center gap-3">
                   <div className="text-3xl">{testimonial.avatar}</div>
                   <div>
-                    <div className="font-semibold text-[#191F28]">{testimonial.name}</div>
-                    <div className="text-sm text-[#8B95A1]">{testimonial.role}</div>
+                    <div className="font-semibold text-white">{testimonial.name}</div>
+                    <div className="text-sm text-white/50">{testimonial.role}</div>
                   </div>
                 </div>
               </motion.div>
@@ -477,10 +474,10 @@ export default function Landing() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-24 bg-gradient-to-br from-[#191F28] to-[#2D3541] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#3182F6] to-transparent rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-violet-500 to-transparent rounded-full blur-3xl" />
+      <section className="py-24 bg-gradient-to-br from-[#161B22] to-[#0D1117] relative overflow-hidden">
+        <div className="absolute inset-0 opacity-50">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#3182F6]/30 to-transparent rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-violet-600/30 to-transparent rounded-full blur-3xl" />
         </div>
         
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
@@ -499,13 +496,13 @@ export default function Landing() {
               지금 바로 시작하세요
             </h2>
             
-            <p className="text-lg text-white/70 mb-10 max-w-2xl mx-auto">
+            <p className="text-lg text-white/60 mb-10 max-w-2xl mx-auto">
               더 이상 혼자 고민하지 마세요.<br />
               AI 커리어 컨설턴트가 24시간 함께합니다.
             </p>
             
             <Button 
-              className="h-16 px-10 text-xl rounded-2xl bg-white text-[#3182F6] hover:bg-white/90 shadow-2xl shadow-black/20 transition-all hover:scale-[1.02]" 
+              className="h-16 px-10 text-xl rounded-2xl bg-gradient-to-r from-[#3182F6] to-blue-500 hover:from-[#2b72d7] hover:to-blue-600 text-white font-semibold shadow-2xl shadow-blue-500/30 transition-all hover:scale-[1.02]" 
               onClick={() => setLocation("/login")}
               data-testid="button-login-cta"
             >
@@ -513,7 +510,7 @@ export default function Landing() {
               <ArrowRight className="ml-2 h-6 w-6" />
             </Button>
             
-            <p className="mt-6 text-sm text-white/50">
+            <p className="mt-6 text-sm text-white/40">
               신용카드 없이 바로 시작 · 언제든 해지 가능
             </p>
           </motion.div>
@@ -521,7 +518,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-[#191F28] border-t border-white/10">
+      <footer className="py-12 bg-[#0D1117] border-t border-white/10">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
@@ -531,12 +528,12 @@ export default function Landing() {
                 className="h-8 w-auto brightness-0 invert opacity-80"
               />
             </div>
-            <div className="flex items-center gap-6 text-sm text-white/50">
-              <span>개인정보처리방침</span>
-              <span>이용약관</span>
-              <span>고객센터</span>
+            <div className="flex items-center gap-6 text-sm text-white/40">
+              <span className="hover:text-white/60 cursor-pointer transition-colors">개인정보처리방침</span>
+              <span className="hover:text-white/60 cursor-pointer transition-colors">이용약관</span>
+              <span className="hover:text-white/60 cursor-pointer transition-colors">고객센터</span>
             </div>
-            <p className="text-sm text-white/40">
+            <p className="text-sm text-white/30">
               &copy; 2025 Konnect.careers. All rights reserved.
             </p>
           </div>
