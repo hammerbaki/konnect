@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { TokenProvider } from "@/lib/TokenContext";
 import { MobileActionProvider } from "@/lib/MobileActionContext";
 import { AuthProvider, useAuth } from "@/lib/AuthContext";
+import { NotificationProvider } from "@/lib/NotificationContext";
+import { ActiveJobsProvider } from "@/lib/ActiveJobsContext";
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
 import { Suspense, lazy, useEffect } from "react";
 
@@ -161,12 +163,16 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TokenProvider>
-          <MobileActionProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Router />
-            </TooltipProvider>
-          </MobileActionProvider>
+          <NotificationProvider>
+            <ActiveJobsProvider>
+              <MobileActionProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Router />
+              </TooltipProvider>
+              </MobileActionProvider>
+            </ActiveJobsProvider>
+          </NotificationProvider>
         </TokenProvider>
       </AuthProvider>
     </QueryClientProvider>

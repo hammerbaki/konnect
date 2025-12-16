@@ -13,7 +13,63 @@ import {
   generateGoals,
   type GoalLevel 
 } from "./ai";
-import type { AiJobType, AiJob } from "@shared/schema";
+import type { AiJobType, AiJob, NotificationType } from "@shared/schema";
+
+function getNotificationDetails(type: AiJobType): { notificationType: NotificationType; title: string; message: string; linkUrl: string } {
+  switch (type) {
+    case "analysis":
+      return {
+        notificationType: "analysis_complete",
+        title: "진로 분석 완료",
+        message: "AI 진로 분석이 완료되었습니다. 결과를 확인해 보세요!",
+        linkUrl: "/analysis",
+      };
+    case "essay":
+      return {
+        notificationType: "essay_complete",
+        title: "자기소개서 생성 완료",
+        message: "AI 자기소개서가 생성되었습니다. 결과를 확인해 보세요!",
+        linkUrl: "/essays",
+      };
+    case "essay_revision":
+      return {
+        notificationType: "essay_complete",
+        title: "자기소개서 수정 완료",
+        message: "AI 자기소개서 수정이 완료되었습니다. 결과를 확인해 보세요!",
+        linkUrl: "/essays",
+      };
+    case "goal":
+      return {
+        notificationType: "goal_complete",
+        title: "목표 생성 완료",
+        message: "AI 목표가 생성되었습니다. Kompass에서 확인해 보세요!",
+        linkUrl: "/kompass",
+      };
+    default:
+      return {
+        notificationType: "system",
+        title: "작업 완료",
+        message: "AI 작업이 완료되었습니다.",
+        linkUrl: "/dashboard",
+      };
+  }
+}
+
+async function createJobCompletionNotification(job: AiJob): Promise<void> {
+  try {
+    const { notificationType, title, message, linkUrl } = getNotificationDetails(job.type as AiJobType);
+    await storage.createNotification({
+      userId: job.userId,
+      type: notificationType,
+      title,
+      message,
+      linkUrl,
+      sourceJobId: job.id,
+    });
+  } catch (error) {
+    console.error("Failed to create notification for job:", job.id, error);
+  }
+}
 
 let isWorkerRunning = false;
 const POLL_INTERVAL = 30000; // 30 seconds to reduce Redis usage
@@ -102,6 +158,9 @@ export async function processJob(job: AiJob): Promise<any> {
     
     await storage.updateAiJobResult(job.id, result);
     await markJobDone(job.id);
+    
+    // Create notification for completed job
+    await createJobCompletionNotification(job);
     
     return result;
   } catch (error) {

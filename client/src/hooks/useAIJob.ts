@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAuthHeaders } from "@/lib/queryClient";
+import { useActiveJobs } from "@/lib/ActiveJobsContext";
 
 export type AIJobType = "analysis" | "essay" | "essay_revision" | "goal";
 export type AIJobStatus = "queued" | "processing" | "completed" | "failed";
@@ -37,6 +38,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const completedJobsRef = useRef<Set<string>>(new Set());
+  const { addJob, removeJob } = useActiveJobs();
 
   const clearPolling = useCallback(() => {
     if (pollIntervalRef.current) {
@@ -68,13 +70,13 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       setStatus(job.status);
       
       if (job.status === "completed") {
-        // Mark job as processed BEFORE calling onSuccess to prevent duplicates
         if (completedJobsRef.current.has(id)) {
-          return job.result; // Already processed
+          return job.result;
         }
         completedJobsRef.current.add(id);
         clearPolling();
         setIsLoading(false);
+        removeJob(id);
         onSuccess?.(job.result, id);
         return job.result;
       }
@@ -83,6 +85,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
         completedJobsRef.current.add(id);
         clearPolling();
         setIsLoading(false);
+        removeJob(id);
         onError?.(job.error || "작업이 실패했습니다.");
         return null;
       }
@@ -92,7 +95,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       console.error("Error polling job status:", error);
       return null;
     }
-  }, [clearPolling, onSuccess, onError]);
+  }, [clearPolling, onSuccess, onError, removeJob]);
 
   const startPolling = useCallback((id: string) => {
     clearPolling();
@@ -129,6 +132,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       const response: SubmitJobResponse = await res.json();
       
       setJobId(response.jobId);
+      addJob(response.jobId, type, profileId || undefined);
       
       if (response.immediate) {
         setStatus("processing");
@@ -144,7 +148,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       onError?.(error.message || "작업 제출 중 오류가 발생했습니다.");
       return null;
     }
-  }, [startPolling, onError]);
+  }, [startPolling, onError, addJob]);
 
   const reset = useCallback(() => {
     clearPolling();

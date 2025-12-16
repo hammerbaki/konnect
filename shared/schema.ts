@@ -646,3 +646,46 @@ export const insertRedemptionHistorySchema = createInsertSchema(redemptionHistor
 
 export type InsertRedemptionHistory = z.infer<typeof insertRedemptionHistorySchema>;
 export type RedemptionHistory = typeof redemptionHistory.$inferSelect;
+
+// ===== NOTIFICATIONS TABLE (User notifications for completed jobs, etc.) =====
+export type NotificationType = 'analysis_complete' | 'essay_complete' | 'goal_complete' | 'system' | 'points_added';
+
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: varchar("type", { length: 30 }).notNull(), // NotificationType
+  title: varchar("title", { length: 200 }).notNull(),
+  message: text("message").notNull(),
+  linkUrl: varchar("link_url", { length: 500 }), // Optional deep link
+  sourceJobId: varchar("source_job_id").references(() => aiJobs.id, { onDelete: "set null" }),
+  isRead: integer("is_read").notNull().default(0), // 0 = unread, 1 = read
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_notifications_user").on(table.userId),
+  index("IDX_notifications_user_unread").on(table.userId, table.isRead),
+  index("IDX_notifications_created").on(table.createdAt),
+]);
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+  sourceJob: one(aiJobs, {
+    fields: [notifications.sourceJobId],
+    references: [aiJobs.id],
+  }),
+}));
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  isRead: true,
+  readAt: true,
+  createdAt: true,
+});
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;

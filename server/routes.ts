@@ -1263,6 +1263,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== NOTIFICATIONS ROUTES =====
+  // Get user notifications
+  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const notifications = await storage.getNotificationsByUser(userId, limit);
+      res.json(notifications);
+    } catch (error: any) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "알림 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get unread notification count
+  app.get('/api/notifications/unread-count', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const count = await storage.getUnreadNotificationCount(userId);
+      res.json({ count });
+    } catch (error: any) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({ message: "알림 개수 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Mark notification as read
+  app.patch('/api/notifications/:id/read', isAuthenticated, async (req: any, res) => {
+    try {
+      const notificationId = req.params.id;
+      const notification = await storage.markNotificationAsRead(notificationId);
+      res.json(notification);
+    } catch (error: any) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "알림 읽음 처리 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Mark all notifications as read
+  app.patch('/api/notifications/read-all', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error marking all as read:", error);
+      res.status(500).json({ message: "알림 전체 읽음 처리 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Delete notification
+  app.delete('/api/notifications/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const notificationId = req.params.id;
+      await storage.deleteNotification(notificationId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting notification:", error);
+      res.status(500).json({ message: "알림 삭제 중 오류가 발생했습니다." });
+    }
+  });
+
   // ===== ADMIN ROUTES =====
   // Middleware for admin/staff access (read-only operations)
   const requireStaffOrAdmin = async (req: any, res: any, next: any) => {

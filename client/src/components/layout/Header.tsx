@@ -1,4 +1,4 @@
-import { Bell, Search, Coins, Menu } from "lucide-react";
+import { Search, Coins, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { RedeemDialog } from "@/components/token/RedeemDialog";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useTokens } from "@/lib/TokenContext";
 import { useAuth } from "@/lib/AuthContext";
 import { Sidebar } from "./Sidebar";
@@ -85,10 +86,7 @@ export function Header() {
             <RedeemDialog />
         </div>
 
-        <Button variant="ghost" size="icon" className="hidden md:flex rounded-full h-10 w-10 bg-white text-[#8B95A1] hover:text-[#3182F6] shadow-sm hover:bg-white ml-2">
-          <Bell className="h-5 w-5" />
-          <span className="sr-only">알림</span>
-        </Button>
+        <NotificationBell />
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
