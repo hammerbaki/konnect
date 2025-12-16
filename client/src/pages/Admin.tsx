@@ -48,6 +48,14 @@ interface AiStats {
   jobsByType: Record<string, number>;
 }
 
+interface QueueStats {
+  goal: { queued: number; processing: number };
+  essay: { queued: number; processing: number };
+  essay_revision: { queued: number; processing: number };
+  analysis: { queued: number; processing: number };
+  totalProcessing: number;
+}
+
 
 interface TrafficStats {
   today: { pageViews: number; uniqueVisitors: number; newUsers: number };
@@ -170,6 +178,13 @@ export default function Admin() {
     queryKey: ['/api/admin/stats/ai'],
     enabled: isStaffOrAdmin,
     retry: false,
+  });
+
+  const { data: queueStats, refetch: refetchQueueStats } = useQuery<QueueStats>({
+    queryKey: ['/api/ai/queue/stats'],
+    enabled: isStaffOrAdmin,
+    retry: false,
+    refetchInterval: 3000,
   });
 
   const { data: trafficStats, refetch: refetchTraffic } = useQuery<TrafficStats>({
@@ -601,6 +616,7 @@ export default function Admin() {
               refetchUsers();
               refetchStats();
               refetchAiStats();
+              refetchQueueStats();
               refetchTraffic();
               refetchPages();
               refetchPackages();
@@ -849,6 +865,126 @@ export default function Admin() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Real-time Job Queue Monitor */}
+            <Card className="toss-card">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-[#3182F6]" />
+                  실시간 작업 큐 모니터
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-sm text-[#8B95A1]">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    자동 갱신 (3초)
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchQueueStats()}
+                    className="rounded-lg"
+                    data-testid="button-refresh-queue"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  {/* Analysis Queue */}
+                  <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200" data-testid="queue-analysis">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BarChart3 className="h-5 w-5 text-blue-600" />
+                      <span className="font-medium text-blue-800">진로 분석</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-600">{queueStats?.analysis?.queued || 0}</p>
+                        <p className="text-xs text-blue-500">대기</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-800">{queueStats?.analysis?.processing || 0}</p>
+                        <p className="text-xs text-blue-500">처리중</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Essay Queue */}
+                  <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200" data-testid="queue-essay">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="h-5 w-5 text-purple-600" />
+                      <span className="font-medium text-purple-800">자기소개서</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-purple-600">{queueStats?.essay?.queued || 0}</p>
+                        <p className="text-xs text-purple-500">대기</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-purple-800">{queueStats?.essay?.processing || 0}</p>
+                        <p className="text-xs text-purple-500">처리중</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Goal Queue */}
+                  <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200" data-testid="queue-goal">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span className="font-medium text-green-800">목표 생성</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-600">{queueStats?.goal?.queued || 0}</p>
+                        <p className="text-xs text-green-500">대기</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-800">{queueStats?.goal?.processing || 0}</p>
+                        <p className="text-xs text-green-500">처리중</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Total Processing */}
+                  <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200" data-testid="queue-total">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="h-5 w-5 text-orange-600" />
+                      <span className="font-medium text-orange-800">전체 현황</span>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-orange-600">{queueStats?.totalProcessing || 0}</p>
+                      <p className="text-xs text-orange-500">총 처리중</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rate Limit Info */}
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <h4 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    API 제한 설정
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="text-center p-2 bg-white rounded-lg">
+                      <p className="text-lg font-bold text-[#3182F6]">30</p>
+                      <p className="text-xs text-gray-500">요청/분 (Leaky Bucket)</p>
+                    </div>
+                    <div className="text-center p-2 bg-white rounded-lg">
+                      <p className="text-lg font-bold text-[#7C3AED]">~8,000</p>
+                      <p className="text-xs text-gray-500">출력 토큰/분</p>
+                    </div>
+                    <div className="text-center p-2 bg-white rounded-lg">
+                      <p className="text-lg font-bold text-[#059669]">10-20</p>
+                      <p className="text-xs text-gray-500">사용자별 요청/분</p>
+                    </div>
+                    <div className="text-center p-2 bg-white rounded-lg">
+                      <p className="text-lg font-bold text-[#D97706]">50</p>
+                      <p className="text-xs text-gray-500">일일 할당량</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="tokens" className="space-y-6">
