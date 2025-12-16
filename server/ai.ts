@@ -1,4 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+// @ts-ignore - leaky-bucket doesn't have type declarations
+import LeakyBucket from "leaky-bucket";
 import type { Profile } from "@shared/schema";
 import { checkAIRateLimit, type RateLimitResult } from "./rateLimiter";
 
@@ -22,39 +24,23 @@ function isRateLimitError(error: any): boolean {
   );
 }
 
-// Simple concurrency limiter (replaces p-limit)
-function createLimiter(concurrency: number) {
-  let active = 0;
-  const queue: (() => void)[] = [];
-  
-  return async function<T>(fn: () => Promise<T>): Promise<T> {
-    return new Promise((resolve, reject) => {
-      const run = async () => {
-        active++;
-        try {
-          const result = await fn();
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        } finally {
-          active--;
-          if (queue.length > 0) {
-            const next = queue.shift();
-            if (next) next();
-          }
-        }
-      };
-      
-      if (active < concurrency) {
-        run();
-      } else {
-        queue.push(run);
-      }
-    });
-  };
+// Leaky Bucket for Claude API rate limiting
+// Claude API limits: ~60 requests/minute for most tiers
+// We use 30/minute to be safe and leave headroom
+const claudeBucket = new LeakyBucket({
+  capacity: 30,        // Max 30 requests in bucket
+  interval: 60,        // Per 60 seconds (1 minute)
+  timeout: 60000,      // Wait up to 60s before rejecting
+});
+
+// Throttle a Claude API call through the leaky bucket
+async function throttleClaudeCall<T>(fn: () => Promise<T>): Promise<T> {
+  // Wait for bucket to have capacity (cost = 1 request)
+  await claudeBucket.throttle();
+  return fn();
 }
 
-// Simple retry with exponential backoff (replaces p-retry)
+// Simple retry with exponential backoff
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   options: { retries: number; minTimeout: number; maxTimeout: number; factor: number }
@@ -74,6 +60,7 @@ async function retryWithBackoff<T>(
       }
       
       if (attempt < options.retries) {
+        console.log(`Rate limit hit, retrying in ${timeout}ms (attempt ${attempt + 1}/${options.retries})`);
         await new Promise(resolve => setTimeout(resolve, timeout));
         timeout = Math.min(timeout * options.factor, options.maxTimeout);
       }
@@ -82,9 +69,6 @@ async function retryWithBackoff<T>(
   
   throw lastError;
 }
-
-// Rate limiter: max 2 concurrent requests
-const limit = createLimiter(2);
 
 // Profile-specific system prompts for career analysis
 const getAnalysisSystemPrompt = (profileType: string): string => {
@@ -585,7 +569,7 @@ export async function generateCareerAnalysis(
   profile: Profile, 
   userIdentity?: { displayName?: string; gender?: string; birthDate?: string | Date }
 ): Promise<CareerAnalysisResult> {
-  return limit(() =>
+  return throttleClaudeCall(() =>
     retryWithBackoff(
       async () => {
         const systemPrompt = getAnalysisSystemPrompt(profile.type);
@@ -729,7 +713,7 @@ export async function generatePersonalEssay(
   content: string;
   rawResponse: string;
 }> {
-  return limit(() =>
+  return throttleClaudeCall(() =>
     retryWithBackoff(
       async () => {
         const profileContext = getEssayProfileContext(profileData, profileType);
@@ -808,7 +792,7 @@ export async function revisePersonalEssay(
   content: string;
   rawResponse: string;
 }> {
-  return limit(() =>
+  return throttleClaudeCall(() =>
     retryWithBackoff(
       async () => {
         const systemPrompt = `당신은 한국의 자기소개서 전문 편집자입니다. 사용자의 요청에 따라 기존 자기소개서를 수정하고 개선합니다. 모든 응답은 한국어로 작성하세요.`;
@@ -927,7 +911,7 @@ export async function generateGoals(
   suggestions: GeneratedGoal[];
   rawResponse: string;
 }> {
-  return limit(() =>
+  return throttleClaudeCall(() =>
     retryWithBackoff(
       async () => {
         const count = customCount || getOutputCountForLevel(level);
