@@ -1,6 +1,4 @@
 import Anthropic from "@anthropic-ai/sdk";
-// @ts-ignore - leaky-bucket doesn't have type declarations
-import LeakyBucket from "leaky-bucket";
 import type { Profile } from "@shared/schema";
 import { checkAIRateLimit, type RateLimitResult } from "./rateLimiter";
 
@@ -24,18 +22,74 @@ function isRateLimitError(error: any): boolean {
   );
 }
 
-// Leaky Bucket for Claude API rate limiting
-// Claude API limits: ~60 requests/minute for most tiers
-// We use 30/minute to be safe and leave headroom
-const claudeBucket = new LeakyBucket({
-  capacity: 30,        // Max 30 requests in bucket
-  interval: 60,        // Per 60 seconds (1 minute)
-  timeout: 60000,      // Wait up to 60s before rejecting
-});
+// Simple Token Bucket Rate Limiter (no external dependencies)
+class TokenBucket {
+  private tokens: number;
+  private lastRefill: number;
+  private readonly capacity: number;
+  private readonly refillRate: number; // tokens per second
+  private queue: Array<{ resolve: () => void; reject: (err: Error) => void }> = [];
+  private processing = false;
 
-// Throttle a Claude API call through the leaky bucket
+  constructor(capacity: number, intervalSeconds: number) {
+    this.capacity = capacity;
+    this.tokens = capacity;
+    this.refillRate = capacity / intervalSeconds;
+    this.lastRefill = Date.now();
+  }
+
+  private refill(): void {
+    const now = Date.now();
+    const elapsed = (now - this.lastRefill) / 1000;
+    this.tokens = Math.min(this.capacity, this.tokens + elapsed * this.refillRate);
+    this.lastRefill = now;
+  }
+
+  async throttle(timeout = 60000): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const startTime = Date.now();
+      
+      const tryAcquire = () => {
+        this.refill();
+        
+        if (this.tokens >= 1) {
+          this.tokens -= 1;
+          resolve();
+          return true;
+        }
+        
+        // Check timeout
+        if (Date.now() - startTime > timeout) {
+          reject(new Error('Rate limit timeout'));
+          return true;
+        }
+        
+        return false;
+      };
+
+      if (tryAcquire()) return;
+
+      // Queue the request
+      const waitTime = Math.ceil((1 - this.tokens) / this.refillRate * 1000);
+      setTimeout(() => {
+        if (!tryAcquire()) {
+          // Retry with shorter interval
+          const interval = setInterval(() => {
+            if (tryAcquire()) {
+              clearInterval(interval);
+            }
+          }, 100);
+        }
+      }, Math.min(waitTime, 1000));
+    });
+  }
+}
+
+// Claude API rate limiting: 30 requests per minute
+const claudeBucket = new TokenBucket(30, 60);
+
+// Throttle a Claude API call through the token bucket
 async function throttleClaudeCall<T>(fn: () => Promise<T>): Promise<T> {
-  // Wait for bucket to have capacity (cost = 1 request)
   await claudeBucket.throttle();
   return fn();
 }

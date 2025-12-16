@@ -1,55 +1,71 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import ws from 'ws';
 import * as schema from "@shared/schema";
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// In production, use Supabase (PROD_DATABASE_URL)
-// In development, use Replit's Helium database (DATABASE_URL)
-let databaseUrl: string = '';
-
-try {
-  if (isProduction) {
-    databaseUrl = process.env.PROD_DATABASE_URL || process.env.DATABASE_URL || '';
-    if (!process.env.PROD_DATABASE_URL) {
-      console.warn('WARNING: PROD_DATABASE_URL not set, falling back to DATABASE_URL');
-    }
-    console.log('Using production database (Supabase)');
-  } else {
-    databaseUrl = process.env.DATABASE_URL || '';
-    console.log('Using development database (Replit Helium)');
-  }
-
-  if (!databaseUrl) {
-    console.warn('WARNING: No database URL configured - database operations will fail');
-    // Use a dummy URL that won't connect but won't crash during initialization
-    databaseUrl = 'postgresql://placeholder:placeholder@localhost:5432/placeholder';
-  }
-} catch (err) {
-  console.error('Error reading database configuration:', err);
-  databaseUrl = 'postgresql://placeholder:placeholder@localhost:5432/placeholder';
+// Log which database we're using
+if (isProduction) {
+  console.log('Using production database (Supabase)');
+} else {
+  console.log('Using development database (Replit Helium)');
 }
 
-// Configure Neon driver for WebSocket (works with both Neon and Supabase)
-try {
-  neonConfig.webSocketConstructor = ws;
-  neonConfig.useSecureWebSocket = true;
-  neonConfig.pipelineTLS = false;
-  neonConfig.pipelineConnect = false;
-} catch (err) {
-  console.error('Error configuring Neon driver:', err);
-}
-
-console.log('Connecting to database...');
-
-// Track connection state
-let isConnected = false;
-
-// Initialize pool - wrap in function to handle errors gracefully
-function createPool(): Pool {
+// Get database URL safely
+function getDatabaseUrl(): string {
   try {
-    const p = new Pool({ 
+    if (isProduction) {
+      const url = process.env.PROD_DATABASE_URL || process.env.DATABASE_URL || '';
+      if (!process.env.PROD_DATABASE_URL && process.env.DATABASE_URL) {
+        console.warn('WARNING: PROD_DATABASE_URL not set, falling back to DATABASE_URL');
+      }
+      return url;
+    }
+    return process.env.DATABASE_URL || '';
+  } catch (err) {
+    console.error('Error reading DATABASE_URL:', err);
+    return '';
+  }
+}
+
+// Configure WebSocket - handle both ESM and CJS imports
+try {
+  // ws might be imported as default or as a named export depending on bundler
+  const WebSocketImpl = (ws as any).WebSocket || (ws as any).default || ws;
+  if (WebSocketImpl && typeof WebSocketImpl === 'function') {
+    neonConfig.webSocketConstructor = WebSocketImpl;
+    neonConfig.useSecureWebSocket = true;
+    neonConfig.pipelineTLS = false;
+    neonConfig.pipelineConnect = false;
+    console.log('✓ WebSocket configured for database');
+  } else {
+    console.warn('WebSocket constructor not found, using default Neon config');
+  }
+} catch (err) {
+  console.warn('WebSocket configuration skipped:', (err as Error).message);
+}
+
+// Lazy pool creation - only create when first accessed
+let _pool: Pool | null = null;
+let _poolError: Error | null = null;
+let _poolInitialized = false;
+
+function getPool(): Pool | null {
+  if (_poolInitialized) return _pool;
+  _poolInitialized = true;
+  
+  try {
+    const databaseUrl = getDatabaseUrl();
+    if (!databaseUrl) {
+      console.warn('WARNING: No database URL configured');
+      _poolError = new Error('No database URL');
+      return null;
+    }
+    
+    console.log('Connecting to database...');
+    
+    _pool = new Pool({ 
       connectionString: databaseUrl,
       connectionTimeoutMillis: 15000,
       idleTimeoutMillis: 30000,
@@ -57,50 +73,73 @@ function createPool(): Pool {
       ssl: isProduction ? { rejectUnauthorized: false } : undefined,
     });
 
-    p.on('error', (err) => {
-      // Never crash on pool errors - just log
-      const isDnsError = err.message?.includes('EAI_AGAIN') || err.message?.includes('ENOTFOUND');
-      if (isDnsError) {
-        if (isConnected) {
-          console.warn('Database connection lost (DNS error), will reconnect');
-          isConnected = false;
-        }
-      } else {
-        console.warn('Database pool error (non-fatal):', err.message);
-      }
+    // Add error handler to prevent crashes
+    _pool.on('error', (err) => {
+      console.warn('Database pool error (non-fatal):', err.message);
     });
 
-    p.on('connect', () => {
-      if (!isConnected) {
-        console.log('✓ Database connection established');
-        isConnected = true;
-      }
+    _pool.on('connect', () => {
+      console.log('✓ Database connection established');
     });
     
     console.log('✓ Database pool created');
-    return p;
+    return _pool;
   } catch (err) {
-    console.error('Error creating database pool:', err);
-    // Return a minimal pool that will fail on queries but won't crash
-    return new Pool({ 
-      connectionString: 'postgresql://x:x@localhost:5432/x',
-      max: 1,
+    console.error('Error creating database pool (non-fatal):', err);
+    _poolError = err as Error;
+    return null;
+  }
+}
+
+// Export pool - lazy initialization
+export function getPoolInstance(): Pool | null {
+  return getPool();
+}
+
+// For backwards compatibility
+export const pool = {
+  get instance() {
+    return getPool();
+  }
+};
+
+// Create a proxy that lazily initializes drizzle
+let _db: ReturnType<typeof drizzle> | null = null;
+let _dbInitialized = false;
+
+function getDb(): ReturnType<typeof drizzle> {
+  if (_dbInitialized && _db) return _db;
+  _dbInitialized = true;
+  
+  const p = getPool();
+  if (!p) {
+    // Return a proxy that throws on access if no pool
+    return new Proxy({} as ReturnType<typeof drizzle>, {
+      get(target, prop) {
+        throw new Error('Database not configured - check DATABASE_URL');
+      }
+    });
+  }
+  
+  try {
+    _db = drizzle({ client: p, schema });
+    console.log('✓ Database connection configured');
+    return _db;
+  } catch (err) {
+    console.error('Error initializing Drizzle ORM:', err);
+    // Return proxy that throws
+    return new Proxy({} as ReturnType<typeof drizzle>, {
+      get(target, prop) {
+        throw new Error('Drizzle ORM initialization failed');
+      }
     });
   }
 }
 
-export const pool = createPool();
-
-// Initialize drizzle
-let drizzleDb: ReturnType<typeof drizzle>;
-
-try {
-  drizzleDb = drizzle({ client: pool, schema });
-  console.log('✓ Database connection configured');
-} catch (err) {
-  console.error('Error initializing Drizzle ORM:', err);
-  // Create a minimal drizzle instance
-  drizzleDb = drizzle({ client: pool, schema });
-}
-
-export const db = drizzleDb;
+// Export db as a getter to enable lazy initialization
+export const db = new Proxy({} as ReturnType<typeof drizzle>, {
+  get(target, prop) {
+    const realDb = getDb();
+    return (realDb as any)[prop];
+  }
+});
