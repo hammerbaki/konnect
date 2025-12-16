@@ -174,9 +174,15 @@ export function useAIJob(options: UseAIJobOptions = {}) {
         setStatus("processing");
         setProgress(10);
         startPolling(activeJob.id);
+      } else {
+        clearPolling();
+        setJobId(null);
+        setIsLoading(false);
+        setStatus(null);
+        setProgress(0);
       }
     }
-  }, [jobType, profileId, getActiveJob, startPolling]);
+  }, [jobType, profileId, getActiveJob, startPolling, clearPolling]);
 
   useEffect(() => {
     return () => {

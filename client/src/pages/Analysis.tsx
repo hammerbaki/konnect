@@ -149,7 +149,7 @@ export default function Analysis() {
         },
     });
 
-    const isCurrentProfileAnalyzing = activeProfileId ? aiJob.isActiveForProfile("analysis", activeProfileId) || aiJob.isLoading : false;
+    const isCurrentProfileAnalyzing = activeProfileId ? aiJob.isActiveForProfile("analysis", activeProfileId) : false;
 
     const handleGenerateAnalysis = async (profileId: string) => {
         if (!activeProfile) return;
