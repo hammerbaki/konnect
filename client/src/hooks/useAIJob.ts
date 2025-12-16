@@ -116,7 +116,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
     profileId: string | null,
     payload: any
   ): Promise<string | null> => {
-    const optimisticId = addOptimisticJob(type, profileId || undefined);
+    // Simple approach: show loading, submit job, get real ID, then poll
     setIsLoading(true);
     setProgress(5);
     setStatus("queued");
@@ -139,25 +139,26 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       
       const response: SubmitJobResponse = await res.json();
       
+      // Use real job ID from server
       setJobId(response.jobId);
-      replaceOptimisticJob(optimisticId, response.jobId);
+      addJob(response.jobId, type, profileId || undefined);
       
       if (response.immediate) {
         setStatus("processing");
         setProgress(10);
       }
       
+      // Start polling with real job ID
       startPolling(response.jobId);
       
       return response.jobId;
     } catch (error: any) {
-      removeJob(optimisticId);
       setIsLoading(false);
       setStatus("failed");
       onError?.(error.message || "작업 제출 중 오류가 발생했습니다.");
       return null;
     }
-  }, [startPolling, onError, addOptimisticJob, replaceOptimisticJob, removeJob]);
+  }, [startPolling, onError, addJob]);
 
   const reset = useCallback(() => {
     clearPolling();
@@ -170,19 +171,13 @@ export function useAIJob(options: UseAIJobOptions = {}) {
   useEffect(() => {
     if (jobType && profileId) {
       const activeJob = getActiveJob(jobType, profileId);
-      // Only poll real job IDs, not optimistic ones (those start with "optimistic_")
+      // Only poll real job IDs (skip any old optimistic ones that may be in localStorage)
       if (activeJob && !completedJobsRef.current.has(activeJob.id) && !activeJob.id.startsWith("optimistic_")) {
         setJobId(activeJob.id);
         setIsLoading(true);
         setStatus("processing");
         setProgress(10);
         startPolling(activeJob.id);
-      } else if (activeJob && activeJob.id.startsWith("optimistic_")) {
-        // For optimistic jobs, just show loading state without polling
-        setJobId(activeJob.id);
-        setIsLoading(true);
-        setStatus("queued");
-        setProgress(5);
       } else {
         clearPolling();
         setJobId(null);
