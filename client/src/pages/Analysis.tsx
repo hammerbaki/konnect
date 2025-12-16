@@ -125,18 +125,18 @@ export default function Analysis() {
     const latestAnalysis = analyses && analyses.length > 0 ? analyses[0] : null;
     const activeProfile = profiles?.find((p: any) => p.id === activeProfileId);
 
-    // Track optimistic credit deduction for safe restoration
     const analysisCreditsDeductedRef = useRef(false);
 
     const aiJob = useAIJob({
+        jobType: "analysis",
+        profileId: activeProfileId,
         onSuccess: () => {
-            analysisCreditsDeductedRef.current = false; // Clear flag on success
+            analysisCreditsDeductedRef.current = false;
             queryClient.invalidateQueries({ queryKey: ['/api/profiles', activeProfileId, 'analyses'] });
             queryClient.invalidateQueries({ queryKey: ['/api/user-identity'] });
             toast({ title: "분석 완료", description: "AI 커리어 분석이 완료되었습니다." });
         },
         onError: (error: string) => {
-            // Only restore if we actually deducted
             if (analysisCreditsDeductedRef.current) {
                 restoreCredits(ANALYSIS_CREDIT_COST);
                 analysisCreditsDeductedRef.current = false;
@@ -148,6 +148,8 @@ export default function Analysis() {
             });
         },
     });
+
+    const isCurrentProfileAnalyzing = activeProfileId ? aiJob.isActiveForProfile("analysis", activeProfileId) || aiJob.isLoading : false;
 
     const handleGenerateAnalysis = async (profileId: string) => {
         if (!activeProfile) return;
@@ -480,7 +482,7 @@ export default function Analysis() {
                     </p>
                     <Button 
                         onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
-                        disabled={aiJob.isLoading || !activeProfileId}
+                        disabled={isCurrentProfileAnalyzing || !activeProfileId}
                         className="h-12 px-8 rounded-xl bg-[#3182F6] text-white font-bold"
                         data-testid="button-generate-analysis"
                     >
@@ -505,7 +507,7 @@ export default function Analysis() {
                     </div>
                     <Button 
                         onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
-                        disabled={aiJob.isLoading}
+                        disabled={isCurrentProfileAnalyzing}
                         variant="outline"
                         className="rounded-xl border-[#3182F6] text-[#3182F6]"
                         data-testid="button-regenerate-analysis"
@@ -600,7 +602,7 @@ export default function Analysis() {
                         </div>
 
                         <div className="p-4 lg:p-8 max-w-4xl mx-auto">
-                            {aiJob.isLoading ? (
+                            {isCurrentProfileAnalyzing ? (
                                 <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-300">
                                     <Card className="bg-white rounded-2xl border border-[#E5E8EB] shadow-lg p-8 max-w-md w-full">
                                         <div className="flex flex-col items-center text-center">

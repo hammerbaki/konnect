@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAuthHeaders } from "@/lib/queryClient";
 import { useActiveJobs } from "@/lib/ActiveJobsContext";
 
@@ -28,17 +28,20 @@ interface UseAIJobOptions {
   onSuccess?: (result: any, jobId: string) => void;
   onError?: (error: string) => void;
   pollInterval?: number;
+  jobType?: AIJobType;
+  profileId?: string | null;
 }
 
 export function useAIJob(options: UseAIJobOptions = {}) {
-  const { onSuccess, onError, pollInterval = 500 } = options;
+  const { onSuccess, onError, pollInterval = 500, jobType, profileId } = options;
   const [jobId, setJobId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<AIJobStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const completedJobsRef = useRef<Set<string>>(new Set());
-  const { addJob, removeJob } = useActiveJobs();
+  const { addJob, removeJob, getActiveJob, hasActiveJob } = useActiveJobs();
+  const queryClient = useQueryClient();
 
   const clearPolling = useCallback(() => {
     if (pollIntervalRef.current) {
@@ -77,6 +80,8 @@ export function useAIJob(options: UseAIJobOptions = {}) {
         clearPolling();
         setIsLoading(false);
         removeJob(id);
+        queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
         onSuccess?.(job.result, id);
         return job.result;
       }
@@ -86,6 +91,8 @@ export function useAIJob(options: UseAIJobOptions = {}) {
         clearPolling();
         setIsLoading(false);
         removeJob(id);
+        queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
         onError?.(job.error || "작업이 실패했습니다.");
         return null;
       }
@@ -95,7 +102,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       console.error("Error polling job status:", error);
       return null;
     }
-  }, [clearPolling, onSuccess, onError, removeJob]);
+  }, [clearPolling, onSuccess, onError, removeJob, queryClient]);
 
   const startPolling = useCallback((id: string) => {
     clearPolling();
@@ -156,14 +163,30 @@ export function useAIJob(options: UseAIJobOptions = {}) {
     setProgress(0);
     setStatus(null);
     setIsLoading(false);
-    // Note: Don't clear completedJobsRef - we want to remember processed jobs
   }, [clearPolling]);
+
+  useEffect(() => {
+    if (jobType && profileId) {
+      const activeJob = getActiveJob(jobType, profileId);
+      if (activeJob && !completedJobsRef.current.has(activeJob.id)) {
+        setJobId(activeJob.id);
+        setIsLoading(true);
+        setStatus("processing");
+        setProgress(10);
+        startPolling(activeJob.id);
+      }
+    }
+  }, [jobType, profileId, getActiveJob, startPolling]);
 
   useEffect(() => {
     return () => {
       clearPolling();
     };
   }, [clearPolling]);
+
+  const isActiveForProfile = useCallback((type: AIJobType, pId: string) => {
+    return hasActiveJob(type, pId);
+  }, [hasActiveJob]);
 
   return {
     submitJob,
@@ -172,6 +195,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
     progress,
     status,
     isLoading,
+    isActiveForProfile,
   };
 }
 
