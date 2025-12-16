@@ -6,9 +6,23 @@ export function serveStatic(app: Express) {
   const distPath = path.resolve(__dirname, "public");
   
   if (!fs.existsSync(distPath)) {
-    throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
-    );
+    console.error(`WARNING: Build directory not found: ${distPath}`);
+    console.error('Static files will not be served. Make sure to build the client first.');
+    
+    // Serve a fallback error page instead of crashing
+    app.use("*", (_req, res) => {
+      res.status(503).send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>Service Starting</title></head>
+          <body>
+            <h1>Service is starting up...</h1>
+            <p>The application is initializing. Please refresh in a few seconds.</p>
+          </body>
+        </html>
+      `);
+    });
+    return;
   }
 
   app.use(express.static(distPath));

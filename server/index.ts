@@ -232,8 +232,8 @@ app.use((req, res, next) => {
       });
     } catch (fallbackError) {
       console.error('Failed to start even minimal server:', fallbackError);
-      // Only exit if we absolutely cannot start any server
-      setTimeout(() => process.exit(1), 5000); // Give 5 seconds for logs to flush
+      // Keep trying - never exit
+      console.error('Server will remain in failed state - check configuration');
     }
   }
 })();
