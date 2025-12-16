@@ -1,0 +1,184 @@
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+Error fetching notifications: error: relation "notifications" does not exist
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+schema: undefined,
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+internalPosition: undefined,
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+constraint: undefined,
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+table: undefined,
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+dataType: undefined,
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+position: '122',
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+where: undefined,
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+file: 'parse_relation.c',
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+hint: undefined,
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+at /home/runner/workspace/dist/index.cjs:78:46393
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+at async /home/runner/workspace/dist/index.cjs:380:30180 {
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+}
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+internalQuery: undefined,
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+code: '42P01',
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+at async Kh.execute (/home/runner/workspace/dist/index.cjs:78:71362)
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+line: '1449',
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+severity: 'ERROR',
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+routine: 'parserOpenTable'
+2025-12-16 14:48:37.36
+f9dbe22a
+User
+5:48:37 AM [express] GET /api/notifications 500 in 713ms :: {"message":"알림 조회 중 오류가 발생했습니다."}
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+schema: undefined,
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+at async Tg.getUnreadNotificationCount (/home/runner/workspace/dist/index.cjs:78:90797)
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+position: '22',
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+constraint: undefined,
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+internalQuery: undefined,
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+file: 'parse_relation.c',
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+detail: undefined,
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+at /home/runner/workspace/dist/index.cjs:78:46393
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+Error fetching unread count: error: relation "notifications" does not exist
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+routine: 'parserOpenTable'
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+line: '1449',
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+table: undefined,
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+length: 112,
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+internalPosition: undefined,
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+}
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+column: undefined,
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+at async /home/runner/workspace/dist/index.cjs:380:30486 {
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+dataType: undefined,
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+severity: 'ERROR',
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+code: '42P01',
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+where: undefined,
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+at async Kh.execute (/home/runner/workspace/dist/index.cjs:78:71362)
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+hint: undefined,
+2025-12-16 14:48:38.36
+f9dbe22a
+User
+5:48:38 AM [express] GET /api/notifications/unread-count 500 in 709ms :: {"message":"알림 개수 조회 중 오류가 발생했습니다."}
