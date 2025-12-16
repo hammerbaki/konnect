@@ -170,12 +170,19 @@ export function useAIJob(options: UseAIJobOptions = {}) {
   useEffect(() => {
     if (jobType && profileId) {
       const activeJob = getActiveJob(jobType, profileId);
-      if (activeJob && !completedJobsRef.current.has(activeJob.id)) {
+      // Only poll real job IDs, not optimistic ones (those start with "optimistic_")
+      if (activeJob && !completedJobsRef.current.has(activeJob.id) && !activeJob.id.startsWith("optimistic_")) {
         setJobId(activeJob.id);
         setIsLoading(true);
         setStatus("processing");
         setProgress(10);
         startPolling(activeJob.id);
+      } else if (activeJob && activeJob.id.startsWith("optimistic_")) {
+        // For optimistic jobs, just show loading state without polling
+        setJobId(activeJob.id);
+        setIsLoading(true);
+        setStatus("queued");
+        setProgress(5);
       } else {
         clearPolling();
         setJobId(null);

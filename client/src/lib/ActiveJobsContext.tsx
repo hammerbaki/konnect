@@ -111,7 +111,8 @@ export function ActiveJobsProvider({ children }: { children: ReactNode }) {
             });
             
             if (!res.ok) {
-              if (res.status === 404) {
+              // Don't remove optimistic jobs on 404 - they haven't been replaced with real IDs yet
+              if (res.status === 404 && !job.id.startsWith("optimistic_")) {
                 completedOrFailed.push(job.id);
               }
               continue;
