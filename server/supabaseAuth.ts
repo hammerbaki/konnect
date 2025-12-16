@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Express, RequestHandler, Request } from "express";
 import { storage } from "./storage";
 
@@ -18,15 +18,28 @@ declare global {
   }
 }
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Initialize Supabase client safely - never crash
+let supabaseAdmin: SupabaseClient | null = null;
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+try {
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  
+  if (supabaseUrl && supabaseServiceKey) {
+    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+  } else {
+    console.warn('WARNING: Supabase credentials not configured - auth will not work');
+  }
+} catch (err) {
+  console.error('Error initializing Supabase client (non-fatal):', err);
+}
+
+export { supabaseAdmin };
 
 export async function setupAuth(app: Express) {
   console.log("Setting up Supabase Auth...");
@@ -37,6 +50,10 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  if (!supabaseAdmin) {
+    return res.status(503).json({ message: "Authentication service unavailable" });
+  }
+  
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith("Bearer ")) {

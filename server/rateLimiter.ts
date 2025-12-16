@@ -1,11 +1,26 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-// Initialize Redis client from environment variables
-export const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+// Initialize Redis client safely - never crash
+let redis: Redis | null = null;
+
+try {
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL || '';
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || '';
+  
+  if (redisUrl && redisToken) {
+    redis = new Redis({
+      url: redisUrl,
+      token: redisToken,
+    });
+  } else {
+    console.warn('WARNING: Redis credentials not configured - using in-memory rate limiting');
+  }
+} catch (err) {
+  console.error('Error initializing Redis client (non-fatal):', err);
+}
+
+export { redis };
 
 // In-memory fallback rate limiter for when Redis is unavailable
 // Uses a simple sliding window approach
@@ -48,7 +63,7 @@ function inMemoryRateLimit(
 }
 
 // Track Redis connection status
-let redisAvailable = true;
+let redisAvailable = !!redis;
 
 // In development, use in-memory rate limiting to conserve Redis commands
 const isDevelopment = process.env.NODE_ENV !== "production";
@@ -57,44 +72,47 @@ if (isDevelopment) {
   redisAvailable = false;
 }
 
+// Create rate limiters safely - use dummy redis if not available
+const dummyRedis = redis || new Redis({ url: 'https://dummy.upstash.io', token: 'dummy' });
+
 // Different rate limiters for different use cases
 // AI Analysis: 10 requests per minute per user (expensive operations)
 export const aiAnalysisLimiter = new Ratelimit({
-  redis,
+  redis: dummyRedis,
   limiter: Ratelimit.slidingWindow(10, "1 m"),
-  analytics: true,
+  analytics: false,
   prefix: "ratelimit:ai:analysis",
 });
 
 // AI Goal Generation: 20 requests per minute per user
 export const aiGoalLimiter = new Ratelimit({
-  redis,
+  redis: dummyRedis,
   limiter: Ratelimit.slidingWindow(20, "1 m"),
-  analytics: true,
+  analytics: false,
   prefix: "ratelimit:ai:goals",
 });
 
 // AI Essay Generation: 5 requests per minute per user (longer operations)
 export const aiEssayLimiter = new Ratelimit({
-  redis,
+  redis: dummyRedis,
   limiter: Ratelimit.slidingWindow(5, "1 m"),
-  analytics: true,
+  analytics: false,
   prefix: "ratelimit:ai:essay",
 });
 
 // Global API rate limiter: 100 requests per minute per IP
 export const globalApiLimiter = new Ratelimit({
-  redis,
+  redis: dummyRedis,
   limiter: Ratelimit.slidingWindow(100, "1 m"),
-  analytics: true,
+  analytics: false,
   prefix: "ratelimit:api:global",
 });
 
 // Daily quota per user: 50 AI requests per day
 export const dailyQuotaLimiter = new Ratelimit({
-  redis,
+  redis: dummyRedis,
   limiter: Ratelimit.slidingWindow(50, "1 d"),
-  analytics: true,
+  analytics: false,
   prefix: "ratelimit:daily:quota",
 });
 
@@ -242,6 +260,10 @@ export async function logRateLimitStats(userId: string): Promise<void> {
 // Check if Redis is connected and working
 export async function checkRedisConnection(): Promise<boolean> {
   try {
+    if (!redis) {
+      redisAvailable = false;
+      return false;
+    }
     await redis.ping();
     redisAvailable = true;
     return true;
