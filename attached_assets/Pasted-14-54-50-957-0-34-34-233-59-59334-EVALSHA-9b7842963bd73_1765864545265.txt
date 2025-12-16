@@ -1,0 +1,226 @@
+14:54:50.957	[0 34.34.233.59:59334]	EVALSHA	
+"9b7842963bd73721f1a3011650c23c0010848ee3" "2" "ratelimit:api:global:34.9.246.53:29431074" "ratelimit:api:global:34.9.246.53:29431073" "100" "1765864490677" "60000" "1"
+
+14:54:50.957	[0 lua]	GET	
+"ratelimit:api:global:34.9.246.53:29431074"
+
+14:54:50.957	[0 lua]	GET	
+"ratelimit:api:global:34.9.246.53:29431073"
+
+14:54:50.957	[0 lua]	INCRBY	
+"ratelimit:api:global:34.9.246.53:29431074" "1"
+
+14:54:50.973	[0 34.34.233.59:19001]	EVALSHA	
+"9b7842963bd73721f1a3011650c23c0010848ee3" "2" "ratelimit:api:global:136.112.69.229:29431074" "ratelimit:api:global:136.112.69.229:29431073" "100" "1765864490674" "60000" "1"
+
+14:54:50.973	[0 lua]	GET	
+"ratelimit:api:global:136.112.69.229:29431074"
+
+14:54:50.973	[0 lua]	GET	
+"ratelimit:api:global:136.112.69.229:29431073"
+
+14:54:50.973	[0 lua]	INCRBY	
+"ratelimit:api:global:136.112.69.229:29431074" "1"
+
+14:54:51.134	[0 34.34.233.59:19001]	ZINCRBY	
+"ratelimit:api:global:events:1765861200000" "1" "{\"identifier\":\"136.112.69.229\",\"success\":true}"
+
+14:54:51.162	[0 34.60.127.5:36720]	ZINCRBY	
+"ratelimit:api:global:events:1765861200000" "1" "{\"identifier\":\"34.9.246.53\",\"success\":true}"
+
+14:54:57.045	[0 34.60.127.5:46116]	EVALSHA	
+"9b7842963bd73721f1a3011650c23c0010848ee3" "2" "ratelimit:api:global:35.225.35.71:29431074" "ratelimit:api:global:35.225.35.71:29431073" "100" "1765864496918" "60000" "1"
+
+14:54:57.045	[0 lua]	GET	
+"ratelimit:api:global:35.225.35.71:29431074"
+
+14:54:57.045	[0 lua]	GET	
+"ratelimit:api:global:35.225.35.71:29431073"
+
+14:54:57.045	[0 lua]	INCRBY	
+"ratelimit:api:global:35.225.35.71:29431074" "1"
+
+14:54:57.249	[0 34.60.127.5:49038]	ZINCRBY	
+"ratelimit:api:global:events:1765861200000" "1" "{\"identifier\":\"35.225.35.71\",\"success\":true}"
+
+14:55:07.818	[0 34.34.233.59:38515]	EVALSHA	
+"9b7842963bd73721f1a3011650c23c0010848ee3" "2" "ratelimit:api:global:136.111.101.96:29431075" "ratelimit:api:global:136.111.101.96:29431074" "100" "1765864507656" "60000" "1"
+
+14:55:07.818	[0 lua]	GET	
+"ratelimit:api:global:136.111.101.96:29431075"
+
+14:55:07.818	[0 lua]	GET	
+"ratelimit:api:global:136.111.101.96:29431074"
+
+14:55:07.818	[0 lua]	INCRBY	
+"ratelimit:api:global:136.111.101.96:29431075" "1"
+
+14:55:07.818	[0 lua]	PEXPIRE	
+"ratelimit:api:global:136.111.101.96:29431075" "121000"
+
+14:55:08.026	[0 34.60.127.5:36720]	ZINCRBY	
+"ratelimit:api:global:events:1765861200000" "1" "{\"identifier\":\"136.111.101.96\",\"success\":true}"
+
+14:55:08.734	[0 34.34.233.59:38515]	EVALSHA	
+"9b7842963bd73721f1a3011650c23c0010848ee3" "2" "ratelimit:api:global:136.112.69.229:29431075" "ratelimit:api:global:136.112.69.229:29431074" "100" "1765864508654" "60000" "1"
+
+14:55:08.734	[0 lua]	GET	
+"ratelimit:api:global:136.112.69.229:29431075"
+
+14:55:08.734	[0 lua]	GET	
+"ratelimit:api:global:136.112.69.229:29431074"
+
+14:55:08.734	[0 lua]	INCRBY	
+"ratelimit:api:global:136.112.69.229:29431075" "1"
+
+14:55:08.734	[0 lua]	PEXPIRE	
+"ratelimit:api:global:136.112.69.229:29431075" "121000"
+
+14:55:08.894	[0 34.60.127.5:36720]	ZINCRBY	
+"ratelimit:api:global:events:1765861200000" "1" "{\"identifier\":\"136.112.69.229\",\"success\":true}"
+
+14:55:11.045	[0 34.34.233.59:38515]	LLEN	
+"ai:queue:goal"
+
+14:55:11.045	[0 34.34.233.59:38515]	LLEN	
+"ai:queue:essay"
+
+14:55:11.045	[0 34.34.233.59:38515]	LLEN	
+"ai:queue:analysis"
+
+14:55:11.202	[0 34.60.127.5:36720]	HGETALL	
+"ai:processing"
+
+14:55:11.362	[0 34.34.233.59:38515]	LPOP	
+"ai:queue:goal"
+
+14:55:11.543	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:goal"
+
+14:55:11.543	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:essay"
+
+14:55:11.544	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:analysis"
+
+14:55:11.845	[0 34.34.233.59:38515]	HGETALL	
+"ai:processing"
+
+14:55:12.043	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:goal"
+
+14:55:12.044	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:essay"
+
+14:55:12.044	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:analysis"
+
+14:55:12.348	[0 34.34.233.59:38515]	HGETALL	
+"ai:processing"
+
+14:55:12.843	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:goal"
+
+14:55:12.843	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:essay"
+
+14:55:12.843	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:analysis"
+
+14:55:13.546	[0 34.34.233.59:38515]	HGETALL	
+"ai:processing"
+
+14:55:13.843	[0 34.60.127.5:36720]	LPOP	
+"ai:queue:analysis"
+
+14:55:16.245	[0 34.34.233.59:38515]	HSET	
+"ai:processing" "2b6180f5-5059-411e-bbe7-eb09b5c29326" "analysis"
+
+14:55:17.746	[0 34.34.233.59:38515]	LLEN	
+"ai:queue:goal"
+
+14:55:17.746	[0 34.34.233.59:38515]	LLEN	
+"ai:queue:essay"
+
+14:55:17.746	[0 34.34.233.59:38515]	LLEN	
+"ai:queue:analysis"
+
+14:55:17.902	[0 34.60.127.5:36720]	HGETALL	
+"ai:processing"
+
+14:55:18.064	[0 34.34.233.59:38515]	LPOP	
+"ai:queue:goal"
+
+14:55:18.243	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:goal"
+
+14:55:18.243	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:essay"
+
+14:55:18.244	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:analysis"
+
+14:55:18.445	[0 34.34.233.59:38515]	HGETALL	
+"ai:processing"
+
+14:55:18.642	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:goal"
+
+14:55:18.643	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:essay"
+
+14:55:18.643	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:analysis"
+
+14:55:18.945	[0 34.34.233.59:38515]	HGETALL	
+"ai:processing"
+
+14:55:19.142	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:goal"
+
+14:55:19.143	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:essay"
+
+14:55:19.143	[0 34.60.127.5:36720]	LLEN	
+"ai:queue:analysis"
+
+14:55:19.346	[0 34.34.233.59:38515]	HGETALL	
+"ai:processing"
+
+14:55:26.052	[0 34.34.233.59:14189]	EVALSHA	
+"9b7842963bd73721f1a3011650c23c0010848ee3" "2" "ratelimit:api:global:34.9.246.53:29431075" "ratelimit:api:global:34.9.246.53:29431074" "100" "1765864525718" "60000" "1"
+
+14:55:26.052	[0 lua]	GET	
+"ratelimit:api:global:34.9.246.53:29431075"
+
+14:55:26.052	[0 lua]	GET	
+"ratelimit:api:global:34.9.246.53:29431074"
+
+14:55:26.052	[0 lua]	INCRBY	
+"ratelimit:api:global:34.9.246.53:29431075" "1"
+
+14:55:26.052	[0 lua]	PEXPIRE	
+"ratelimit:api:global:34.9.246.53:29431075" "121000"
+
+14:55:26.455	[0 34.34.233.59:23056]	ZINCRBY	
+"ratelimit:api:global:events:1765861200000" "1" "{\"identifier\":\"34.9.246.53\",\"success\":true}"
+
+14:55:26.747	[0 34.34.233.59:14189]	EVALSHA	
+"9b7842963bd73721f1a3011650c23c0010848ee3" "2" "ratelimit:api:global:35.225.35.71:29431075" "ratelimit:api:global:35.225.35.71:29431074" "100" "1765864526651" "60000" "1"
+
+14:55:26.747	[0 lua]	GET	
+"ratelimit:api:global:35.225.35.71:29431075"
+
+14:55:26.747	[0 lua]	GET	
+"ratelimit:api:global:35.225.35.71:29431074"
+
+14:55:26.747	[0 lua]	INCRBY	
+"ratelimit:api:global:35.225.35.71:29431075" "1"
+
+14:55:26.747	[0 lua]	PEXPIRE	
+"ratelimit:api:global:35.225.35.71:29431075" "121000"
+
+14:55:26.931	[0 34.34.233.59:23056]	ZINCRBY	
+"ratelimit:api:global:events:1765861200000" "1" "{\"identifier\":\"35.225.35.71\",\"success\":true}"
+
+Waiting for logs to be received…

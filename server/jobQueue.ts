@@ -32,14 +32,14 @@ const QUEUE_KEYS: Record<AiJobType, string> = {
 
 const PROCESSING_KEY = "ai:processing";
 
-const CONCURRENCY_LIMITS: Record<AiJobType, number> = {
+export const CONCURRENCY_LIMITS: Record<AiJobType, number> = {
   goal: 6,
   essay: 2,
   essay_revision: 2, // Share limit with essay
   analysis: 2,
 };
 
-const GLOBAL_LIMIT = 8;
+export const GLOBAL_LIMIT = 8;
 
 export interface QueueStats {
   goal: { queued: number; processing: number };
