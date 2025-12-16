@@ -40,7 +40,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const completedJobsRef = useRef<Set<string>>(new Set());
-  const { addJob, removeJob, getActiveJob, hasActiveJob } = useActiveJobs();
+  const { addJob, removeJob, getActiveJob, hasActiveJob, addOptimisticJob, replaceOptimisticJob } = useActiveJobs();
   const queryClient = useQueryClient();
 
   const clearPolling = useCallback(() => {
@@ -116,8 +116,9 @@ export function useAIJob(options: UseAIJobOptions = {}) {
     profileId: string | null,
     payload: any
   ): Promise<string | null> => {
+    const optimisticId = addOptimisticJob(type, profileId || undefined);
     setIsLoading(true);
-    setProgress(0);
+    setProgress(5);
     setStatus("queued");
     
     try {
@@ -139,7 +140,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       const response: SubmitJobResponse = await res.json();
       
       setJobId(response.jobId);
-      addJob(response.jobId, type, profileId || undefined);
+      replaceOptimisticJob(optimisticId, response.jobId);
       
       if (response.immediate) {
         setStatus("processing");
@@ -150,12 +151,13 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       
       return response.jobId;
     } catch (error: any) {
+      removeJob(optimisticId);
       setIsLoading(false);
       setStatus("failed");
       onError?.(error.message || "작업 제출 중 오류가 발생했습니다.");
       return null;
     }
-  }, [startPolling, onError, addJob]);
+  }, [startPolling, onError, addOptimisticJob, replaceOptimisticJob, removeJob]);
 
   const reset = useCallback(() => {
     clearPolling();

@@ -1,5 +1,6 @@
 import { createContext, useContext, ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 export interface Notification {
   id: string;
@@ -31,7 +32,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const { data: notifications = [], isLoading: notificationsLoading, refetch: refetchNotifications } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
     queryFn: async () => {
-      const res = await fetch("/api/notifications?limit=20", { credentials: "include" });
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch("/api/notifications?limit=20", { 
+        credentials: "include",
+        headers: authHeaders,
+      });
       if (!res.ok) {
         if (res.status === 401) return [];
         throw new Error("Failed to fetch notifications");
@@ -46,7 +51,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const { data: unreadCountData, refetch: refetchUnreadCount } = useQuery<{ count: number }>({
     queryKey: ["/api/notifications/unread-count"],
     queryFn: async () => {
-      const res = await fetch("/api/notifications/unread-count", { credentials: "include" });
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch("/api/notifications/unread-count", { 
+        credentials: "include",
+        headers: authHeaders,
+      });
       if (!res.ok) {
         if (res.status === 401) return { count: 0 };
         throw new Error("Failed to fetch unread count");
@@ -60,9 +69,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const markAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
+      const authHeaders = await getAuthHeaders();
       const res = await fetch(`/api/notifications/${id}/read`, {
         method: "PATCH",
         credentials: "include",
+        headers: authHeaders,
       });
       if (!res.ok) throw new Error("Failed to mark as read");
       return res.json();
@@ -75,9 +86,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
+      const authHeaders = await getAuthHeaders();
       const res = await fetch("/api/notifications/read-all", {
         method: "PATCH",
         credentials: "include",
+        headers: authHeaders,
       });
       if (!res.ok) throw new Error("Failed to mark all as read");
       return res.json();

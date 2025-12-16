@@ -16,6 +16,8 @@ interface ActiveJobsContextType {
   removeJob: (jobId: string) => void;
   hasActiveJob: (type: string, profileId?: string) => boolean;
   getActiveJob: (type: string, profileId?: string) => ActiveJob | undefined;
+  addOptimisticJob: (type: string, profileId?: string) => string;
+  replaceOptimisticJob: (optimisticId: string, realJobId: string) => void;
 }
 
 const ActiveJobsContext = createContext<ActiveJobsContextType | undefined>(undefined);
@@ -75,6 +77,24 @@ export function ActiveJobsProvider({ children }: { children: ReactNode }) {
     );
   }, [activeJobs]);
 
+  const addOptimisticJob = useCallback((type: string, profileId?: string): string => {
+    const optimisticId = `optimistic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    setActiveJobs(prev => {
+      const newJobs = [...prev, { id: optimisticId, type, profileId, startedAt: Date.now() }];
+      saveActiveJobs(newJobs);
+      return newJobs;
+    });
+    return optimisticId;
+  }, []);
+
+  const replaceOptimisticJob = useCallback((optimisticId: string, realJobId: string) => {
+    setActiveJobs(prev => {
+      const newJobs = prev.map(j => j.id === optimisticId ? { ...j, id: realJobId } : j);
+      saveActiveJobs(newJobs);
+      return newJobs;
+    });
+  }, []);
+
   useEffect(() => {
     const checkJobStatuses = async () => {
       if (activeJobs.length === 0) return;
@@ -128,7 +148,7 @@ export function ActiveJobsProvider({ children }: { children: ReactNode }) {
   }, [activeJobs.length]);
 
   return (
-    <ActiveJobsContext.Provider value={{ activeJobs, addJob, removeJob, hasActiveJob, getActiveJob }}>
+    <ActiveJobsContext.Provider value={{ activeJobs, addJob, removeJob, hasActiveJob, getActiveJob, addOptimisticJob, replaceOptimisticJob }}>
       {children}
     </ActiveJobsContext.Provider>
   );
