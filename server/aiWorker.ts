@@ -267,26 +267,12 @@ export async function submitJobWithFastPath(
     payload,
   });
   
-  // In autoscale deployments, always try to process immediately
-  // The background worker may not be running between requests
-  const stats = await getQueueStats();
-  const typeStats = stats[type];
+  // Always process immediately - don't rely on background worker in autoscale
+  // The worker may not be running in serverless/autoscale deployments
+  console.log(`Processing job ${job.id} immediately (type: ${type})`);
+  processJob(job).catch(err => {
+    console.error(`Immediate job ${job.id} failed:`, err);
+  });
   
-  // Only block if we're at global limit or type is already at max processing
-  const canProcess = stats.totalProcessing < GLOBAL_LIMIT && 
-                     typeStats.processing < CONCURRENCY_LIMITS[type];
-  
-  if (canProcess) {
-    // Process immediately - don't rely on background worker in autoscale
-    processJob(job).catch(err => {
-      console.error(`Immediate job ${job.id} failed:`, err);
-    });
-    return { jobId: job.id, immediate: true };
-  }
-  
-  // Only enqueue if we truly can't process now
-  const { enqueueJob } = await import("./jobQueue");
-  await enqueueJob(job.id, type);
-  
-  return { jobId: job.id, immediate: false };
+  return { jobId: job.id, immediate: true };
 }
