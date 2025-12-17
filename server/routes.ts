@@ -1675,6 +1675,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Admin: View processing map to debug stuck jobs
+  app.get('/api/admin/jobs/processing-map', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
+    try {
+      if (!redis) {
+        return res.json({ processing: {}, message: "Development mode - in-memory queue" });
+      }
+      
+      const processing = await redis.hgetall<Record<string, string>>("ai:processing") || {};
+      
+      // Get job details for each processing job
+      const processingDetails = await Promise.all(
+        Object.entries(processing).map(async ([jobId, type]) => {
+          const job = await storage.getAiJob(jobId);
+          return {
+            jobId,
+            type,
+            status: job?.status || "not_found",
+            startedAt: job?.startedAt,
+            isStale: job?.status === "completed" || job?.status === "failed" || !job,
+          };
+        })
+      );
+      
+      res.json({ 
+        processing, 
+        details: processingDetails,
+        staleCount: processingDetails.filter(d => d.isStale).length,
+      });
+    } catch (error: any) {
+      console.error("Error fetching processing map:", error);
+      res.status(500).json({ message: "처리 중 맵 조회 오류" });
+    }
+  });
+
+  // Admin: Clear stale processing entries
+  app.post('/api/admin/jobs/clear-stale', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
+    try {
+      if (!redis) {
+        return res.json({ cleared: 0, message: "Development mode - nothing to clear" });
+      }
+      
+      const processing = await redis.hgetall<Record<string, string>>("ai:processing") || {};
+      let clearedCount = 0;
+      
+      for (const [jobId, type] of Object.entries(processing)) {
+        const job = await storage.getAiJob(jobId);
+        
+        // Clear if job is completed, failed, or not found
+        if (!job || job.status === "completed" || job.status === "failed") {
+          await redis.hdel("ai:processing", jobId);
+          clearedCount++;
+          console.log(`Cleared stale processing entry: ${jobId} (${type})`);
+        }
+      }
+      
+      res.json({ cleared: clearedCount, message: `Cleared ${clearedCount} stale entries` });
+    } catch (error: any) {
+      console.error("Error clearing stale entries:", error);
+      res.status(500).json({ message: "스테일 항목 제거 오류" });
+    }
+  });
+  
   // ==================== ADMIN POINT PACKAGE MANAGEMENT ====================
 
   // Get all point packages (including inactive) for admin
