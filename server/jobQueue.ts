@@ -91,6 +91,29 @@ export async function markJobDone(jobId: string): Promise<void> {
   }
 }
 
+/**
+ * Get all job IDs currently marked as processing in Redis.
+ * Used for stale job cleanup.
+ */
+export async function getProcessingJobIds(): Promise<Record<string, string>> {
+  if (isDevelopment) {
+    return { ...memoryProcessing };
+  }
+  return await redis!.hgetall<Record<string, string>>(PROCESSING_KEY) || {};
+}
+
+/**
+ * Clear a specific job from the processing map without checking status.
+ * Used for stale job cleanup.
+ */
+export async function clearProcessingEntry(jobId: string): Promise<void> {
+  if (isDevelopment) {
+    delete memoryProcessing[jobId];
+  } else {
+    await redis!.hdel(PROCESSING_KEY, jobId);
+  }
+}
+
 export async function getProcessingCount(type?: AiJobType): Promise<number> {
   let processing: Record<string, string>;
   if (isDevelopment) {

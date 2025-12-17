@@ -6,6 +6,8 @@ import {
   markJobDone, 
   canProcessImmediately,
   getQueueStats,
+  getProcessingJobIds,
+  clearProcessingEntry,
   GLOBAL_LIMIT,
   CONCURRENCY_LIMITS,
 } from "./jobQueue";
@@ -89,9 +91,73 @@ async function createJobCompletionNotification(job: AiJob): Promise<void> {
 let isWorkerRunning = false;
 const POLL_INTERVAL = 30000; // 30 seconds to reduce Redis usage
 const FAST_POLL_INTERVAL = 2000; // 2 seconds when there are active jobs
+const STALE_JOB_TIMEOUT = 5 * 60 * 1000; // 5 minutes - jobs processing longer than this are considered stale
 let lastHadWork = false;
 let currentTimer: NodeJS.Timeout | null = null; // Track the current timeout
 let pollFn: (() => Promise<void>) | null = null; // Store reference to poll function
+let lastStaleCleanup = 0;
+const STALE_CLEANUP_INTERVAL = 60000; // Run stale cleanup every 60 seconds
+
+/**
+ * Clean up stale entries from the processing map.
+ * A job is considered stale if:
+ * - It doesn't exist in the database
+ * - It's marked as completed or failed in the database
+ * - It's been processing for longer than STALE_JOB_TIMEOUT
+ * 
+ * Exported so it can be called from admin endpoints.
+ */
+export async function cleanupStaleProcessingJobs(): Promise<number> {
+  try {
+    const processingMap = await getProcessingJobIds();
+    const now = Date.now();
+    let clearedCount = 0;
+    
+    for (const [jobId, type] of Object.entries(processingMap)) {
+      try {
+        const job = await storage.getAiJob(jobId);
+        
+        let isStale = false;
+        let reason = "";
+        
+        if (!job) {
+          isStale = true;
+          reason = "job not found in database";
+        } else if (job.status === "completed" || job.status === "failed") {
+          isStale = true;
+          reason = `job already ${job.status}`;
+        } else if (job.status === "processing" && job.startedAt) {
+          const startTime = job.startedAt instanceof Date 
+            ? job.startedAt.getTime() 
+            : new Date(job.startedAt).getTime();
+          if (!isNaN(startTime) && now - startTime > STALE_JOB_TIMEOUT) {
+            isStale = true;
+            reason = `job processing for ${Math.round((now - startTime) / 1000)}s (timeout: ${STALE_JOB_TIMEOUT / 1000}s)`;
+            // Also mark the job as failed in the database
+            await storage.updateAiJobError(jobId, "Job timed out - processing took too long");
+          }
+        } else if (job.status === "queued") {
+          // Job is queued in DB but marked as processing in Redis - inconsistent state
+          isStale = true;
+          reason = "job is queued in DB but marked processing in Redis";
+        }
+        
+        if (isStale) {
+          await clearProcessingEntry(jobId);
+          clearedCount++;
+          console.log(`Cleared stale processing entry: ${jobId} (${type}) - ${reason}`);
+        }
+      } catch (err) {
+        console.error(`Error checking stale job ${jobId}:`, err);
+      }
+    }
+    
+    return clearedCount;
+  } catch (err) {
+    console.error("Error in stale job cleanup:", err);
+    return 0;
+  }
+}
 
 export async function processJob(job: AiJob): Promise<any> {
   const type = job.type as AiJobType;
@@ -276,6 +342,15 @@ export function startWorker(): void {
   isWorkerRunning = true;
   console.log("✓ AI job worker started");
   
+  // Run initial stale cleanup on startup
+  cleanupStaleProcessingJobs().then(cleared => {
+    if (cleared > 0) {
+      console.log(`✓ Startup cleanup: cleared ${cleared} stale processing entries`);
+    }
+  }).catch(err => {
+    console.error("Startup stale cleanup failed:", err);
+  });
+  
   const poll = async () => {
     if (!isWorkerRunning) return;
     
@@ -284,6 +359,15 @@ export function startWorker(): void {
     
     // Clear any pending timer reference
     currentTimer = null;
+    
+    // Periodically run stale cleanup (every 60 seconds)
+    const now = Date.now();
+    if (now - lastStaleCleanup > STALE_CLEANUP_INTERVAL) {
+      lastStaleCleanup = now;
+      cleanupStaleProcessingJobs().catch(err => {
+        console.error("Periodic stale cleanup failed:", err);
+      });
+    }
     
     let shouldUseFastPoll = false;
     try {
