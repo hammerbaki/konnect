@@ -78,7 +78,36 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (!res.ok) throw new Error("Failed to mark as read");
       return res.json();
     },
-    onSuccess: () => {
+    onMutate: async (id: string) => {
+      // Optimistic update - immediately update UI
+      await queryClient.cancelQueries({ queryKey: ["/api/notifications"] });
+      
+      const previousNotifications = queryClient.getQueryData<Notification[]>(["/api/notifications"]);
+      const previousCount = queryClient.getQueryData<{ count: number }>(["/api/notifications/unread-count"]);
+      
+      // Immediately mark this notification as read
+      if (previousNotifications) {
+        queryClient.setQueryData<Notification[]>(["/api/notifications"], 
+          previousNotifications.map(n => n.id === id ? { ...n, isRead: 1 } : n)
+        );
+      }
+      // Decrement count
+      if (previousCount && previousCount.count > 0) {
+        queryClient.setQueryData(["/api/notifications/unread-count"], { count: previousCount.count - 1 });
+      }
+      
+      return { previousNotifications, previousCount };
+    },
+    onError: (err, id, context) => {
+      // Rollback on error
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["/api/notifications"], context.previousNotifications);
+      }
+      if (context?.previousCount) {
+        queryClient.setQueryData(["/api/notifications/unread-count"], context.previousCount);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
     },
@@ -95,7 +124,36 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (!res.ok) throw new Error("Failed to mark all as read");
       return res.json();
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      // Optimistic update - immediately update UI
+      await queryClient.cancelQueries({ queryKey: ["/api/notifications"] });
+      await queryClient.cancelQueries({ queryKey: ["/api/notifications/unread-count"] });
+      
+      const previousNotifications = queryClient.getQueryData<Notification[]>(["/api/notifications"]);
+      const previousCount = queryClient.getQueryData<{ count: number }>(["/api/notifications/unread-count"]);
+      
+      // Immediately update notifications to show as read
+      if (previousNotifications) {
+        queryClient.setQueryData<Notification[]>(["/api/notifications"], 
+          previousNotifications.map(n => ({ ...n, isRead: 1 }))
+        );
+      }
+      // Immediately set count to 0
+      queryClient.setQueryData(["/api/notifications/unread-count"], { count: 0 });
+      
+      return { previousNotifications, previousCount };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["/api/notifications"], context.previousNotifications);
+      }
+      if (context?.previousCount) {
+        queryClient.setQueryData(["/api/notifications/unread-count"], context.previousCount);
+      }
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
     },

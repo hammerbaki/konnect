@@ -91,13 +91,14 @@ export default function Analysis() {
     const { setAction } = useMobileAction();
     const { user } = useAuth();
     const queryClient = useQueryClient();
-    const [, navigate] = useLocation();
+    const [location, navigate] = useLocation();
     const { deductCredit, restoreCredits } = useTokens();
     
     const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [expandedCareer, setExpandedCareer] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [urlProfileHandled, setUrlProfileHandled] = useState(false);
 
     const { data: profiles, isLoading: isLoadingProfiles } = useQuery({
         queryKey: ['/api/profiles'],
@@ -108,11 +109,29 @@ export default function Analysis() {
         enabled: !!user,
     });
 
+    // Handle profile query parameter from URL (e.g., /analysis?profile=xxx)
     useEffect(() => {
-        if (profiles && profiles.length > 0 && !activeProfileId) {
-            setActiveProfileId(profiles[0].id);
+        if (profiles && profiles.length > 0 && !urlProfileHandled) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const profileParam = urlParams.get('profile');
+            
+            if (profileParam) {
+                // Check if the profile exists in user's profiles
+                const matchedProfile = profiles.find((p: any) => p.id === profileParam);
+                if (matchedProfile) {
+                    setActiveProfileId(profileParam);
+                    // Clear the URL parameter
+                    navigate('/analysis', { replace: true });
+                } else {
+                    // Profile not found, use first profile
+                    setActiveProfileId(profiles[0].id);
+                }
+            } else if (!activeProfileId) {
+                setActiveProfileId(profiles[0].id);
+            }
+            setUrlProfileHandled(true);
         }
-    }, [profiles, activeProfileId]);
+    }, [profiles, urlProfileHandled, navigate, activeProfileId]);
 
     const { data: analyses, isLoading: isLoadingAnalyses } = useQuery({
         queryKey: ['/api/profiles', activeProfileId, 'analyses'],

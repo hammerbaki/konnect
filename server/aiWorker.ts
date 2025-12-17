@@ -17,21 +17,27 @@ import {
 } from "./ai";
 import type { AiJobType, AiJob, NotificationType } from "@shared/schema";
 
-function getNotificationDetails(type: AiJobType): { notificationType: NotificationType; title: string; message: string; linkUrl: string } {
+function getNotificationDetails(
+  type: AiJobType, 
+  profileTitle?: string, 
+  profileId?: string | null
+): { notificationType: NotificationType; title: string; message: string; linkUrl: string } {
+  const displayName = profileTitle || "프로필";
+  
   switch (type) {
     case "analysis":
       return {
         notificationType: "analysis_complete",
-        title: "진로 분석 완료",
-        message: "AI 진로 분석이 완료되었습니다. 결과를 확인해 보세요!",
-        linkUrl: "/analysis",
+        title: `${displayName} 분석 완료`,
+        message: `'${displayName}' 프로필의 AI 진로 분석이 완료되었습니다. 결과를 확인해 보세요!`,
+        linkUrl: profileId ? `/analysis?profile=${profileId}` : "/analysis",
       };
     case "essay":
       return {
         notificationType: "essay_complete",
         title: "자기소개서 생성 완료",
-        message: "AI 자기소개서가 생성되었습니다. 결과를 확인해 보세요!",
-        linkUrl: "/essays",
+        message: `'${displayName}' 프로필의 자기소개서가 생성되었습니다. 결과를 확인해 보세요!`,
+        linkUrl: profileId ? `/essays?profile=${profileId}` : "/essays",
       };
     case "essay_revision":
       return {
@@ -59,7 +65,13 @@ function getNotificationDetails(type: AiJobType): { notificationType: Notificati
 
 async function createJobCompletionNotification(job: AiJob): Promise<void> {
   try {
-    const { notificationType, title, message, linkUrl } = getNotificationDetails(job.type as AiJobType);
+    const payload = job.payload as any;
+    const profileTitle = payload?.profileTitle || payload?.title;
+    const { notificationType, title, message, linkUrl } = getNotificationDetails(
+      job.type as AiJobType, 
+      profileTitle,
+      job.profileId
+    );
     await storage.createNotification({
       userId: job.userId,
       type: notificationType,
