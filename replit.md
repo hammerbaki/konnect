@@ -30,6 +30,8 @@ The database schema includes `users`, `profiles`, `career_analyses`, `personal_e
 - **Service Pricing System**: Configurable point costs for AI services via `service_pricing` table. Supports goal-level pricing (yearly, half-yearly, monthly, weekly, daily) with admin UI for editing. Falls back to defaults if not initialized.
 - **System Settings**: Key-value store for configurable settings like signup bonus amount, managed via `system_settings` table with admin UI.
 - **Redemption Code System**: Admin-managed coupon system via `redemption_codes` table with max uses, expiration dates, and usage tracking. Supports CRUD operations and user redemption with duplicate prevention via `redemption_history`.
+- **Profile Validation System**: Enforces minimum required fields before AI analysis/essay generation. Different profile types (high school, university, general) have type-specific required fields. UI displays user-friendly Korean labels for missing fields with links to profile editing. Both Analysis and PersonalStatement pages validate profiles and disable actions until requirements are met.
+- **Mandatory Target Info for Essays**: Essay generation requires target company/school name input. Target section has prominent blue-bordered UI with "필수" (required) badge. Web scraping feature fetches company info from URLs to enhance AI-generated essays with specific, tailored content.
 
 ## External Dependencies
 
