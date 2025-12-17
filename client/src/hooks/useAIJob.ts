@@ -173,6 +173,48 @@ export function useAIJob(options: UseAIJobOptions = {}) {
     setIsLoading(false);
   }, [clearPolling]);
 
+  const cancelJob = useCallback(async (id?: string): Promise<{ success: boolean; refundedAmount?: number; currentCredits?: number }> => {
+    const targetJobId = id || jobId;
+    if (!targetJobId) {
+      return { success: false };
+    }
+    
+    try {
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch(`/api/ai/jobs/${targetJobId}/cancel`, {
+        method: "POST",
+        credentials: "include",
+        headers: authHeaders,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "작업 취소 실패");
+      }
+      
+      const result = await response.json();
+      
+      // Clean up local state
+      completedJobsRef.current.add(targetJobId);
+      clearPolling();
+      setIsLoading(false);
+      setStatus("failed");
+      removeJob(targetJobId);
+      
+      // Invalidate user query to refresh credits
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      
+      return {
+        success: true,
+        refundedAmount: result.refundedAmount,
+        currentCredits: result.currentCredits,
+      };
+    } catch (error: any) {
+      console.error("Error cancelling job:", error);
+      return { success: false };
+    }
+  }, [jobId, clearPolling, removeJob, queryClient]);
+
   useEffect(() => {
     if (jobType && profileId) {
       const activeJob = getActiveJob(jobType, profileId);
@@ -206,6 +248,7 @@ export function useAIJob(options: UseAIJobOptions = {}) {
   return {
     submitJob,
     reset,
+    cancelJob,
     jobId,
     progress,
     status,

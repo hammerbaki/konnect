@@ -71,6 +71,7 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserCredits(userId: string, credits: number): Promise<void>;
   deductUserCredits(userId: string, amount: number): Promise<boolean>;
+  addUserCredits(userId: string, amount: number, reason?: string): Promise<boolean>;
   updateUserIdentity(userId: string, data: UpdateUserIdentity): Promise<User>;
   updateUserSettings(userId: string, settings: UpdateUserSettings): Promise<User>;
   getUserSettings(userId: string): Promise<{ phone: string | null; marketingConsent: boolean; emailNotifications: boolean; pushNotifications: boolean } | undefined>;
@@ -251,6 +252,16 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
     await this.updateUserCredits(userId, user.credits - amount);
+    return true;
+  }
+
+  async addUserCredits(userId: string, amount: number, reason?: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      return false;
+    }
+    await this.updateUserCredits(userId, user.credits + amount);
+    console.log(`Added ${amount} credits to user ${userId}${reason ? ` - ${reason}` : ''}`);
     return true;
   }
 

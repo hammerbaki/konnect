@@ -1254,6 +1254,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "작업 상태 조회 중 오류가 발생했습니다." });
     }
   });
+
+  // Cancel a job and refund points
+  app.post('/api/ai/jobs/:id/cancel', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const jobId = req.params.id;
+      
+      const job = await storage.getAiJob(jobId);
+      
+      if (!job) {
+        return res.status(404).json({ message: "작업을 찾을 수 없습니다." });
+      }
+      
+      if (job.userId !== userId) {
+        return res.status(403).json({ message: "접근 권한이 없습니다." });
+      }
+      
+      // Only allow cancelling queued or processing jobs
+      if (job.status !== 'queued' && job.status !== 'processing') {
+        return res.status(400).json({ 
+          message: "이미 완료되었거나 실패한 작업은 취소할 수 없습니다.",
+          status: job.status,
+        });
+      }
+      
+      // Calculate refund amount based on job type
+      let refundAmount = 0;
+      const jobType = job.type as AiJobType;
+      const payload = job.payload as any;
+      
+      if (jobType === 'analysis') {
+        refundAmount = await storage.getServiceCost('analysis');
+      } else if (jobType === 'essay') {
+        refundAmount = await storage.getServiceCost('essay');
+      } else if (jobType === 'essay_revision') {
+        refundAmount = await storage.getServiceCost('essay_revision');
+      } else if (jobType === 'goal' && payload?.level) {
+        const isStrategicLevel = payload.level === 'year' || payload.level === 'half';
+        if (isStrategicLevel) {
+          refundAmount = await storage.getServiceCost('goal_strategic');
+        }
+      }
+      
+      // Mark job as failed with cancellation message
+      await storage.updateAiJobError(jobId, "사용자가 작업을 취소했습니다.");
+      
+      // Clear from Redis processing map if present
+      try {
+        const { clearProcessingEntry } = await import("./jobQueue");
+        await clearProcessingEntry(jobId);
+      } catch (err) {
+        console.error("Error clearing processing entry:", err);
+      }
+      
+      // Refund points
+      if (refundAmount > 0) {
+        await storage.addUserCredits(userId, refundAmount, "작업 취소 환불");
+      }
+      
+      const user = await storage.getUser(userId);
+      
+      res.json({
+        success: true,
+        message: "작업이 취소되었습니다.",
+        refundedAmount: refundAmount,
+        currentCredits: user?.credits || 0,
+      });
+    } catch (error: any) {
+      console.error("Error cancelling job:", error);
+      res.status(500).json({ message: "작업 취소 중 오류가 발생했습니다." });
+    }
+  });
   
   // Get queue stats
   app.get('/api/ai/queue/stats', isAuthenticated, async (_req, res) => {

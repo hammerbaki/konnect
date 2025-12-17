@@ -133,8 +133,35 @@ export async function cleanupStaleProcessingJobs(): Promise<number> {
           if (!isNaN(startTime) && now - startTime > STALE_JOB_TIMEOUT) {
             isStale = true;
             reason = `job processing for ${Math.round((now - startTime) / 1000)}s (timeout: ${STALE_JOB_TIMEOUT / 1000}s)`;
-            // Also mark the job as failed in the database
-            await storage.updateAiJobError(jobId, "Job timed out - processing took too long");
+            // Mark the job as failed in the database
+            await storage.updateAiJobError(jobId, "작업 시간이 초과되었습니다. 포인트가 환불되었습니다.");
+            
+            // Auto-refund points for timed out jobs
+            try {
+              let refundAmount = 0;
+              const jobType = job.type as AiJobType;
+              const payload = job.payload as any;
+              
+              if (jobType === 'analysis') {
+                refundAmount = await storage.getServiceCost('analysis');
+              } else if (jobType === 'essay') {
+                refundAmount = await storage.getServiceCost('essay');
+              } else if (jobType === 'essay_revision') {
+                refundAmount = await storage.getServiceCost('essay_revision');
+              } else if (jobType === 'goal' && payload?.level) {
+                const isStrategicLevel = payload.level === 'year' || payload.level === 'half';
+                if (isStrategicLevel) {
+                  refundAmount = await storage.getServiceCost('goal_strategic');
+                }
+              }
+              
+              if (refundAmount > 0) {
+                await storage.addUserCredits(job.userId, refundAmount, "작업 시간 초과 환불");
+                console.log(`Refunded ${refundAmount} points to user ${job.userId} for timed out job ${jobId}`);
+              }
+            } catch (refundErr) {
+              console.error(`Failed to refund points for timed out job ${jobId}:`, refundErr);
+            }
           }
         } else if (job.status === "queued") {
           // Job is queued in DB but marked as processing in Redis - inconsistent state

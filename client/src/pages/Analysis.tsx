@@ -10,9 +10,10 @@ import {
     Target, Award, Star, Compass,
     ChevronRight, Plus, LayoutDashboard, History,
     CheckCircle2, AlertTriangle, Zap, User, ExternalLink,
-    FolderOpen, Users, Heart, Lightbulb, LayoutGrid
+    FolderOpen, Users, Heart, Lightbulb, LayoutGrid,
+    XCircle, Clock
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { Link, useLocation } from "wouter";
@@ -85,6 +86,126 @@ const matchScoreLabels: Record<string, string> = {
     university: '취업 적합도',
     general: '적합도',
 };
+
+interface AnalysisLoadingStateProps {
+    progress: number;
+    isSubmitting: boolean;
+    isCurrentProfileAnalyzing: boolean;
+    jobId: string | null;
+    onCancel: () => void;
+}
+
+function AnalysisLoadingState({ progress, isSubmitting, isCurrentProfileAnalyzing, jobId, onCancel }: AnalysisLoadingStateProps) {
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const [isCancelling, setIsCancelling] = useState(false);
+    const startTimeRef = useRef<number>(Date.now());
+    
+    useEffect(() => {
+        startTimeRef.current = Date.now();
+        const interval = setInterval(() => {
+            setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [jobId]);
+    
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return mins > 0 ? `${mins}분 ${secs}초` : `${secs}초`;
+    };
+    
+    const handleCancel = async () => {
+        setIsCancelling(true);
+        try {
+            await onCancel();
+        } finally {
+            setIsCancelling(false);
+        }
+    };
+    
+    const isLongRunning = elapsedSeconds >= 120; // 2 minutes
+    const isVeryLongRunning = elapsedSeconds >= 240; // 4 minutes
+    
+    return (
+        <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-300">
+            <Card className="bg-white rounded-2xl border border-[#E5E8EB] shadow-lg p-8 max-w-md w-full">
+                <div className="flex flex-col items-center text-center">
+                    <div className="relative mb-6">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#3182F6]/20 to-[#3182F6]/5 flex items-center justify-center">
+                            <Loader2 className="h-10 w-10 text-[#3182F6] animate-spin" />
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#3182F6] flex items-center justify-center shadow-lg">
+                            <Brain className="h-4 w-4 text-white" />
+                        </div>
+                    </div>
+                    
+                    <h3 className="text-lg font-bold text-[#191F28] mb-2">AI 분석 진행 중</h3>
+                    <p className="text-sm text-[#8B95A1] mb-4">
+                        프로필 정보를 바탕으로 맞춤형 진로를 분석하고 있습니다
+                    </p>
+                    
+                    <div className="flex items-center gap-2 text-xs text-[#8B95A1] mb-4">
+                        <Clock className="h-3 w-3" />
+                        <span>경과 시간: {formatTime(elapsedSeconds)}</span>
+                    </div>
+                    
+                    {isLongRunning && (
+                        <div className={cn(
+                            "w-full p-3 rounded-lg mb-4 text-sm",
+                            isVeryLongRunning 
+                                ? "bg-red-50 text-red-700 border border-red-200" 
+                                : "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                        )}>
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4 shrink-0" />
+                                <span>
+                                    {isVeryLongRunning 
+                                        ? "분석이 예상보다 오래 걸리고 있습니다. 취소하고 다시 시도해 주세요."
+                                        : "평소보다 시간이 오래 걸리고 있습니다. 잠시만 기다려 주세요."}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                    
+                    <div className="w-full bg-[#F2F4F6] rounded-full h-2 mb-3">
+                        <div 
+                            className="bg-gradient-to-r from-[#3182F6] to-[#1565C0] h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.max(progress, 10)}%` }}
+                        />
+                    </div>
+                    <p className="text-xs text-[#8B95A1] mb-6">
+                        {isSubmitting && !isCurrentProfileAnalyzing ? "분석 요청을 처리 중..." :
+                         progress < 20 ? "프로필 정보 분석 중..." : 
+                         progress < 50 ? "AI가 추천 진로를 생성 중..." : 
+                         progress < 80 ? "결과를 정리하고 있습니다..." : 
+                         "거의 완료되었습니다!"}
+                    </p>
+                    
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCancel}
+                        disabled={isCancelling}
+                        className="text-[#8B95A1] hover:text-[#191F28] hover:border-[#191F28]"
+                        data-testid="button-cancel-analysis"
+                    >
+                        {isCancelling ? (
+                            <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                취소 중...
+                            </>
+                        ) : (
+                            <>
+                                <XCircle className="h-4 w-4 mr-2" />
+                                분석 취소
+                            </>
+                        )}
+                    </Button>
+                </div>
+            </Card>
+        </div>
+    );
+}
 
 export default function Analysis() {
     const { toast } = useToast();
@@ -661,39 +782,21 @@ export default function Analysis() {
 
                         <div className="p-4 lg:p-8 max-w-4xl mx-auto">
                             {(isCurrentProfileAnalyzing || isSubmitting) ? (
-                                <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-300">
-                                    <Card className="bg-white rounded-2xl border border-[#E5E8EB] shadow-lg p-8 max-w-md w-full">
-                                        <div className="flex flex-col items-center text-center">
-                                            <div className="relative mb-6">
-                                                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#3182F6]/20 to-[#3182F6]/5 flex items-center justify-center">
-                                                    <Loader2 className="h-10 w-10 text-[#3182F6] animate-spin" />
-                                                </div>
-                                                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#3182F6] flex items-center justify-center shadow-lg">
-                                                    <Brain className="h-4 w-4 text-white" />
-                                                </div>
-                                            </div>
-                                            
-                                            <h3 className="text-lg font-bold text-[#191F28] mb-2">AI 분석 진행 중</h3>
-                                            <p className="text-sm text-[#8B95A1] mb-6">
-                                                프로필 정보를 바탕으로 맞춤형 진로를 분석하고 있습니다
-                                            </p>
-                                            
-                                            <div className="w-full bg-[#F2F4F6] rounded-full h-2 mb-3">
-                                                <div 
-                                                    className="bg-gradient-to-r from-[#3182F6] to-[#1565C0] h-2 rounded-full transition-all duration-500"
-                                                    style={{ width: `${Math.max(aiJob.progress, 10)}%` }}
-                                                />
-                                            </div>
-                                            <p className="text-xs text-[#8B95A1]">
-                                                {isSubmitting && !isCurrentProfileAnalyzing ? "분석 요청을 처리 중..." :
-                                                 aiJob.progress < 20 ? "프로필 정보 분석 중..." : 
-                                                 aiJob.progress < 50 ? "AI가 추천 진로를 생성 중..." : 
-                                                 aiJob.progress < 80 ? "결과를 정리하고 있습니다..." : 
-                                                 "거의 완료되었습니다!"}
-                                            </p>
-                                        </div>
-                                    </Card>
-                                </div>
+                                <AnalysisLoadingState 
+                                    progress={aiJob.progress}
+                                    isSubmitting={isSubmitting}
+                                    isCurrentProfileAnalyzing={isCurrentProfileAnalyzing}
+                                    jobId={aiJob.jobId}
+                                    onCancel={async () => {
+                                        const result = await aiJob.cancelJob();
+                                        if (result.success) {
+                                            toast({
+                                                title: "분석이 취소되었습니다",
+                                                description: result.refundedAmount ? `${result.refundedAmount} 포인트가 환불되었습니다.` : undefined,
+                                            });
+                                        }
+                                    }}
+                                />
                             ) : isLoadingProfiles || isLoadingAnalyses ? (
                                 <div className="max-w-3xl mx-auto py-8 space-y-6">
                                     <Card className="toss-card p-6">
