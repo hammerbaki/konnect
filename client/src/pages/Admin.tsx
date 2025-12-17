@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
@@ -54,6 +55,21 @@ interface QueueStats {
   essay_revision: { queued: number; processing: number };
   analysis: { queued: number; processing: number };
   totalProcessing: number;
+}
+
+interface RecentJob {
+  id: string;
+  userId: string;
+  profileId: string | null;
+  type: string;
+  status: string;
+  progress: number | null;
+  estimatedProgress: number;
+  error: string | null;
+  queuedAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  user: { email: string | null; displayName: string | null } | null;
 }
 
 
@@ -182,6 +198,13 @@ export default function Admin() {
 
   const { data: queueStats, refetch: refetchQueueStats } = useQuery<QueueStats>({
     queryKey: ['/api/ai/queue/stats'],
+    enabled: isStaffOrAdmin,
+    retry: false,
+    refetchInterval: 3000,
+  });
+
+  const { data: recentJobs = [], refetch: refetchRecentJobs } = useQuery<RecentJob[]>({
+    queryKey: ['/api/admin/jobs/recent'],
     enabled: isStaffOrAdmin,
     retry: false,
     refetchInterval: 3000,
@@ -967,21 +990,137 @@ export default function Admin() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div className="text-center p-2 bg-white rounded-lg">
                       <p className="text-lg font-bold text-[#3182F6]">30</p>
-                      <p className="text-xs text-gray-500">요청/분 (Leaky Bucket)</p>
+                      <p className="text-xs text-gray-500">요청/분 (Shared Rate Limit)</p>
                     </div>
                     <div className="text-center p-2 bg-white rounded-lg">
-                      <p className="text-lg font-bold text-[#7C3AED]">~8,000</p>
-                      <p className="text-xs text-gray-500">출력 토큰/분</p>
+                      <p className="text-lg font-bold text-[#7C3AED]">3</p>
+                      <p className="text-xs text-gray-500">동시 분석</p>
                     </div>
                     <div className="text-center p-2 bg-white rounded-lg">
-                      <p className="text-lg font-bold text-[#059669]">10-20</p>
-                      <p className="text-xs text-gray-500">사용자별 요청/분</p>
+                      <p className="text-lg font-bold text-[#059669]">2</p>
+                      <p className="text-xs text-gray-500">동시 자소서</p>
                     </div>
                     <div className="text-center p-2 bg-white rounded-lg">
-                      <p className="text-lg font-bold text-[#D97706]">50</p>
-                      <p className="text-xs text-gray-500">일일 할당량</p>
+                      <p className="text-lg font-bold text-[#D97706]">3</p>
+                      <p className="text-xs text-gray-500">동시 목표</p>
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Jobs List */}
+            <Card className="toss-card">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-[#3182F6]" />
+                  최근 AI 작업 목록
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-[#3182F6] text-white">
+                    {recentJobs.filter(j => j.status === 'processing' || j.status === 'queued').length}개 진행 중
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchRecentJobs()}
+                    className="rounded-lg"
+                    data-testid="button-refresh-jobs"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {recentJobs.length === 0 ? (
+                    <div className="text-center text-[#8B95A1] py-8">
+                      최근 작업이 없습니다
+                    </div>
+                  ) : (
+                    recentJobs.slice(0, 20).map((job) => {
+                      const typeLabels: Record<string, string> = {
+                        analysis: '진로 분석',
+                        essay: '자기소개서',
+                        essay_revision: '자소서 수정',
+                        goal: '목표 생성',
+                      };
+                      const statusColors: Record<string, string> = {
+                        queued: 'bg-yellow-100 text-yellow-800',
+                        processing: 'bg-blue-100 text-blue-800',
+                        completed: 'bg-green-100 text-green-800',
+                        failed: 'bg-red-100 text-red-800',
+                      };
+                      const statusLabels: Record<string, string> = {
+                        queued: '대기',
+                        processing: '처리중',
+                        completed: '완료',
+                        failed: '실패',
+                      };
+                      
+                      const elapsedTime = job.startedAt 
+                        ? Math.round((Date.now() - new Date(job.startedAt).getTime()) / 1000)
+                        : null;
+                      
+                      return (
+                        <div 
+                          key={job.id} 
+                          className="p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E8EB]"
+                          data-testid={`job-row-${job.id}`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Badge className={`${statusColors[job.status] || 'bg-gray-100 text-gray-800'} text-xs`}>
+                                {statusLabels[job.status] || job.status}
+                              </Badge>
+                              <span className="font-medium text-[#191F28]">
+                                {typeLabels[job.type] || job.type}
+                              </span>
+                            </div>
+                            <div className="text-xs text-[#8B95A1]">
+                              {job.user?.displayName || job.user?.email || '알 수 없음'}
+                            </div>
+                          </div>
+                          
+                          {(job.status === 'processing' || job.status === 'queued') && (
+                            <div className="mb-2">
+                              <div className="flex items-center justify-between text-xs text-[#8B95A1] mb-1">
+                                <span>진행률</span>
+                                <span>{job.estimatedProgress}%</span>
+                              </div>
+                              <Progress value={job.estimatedProgress} className="h-2" />
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center justify-between text-xs text-[#8B95A1]">
+                            <span>
+                              {job.queuedAt 
+                                ? new Date(job.queuedAt).toLocaleString('ko-KR', { 
+                                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                                  })
+                                : '-'
+                              }
+                            </span>
+                            {job.status === 'processing' && elapsedTime !== null && (
+                              <span className="text-blue-600">
+                                {elapsedTime}초 경과
+                              </span>
+                            )}
+                            {job.status === 'completed' && job.completedAt && job.startedAt && (
+                              <span className="text-green-600">
+                                {Math.round((new Date(job.completedAt).getTime() - new Date(job.startedAt).getTime()) / 1000)}초 소요
+                              </span>
+                            )}
+                            {job.status === 'failed' && (
+                              <span className="text-red-600 truncate max-w-[200px]" title={job.error || ''}>
+                                {job.error || '오류 발생'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </CardContent>
             </Card>
