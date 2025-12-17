@@ -20,6 +20,67 @@ import {
   Coins
 } from "lucide-react";
 
+// Profile field definitions for each profile type
+const PROFILE_FIELDS: Record<string, { required: string[]; optional: string[] }> = {
+  high: {
+    required: ["high_hopeUniversity", "high_careerHope"],
+    optional: ["high_favoriteSubject", "high_dreamJob", "high_grade", "high_extracurriculars", "high_awards", "high_skills"],
+  },
+  university: {
+    required: ["univ_majorName", "univ_desiredIndustry"],
+    optional: ["univ_desiredRole", "univ_gpa", "univ_certifications", "univ_projects", "univ_internships", "univ_skills"],
+  },
+  general: {
+    required: ["gen_desiredIndustry", "gen_desiredRole"],
+    optional: ["gen_skills", "gen_experience", "gen_currentRole", "gen_certifications", "gen_education"],
+  },
+  middle: {
+    required: [],
+    optional: ["mid_interests", "mid_dreamJob", "mid_favoriteSubject"],
+  },
+  elementary: {
+    required: [],
+    optional: ["elem_interests", "elem_dreamJob"],
+  },
+};
+
+// Calculate profile completeness percentage
+function calculateProfileCompleteness(profile: any): { percentage: number; filledCount: number; totalCount: number } {
+  if (!profile || !profile.profileData) {
+    return { percentage: 0, filledCount: 0, totalCount: 1 };
+  }
+  
+  const fields = PROFILE_FIELDS[profile.type];
+  if (!fields) {
+    return { percentage: 50, filledCount: 1, totalCount: 2 }; // Default for unknown types
+  }
+  
+  const allFields = [...fields.required, ...fields.optional];
+  if (allFields.length === 0) {
+    return { percentage: 100, filledCount: 0, totalCount: 0 };
+  }
+  
+  let filledCount = 0;
+  for (const field of allFields) {
+    const value = profile.profileData[field];
+    const isFilled = value !== undefined && value !== null && value !== "" && 
+      !(Array.isArray(value) && value.length === 0);
+    if (isFilled) filledCount++;
+  }
+  
+  // Required fields are weighted more (count as 2)
+  const requiredFilled = fields.required.filter(f => {
+    const v = profile.profileData[f];
+    return v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0);
+  }).length;
+  
+  const weightedFilled = filledCount + requiredFilled; // Required counted twice
+  const weightedTotal = allFields.length + fields.required.length;
+  
+  const percentage = Math.round((weightedFilled / weightedTotal) * 100);
+  return { percentage, filledCount, totalCount: allFields.length };
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   
@@ -85,6 +146,12 @@ export default function Dashboard() {
   const analysisCount = analyses?.length ?? 0;
   const essayCount = essays?.length ?? 0;
   const kompassCount = kompass?.length ?? 0;
+  
+  // Calculate actual profile completeness for the first profile
+  const firstProfile = profiles?.[0];
+  const profileCompleteness = firstProfile 
+    ? calculateProfileCompleteness(firstProfile) 
+    : { percentage: 0, filledCount: 0, totalCount: 0 };
 
   // Quick action cards data
   const quickActions = [
@@ -334,17 +401,25 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-[#4E5968] font-medium">프로필 완성도</span>
-                  <span className="text-[#3182F6] font-bold">{profileCount > 0 ? '작성됨' : '미작성'}</span>
+                  <span className="text-[#3182F6] font-bold">
+                    {profileCount > 0 
+                      ? `${profileCompleteness.percentage}%` 
+                      : '미작성'}
+                  </span>
                 </div>
                 <Progress 
-                  value={profileCount > 0 ? 60 : 0} 
+                  value={profileCompleteness.percentage} 
                   className="h-3 bg-[#F2F4F6]" 
                   indicatorClassName="bg-[#3182F6]" 
                 />
                 <p className="text-sm text-[#8B95A1]">
-                  {profileCount > 0 
-                    ? '프로필 정보를 더 상세히 입력하면 더 정확한 분석을 받을 수 있어요.'
-                    : '프로필을 작성하면 AI 분석과 맞춤 추천을 받을 수 있어요.'
+                  {profileCount === 0 
+                    ? '프로필을 작성하면 AI 분석과 맞춤 추천을 받을 수 있어요.'
+                    : profileCompleteness.percentage < 50
+                      ? '필수 정보를 입력해야 AI 분석을 받을 수 있어요.'
+                      : profileCompleteness.percentage < 100
+                        ? '프로필 정보를 더 상세히 입력하면 더 정확한 분석을 받을 수 있어요.'
+                        : '프로필이 완성되었어요! AI 분석을 시작해보세요.'
                   }
                 </p>
               </div>
