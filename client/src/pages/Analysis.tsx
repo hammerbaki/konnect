@@ -97,6 +97,7 @@ export default function Analysis() {
     const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [expandedCareer, setExpandedCareer] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data: profiles, isLoading: isLoadingProfiles } = useQuery({
         queryKey: ['/api/profiles'],
@@ -120,6 +121,8 @@ export default function Analysis() {
             return response.json();
         },
         enabled: !!activeProfileId,
+        staleTime: 30000,
+        refetchOnWindowFocus: false,
     });
 
     const latestAnalysis = analyses && analyses.length > 0 ? analyses[0] : null;
@@ -154,9 +157,19 @@ export default function Analysis() {
     const handleGenerateAnalysis = async (profileId: string) => {
         if (!activeProfile) return;
         
+        // Prevent duplicate submissions
+        if (isSubmitting || isCurrentProfileAnalyzing) {
+            console.log("Analysis already in progress, ignoring click");
+            return;
+        }
+        
+        // Show immediate feedback
+        setIsSubmitting(true);
+        
         // Optimistically deduct credits immediately
         const deducted = deductCredit(ANALYSIS_CREDIT_COST);
         if (!deducted) {
+            setIsSubmitting(false);
             toast({ variant: "destructive", description: "포인트가 부족합니다. 분석에 100 포인트가 필요합니다." });
             return;
         }
@@ -169,20 +182,30 @@ export default function Analysis() {
                 profileTitle: activeProfile.title,
             });
         } catch (error) {
+            setIsSubmitting(false);
             // onError in useAIJob will handle restoring credits using the ref flag
         }
     };
+    
+    // Reset isSubmitting when job starts processing
+    useEffect(() => {
+        if (isCurrentProfileAnalyzing) {
+            setIsSubmitting(false);
+        }
+    }, [isCurrentProfileAnalyzing]);
 
     useEffect(() => {
-        if (activeProfileId) {
+        if (activeProfileId && !isSubmitting && !isCurrentProfileAnalyzing) {
             setAction({
                 icon: Brain,
                 label: "분석하기",
-                onClick: () => activeProfileId && handleGenerateAnalysis(activeProfileId)
+                onClick: () => handleGenerateAnalysis(activeProfileId)
             });
+        } else {
+            setAction(null);
         }
         return () => setAction(null);
-    }, [activeProfileId, setAction]);
+    }, [activeProfileId, setAction, isSubmitting, isCurrentProfileAnalyzing]);
 
     const handleExportToKompass = (career: CareerRecommendation) => {
         const goalData = {
@@ -482,11 +505,19 @@ export default function Analysis() {
                     </p>
                     <Button 
                         onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
-                        disabled={isCurrentProfileAnalyzing || !activeProfileId}
+                        disabled={isCurrentProfileAnalyzing || isSubmitting || !activeProfileId}
                         className="h-12 px-8 rounded-xl bg-[#3182F6] text-white font-bold"
                         data-testid="button-generate-analysis"
                     >
-                        <Sparkles className="h-5 w-5 mr-2" /> AI 분석 시작 (100 포인트)
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="h-5 w-5 mr-2 animate-spin" /> 분석 요청 중...
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="h-5 w-5 mr-2" /> AI 분석 시작 (100 포인트)
+                            </>
+                        )}
                     </Button>
                 </div>
             );
@@ -497,7 +528,7 @@ export default function Analysis() {
         const profileType = activeProfile?.type || 'general';
 
         return (
-            <div className="space-y-6 animate-in fade-in-50 duration-500">
+            <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-xl font-bold text-[#191F28]">분석 결과</h2>
@@ -507,12 +538,20 @@ export default function Analysis() {
                     </div>
                     <Button 
                         onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
-                        disabled={isCurrentProfileAnalyzing}
+                        disabled={isCurrentProfileAnalyzing || isSubmitting}
                         variant="outline"
                         className="rounded-xl border-[#3182F6] text-[#3182F6]"
                         data-testid="button-regenerate-analysis"
                     >
-                        <Sparkles className="h-4 w-4 mr-2" /> 다시 분석하기
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 요청 중...
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="h-4 w-4 mr-2" /> 다시 분석하기
+                            </>
+                        )}
                     </Button>
                 </div>
 
@@ -602,7 +641,7 @@ export default function Analysis() {
                         </div>
 
                         <div className="p-4 lg:p-8 max-w-4xl mx-auto">
-                            {isCurrentProfileAnalyzing ? (
+                            {(isCurrentProfileAnalyzing || isSubmitting) ? (
                                 <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-300">
                                     <Card className="bg-white rounded-2xl border border-[#E5E8EB] shadow-lg p-8 max-w-md w-full">
                                         <div className="flex flex-col items-center text-center">
@@ -627,9 +666,10 @@ export default function Analysis() {
                                                 />
                                             </div>
                                             <p className="text-xs text-[#8B95A1]">
-                                                {aiJob.progress < 30 ? "프로필 정보 분석 중..." : 
-                                                 aiJob.progress < 60 ? "AI가 추천 진로를 생성 중..." : 
-                                                 aiJob.progress < 90 ? "결과를 정리하고 있습니다..." : 
+                                                {isSubmitting && !isCurrentProfileAnalyzing ? "분석 요청을 처리 중..." :
+                                                 aiJob.progress < 20 ? "프로필 정보 분석 중..." : 
+                                                 aiJob.progress < 50 ? "AI가 추천 진로를 생성 중..." : 
+                                                 aiJob.progress < 80 ? "결과를 정리하고 있습니다..." : 
                                                  "거의 완료되었습니다!"}
                                             </p>
                                         </div>
