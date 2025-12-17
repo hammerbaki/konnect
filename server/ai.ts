@@ -829,13 +829,65 @@ function getEssayProfileContext(profileData: any, profileType: string): string {
   return context;
 }
 
+export interface TargetInfo {
+  targetName?: string;
+  targetUrl?: string;
+  targetPosition?: string;
+  companyInfo?: {
+    name?: string;
+    description?: string;
+    mission?: string;
+    values?: string[];
+    culture?: string;
+    industryKeywords?: string[];
+    rawContent?: string;
+  };
+}
+
+function buildTargetContext(targetInfo?: TargetInfo): string {
+  if (!targetInfo || (!targetInfo.targetName && !targetInfo.companyInfo)) {
+    return '';
+  }
+  
+  let context = '\n## 지원 대상 정보\n';
+  
+  if (targetInfo.targetName) {
+    context += `- 지원 기관/회사: ${targetInfo.targetName}\n`;
+  }
+  if (targetInfo.targetPosition) {
+    context += `- 지원 직무/학과: ${targetInfo.targetPosition}\n`;
+  }
+  
+  if (targetInfo.companyInfo) {
+    const info = targetInfo.companyInfo;
+    if (info.description) {
+      context += `- 기관 소개: ${info.description}\n`;
+    }
+    if (info.mission) {
+      context += `- 미션/비전: ${info.mission}\n`;
+    }
+    if (info.values && info.values.length > 0) {
+      context += `- 핵심 가치: ${info.values.join(', ')}\n`;
+    }
+    if (info.industryKeywords && info.industryKeywords.length > 0) {
+      context += `- 관련 키워드: ${info.industryKeywords.join(', ')}\n`;
+    }
+    if (info.rawContent) {
+      context += `\n### 기관 상세 정보\n${info.rawContent.slice(0, 3000)}\n`;
+    }
+  }
+  
+  return context;
+}
+
 // Generate personal essay using Claude
 export async function generatePersonalEssay(
   profileType: string,
   category: string,
   topic: string,
   essayContext?: string,
-  profileData?: any
+  profileData?: any,
+  targetInfo?: TargetInfo
 ): Promise<{
   title: string;
   content: string;
@@ -845,24 +897,49 @@ export async function generatePersonalEssay(
     retryWithBackoff(
       async () => {
         const profileContext = getEssayProfileContext(profileData, profileType);
+        const targetContext = buildTargetContext(targetInfo);
         
-        const systemPrompt = `당신은 한국의 자기소개서 전문 작가입니다. ${category}를 위한 자기소개서를 작성합니다. 
-모든 응답은 한국어로 작성하세요.
-중요: 지원자 정보에 제공된 실제 값(희망 산업, 희망 직무 등)을 자기소개서에 그대로 사용하세요. 
-절대 {변수명} 형태의 플레이스홀더를 사용하지 마세요.`;
+        const hasTarget = targetInfo && (targetInfo.targetName || targetInfo.companyInfo);
+        
+        const systemPrompt = `당신은 한국 최고의 자기소개서 전문 작가이자 채용/입시 컨설턴트입니다. ${category}를 위한 자기소개서를 작성합니다.
+
+## 핵심 원칙
+1. 모든 응답은 한국어로 작성하세요.
+2. 지원자 정보에 제공된 실제 값(희망 산업, 희망 직무, 강점 등)을 자기소개서에 그대로 반영하세요.
+3. 절대 {변수명} 형태의 플레이스홀더를 사용하지 마세요.
+${hasTarget ? `4. **중요**: 지원 대상(회사/학교)의 미션, 가치, 문화를 철저히 분석하여 지원자의 경험과 연결하세요.
+5. 지원 기관의 키워드와 가치를 자연스럽게 자기소개서에 녹여내세요.
+6. 지원자가 해당 기관에 왜 적합한지, 어떤 기여를 할 수 있는지 구체적으로 서술하세요.` : ''}
+
+## 작성 가이드라인
+- STAR 기법 활용: 상황(Situation) → 과제(Task) → 행동(Action) → 결과(Result)
+- 구체적인 숫자와 성과 포함 (예: "15% 개선", "3개월 동안")
+- 추상적 표현 대신 구체적 경험 사례 제시
+- 지원 동기와 포부는 기관의 가치와 연결`;
 
         const prompt = `주제: ${topic}
 ${profileContext}
+${targetContext}
 ${essayContext ? `\n추가 정보: ${essayContext}` : ''}
 
-위 주제와 지원자 정보를 바탕으로 맞춤형 자기소개서를 작성하세요.
+${hasTarget ? `
+## 작성 요청
+위 지원자 정보와 지원 대상 정보를 깊이 분석하여:
+1. 지원 기관의 미션/가치와 지원자의 경험을 연결하세요
+2. 지원 직무/학과에 필요한 역량과 지원자의 강점을 매칭하세요
+3. 지원자가 해당 기관에서 어떻게 성장하고 기여할 수 있는지 구체적으로 서술하세요
+4. 기관 특유의 문화와 가치를 자연스럽게 언급하세요
+` : `
+## 작성 요청
+위 지원자 정보를 바탕으로 맞춤형 자기소개서를 작성하세요.
 지원자의 희망 산업, 희망 직무, 강점 등을 구체적으로 언급하세요.
+`}
 
 다음 JSON 형식으로 반환하세요:
 
 {
   "title": "자기소개서 제목",
-  "content": "자기소개서 본문 (3-5단락, 각 단락은 구체적 경험과 배운 점 포함)"
+  "content": "자기소개서 본문 (3-5단락, 각 단락은 구체적 경험과 배운 점 포함, 총 800-1500자)"
 }
 
 **반드시 유효한 JSON만 반환하세요. 추가 설명 없이 JSON만 출력하세요.**`;

@@ -234,7 +234,8 @@ export async function processJob(job: AiJob): Promise<any> {
           payload.category,
           payload.topic,
           payload.context,
-          payload.profileData
+          payload.profileData,
+          payload.targetInfo
         );
         break;
       }

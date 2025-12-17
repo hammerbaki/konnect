@@ -1,9 +1,13 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { getAuthHeaders } from "@/lib/queryClient";
 import {
     Send,
     Sparkles,
@@ -24,6 +28,11 @@ import {
     Trash2,
     Loader2,
     User,
+    Building2,
+    Link2,
+    Search,
+    CheckCircle,
+    XCircle,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -355,6 +364,15 @@ export default function PersonalStatement() {
     // History sidebar state
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
+    // Target company/school info state
+    const [targetName, setTargetName] = useState("");
+    const [targetUrl, setTargetUrl] = useState("");
+    const [targetPosition, setTargetPosition] = useState("");
+    const [isFetchingCompanyInfo, setIsFetchingCompanyInfo] = useState(false);
+    const [companyInfo, setCompanyInfo] = useState<any>(null);
+    const [companyFetchError, setCompanyFetchError] = useState<string | null>(null);
+    const [isTargetInfoOpen, setIsTargetInfoOpen] = useState(false);
+
     // Chat State
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState<any[]>([]);
@@ -372,8 +390,60 @@ export default function PersonalStatement() {
         setCurrentSessionId(null);
         setMessages([]);
         setIsHistoryOpen(false);
+        // Reset target info
+        setTargetName("");
+        setTargetUrl("");
+        setTargetPosition("");
+        setCompanyInfo(null);
+        setCompanyFetchError(null);
+        setIsTargetInfoOpen(false);
         aiJob.reset();
         revisionJob.reset();
+    };
+
+    // Fetch company info from URL
+    const handleFetchCompanyInfo = async () => {
+        if (!targetUrl.trim()) {
+            setCompanyFetchError("URL을 입력해주세요.");
+            return;
+        }
+        
+        setIsFetchingCompanyInfo(true);
+        setCompanyFetchError(null);
+        setCompanyInfo(null);
+        
+        try {
+            const authHeaders = await getAuthHeaders();
+            const res = await fetch("/api/fetch-company-info", {
+                method: "POST",
+                headers: {
+                    ...authHeaders,
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({ url: targetUrl }),
+            });
+            
+            const data = await res.json();
+            
+            if (!res.ok || !data.success) {
+                setCompanyFetchError(data.message || "정보를 가져올 수 없습니다.");
+                return;
+            }
+            
+            setCompanyInfo(data.info);
+            // Auto-fill company name if found
+            if (data.info?.name && !targetName.trim()) {
+                setTargetName(data.info.name);
+            }
+            
+            toast({ description: "기관 정보를 성공적으로 가져왔습니다!" });
+        } catch (error: any) {
+            console.error("Error fetching company info:", error);
+            setCompanyFetchError("웹페이지 분석 중 오류가 발생했습니다.");
+        } finally {
+            setIsFetchingCompanyInfo(false);
+        }
     };
 
     const handleLoadSession = (session: ChatSession) => {
@@ -467,11 +537,17 @@ export default function PersonalStatement() {
         setStep("chat");
         setCurrentSessionId(null);
 
+        // Build target info message if available
+        const hasTargetInfo = targetName.trim() || targetPosition.trim() || companyInfo;
+        const targetInfoText = hasTargetInfo 
+            ? `\n\n🎯 지원 대상: ${targetName || "미입력"}${targetPosition ? ` (${targetPosition})` : ""}${companyInfo ? "\n✅ 기관 정보 분석 완료" : ""}`
+            : "";
+
         const initialMsg = {
             id: "system-welcome",
             sender: "ai",
             type: "text",
-            content: `안녕하세요! [${selectedCategory.label}] - [${agent.label}] 에이전트입니다.\n\n프로필 정보를 바탕으로 자기소개서 초안 작성을 시작합니다.`,
+            content: `안녕하세요! [${selectedCategory.label}] - [${agent.label}] 에이전트입니다.\n\n프로필 정보를 바탕으로 자기소개서 초안 작성을 시작합니다.${targetInfoText}`,
             timestamp: new Date(),
         };
 
@@ -485,6 +561,14 @@ export default function PersonalStatement() {
         }
         essayCreditsDeductedRef.current = true; // Track deduction for safe restoration
 
+        // Build target info for AI
+        const targetInfoPayload = hasTargetInfo ? {
+            targetName: targetName.trim() || undefined,
+            targetUrl: targetUrl.trim() || undefined,
+            targetPosition: targetPosition.trim() || undefined,
+            companyInfo: companyInfo || undefined,
+        } : undefined;
+
         // Submit job to queue for AI generation
         try {
             await aiJob.submitJob("essay", activeProfileId, {
@@ -493,6 +577,7 @@ export default function PersonalStatement() {
                 topic: agent.label,
                 context: agent.promptTemplate,
                 profileData: activeProfile.profileData,
+                targetInfo: targetInfoPayload,
             });
         } catch (error) {
             console.error("Failed to submit essay job:", error);
@@ -811,6 +896,151 @@ export default function PersonalStatement() {
                                         전문 에이전트 선택
                                     </span>
                                 </div>
+
+                                {/* Target Company/School Info Section */}
+                                <Card className="bg-white border border-[#E5E8EB] overflow-hidden">
+                                    <Collapsible open={isTargetInfoOpen} onOpenChange={setIsTargetInfoOpen}>
+                                        <CollapsibleTrigger asChild>
+                                            <button className="w-full p-4 flex items-center justify-between hover:bg-[#F9FAFB] transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 rounded-lg bg-gradient-to-br from-[#3182F6]/10 to-[#3182F6]/5">
+                                                        <Building2 className="h-5 w-5 text-[#3182F6]" />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <h4 className="font-semibold text-[#191F28] flex items-center gap-2">
+                                                            지원 대상 정보 입력
+                                                            <Badge variant="outline" className="text-xs bg-blue-50 text-[#3182F6] border-blue-100">
+                                                                선택사항
+                                                            </Badge>
+                                                        </h4>
+                                                        <p className="text-xs text-[#8B95A1] mt-0.5">
+                                                            지원 회사/학교 정보를 입력하면 더 맞춤화된 자소서를 생성합니다
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <ChevronLeft className={cn(
+                                                    "h-5 w-5 text-[#8B95A1] transition-transform duration-200",
+                                                    isTargetInfoOpen ? "-rotate-90" : "rotate-0"
+                                                )} />
+                                            </button>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent>
+                                            <div className="px-4 pb-4 space-y-4 border-t border-[#F2F4F6] pt-4">
+                                                <div className="grid gap-4 md:grid-cols-2">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="targetName" className="text-sm font-medium text-[#4E5968]">
+                                                            회사/학교명
+                                                        </Label>
+                                                        <Input
+                                                            id="targetName"
+                                                            placeholder="예: 삼성전자, 서울대학교"
+                                                            value={targetName}
+                                                            onChange={(e) => setTargetName(e.target.value)}
+                                                            className="border-[#E5E8EB] focus:border-[#3182F6]"
+                                                            data-testid="input-target-name"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="targetPosition" className="text-sm font-medium text-[#4E5968]">
+                                                            지원 직무/학과
+                                                        </Label>
+                                                        <Input
+                                                            id="targetPosition"
+                                                            placeholder="예: 소프트웨어 개발, 경영학과"
+                                                            value={targetPosition}
+                                                            onChange={(e) => setTargetPosition(e.target.value)}
+                                                            className="border-[#E5E8EB] focus:border-[#3182F6]"
+                                                            data-testid="input-target-position"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="targetUrl" className="text-sm font-medium text-[#4E5968]">
+                                                        회사/학교 웹사이트 URL
+                                                    </Label>
+                                                    <div className="flex gap-2">
+                                                        <div className="relative flex-1">
+                                                            <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
+                                                            <Input
+                                                                id="targetUrl"
+                                                                placeholder="https://company.com/about"
+                                                                value={targetUrl}
+                                                                onChange={(e) => {
+                                                                    setTargetUrl(e.target.value);
+                                                                    setCompanyFetchError(null);
+                                                                }}
+                                                                className="pl-9 border-[#E5E8EB] focus:border-[#3182F6]"
+                                                                data-testid="input-target-url"
+                                                            />
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            onClick={handleFetchCompanyInfo}
+                                                            disabled={isFetchingCompanyInfo || !targetUrl.trim()}
+                                                            className="bg-[#3182F6] hover:bg-[#1565C0] shrink-0"
+                                                            data-testid="button-fetch-company-info"
+                                                        >
+                                                            {isFetchingCompanyInfo ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                            ) : (
+                                                                <Search className="h-4 w-4" />
+                                                            )}
+                                                            <span className="ml-2 hidden md:inline">분석</span>
+                                                        </Button>
+                                                    </div>
+                                                    <p className="text-xs text-[#8B95A1]">
+                                                        AI가 웹페이지에서 회사/학교의 미션, 가치, 문화 등을 자동으로 분석합니다
+                                                    </p>
+                                                </div>
+
+                                                {companyFetchError && (
+                                                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">
+                                                        <XCircle className="h-4 w-4 shrink-0" />
+                                                        {companyFetchError}
+                                                    </div>
+                                                )}
+
+                                                {companyInfo && (
+                                                    <div className="p-4 bg-green-50 border border-green-100 rounded-lg space-y-2">
+                                                        <div className="flex items-center gap-2 text-green-700 font-medium">
+                                                            <CheckCircle className="h-4 w-4" />
+                                                            기관 정보 분석 완료
+                                                        </div>
+                                                        {companyInfo.name && (
+                                                            <p className="text-sm text-green-600">
+                                                                <span className="font-medium">기관명:</span> {companyInfo.name}
+                                                            </p>
+                                                        )}
+                                                        {companyInfo.description && (
+                                                            <p className="text-sm text-green-600 line-clamp-2">
+                                                                <span className="font-medium">소개:</span> {companyInfo.description}
+                                                            </p>
+                                                        )}
+                                                        {companyInfo.values && companyInfo.values.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                                {companyInfo.values.slice(0, 4).map((value: string, i: number) => (
+                                                                    <span key={i} className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                                                                        {value}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        {companyInfo.industryKeywords && companyInfo.industryKeywords.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                {companyInfo.industryKeywords.slice(0, 6).map((kw: string, i: number) => (
+                                                                    <span key={i} className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded">
+                                                                        #{kw}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </CollapsibleContent>
+                                    </Collapsible>
+                                </Card>
 
                                 <div className="grid gap-4">
                                     {selectedCategory.agents.map((agent) => (

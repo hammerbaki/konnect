@@ -16,6 +16,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { generateCareerAnalysis, generatePersonalEssay, generateGoals, type GoalLevel, checkAIRateLimit } from "./ai";
+import { fetchCompanyInfo } from "./webFetcher";
 import { createRateLimitMiddleware, checkRedisConnection, redis } from "./rateLimiter";
 import { startWorker, submitQueuedJob } from "./aiWorker";
 import { getQueueStats, estimateProgress } from "./jobQueue";
@@ -933,7 +934,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { category, topic, context } = req.body;
+      const { category, topic, context, targetInfo } = req.body;
       if (!category || !topic) {
         return res.status(400).json({ message: "카테고리와 주제는 필수입니다." });
       }
@@ -959,6 +960,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category,
           topic,
           context,
+          targetInfo,
         }
       );
 
@@ -972,6 +974,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating essay:", error);
       res.status(500).json({ message: "자기소개서 생성 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Fetch company/school information from URL for essay generation
+  app.post('/api/fetch-company-info', isAuthenticated, async (req: any, res) => {
+    try {
+      const { url } = req.body;
+      if (!url) {
+        return res.status(400).json({ message: "URL은 필수입니다." });
+      }
+
+      // Validate URL format
+      try {
+        new URL(url);
+      } catch {
+        return res.status(400).json({ message: "올바른 URL 형식이 아닙니다." });
+      }
+
+      const result = await fetchCompanyInfo(url);
+      
+      if (!result.success) {
+        return res.status(422).json({ 
+          message: result.error || "웹페이지 정보를 가져올 수 없습니다.",
+          success: false 
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        info: result.info 
+      });
+    } catch (error: any) {
+      console.error("Error fetching company info:", error);
+      res.status(500).json({ 
+        message: "웹페이지 분석 중 오류가 발생했습니다.", 
+        success: false 
+      });
     }
   });
 
