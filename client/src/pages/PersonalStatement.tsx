@@ -57,6 +57,85 @@ const profileTypeToCategoryId: Record<string, CategoryId> = {
     general: "general",
 };
 
+// Field names to user-friendly Korean labels mapping
+const FIELD_LABELS: Record<string, string> = {
+    // High school fields
+    high_hopeUniversity: "희망 대학",
+    high_careerHope: "진로 희망",
+    high_favoriteSubject: "좋아하는 과목",
+    high_activityStatus: "활동 내역",
+    high_dreamJob: "희망 직업",
+    high_studyStyle: "학습 스타일",
+    // University fields
+    univ_majorName: "전공 (학과명)",
+    univ_majorCategory: "전공 계열",
+    univ_skillsToDevelop: "개발하고 싶은 스킬",
+    univ_desiredIndustry: "희망 산업",
+    univ_desiredRole: "희망 직무",
+    univ_studyAndCareer: "학습 및 취업 준비",
+    // General fields
+    gen_desiredIndustry: "희망 산업 분야",
+    gen_desiredRole: "희망 직무",
+    gen_skills: "보유 핵심 스킬",
+    gen_workExperience: "주요 경력 사항",
+    gen_reasonForChange: "이직/구직 사유",
+    gen_careerGoal: "커리어 목표",
+};
+
+// Minimum required fields for meaningful essay generation by profile type
+const MINIMUM_REQUIRED_FIELDS: Record<string, { fields: string[]; description: string }> = {
+    high: {
+        fields: ["high_hopeUniversity", "high_careerHope"],
+        description: "희망 대학과 진로 희망을 입력해야 자기소개서를 생성할 수 있습니다.",
+    },
+    university: {
+        fields: ["univ_majorName", "univ_desiredIndustry"],
+        description: "전공과 희망 산업을 입력해야 자기소개서를 생성할 수 있습니다.",
+    },
+    general: {
+        fields: ["gen_desiredIndustry", "gen_desiredRole"],
+        description: "희망 산업과 희망 직무를 입력해야 자기소개서를 생성할 수 있습니다.",
+    },
+};
+
+// Validate if profile has minimum required fields for essay generation
+function validateProfileForEssay(profileType: string, profileData: any): { 
+    isValid: boolean; 
+    missingFields: { key: string; label: string }[];
+    message: string;
+} {
+    const requirements = MINIMUM_REQUIRED_FIELDS[profileType];
+    if (!requirements) {
+        return { isValid: true, missingFields: [], message: "" };
+    }
+    
+    const missingFields: { key: string; label: string }[] = [];
+    
+    for (const field of requirements.fields) {
+        const value = profileData?.[field];
+        const isEmpty = value === undefined || value === null || value === "" || 
+            (Array.isArray(value) && value.length === 0);
+        
+        if (isEmpty) {
+            missingFields.push({
+                key: field,
+                label: FIELD_LABELS[field] || field,
+            });
+        }
+    }
+    
+    return {
+        isValid: missingFields.length === 0,
+        missingFields,
+        message: missingFields.length > 0 ? requirements.description : "",
+    };
+}
+
+// Get Korean label for a field key
+function getFieldLabel(fieldKey: string): string {
+    return FIELD_LABELS[fieldKey] || fieldKey;
+}
+
 // --- Types ---
 type CategoryId = "high" | "univ" | "general";
 type AgentId = string;
@@ -371,7 +450,7 @@ export default function PersonalStatement() {
     const [isFetchingCompanyInfo, setIsFetchingCompanyInfo] = useState(false);
     const [companyInfo, setCompanyInfo] = useState<any>(null);
     const [companyFetchError, setCompanyFetchError] = useState<string | null>(null);
-    const [isTargetInfoOpen, setIsTargetInfoOpen] = useState(false);
+    // Target info section is always visible (mandatory)
 
     // Chat State
     const [input, setInput] = useState("");
@@ -532,16 +611,34 @@ export default function PersonalStatement() {
             return;
         }
 
+        // Validate profile has minimum required fields
+        const profileValidation = validateProfileForEssay(activeProfile.type, activeProfile.profileData);
+        if (!profileValidation.isValid) {
+            toast({ 
+                variant: "destructive", 
+                title: "프로필 정보 부족",
+                description: `다음 필드를 먼저 입력해주세요: ${profileValidation.missingFields.map(f => f.label).join(", ")}` 
+            });
+            return;
+        }
+
+        // Validate target company/school name (mandatory)
+        if (!targetName.trim()) {
+            toast({ 
+                variant: "destructive", 
+                title: "지원 대상 정보 필요",
+                description: "자기소개서 생성을 위해 지원하는 회사/학교명을 입력해주세요." 
+            });
+            return;
+        }
+
         // Initialize session
         setSelectedAgent(agent);
         setStep("chat");
         setCurrentSessionId(null);
 
-        // Build target info message if available
-        const hasTargetInfo = targetName.trim() || targetPosition.trim() || companyInfo;
-        const targetInfoText = hasTargetInfo 
-            ? `\n\n🎯 지원 대상: ${targetName || "미입력"}${targetPosition ? ` (${targetPosition})` : ""}${companyInfo ? "\n✅ 기관 정보 분석 완료" : ""}`
-            : "";
+        // Build target info message
+        const targetInfoText = `\n\n🎯 지원 대상: ${targetName}${targetPosition ? ` (${targetPosition})` : ""}${companyInfo ? "\n✅ 기관 정보 분석 완료" : ""}`;
 
         const initialMsg = {
             id: "system-welcome",
@@ -561,13 +658,13 @@ export default function PersonalStatement() {
         }
         essayCreditsDeductedRef.current = true; // Track deduction for safe restoration
 
-        // Build target info for AI
-        const targetInfoPayload = hasTargetInfo ? {
-            targetName: targetName.trim() || undefined,
+        // Build target info for AI (always include since targetName is now mandatory)
+        const targetInfoPayload = {
+            targetName: targetName.trim(),
             targetUrl: targetUrl.trim() || undefined,
             targetPosition: targetPosition.trim() || undefined,
             companyInfo: companyInfo || undefined,
-        } : undefined;
+        };
 
         // Submit job to queue for AI generation
         try {
@@ -897,149 +994,171 @@ export default function PersonalStatement() {
                                     </span>
                                 </div>
 
-                                {/* Target Company/School Info Section */}
-                                <Card className="bg-white border border-[#E5E8EB] overflow-hidden">
-                                    <Collapsible open={isTargetInfoOpen} onOpenChange={setIsTargetInfoOpen}>
-                                        <CollapsibleTrigger asChild>
-                                            <button className="w-full p-4 flex items-center justify-between hover:bg-[#F9FAFB] transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 rounded-lg bg-gradient-to-br from-[#3182F6]/10 to-[#3182F6]/5">
-                                                        <Building2 className="h-5 w-5 text-[#3182F6]" />
+                                {/* Profile Validation Warning */}
+                                {activeProfile && (() => {
+                                    const validation = validateProfileForEssay(activeProfile.type, activeProfile.profileData);
+                                    if (!validation.isValid) {
+                                        return (
+                                            <Alert className="bg-amber-50 border-amber-200">
+                                                <AlertCircle className="h-4 w-4 text-amber-600" />
+                                                <AlertTitle className="text-amber-800">프로필 정보가 부족합니다</AlertTitle>
+                                                <AlertDescription className="text-amber-700">
+                                                    <p className="mb-2">{validation.message}</p>
+                                                    <div className="flex flex-wrap gap-2 mb-3">
+                                                        {validation.missingFields.map((field) => (
+                                                            <span key={field.key} className="text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded-md border border-amber-200">
+                                                                {field.label}
+                                                            </span>
+                                                        ))}
                                                     </div>
-                                                    <div className="text-left">
-                                                        <h4 className="font-semibold text-[#191F28] flex items-center gap-2">
-                                                            지원 대상 정보 입력
-                                                            <Badge variant="outline" className="text-xs bg-blue-50 text-[#3182F6] border-blue-100">
-                                                                선택사항
-                                                            </Badge>
-                                                        </h4>
-                                                        <p className="text-xs text-[#8B95A1] mt-0.5">
-                                                            지원 회사/학교 정보를 입력하면 더 맞춤화된 자소서를 생성합니다
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <ChevronLeft className={cn(
-                                                    "h-5 w-5 text-[#8B95A1] transition-transform duration-200",
-                                                    isTargetInfoOpen ? "-rotate-90" : "rotate-0"
-                                                )} />
-                                            </button>
-                                        </CollapsibleTrigger>
-                                        <CollapsibleContent>
-                                            <div className="px-4 pb-4 space-y-4 border-t border-[#F2F4F6] pt-4">
-                                                <div className="grid gap-4 md:grid-cols-2">
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="targetName" className="text-sm font-medium text-[#4E5968]">
-                                                            회사/학교명
-                                                        </Label>
-                                                        <Input
-                                                            id="targetName"
-                                                            placeholder="예: 삼성전자, 서울대학교"
-                                                            value={targetName}
-                                                            onChange={(e) => setTargetName(e.target.value)}
-                                                            className="border-[#E5E8EB] focus:border-[#3182F6]"
-                                                            data-testid="input-target-name"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="targetPosition" className="text-sm font-medium text-[#4E5968]">
-                                                            지원 직무/학과
-                                                        </Label>
-                                                        <Input
-                                                            id="targetPosition"
-                                                            placeholder="예: 소프트웨어 개발, 경영학과"
-                                                            value={targetPosition}
-                                                            onChange={(e) => setTargetPosition(e.target.value)}
-                                                            className="border-[#E5E8EB] focus:border-[#3182F6]"
-                                                            data-testid="input-target-position"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="targetUrl" className="text-sm font-medium text-[#4E5968]">
-                                                        회사/학교 웹사이트 URL
-                                                    </Label>
-                                                    <div className="flex gap-2">
-                                                        <div className="relative flex-1">
-                                                            <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
-                                                            <Input
-                                                                id="targetUrl"
-                                                                placeholder="https://company.com/about"
-                                                                value={targetUrl}
-                                                                onChange={(e) => {
-                                                                    setTargetUrl(e.target.value);
-                                                                    setCompanyFetchError(null);
-                                                                }}
-                                                                className="pl-9 border-[#E5E8EB] focus:border-[#3182F6]"
-                                                                data-testid="input-target-url"
-                                                            />
-                                                        </div>
-                                                        <Button
-                                                            type="button"
-                                                            onClick={handleFetchCompanyInfo}
-                                                            disabled={isFetchingCompanyInfo || !targetUrl.trim()}
-                                                            className="bg-[#3182F6] hover:bg-[#1565C0] shrink-0"
-                                                            data-testid="button-fetch-company-info"
-                                                        >
-                                                            {isFetchingCompanyInfo ? (
-                                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                            ) : (
-                                                                <Search className="h-4 w-4" />
-                                                            )}
-                                                            <span className="ml-2 hidden md:inline">분석</span>
+                                                    <Link href="/profile">
+                                                        <Button size="sm" variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-100">
+                                                            프로필 작성하기
                                                         </Button>
-                                                    </div>
-                                                    <p className="text-xs text-[#8B95A1]">
-                                                        AI가 웹페이지에서 회사/학교의 미션, 가치, 문화 등을 자동으로 분석합니다
-                                                    </p>
-                                                </div>
+                                                    </Link>
+                                                </AlertDescription>
+                                            </Alert>
+                                        );
+                                    }
+                                    return null;
+                                })()}
 
-                                                {companyFetchError && (
-                                                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">
-                                                        <XCircle className="h-4 w-4 shrink-0" />
-                                                        {companyFetchError}
-                                                    </div>
-                                                )}
-
-                                                {companyInfo && (
-                                                    <div className="p-4 bg-green-50 border border-green-100 rounded-lg space-y-2">
-                                                        <div className="flex items-center gap-2 text-green-700 font-medium">
-                                                            <CheckCircle className="h-4 w-4" />
-                                                            기관 정보 분석 완료
-                                                        </div>
-                                                        {companyInfo.name && (
-                                                            <p className="text-sm text-green-600">
-                                                                <span className="font-medium">기관명:</span> {companyInfo.name}
-                                                            </p>
-                                                        )}
-                                                        {companyInfo.description && (
-                                                            <p className="text-sm text-green-600 line-clamp-2">
-                                                                <span className="font-medium">소개:</span> {companyInfo.description}
-                                                            </p>
-                                                        )}
-                                                        {companyInfo.values && companyInfo.values.length > 0 && (
-                                                            <div className="flex flex-wrap gap-1 mt-2">
-                                                                {companyInfo.values.slice(0, 4).map((value: string, i: number) => (
-                                                                    <span key={i} className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                                                                        {value}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                        {companyInfo.industryKeywords && companyInfo.industryKeywords.length > 0 && (
-                                                            <div className="flex flex-wrap gap-1 mt-1">
-                                                                {companyInfo.industryKeywords.slice(0, 6).map((kw: string, i: number) => (
-                                                                    <span key={i} className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded">
-                                                                        #{kw}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
+                                {/* Target Company/School Info Section - MANDATORY */}
+                                <Card className="bg-gradient-to-br from-blue-50 to-white border-2 border-[#3182F6] overflow-hidden shadow-sm">
+                                    <div className="p-4">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="p-2 rounded-lg bg-[#3182F6]">
+                                                <Building2 className="h-5 w-5 text-white" />
                                             </div>
-                                        </CollapsibleContent>
-                                    </Collapsible>
+                                            <div>
+                                                <h4 className="font-bold text-[#191F28] flex items-center gap-2">
+                                                    지원 대상 정보 입력
+                                                    <Badge className="text-xs bg-red-500 text-white border-none">
+                                                        필수
+                                                    </Badge>
+                                                </h4>
+                                                <p className="text-xs text-[#4E5968] mt-0.5">
+                                                    지원하는 회사/학교 정보를 입력해야 자기소개서를 생성할 수 있습니다
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="grid gap-4 md:grid-cols-2">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="targetName" className="text-sm font-medium text-[#4E5968]">
+                                                        회사/학교명 <span className="text-red-500">*</span>
+                                                    </Label>
+                                                    <Input
+                                                        id="targetName"
+                                                        placeholder="예: 삼성전자, 서울대학교"
+                                                        value={targetName}
+                                                        onChange={(e) => setTargetName(e.target.value)}
+                                                        className={cn(
+                                                            "border-[#E5E8EB] focus:border-[#3182F6]",
+                                                            !targetName.trim() && "border-red-200 bg-red-50/30"
+                                                        )}
+                                                        data-testid="input-target-name"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="targetPosition" className="text-sm font-medium text-[#4E5968]">
+                                                        지원 직무/학과
+                                                    </Label>
+                                                    <Input
+                                                        id="targetPosition"
+                                                        placeholder="예: 소프트웨어 개발, 경영학과"
+                                                        value={targetPosition}
+                                                        onChange={(e) => setTargetPosition(e.target.value)}
+                                                        className="border-[#E5E8EB] focus:border-[#3182F6]"
+                                                        data-testid="input-target-position"
+                                                    />
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="space-y-2">
+                                                <Label htmlFor="targetUrl" className="text-sm font-medium text-[#4E5968]">
+                                                    회사/학교 웹사이트 URL (선택)
+                                                </Label>
+                                                <div className="flex gap-2">
+                                                    <div className="relative flex-1">
+                                                        <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
+                                                        <Input
+                                                            id="targetUrl"
+                                                            placeholder="https://company.com/about"
+                                                            value={targetUrl}
+                                                            onChange={(e) => {
+                                                                setTargetUrl(e.target.value);
+                                                                setCompanyFetchError(null);
+                                                            }}
+                                                            className="pl-9 border-[#E5E8EB] focus:border-[#3182F6]"
+                                                            data-testid="input-target-url"
+                                                        />
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        onClick={handleFetchCompanyInfo}
+                                                        disabled={isFetchingCompanyInfo || !targetUrl.trim()}
+                                                        className="bg-[#3182F6] hover:bg-[#1565C0] shrink-0"
+                                                        data-testid="button-fetch-company-info"
+                                                    >
+                                                        {isFetchingCompanyInfo ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Search className="h-4 w-4" />
+                                                        )}
+                                                        <span className="ml-2 hidden md:inline">분석</span>
+                                                    </Button>
+                                                </div>
+                                                <p className="text-xs text-[#8B95A1]">
+                                                    URL을 입력하면 AI가 웹페이지에서 기관 정보를 자동으로 분석합니다
+                                                </p>
+                                            </div>
+
+                                            {companyFetchError && (
+                                                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-600">
+                                                    <XCircle className="h-4 w-4 shrink-0" />
+                                                    {companyFetchError}
+                                                </div>
+                                            )}
+
+                                            {companyInfo && (
+                                                <div className="p-4 bg-green-50 border border-green-100 rounded-lg space-y-2">
+                                                    <div className="flex items-center gap-2 text-green-700 font-medium">
+                                                        <CheckCircle className="h-4 w-4" />
+                                                        기관 정보 분석 완료
+                                                    </div>
+                                                    {companyInfo.name && (
+                                                        <p className="text-sm text-green-600">
+                                                            <span className="font-medium">기관명:</span> {companyInfo.name}
+                                                        </p>
+                                                    )}
+                                                    {companyInfo.description && (
+                                                        <p className="text-sm text-green-600 line-clamp-2">
+                                                            <span className="font-medium">소개:</span> {companyInfo.description}
+                                                        </p>
+                                                    )}
+                                                    {companyInfo.values && companyInfo.values.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                            {companyInfo.values.slice(0, 4).map((value: string, i: number) => (
+                                                                <span key={i} className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                                                                    {value}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    {companyInfo.industryKeywords && companyInfo.industryKeywords.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                            {companyInfo.industryKeywords.slice(0, 6).map((kw: string, i: number) => (
+                                                                <span key={i} className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded">
+                                                                    #{kw}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </Card>
 
                                 <div className="grid gap-4">
@@ -1063,8 +1182,8 @@ export default function PersonalStatement() {
                                                         {agent.desc}
                                                     </p>
 
-                                                    {/* Required Fields Tag */}
-                                                    <div className="flex gap-2 mt-3">
+                                                    {/* Required Fields Tag - using Korean labels */}
+                                                    <div className="flex flex-wrap gap-2 mt-3">
                                                         {agent.requiredFields.map(
                                                             (field) => (
                                                                 <span
@@ -1072,7 +1191,7 @@ export default function PersonalStatement() {
                                                                     className="text-[10px] px-2 py-1 rounded-md bg-[#F9FAFB] text-[#8B95A1] border border-[#E5E8EB]"
                                                                 >
                                                                     필요:{" "}
-                                                                    {field}
+                                                                    {getFieldLabel(field)}
                                                                 </span>
                                                             ),
                                                         )}

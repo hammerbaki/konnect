@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { 
     Brain, Sparkles, Loader2, ArrowRight, 
     Briefcase, TrendingUp, School, GraduationCap, 
@@ -28,6 +29,72 @@ import { useTokens } from "@/lib/TokenContext";
 import { Bot } from "lucide-react";
 
 const ANALYSIS_CREDIT_COST = 100;
+
+// Field names to user-friendly Korean labels mapping
+const FIELD_LABELS: Record<string, string> = {
+    // High school fields
+    high_hopeUniversity: "희망 대학",
+    high_careerHope: "진로 희망",
+    high_favoriteSubject: "좋아하는 과목",
+    high_dreamJob: "희망 직업",
+    // University fields
+    univ_majorName: "전공 (학과명)",
+    univ_desiredIndustry: "희망 산업",
+    univ_desiredRole: "희망 직무",
+    // General fields
+    gen_desiredIndustry: "희망 산업 분야",
+    gen_desiredRole: "희망 직무",
+    gen_skills: "보유 핵심 스킬",
+};
+
+// Minimum required fields for meaningful analysis by profile type
+const MINIMUM_REQUIRED_FIELDS: Record<string, { fields: string[]; description: string }> = {
+    high: {
+        fields: ["high_hopeUniversity", "high_careerHope"],
+        description: "희망 대학과 진로 희망을 입력해야 분석을 실행할 수 있습니다.",
+    },
+    university: {
+        fields: ["univ_majorName", "univ_desiredIndustry"],
+        description: "전공과 희망 산업을 입력해야 분석을 실행할 수 있습니다.",
+    },
+    general: {
+        fields: ["gen_desiredIndustry", "gen_desiredRole"],
+        description: "희망 산업과 희망 직무를 입력해야 분석을 실행할 수 있습니다.",
+    },
+};
+
+// Validate if profile has minimum required fields for analysis
+function validateProfileForAnalysis(profileType: string, profileData: any): { 
+    isValid: boolean; 
+    missingFields: { key: string; label: string }[];
+    message: string;
+} {
+    const requirements = MINIMUM_REQUIRED_FIELDS[profileType];
+    if (!requirements) {
+        return { isValid: true, missingFields: [], message: "" };
+    }
+    
+    const missingFields: { key: string; label: string }[] = [];
+    
+    for (const field of requirements.fields) {
+        const value = profileData?.[field];
+        const isEmpty = value === undefined || value === null || value === "" || 
+            (Array.isArray(value) && value.length === 0);
+        
+        if (isEmpty) {
+            missingFields.push({
+                key: field,
+                label: FIELD_LABELS[field] || field,
+            });
+        }
+    }
+    
+    return {
+        isValid: missingFields.length === 0,
+        missingFields,
+        message: missingFields.length > 0 ? requirements.description : "",
+    };
+}
 
 interface CareerActions {
     portfolio: string[];
@@ -303,6 +370,17 @@ export default function Analysis() {
             return;
         }
         
+        // Validate profile has minimum required fields
+        const profileValidation = validateProfileForAnalysis(activeProfile.type, activeProfile.profileData);
+        if (!profileValidation.isValid) {
+            toast({ 
+                variant: "destructive", 
+                title: "프로필 정보 부족",
+                description: `다음 필드를 먼저 입력해주세요: ${profileValidation.missingFields.map(f => f.label).join(", ")}` 
+            });
+            return;
+        }
+        
         // Show immediate feedback
         setIsSubmitting(true);
         
@@ -326,6 +404,11 @@ export default function Analysis() {
             // onError in useAIJob will handle restoring credits using the ref flag
         }
     };
+    
+    // Get profile validation status for display
+    const profileValidation = activeProfile 
+        ? validateProfileForAnalysis(activeProfile.type, activeProfile.profileData) 
+        : { isValid: true, missingFields: [], message: "" };
     
     // Reset isSubmitting when job starts processing
     useEffect(() => {
@@ -643,10 +726,29 @@ export default function Analysis() {
                     <p className="text-sm text-[#8B95A1] text-center mb-6 max-w-md">
                         프로필 정보를 바탕으로 맞춤형 진로 분석을 제공합니다
                     </p>
+                    
+                    {!profileValidation.isValid && activeProfile && (
+                        <Alert variant="destructive" className="mb-6 max-w-md">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>프로필 정보 부족</AlertTitle>
+                            <AlertDescription>
+                                분석을 실행하려면 다음 정보를 입력해주세요:
+                                <ul className="mt-2 list-disc list-inside">
+                                    {profileValidation.missingFields.map(field => (
+                                        <li key={field.key}>{field.label}</li>
+                                    ))}
+                                </ul>
+                                <Link href="/profile" className="inline-flex items-center mt-2 text-sm font-medium underline">
+                                    프로필 수정하기 <ChevronRight className="h-3 w-3 ml-1" />
+                                </Link>
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    
                     <Button 
                         onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
-                        disabled={isCurrentProfileAnalyzing || isSubmitting || !activeProfileId}
-                        className="h-12 px-8 rounded-xl bg-[#3182F6] text-white font-bold"
+                        disabled={isCurrentProfileAnalyzing || isSubmitting || !activeProfileId || !profileValidation.isValid}
+                        className="h-12 px-8 rounded-xl bg-[#3182F6] text-white font-bold disabled:opacity-50"
                         data-testid="button-generate-analysis"
                     >
                         {isSubmitting ? (
@@ -669,6 +771,25 @@ export default function Analysis() {
 
         return (
             <div className="space-y-6">
+                {/* Profile validation warning - show even when analysis exists */}
+                {!profileValidation.isValid && activeProfile && (
+                    <Alert variant="destructive" className="mb-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>프로필 정보 부족</AlertTitle>
+                        <AlertDescription>
+                            다시 분석하려면 다음 정보를 입력해주세요:
+                            <ul className="mt-2 list-disc list-inside">
+                                {profileValidation.missingFields.map(field => (
+                                    <li key={field.key}>{field.label}</li>
+                                ))}
+                            </ul>
+                            <Link href="/profile" className="inline-flex items-center mt-2 text-sm font-medium underline">
+                                프로필 수정하기 <ChevronRight className="h-3 w-3 ml-1" />
+                            </Link>
+                        </AlertDescription>
+                    </Alert>
+                )}
+                
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-xl font-bold text-[#191F28]">분석 결과</h2>
@@ -678,9 +799,9 @@ export default function Analysis() {
                     </div>
                     <Button 
                         onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
-                        disabled={isCurrentProfileAnalyzing || isSubmitting}
+                        disabled={isCurrentProfileAnalyzing || isSubmitting || !profileValidation.isValid}
                         variant="outline"
-                        className="rounded-xl border-[#3182F6] text-[#3182F6]"
+                        className="rounded-xl border-[#3182F6] text-[#3182F6] disabled:opacity-50"
                         data-testid="button-regenerate-analysis"
                     >
                         {isSubmitting ? (
