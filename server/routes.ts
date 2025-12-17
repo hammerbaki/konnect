@@ -1457,6 +1457,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get recent AI jobs for admin with progress info
+  app.get('/api/admin/jobs/recent', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const jobs = await storage.getRecentAiJobsForAdmin(limit);
+      
+      const jobsWithProgress = jobs.map(job => {
+        let estimatedProgress = job.progress || 0;
+        
+        if (job.status === 'processing' && job.startedAt) {
+          const startTime = job.startedAt instanceof Date 
+            ? job.startedAt.getTime() 
+            : new Date(job.startedAt).getTime();
+          const elapsed = Date.now() - startTime;
+          const estimatedDuration = job.type === 'goal' ? 15000 : 45000;
+          estimatedProgress = Math.min(90, 10 + (elapsed / estimatedDuration) * 80);
+        } else if (job.status === 'completed') {
+          estimatedProgress = 100;
+        } else if (job.status === 'queued') {
+          estimatedProgress = 5;
+        }
+        
+        return {
+          ...job,
+          estimatedProgress: Math.round(estimatedProgress),
+        };
+      });
+      
+      res.json(jobsWithProgress);
+    } catch (error: any) {
+      console.error("Error fetching recent jobs:", error);
+      res.status(500).json({ message: "작업 목록 조회 중 오류가 발생했습니다." });
+    }
+  });
+
   // Get traffic stats (admin/staff can view)
   app.get('/api/admin/stats/traffic', isAuthenticated, requireStaffOrAdmin, async (_req, res) => {
     try {

@@ -115,6 +115,7 @@ export interface IStorage {
   updateAiJobStatus(id: string, status: AiJobStatus, progress?: number): Promise<AiJob>;
   updateAiJobResult(id: string, result: any): Promise<AiJob>;
   updateAiJobError(id: string, error: string): Promise<AiJob>;
+  getRecentAiJobsForAdmin(limit?: number): Promise<Array<AiJob & { user: { email: string | null; displayName: string | null } | null }>>;
 
   // Admin functions
   getAllUsers(): Promise<User[]>;
@@ -572,6 +573,49 @@ export class DatabaseStorage implements IStorage {
       .where(eq(aiJobs.id, id))
       .returning();
     return job;
+  }
+
+  async getRecentAiJobsForAdmin(limit: number = 50): Promise<Array<AiJob & { user: { email: string | null; displayName: string | null } | null }>> {
+    const jobs = await db
+      .select({
+        id: aiJobs.id,
+        userId: aiJobs.userId,
+        profileId: aiJobs.profileId,
+        type: aiJobs.type,
+        status: aiJobs.status,
+        progress: aiJobs.progress,
+        payload: aiJobs.payload,
+        result: aiJobs.result,
+        error: aiJobs.error,
+        queuedAt: aiJobs.queuedAt,
+        startedAt: aiJobs.startedAt,
+        completedAt: aiJobs.completedAt,
+        userEmail: users.email,
+        userDisplayName: users.displayName,
+      })
+      .from(aiJobs)
+      .leftJoin(users, eq(aiJobs.userId, users.id))
+      .orderBy(desc(aiJobs.queuedAt))
+      .limit(limit);
+    
+    return jobs.map(job => ({
+      id: job.id,
+      userId: job.userId,
+      profileId: job.profileId,
+      type: job.type,
+      status: job.status,
+      progress: job.progress,
+      payload: job.payload,
+      result: job.result,
+      error: job.error,
+      queuedAt: job.queuedAt,
+      startedAt: job.startedAt,
+      completedAt: job.completedAt,
+      user: job.userEmail || job.userDisplayName ? {
+        email: job.userEmail,
+        displayName: job.userDisplayName,
+      } : null,
+    }));
   }
 
   // Admin functions
