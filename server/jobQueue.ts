@@ -178,13 +178,28 @@ export function estimateProgress(job: AiJob): number {
   if (job.status === "queued") return 5;
   
   if (job.status === "processing") {
-    if (!job.startedAt) return 10;
+    // Try to calculate progress based on elapsed time
+    if (job.startedAt) {
+      try {
+        const startTime = job.startedAt instanceof Date 
+          ? job.startedAt.getTime() 
+          : new Date(job.startedAt).getTime();
+        
+        if (!isNaN(startTime)) {
+          const elapsed = Date.now() - startTime;
+          // Use longer duration estimate for more gradual progress
+          const estimatedDuration = job.type === "goal" ? 15000 : 45000;
+          const progress = Math.min(90, 10 + (elapsed / estimatedDuration) * 80);
+          return Math.round(progress);
+        }
+      } catch (e) {
+        // Fall through to stored progress
+      }
+    }
     
-    const elapsed = Date.now() - new Date(job.startedAt).getTime();
-    const estimatedDuration = job.type === "goal" ? 8000 : 20000;
-    const progress = Math.min(90, 10 + (elapsed / estimatedDuration) * 80);
-    return Math.round(progress);
+    // Fall back to stored progress value if time-based calculation fails
+    return Math.max(job.progress || 0, 10);
   }
   
-  return job.progress;
+  return job.progress || 0;
 }
