@@ -1,4 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 import type { Profile } from "@shared/schema";
 import { checkAIRateLimit, type RateLimitResult } from "./rateLimiter";
 
@@ -22,14 +24,44 @@ function isRateLimitError(error: any): boolean {
   );
 }
 
-// Simple Token Bucket Rate Limiter (no external dependencies)
+// ============================================================================
+// Shared Redis-based Claude API Rate Limiter
+// This ensures all server instances share the same 30 RPM limit
+// ============================================================================
+
+const isDevelopment = process.env.NODE_ENV !== "production";
+
+// Initialize Redis for shared rate limiting
+let sharedRedis: Redis | null = null;
+let sharedClaudeLimiter: Ratelimit | null = null;
+
+try {
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL || '';
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || '';
+  
+  if (redisUrl && redisToken && !isDevelopment) {
+    sharedRedis = new Redis({ url: redisUrl, token: redisToken });
+    // Shared limiter: 30 requests per minute across all instances
+    sharedClaudeLimiter = new Ratelimit({
+      redis: sharedRedis,
+      limiter: Ratelimit.slidingWindow(30, "1 m"),
+      analytics: false,
+      prefix: "ratelimit:claude:api",
+    });
+    console.log("✓ Shared Redis-based Claude API rate limiter initialized (30 RPM)");
+  } else {
+    console.log("Development mode: Using in-memory Claude rate limiter");
+  }
+} catch (err) {
+  console.error("Error initializing shared Claude rate limiter (non-fatal):", err);
+}
+
+// Fallback in-memory Token Bucket for when Redis is unavailable
 class TokenBucket {
   private tokens: number;
   private lastRefill: number;
   private readonly capacity: number;
-  private readonly refillRate: number; // tokens per second
-  private queue: Array<{ resolve: () => void; reject: (err: Error) => void }> = [];
-  private processing = false;
+  private readonly refillRate: number;
 
   constructor(capacity: number, intervalSeconds: number) {
     this.capacity = capacity;
@@ -58,7 +90,6 @@ class TokenBucket {
           return true;
         }
         
-        // Check timeout
         if (Date.now() - startTime > timeout) {
           reject(new Error('Rate limit timeout'));
           return true;
@@ -69,11 +100,9 @@ class TokenBucket {
 
       if (tryAcquire()) return;
 
-      // Queue the request
       const waitTime = Math.ceil((1 - this.tokens) / this.refillRate * 1000);
       setTimeout(() => {
         if (!tryAcquire()) {
-          // Retry with shorter interval
           const interval = setInterval(() => {
             if (tryAcquire()) {
               clearInterval(interval);
@@ -85,12 +114,57 @@ class TokenBucket {
   }
 }
 
-// Claude API rate limiting: 30 requests per minute
-const claudeBucket = new TokenBucket(30, 60);
+// Fallback bucket for development or when Redis fails
+const fallbackBucket = new TokenBucket(30, 60);
 
-// Throttle a Claude API call through the token bucket
-async function throttleClaudeCall<T>(fn: () => Promise<T>): Promise<T> {
-  await claudeBucket.throttle();
+/**
+ * Throttle a Claude API call through the shared rate limiter.
+ * Uses Redis-based limiter in production for cross-instance coordination.
+ * Falls back to in-memory token bucket in development or if Redis fails.
+ */
+async function throttleClaudeCall<T>(fn: () => Promise<T>, retryCount = 0): Promise<T> {
+  const MAX_RETRIES = 5;
+  const MAX_WAIT_MS = 60000; // Max 1 minute wait
+  
+  // Try shared Redis limiter first (production)
+  if (sharedClaudeLimiter) {
+    try {
+      const result = await sharedClaudeLimiter.limit("claude-api");
+      
+      if (!result.success) {
+        if (retryCount >= MAX_RETRIES) {
+          throw new Error('Claude API rate limit exceeded after max retries');
+        }
+        
+        // Calculate wait time with exponential backoff
+        const waitMs = Math.min(
+          Math.max(0, result.reset - Date.now()),
+          MAX_WAIT_MS
+        );
+        // Add jitter to prevent thundering herd
+        const jitter = Math.random() * 1000;
+        const actualWait = Math.min(waitMs + jitter, MAX_WAIT_MS);
+        
+        console.log(`Claude API rate limit hit, waiting ${Math.round(actualWait)}ms (retry ${retryCount + 1}/${MAX_RETRIES})`);
+        
+        await new Promise(resolve => setTimeout(resolve, actualWait));
+        // Retry with incremented counter
+        return throttleClaudeCall(fn, retryCount + 1);
+      }
+      
+      return fn();
+    } catch (error) {
+      // If it's a rate limit error, re-throw it
+      if (error instanceof Error && error.message.includes('rate limit')) {
+        throw error;
+      }
+      // Redis connection failed, fall through to in-memory limiter
+      console.warn("Shared rate limiter failed, using fallback:", error);
+    }
+  }
+  
+  // Fallback to in-memory token bucket
+  await fallbackBucket.throttle();
   return fn();
 }
 

@@ -20,7 +20,7 @@ interface AIJobResponse {
 
 interface SubmitJobResponse {
   jobId: string;
-  immediate: boolean;
+  immediate?: boolean; // Deprecated - jobs are now always queued
   status: string;
 }
 
@@ -143,12 +143,17 @@ export function useAIJob(options: UseAIJobOptions = {}) {
       setJobId(response.jobId);
       addJob(response.jobId, type, profileId || undefined);
       
-      if (response.immediate) {
+      // Set initial status based on server response
+      // If immediate/processing, job started right away; otherwise it's queued
+      if (response.immediate || response.status === "processing") {
         setStatus("processing");
         setProgress(10);
+      } else {
+        setStatus("queued");
+        setProgress(5);
       }
       
-      // Start polling with real job ID
+      // Start polling with real job ID - this will update status as job progresses
       startPolling(response.jobId);
       
       return response.jobId;

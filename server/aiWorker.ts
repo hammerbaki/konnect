@@ -1,5 +1,6 @@
 import { storage } from "./storage";
 import { 
+  enqueueJob,
   dequeueJob, 
   markJobProcessing, 
   markJobDone, 
@@ -89,6 +90,8 @@ let isWorkerRunning = false;
 const POLL_INTERVAL = 30000; // 30 seconds to reduce Redis usage
 const FAST_POLL_INTERVAL = 2000; // 2 seconds when there are active jobs
 let lastHadWork = false;
+let currentTimer: NodeJS.Timeout | null = null; // Track the current timeout
+let pollFn: (() => Promise<void>) | null = null; // Store reference to poll function
 
 export async function processJob(job: AiJob): Promise<any> {
   const type = job.type as AiJobType;
@@ -173,6 +176,9 @@ export async function processJob(job: AiJob): Promise<any> {
     await storage.updateAiJobResult(job.id, result);
     await markJobDone(job.id);
     
+    // Wake worker to process any queued jobs now that capacity is freed
+    wakeWorker();
+    
     // Create notification for completed job
     await createJobCompletionNotification(job);
     
@@ -181,56 +187,85 @@ export async function processJob(job: AiJob): Promise<any> {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     await storage.updateAiJobError(job.id, errorMessage);
     await markJobDone(job.id);
+    
+    // Wake worker to process any queued jobs now that capacity is freed
+    wakeWorker();
+    
     throw error;
   }
 }
 
-async function processNextJob(type: AiJobType): Promise<boolean> {
+interface ProcessResult {
+  processed: boolean;  // Did we successfully process a job?
+  sawWork: boolean;    // Did we see queued jobs or hit capacity limits?
+}
+
+async function processNextJob(queueType: AiJobType): Promise<ProcessResult> {
   const stats = await getQueueStats();
-  const typeStats = stats[type];
   
-  const concurrencyLimits: Record<AiJobType, number> = {
-    goal: 6,
-    essay: 2,
-    essay_revision: 2,
-    analysis: 2,
-  };
+  // Check if there's any work in the system (queued or processing)
+  const hasQueuedJobs = stats.goal.queued > 0 || stats.essay.queued > 0 || stats.analysis.queued > 0;
+  const hasProcessingJobs = stats.totalProcessing > 0;
+  const sawWork = hasQueuedJobs || hasProcessingJobs;
   
-  if (stats.totalProcessing >= 8) {
-    return false;
+  // Global limit check
+  if (stats.totalProcessing >= GLOBAL_LIMIT) {
+    return { processed: false, sawWork };
   }
   
-  if (typeStats.processing >= concurrencyLimits[type]) {
-    return false;
+  // For essay queue, check combined essay + essay_revision processing count
+  // since they share the same queue and concurrency limit
+  if (queueType === "essay") {
+    const combinedProcessing = stats.essay.processing; // Already includes essay_revision (see getQueueStats)
+    if (combinedProcessing >= CONCURRENCY_LIMITS.essay) {
+      return { processed: false, sawWork };
+    }
+  } else {
+    const typeStats = stats[queueType];
+    if (typeStats.processing >= CONCURRENCY_LIMITS[queueType]) {
+      return { processed: false, sawWork };
+    }
   }
   
-  const jobId = await dequeueJob(type);
+  const jobId = await dequeueJob(queueType);
   if (!jobId) {
-    return false;
+    // No jobs in this queue, but there might be work in other queues
+    return { processed: false, sawWork };
   }
   
   const job = await storage.getAiJob(jobId);
   if (!job || job.status !== "queued") {
-    return false;
+    // Job not found or already processed, but we still saw work
+    return { processed: false, sawWork: true };
   }
   
+  // Process the job - uses job.type (could be essay or essay_revision)
   processJob(job).catch(err => {
     console.error(`Job ${jobId} failed:`, err);
   });
   
-  return true;
+  return { processed: true, sawWork: true };
 }
 
-async function workerLoop(): Promise<boolean> {
-  const types: AiJobType[] = ["goal", "essay", "essay_revision", "analysis"];
+async function workerLoop(): Promise<{ didWork: boolean; hasActiveWork: boolean }> {
+  // Note: essay_revision shares queue with essay, so only process unique queues
+  // When we dequeue from essay queue, we check the actual job type for proper handling
+  const types: AiJobType[] = ["goal", "essay", "analysis"];
   let didWork = false;
+  let sawWork = false;
   
   for (const type of types) {
-    const processed = await processNextJob(type);
-    if (processed) didWork = true;
+    const result = await processNextJob(type);
+    if (result.processed) didWork = true;
+    if (result.sawWork) sawWork = true;
   }
   
-  return didWork;
+  // Use local knowledge from processNextJob calls to determine if there's active work
+  // This avoids a second stats fetch that could race and give stale results
+  // hasActiveWork = true if any processNextJob saw queued jobs or processing jobs
+  const hasActiveWork = didWork || sawWork;
+  
+  return { didWork, hasActiveWork };
 }
 
 export function startWorker(): void {
@@ -244,32 +279,89 @@ export function startWorker(): void {
   const poll = async () => {
     if (!isWorkerRunning) return;
     
+    // Mark poll as in progress to prevent duplicate polls from wakeWorker
+    pollInProgress = true;
+    
+    // Clear any pending timer reference
+    currentTimer = null;
+    
+    let shouldUseFastPoll = false;
     try {
-      const didWork = await workerLoop();
-      lastHadWork = didWork;
+      const result = await workerLoop();
+      lastHadWork = result.didWork;
+      // Use fast polling if there's any active work (queued, processing, or just completed)
+      shouldUseFastPoll = result.hasActiveWork;
     } catch (error) {
       console.error("Worker loop error:", error);
     }
     
-    // Use faster polling when there's active work, slower when idle
-    const interval = lastHadWork ? FAST_POLL_INTERVAL : POLL_INTERVAL;
-    setTimeout(poll, interval);
+    // Mark poll as complete before scheduling next
+    pollInProgress = false;
+    
+    // Use faster polling when there's active work, slower when truly idle
+    const interval = shouldUseFastPoll ? FAST_POLL_INTERVAL : POLL_INTERVAL;
+    currentTimer = setTimeout(poll, interval);
   };
   
+  // Store reference to poll function for wakeWorker
+  pollFn = poll;
+  
+  // Start polling immediately
   poll();
 }
 
 export function stopWorker(): void {
   isWorkerRunning = false;
+  if (currentTimer) {
+    clearTimeout(currentTimer);
+    currentTimer = null;
+  }
   console.log("AI job worker stopped");
 }
 
-export async function submitJobWithFastPath(
+// Track if a wake/poll is already scheduled or running to prevent duplicate polls
+let pollInProgress = false;
+let wakeScheduled = false;
+
+/**
+ * Signal the worker to wake up and process queued jobs immediately.
+ * Cancels any pending sleep timer and runs the worker loop now.
+ * Safe to call from any context - handles both active and idle worker states.
+ */
+export function wakeWorker(): void {
+  if (!isWorkerRunning || !pollFn) return;
+  
+  // Don't schedule if a wake is already scheduled or poll is in progress
+  if (wakeScheduled || pollInProgress) return;
+  wakeScheduled = true;
+  
+  // Cancel the current sleep timer if it exists
+  if (currentTimer) {
+    clearTimeout(currentTimer);
+    currentTimer = null;
+  }
+  
+  // Run the poll immediately
+  setImmediate(() => {
+    wakeScheduled = false;
+    if (pollFn && isWorkerRunning && !pollInProgress) {
+      pollFn();
+    }
+  });
+}
+
+/**
+ * Submit a job to the queue for background processing.
+ * Uses a hybrid approach: processes immediately if capacity allows, otherwise queues.
+ * Returns immediately with job ID - processing happens async.
+ */
+export async function submitQueuedJob(
   userId: string,
   profileId: string | null,
   type: AiJobType,
   payload: any
-): Promise<{ jobId: string; immediate: boolean }> {
+): Promise<{ jobId: string; status: "queued" | "processing" }> {
+  // Create job record in database
   const job = await storage.createAiJob({
     userId,
     profileId,
@@ -279,12 +371,40 @@ export async function submitJobWithFastPath(
     payload,
   });
   
-  // Always process immediately - don't rely on background worker in autoscale
-  // The worker may not be running in serverless/autoscale deployments
-  console.log(`Processing job ${job.id} immediately (type: ${type})`);
-  processJob(job).catch(err => {
-    console.error(`Immediate job ${job.id} failed:`, err);
-  });
+  // Ensure worker is running (idempotent - won't restart if already running)
+  startWorker();
   
-  return { jobId: job.id, immediate: true };
+  // Check if we can process immediately (fast path for good UX)
+  const canProcessNow = await canProcessImmediately(type);
+  
+  if (canProcessNow) {
+    // Process immediately in background - no queue delay
+    console.log(`Job ${job.id} starting immediately (type: ${type})`);
+    processJob(job).catch(err => {
+      console.error(`Job ${job.id} failed:`, err);
+    });
+    return { jobId: job.id, status: "processing" };
+  }
+  
+  // Queue for background processing
+  await enqueueJob(job.id, type);
+  console.log(`Job ${job.id} queued for background processing (type: ${type})`);
+  
+  // Wake the worker to process the job immediately (instead of waiting for 30s idle timer)
+  wakeWorker();
+  
+  return { jobId: job.id, status: "queued" };
+}
+
+/**
+ * @deprecated Use submitQueuedJob instead. Kept for backward compatibility.
+ */
+export async function submitJobWithFastPath(
+  userId: string,
+  profileId: string | null,
+  type: AiJobType,
+  payload: any
+): Promise<{ jobId: string; immediate: boolean }> {
+  const result = await submitQueuedJob(userId, profileId, type, payload);
+  return { jobId: result.jobId, immediate: false };
 }

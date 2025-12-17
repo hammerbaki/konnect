@@ -17,7 +17,7 @@ import {
 import { z } from "zod";
 import { generateCareerAnalysis, generatePersonalEssay, generateGoals, type GoalLevel, checkAIRateLimit } from "./ai";
 import { createRateLimitMiddleware, checkRedisConnection, redis } from "./rateLimiter";
-import { startWorker, submitJobWithFastPath } from "./aiWorker";
+import { startWorker, submitQueuedJob } from "./aiWorker";
 import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
 import { desc } from "drizzle-orm";
@@ -949,8 +949,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
       }
 
-      // Submit job to queue instead of processing directly
-      const { jobId, immediate } = await submitJobWithFastPath(
+      // Submit job to queue for background processing
+      const { jobId, status } = await submitQueuedJob(
         userId,
         req.params.profileId,
         "essay",
@@ -962,10 +962,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       );
 
+      // Return status from queue (processing if immediate, queued if waiting)
       res.status(202).json({ 
         jobId,
-        immediate,
-        message: immediate ? "자기소개서 생성을 시작합니다." : "대기열에 추가되었습니다.",
+        status,
+        immediate: status === "processing",
+        message: status === "processing" ? "자기소개서 생성을 시작합니다." : "대기열에 추가되었습니다.",
       });
     } catch (error) {
       console.error("Error generating essay:", error);
@@ -1199,17 +1201,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      const result = await submitJobWithFastPath(
+      const result = await submitQueuedJob(
         userId,
         profileId || null,
         type as AiJobType,
         payload
       );
       
+      // Return status from queue (processing if immediate, queued if waiting)
       res.json({
         jobId: result.jobId,
-        immediate: result.immediate,
-        status: result.immediate ? 'processing' : 'queued',
+        status: result.status,
+        immediate: result.status === "processing",
       });
     } catch (error: any) {
       console.error("Error submitting AI job:", error);
