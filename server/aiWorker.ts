@@ -40,14 +40,14 @@ function getNotificationDetails(
         notificationType: "essay_complete",
         title: "자기소개서 생성 완료",
         message: `'${displayName}' 프로필의 자기소개서가 생성되었습니다. 결과를 확인해 보세요!`,
-        linkUrl: profileId ? `/essays?profile=${profileId}` : "/essays",
+        linkUrl: profileId ? `/personal-statement?profile=${profileId}` : "/personal-statement",
       };
     case "essay_revision":
       return {
         notificationType: "essay_complete",
         title: "자기소개서 수정 완료",
         message: "AI 자기소개서 수정이 완료되었습니다. 결과를 확인해 보세요!",
-        linkUrl: "/essays",
+        linkUrl: "/personal-statement",
       };
     case "goal":
       return {
