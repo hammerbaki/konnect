@@ -114,7 +114,14 @@ export interface IStorage {
   getAiJobsByUser(userId: string): Promise<AiJob[]>;
   getPendingJobs(type?: string): Promise<AiJob[]>;
   updateAiJobStatus(id: string, status: AiJobStatus, progress?: number): Promise<AiJob>;
-  updateAiJobResult(id: string, result: any): Promise<AiJob>;
+  updateAiJobResult(id: string, result: any, tokenUsage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
+    totalTokens?: number;
+    estimatedCostCents?: number;
+  }): Promise<AiJob>;
   updateAiJobError(id: string, error: string): Promise<AiJob>;
   getRecentAiJobsForAdmin(limit?: number): Promise<Array<AiJob & { user: { email: string | null; displayName: string | null } | null }>>;
 
@@ -559,15 +566,33 @@ export class DatabaseStorage implements IStorage {
     return job;
   }
 
-  async updateAiJobResult(id: string, result: any): Promise<AiJob> {
+  async updateAiJobResult(id: string, result: any, tokenUsage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
+    totalTokens?: number;
+    estimatedCostCents?: number;
+  }): Promise<AiJob> {
+    const updateData: Record<string, any> = { 
+      result, 
+      status: 'completed' as AiJobStatus, 
+      progress: 100,
+      completedAt: new Date() 
+    };
+    
+    if (tokenUsage) {
+      if (tokenUsage.inputTokens !== undefined) updateData.inputTokens = tokenUsage.inputTokens;
+      if (tokenUsage.outputTokens !== undefined) updateData.outputTokens = tokenUsage.outputTokens;
+      if (tokenUsage.cacheReadTokens !== undefined) updateData.cacheReadTokens = tokenUsage.cacheReadTokens;
+      if (tokenUsage.cacheWriteTokens !== undefined) updateData.cacheWriteTokens = tokenUsage.cacheWriteTokens;
+      if (tokenUsage.totalTokens !== undefined) updateData.totalTokens = tokenUsage.totalTokens;
+      if (tokenUsage.estimatedCostCents !== undefined) updateData.estimatedCostCents = tokenUsage.estimatedCostCents;
+    }
+    
     const [job] = await db
       .update(aiJobs)
-      .set({ 
-        result, 
-        status: 'completed' as AiJobStatus, 
-        progress: 100,
-        completedAt: new Date() 
-      })
+      .set(updateData)
       .where(eq(aiJobs.id, id))
       .returning();
     return job;
@@ -598,6 +623,12 @@ export class DatabaseStorage implements IStorage {
         payload: aiJobs.payload,
         result: aiJobs.result,
         error: aiJobs.error,
+        inputTokens: aiJobs.inputTokens,
+        outputTokens: aiJobs.outputTokens,
+        cacheReadTokens: aiJobs.cacheReadTokens,
+        cacheWriteTokens: aiJobs.cacheWriteTokens,
+        totalTokens: aiJobs.totalTokens,
+        estimatedCostCents: aiJobs.estimatedCostCents,
         queuedAt: aiJobs.queuedAt,
         startedAt: aiJobs.startedAt,
         completedAt: aiJobs.completedAt,
@@ -619,6 +650,12 @@ export class DatabaseStorage implements IStorage {
       payload: job.payload,
       result: job.result,
       error: job.error,
+      inputTokens: job.inputTokens,
+      outputTokens: job.outputTokens,
+      cacheReadTokens: job.cacheReadTokens,
+      cacheWriteTokens: job.cacheWriteTokens,
+      totalTokens: job.totalTokens,
+      estimatedCostCents: job.estimatedCostCents,
       queuedAt: job.queuedAt,
       startedAt: job.startedAt,
       completedAt: job.completedAt,

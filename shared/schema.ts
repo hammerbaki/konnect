@@ -256,6 +256,12 @@ export const aiJobs = pgTable("ai_jobs", {
   payload: jsonb("payload"), // Input data for the AI job
   result: jsonb("result"), // Output from AI
   error: text("error"), // Error message if failed
+  inputTokens: integer("input_tokens").default(0), // Claude API input tokens
+  outputTokens: integer("output_tokens").default(0), // Claude API output tokens
+  cacheReadTokens: integer("cache_read_tokens").default(0), // Claude API cache read tokens
+  cacheWriteTokens: integer("cache_write_tokens").default(0), // Claude API cache write tokens
+  totalTokens: integer("total_tokens").default(0), // Total tokens used
+  estimatedCostCents: integer("estimated_cost_cents").default(0), // Estimated cost in USD cents
   queuedAt: timestamp("queued_at").defaultNow(),
   startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),

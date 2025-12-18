@@ -198,6 +198,50 @@ async function retryWithBackoff<T>(
   throw lastError;
 }
 
+// Token usage tracking type
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  totalTokens: number;
+  estimatedCostCents: number;
+}
+
+// Claude Sonnet 4.5 pricing (as of 2024) - in dollars per million tokens
+const CLAUDE_PRICING = {
+  inputPerMillion: 3.00,  // $3 per 1M input tokens
+  outputPerMillion: 15.00, // $15 per 1M output tokens
+  cacheReadPerMillion: 0.30, // $0.30 per 1M cache read tokens
+  cacheWritePerMillion: 3.75, // $3.75 per 1M cache write tokens
+};
+
+// Extract token usage from Anthropic response
+function extractTokenUsage(message: any): TokenUsage {
+  const usage = message?.usage || {};
+  const inputTokens = usage.input_tokens || 0;
+  const outputTokens = usage.output_tokens || 0;
+  const cacheReadTokens = usage.cache_read_input_tokens || 0;
+  const cacheWriteTokens = usage.cache_creation_input_tokens || 0;
+  const totalTokens = inputTokens + outputTokens;
+  
+  // Calculate estimated cost in cents
+  const inputCost = (inputTokens / 1_000_000) * CLAUDE_PRICING.inputPerMillion * 100;
+  const outputCost = (outputTokens / 1_000_000) * CLAUDE_PRICING.outputPerMillion * 100;
+  const cacheReadCost = (cacheReadTokens / 1_000_000) * CLAUDE_PRICING.cacheReadPerMillion * 100;
+  const cacheWriteCost = (cacheWriteTokens / 1_000_000) * CLAUDE_PRICING.cacheWritePerMillion * 100;
+  const estimatedCostCents = Math.round(inputCost + outputCost + cacheReadCost + cacheWriteCost);
+  
+  return {
+    inputTokens,
+    outputTokens,
+    cacheReadTokens,
+    cacheWriteTokens,
+    totalTokens,
+    estimatedCostCents,
+  };
+}
+
 // Profile-specific system prompts for career analysis
 const getAnalysisSystemPrompt = (profileType: string): string => {
   const basePrompt = `당신은 한국의 커리어 컨설턴트 AI입니다. 사용자의 프로필을 분석하여 진로 방향을 제시합니다. 모든 응답은 한국어로 작성하세요.`;
@@ -581,6 +625,7 @@ export interface CareerAnalysisResult {
   stats: { label1: string; val1: string; label2: string; val2: string; label3: string; val3: string };
   careerRecommendations: CareerRecommendation[];
   rawResponse: string;
+  tokenUsage?: TokenUsage;
 }
 
 // Get profile-type specific context for the prompt
@@ -730,6 +775,8 @@ ${profileTypePrompt}
           ],
         });
 
+        const tokenUsage = extractTokenUsage(message);
+        
         const content = message.content[0];
         if (content.type !== "text") {
           throw new Error("Unexpected response type");
@@ -767,6 +814,7 @@ ${profileTypePrompt}
           stats: parsed.stats || { label1: "분석중", val1: "-", label2: "분석중", val2: "-", label3: "분석중", val3: "-" },
           careerRecommendations,
           rawResponse,
+          tokenUsage,
         };
       },
       {
@@ -956,6 +1004,8 @@ ${hasTarget ? `
           ],
         });
 
+        const tokenUsage = extractTokenUsage(message);
+        
         const msgContent = message.content[0];
         if (msgContent.type !== "text") {
           throw new Error("Unexpected response type");
@@ -975,6 +1025,7 @@ ${hasTarget ? `
           title: parsed.title || "자기소개서",
           content: parsed.content || "내용을 생성할 수 없습니다.",
           rawResponse,
+          tokenUsage,
         };
       },
       {
@@ -1035,6 +1086,8 @@ ${revisionRequest}
           ],
         });
 
+        const tokenUsage = extractTokenUsage(message);
+        
         const msgContent = message.content[0];
         if (msgContent.type !== "text") {
           throw new Error("Unexpected response type");
@@ -1054,6 +1107,7 @@ ${revisionRequest}
           title: parsed.title || originalTitle,
           content: parsed.content || "수정된 내용을 생성할 수 없습니다.",
           rawResponse,
+          tokenUsage,
         };
       },
       {
@@ -1183,6 +1237,8 @@ ${getLevelPrompt(level, count)}
           ],
         });
 
+        const tokenUsage = extractTokenUsage(message);
+        
         const msgContent = message.content[0];
         if (msgContent.type !== "text") {
           throw new Error("Unexpected response type");
@@ -1207,6 +1263,7 @@ ${getLevelPrompt(level, count)}
         return {
           suggestions,
           rawResponse,
+          tokenUsage,
         };
       },
       {

@@ -267,7 +267,17 @@ export async function processJob(job: AiJob): Promise<any> {
         throw new Error(`Unknown job type: ${type}`);
     }
     
-    await storage.updateAiJobResult(job.id, result);
+    // Extract token usage from result if present
+    const tokenUsage = result?.tokenUsage ? {
+      inputTokens: result.tokenUsage.inputTokens,
+      outputTokens: result.tokenUsage.outputTokens,
+      cacheReadTokens: result.tokenUsage.cacheReadTokens,
+      cacheWriteTokens: result.tokenUsage.cacheWriteTokens,
+      totalTokens: result.tokenUsage.totalTokens,
+      estimatedCostCents: result.tokenUsage.estimatedCostCents,
+    } : undefined;
+    
+    await storage.updateAiJobResult(job.id, result, tokenUsage);
     await markJobDone(job.id);
     
     // Wake worker to process any queued jobs now that capacity is freed
