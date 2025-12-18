@@ -76,6 +76,7 @@ interface RecentJob {
   startedAt: string | null;
   completedAt: string | null;
   user: { email: string | null; displayName: string | null } | null;
+  profile: { type: string | null; title: string | null } | null;
 }
 
 
@@ -1083,8 +1084,17 @@ export default function Admin() {
                                 {typeLabels[job.type] || job.type}
                               </span>
                             </div>
-                            <div className="text-xs text-[#8B95A1]">
-                              {job.user?.displayName || job.user?.email || '알 수 없음'}
+                            <div className="flex items-center gap-2 text-xs text-[#8B95A1]">
+                              <span>{job.user?.displayName || job.user?.email || '알 수 없음'}</span>
+                              {job.profile?.type && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-white">
+                                  {job.profile.type === 'high' ? '고등' : 
+                                   job.profile.type === 'university' ? '대학' : 
+                                   job.profile.type === 'general' ? '일반' :
+                                   job.profile.type === 'middle' ? '중등' :
+                                   job.profile.type === 'elementary' ? '초등' : job.profile.type}
+                                </Badge>
+                              )}
                             </div>
                           </div>
                           

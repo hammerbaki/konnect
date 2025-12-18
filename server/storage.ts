@@ -123,7 +123,7 @@ export interface IStorage {
     estimatedCostCents?: number;
   }): Promise<AiJob>;
   updateAiJobError(id: string, error: string): Promise<AiJob>;
-  getRecentAiJobsForAdmin(limit?: number): Promise<Array<AiJob & { user: { email: string | null; displayName: string | null } | null }>>;
+  getRecentAiJobsForAdmin(limit?: number): Promise<Array<AiJob & { user: { email: string | null; displayName: string | null } | null; profile: { type: string | null; title: string | null } | null }>>;
 
   // Admin functions
   getAllUsers(): Promise<User[]>;
@@ -611,7 +611,7 @@ export class DatabaseStorage implements IStorage {
     return job;
   }
 
-  async getRecentAiJobsForAdmin(limit: number = 50): Promise<Array<AiJob & { user: { email: string | null; displayName: string | null } | null }>> {
+  async getRecentAiJobsForAdmin(limit: number = 50): Promise<Array<AiJob & { user: { email: string | null; displayName: string | null } | null; profile: { type: string | null; title: string | null } | null }>> {
     const jobs = await db
       .select({
         id: aiJobs.id,
@@ -634,9 +634,12 @@ export class DatabaseStorage implements IStorage {
         completedAt: aiJobs.completedAt,
         userEmail: users.email,
         userDisplayName: users.displayName,
+        profileType: profiles.type,
+        profileTitle: profiles.title,
       })
       .from(aiJobs)
       .leftJoin(users, eq(aiJobs.userId, users.id))
+      .leftJoin(profiles, eq(aiJobs.profileId, profiles.id))
       .orderBy(desc(aiJobs.queuedAt))
       .limit(limit);
     
@@ -662,6 +665,10 @@ export class DatabaseStorage implements IStorage {
       user: job.userEmail || job.userDisplayName ? {
         email: job.userEmail,
         displayName: job.userDisplayName,
+      } : null,
+      profile: job.profileType || job.profileTitle ? {
+        type: job.profileType,
+        title: job.profileTitle,
       } : null,
     }));
   }
