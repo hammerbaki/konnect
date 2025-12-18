@@ -66,6 +66,7 @@ interface RecentJob {
   progress: number | null;
   estimatedProgress: number;
   error: string | null;
+  payload: Record<string, unknown> | null;
   inputTokens: number | null;
   outputTokens: number | null;
   cacheReadTokens: number | null;
@@ -1083,6 +1084,14 @@ export default function Admin() {
                         failed: '실패',
                       };
                       
+                      const goalLevelLabels: Record<string, string> = {
+                        year: '연간',
+                        half: '반기',
+                        month: '월간',
+                        week: '주간',
+                        day: '일간',
+                      };
+                      
                       const elapsedTime = job.startedAt 
                         ? Math.round((Date.now() - new Date(job.startedAt).getTime()) / 1000)
                         : null;
@@ -1100,6 +1109,11 @@ export default function Admin() {
                               </Badge>
                               <span className="font-medium text-[#191F28]">
                                 {typeLabels[job.type] || job.type}
+                                {job.type === 'goal' && (job.payload as any)?.level && (
+                                  <span className="text-[#8B95A1] font-normal ml-1">
+                                    ({goalLevelLabels[(job.payload as any).level] || (job.payload as any).level})
+                                  </span>
+                                )}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-[#8B95A1]">

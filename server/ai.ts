@@ -1169,6 +1169,7 @@ export async function generateGoals(
 ): Promise<{
   suggestions: GeneratedGoal[];
   rawResponse: string;
+  tokenUsage: TokenUsage;
 }> {
   return throttleClaudeCall(() =>
     retryWithBackoff(

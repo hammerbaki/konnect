@@ -1158,11 +1158,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Create AI job record for token tracking
+      const job = await storage.createAiJob({
+        userId,
+        profileId: null,
+        type: 'goal',
+        status: 'processing',
+        progress: 0,
+        payload: { level, visionTitle, visionDescription, targetYear },
+      });
+
       const result = await generateGoals(
         level as GoalLevel,
         { visionTitle, visionDescription, targetYear, ancestorChain, siblings },
         count
       );
+
+      // Save token usage to the job
+      const tokenUsage = result.tokenUsage ? {
+        inputTokens: result.tokenUsage.inputTokens,
+        outputTokens: result.tokenUsage.outputTokens,
+        cacheReadTokens: result.tokenUsage.cacheReadTokens,
+        cacheWriteTokens: result.tokenUsage.cacheWriteTokens,
+        totalTokens: result.tokenUsage.totalTokens,
+        estimatedCostCents: result.tokenUsage.estimatedCostCents,
+      } : undefined;
+      
+      await storage.updateAiJobResult(job.id, result, tokenUsage);
 
       // Return updated credits if strategic level was used
       let updatedCredits: number | undefined;
@@ -1175,6 +1197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         suggestions: result.suggestions,
         creditsUsed: goalCost,
         remainingCredits: updatedCredits,
+        tokenUsage: tokenUsage,
       });
     } catch (error: any) {
       console.error("Error generating goal suggestions:", error);
