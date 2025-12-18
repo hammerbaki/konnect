@@ -113,6 +113,8 @@ export default function KompassDetail() {
       findAndUpdateNode(newVision.children);
     }
     
+    // Sync ref immediately to ensure cleanup has latest data
+    visionRef.current = newVision;
     setVision(newVision);
     setGoalModalOpen(false);
     toast({ title: "저장 완료", description: "목표가 수정되었습니다." });
@@ -384,6 +386,9 @@ export default function KompassDetail() {
         break;
     }
     
+    // Immediately sync ref to ensure cleanup effect has latest vision
+    // This prevents race condition where user navigates before useEffect runs
+    visionRef.current = newVision;
     setVision(newVision);
   };
 
@@ -602,6 +607,8 @@ export default function KompassDetail() {
           if (todo) {
               todo.completed = !todo.completed;
               recalculateProgress(newVision);
+              // Sync ref immediately to ensure cleanup has latest data
+              visionRef.current = newVision;
               setVision(newVision);
           }
       }
@@ -632,6 +639,8 @@ export default function KompassDetail() {
           const todo = targetDay.todos.find(t => t.id === todoId);
           if (todo) {
               todo.title = newText;
+              // Sync ref immediately to ensure cleanup has latest data
+              visionRef.current = newVision;
               setVision(newVision);
           }
       }
@@ -682,12 +691,16 @@ export default function KompassDetail() {
         // Check Vision root first
         if (newVision.id === nodeId) {
             newVision[field] = value;
+            // Sync ref immediately to ensure cleanup has latest data
+            visionRef.current = newVision;
             setVision(newVision);
             return;
         }
 
         // Traverse children
         if (findAndUpdate(newVision.children)) {
+            // Sync ref immediately to ensure cleanup has latest data
+            visionRef.current = newVision;
             setVision(newVision);
         }
     };
