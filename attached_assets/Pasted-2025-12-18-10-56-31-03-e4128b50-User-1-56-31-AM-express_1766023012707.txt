@@ -1,0 +1,109 @@
+2025-12-18 10:56:31.03
+e4128b50
+User
+1:56:31 AM [express] POST /api/fetch-company-info 200 in 1111ms :: {"success":true,"info":{"name":"K·JOBS","description":"전직지원, 재취업지원, 글로벌HR, AI 기반 커리어 솔루션을 제공하는 대한민국 대표 고용플랫폼 기업입니다.","values":[],"industryKeywords":[],"rawContent":""}}
+2025-12-18 10:56:34.51
+e4128b50
+User
+internalQuery: undefined,
+2025-12-18 10:56:34.51
+e4128b50
+User
+}
+2025-12-18 10:56:34.51
+e4128b50
+User
+Error submitting AI job: error: column "input_tokens" of relation "ai_jobs" does not exist
+2025-12-18 10:56:34.51
+e4128b50
+User
+where: undefined,
+2025-12-18 10:56:34.51
+e4128b50
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+
+2025-12-18 10:56:34.51
+e4128b50
+User
+schema: undefined,
+2025-12-18 10:56:34.51
+e4128b50
+User
+dataType: undefined,
+2025-12-18 10:56:34.51
+e4128b50
+User
+length: 133,
+2025-12-18 10:56:34.51
+e4128b50
+User
+table: undefined,
+2025-12-18 10:56:34.51
+e4128b50
+User
+hint: undefined,
+2025-12-18 10:56:34.51
+e4128b50
+User
+position: '115',
+2025-12-18 10:56:34.51
+e4128b50
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2025-12-18 10:56:34.51
+e4128b50
+User
+at async Wc (/home/runner/workspace/dist/index.cjs:400:9114)
+2025-12-18 10:56:34.51
+e4128b50
+User
+file: 'parse_target.c',
+2025-12-18 10:56:34.51
+e4128b50
+User
+at async Cc.createAiJob (/home/runner/workspace/dist/index.cjs:63:90903)
+2025-12-18 10:56:34.51
+e4128b50
+User
+at async /home/runner/workspace/dist/index.cjs:400:34600 {
+2025-12-18 10:56:34.51
+e4128b50
+User
+line: '1065',
+2025-12-18 10:56:34.51
+e4128b50
+User
+severity: 'ERROR',
+2025-12-18 10:56:34.51
+e4128b50
+User
+detail: undefined,
+2025-12-18 10:56:34.51
+e4128b50
+User
+routine: 'checkInsertTargets'
+2025-12-18 10:56:34.51
+e4128b50
+User
+internalPosition: undefined,
+2025-12-18 10:56:34.51
+e4128b50
+User
+constraint: undefined,
+2025-12-18 10:56:34.51
+e4128b50
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-18 10:56:34.51
+e4128b50
+User
+column: undefined,
+2025-12-18 10:56:34.51
+e4128b50
+User
+code: '42703',
+2025-12-18 10:56:34.51
+e4128b50
+User
+1:56:34 AM [express] POST /api/ai/jobs 500 in 1745ms :: {"message":"AI 작업 제출 중 오류가 발생했습니다."}
