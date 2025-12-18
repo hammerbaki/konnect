@@ -51,6 +51,8 @@ export default function KompassDetail() {
   const dailyCardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedVisionRef = useRef<string>("");
+  const visionRef = useRef<VisionGoal | null>(null);
+  const kompassIdRef = useRef<string | null>(null);
 
   // Reminder State
   const [isReminderEnabled, setIsReminderEnabled] = useState(false);
@@ -190,6 +192,15 @@ export default function KompassDetail() {
     triggerAutoSave();
   }, [vision, triggerAutoSave]);
 
+  // Keep refs in sync for cleanup effect
+  useEffect(() => {
+    visionRef.current = vision;
+  }, [vision]);
+
+  useEffect(() => {
+    kompassIdRef.current = kompassId;
+  }, [kompassId]);
+
   // Initialize from API data
   useEffect(() => {
     if (kompassData) {
@@ -206,11 +217,60 @@ export default function KompassDetail() {
     }
   }, [kompassData]);
 
-  // Cleanup save timeout on unmount
+  // Helper function to calculate progress for immediate save
+  const calculateProgressForSave = (v: VisionGoal): number => {
+    let total = 0;
+    let completed = 0;
+    
+    v.children.forEach(year => {
+      year.children.forEach(half => {
+        half.children.forEach(month => {
+          month.children.forEach(week => {
+            week.children.forEach(day => {
+              day.todos.forEach(todo => {
+                total++;
+                if (todo.completed) completed++;
+              });
+            });
+          });
+        });
+      });
+    });
+    
+    return total > 0 ? Math.round((completed / total) * 100) : 0;
+  };
+
+  // Save immediately on unmount if there are unsaved changes
   useEffect(() => {
     return () => {
+      // Clear any pending debounced save
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+      }
+      
+      // Check if there are unsaved changes and save immediately
+      const currentVision = visionRef.current;
+      const currentKompassId = kompassIdRef.current;
+      
+      if (currentVision && currentKompassId) {
+        const currentVisionStr = JSON.stringify(currentVision);
+        if (currentVisionStr !== lastSavedVisionRef.current) {
+          // Use fetch with keepalive for reliable save during page navigation
+          // Note: sendBeacon only supports POST, but our API uses PATCH
+          const payload = JSON.stringify({
+            visionData: currentVision,
+            progress: calculateProgressForSave(currentVision),
+          });
+          
+          fetch(`/api/kompass/${currentKompassId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true, // Ensures request completes even after page navigation
+          }).catch(() => {
+            // Silent fail - nothing we can do if the request fails during unmount
+          });
+        }
       }
     };
   }, []);
