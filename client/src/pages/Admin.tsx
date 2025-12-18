@@ -178,6 +178,9 @@ export default function Admin() {
   const [editingSignupBonus, setEditingSignupBonus] = useState<number | null>(null);
   const [newCoupon, setNewCoupon] = useState<{code: string; pointAmount: number; maxUses: number | null; expiresAt: string | null} | null>(null);
   const [editingCoupon, setEditingCoupon] = useState<RedemptionCode | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRefreshingQueue, setIsRefreshingQueue] = useState(false);
+  const [isRefreshingJobs, setIsRefreshingJobs] = useState(false);
 
   const { user: currentUser, isLoading: userLoading } = useAuth();
 
@@ -642,20 +645,25 @@ export default function Admin() {
           </h2>
           <Button 
             variant="outline" 
-            onClick={() => {
-              refetchUsers();
-              refetchStats();
-              refetchAiStats();
-              refetchQueueStats();
-              refetchTraffic();
-              refetchPages();
-              refetchPackages();
+            onClick={async () => {
+              setIsRefreshing(true);
+              await Promise.all([
+                refetchUsers(),
+                refetchStats(),
+                refetchAiStats(),
+                refetchQueueStats(),
+                refetchTraffic(),
+                refetchPages(),
+                refetchPackages(),
+              ]);
+              setIsRefreshing(false);
             }}
+            disabled={isRefreshing}
             className="rounded-xl"
             data-testid="button-refresh-admin"
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            새로고침
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? '새로고침 중...' : '새로고침'}
           </Button>
         </div>
 
@@ -911,11 +919,16 @@ export default function Admin() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => refetchQueueStats()}
+                    onClick={async () => {
+                      setIsRefreshingQueue(true);
+                      await refetchQueueStats();
+                      setIsRefreshingQueue(false);
+                    }}
+                    disabled={isRefreshingQueue}
                     className="rounded-lg"
                     data-testid="button-refresh-queue"
                   >
-                    <RefreshCw className="h-3 w-3" />
+                    <RefreshCw className={`h-3 w-3 ${isRefreshingQueue ? 'animate-spin' : ''}`} />
                   </Button>
                 </div>
               </CardHeader>
@@ -1030,11 +1043,16 @@ export default function Admin() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => refetchRecentJobs()}
+                    onClick={async () => {
+                      setIsRefreshingJobs(true);
+                      await refetchRecentJobs();
+                      setIsRefreshingJobs(false);
+                    }}
+                    disabled={isRefreshingJobs}
                     className="rounded-lg"
                     data-testid="button-refresh-jobs"
                   >
-                    <RefreshCw className="h-3 w-3" />
+                    <RefreshCw className={`h-3 w-3 ${isRefreshingJobs ? 'animate-spin' : ''}`} />
                   </Button>
                 </div>
               </CardHeader>
