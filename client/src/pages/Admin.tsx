@@ -66,6 +66,12 @@ interface RecentJob {
   progress: number | null;
   estimatedProgress: number;
   error: string | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  cacheReadTokens: number | null;
+  cacheWriteTokens: number | null;
+  totalTokens: number | null;
+  estimatedCostCents: number | null;
   queuedAt: string | null;
   startedAt: string | null;
   completedAt: string | null;
@@ -1117,6 +1123,20 @@ export default function Admin() {
                               </span>
                             )}
                           </div>
+                          
+                          {/* Token usage display for completed jobs */}
+                          {job.status === 'completed' && job.totalTokens && job.totalTokens > 0 && (
+                            <div className="flex items-center gap-3 text-xs text-[#8B95A1] mt-1">
+                              <span title="입력 토큰">IN: {job.inputTokens?.toLocaleString() || 0}</span>
+                              <span title="출력 토큰">OUT: {job.outputTokens?.toLocaleString() || 0}</span>
+                              <span title="총 토큰">총: {job.totalTokens?.toLocaleString()}</span>
+                              {job.estimatedCostCents && job.estimatedCostCents > 0 && (
+                                <span className="text-amber-600 font-medium" title="예상 비용">
+                                  ${(job.estimatedCostCents / 100).toFixed(3)}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })
