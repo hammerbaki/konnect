@@ -1134,31 +1134,45 @@ export default function KompassDetail() {
                                 </div>
                                 
                                 {/* Editable Todo List */}
-                                <div className="space-y-3 flex-1">
-                                    {day.todos.map((todo) => (
+                                <div className="space-y-2 flex-1">
+                                    {day.todos.map((todo, todoIdx) => (
                                         <div 
                                             key={todo.id} 
-                                            className="flex items-center gap-3 group"
+                                            className="flex items-start gap-2.5 group bg-[#F9FAFB] rounded-lg p-2.5 hover:bg-[#F2F4F6] transition-colors"
                                         >
                                             <div 
                                                 className={cn(
-                                                    "cursor-pointer transition-colors mt-1",
-                                                    todo.completed ? "text-[#00BFA5]" : "text-[#E5E8EB] group-hover:text-[#B0B8C1]"
+                                                    "cursor-pointer transition-colors flex-shrink-0 mt-0.5",
+                                                    todo.completed ? "text-[#00BFA5]" : "text-[#B0B8C1] group-hover:text-[#3182F6]"
                                                 )}
                                                 onClick={() => toggleTodo(day.id, todo.id)}
                                             >
-                                                {todo.completed ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
+                                                {todo.completed ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
                                             </div>
-                                            <Input 
+                                            <textarea 
+                                                ref={(el) => {
+                                                    if (el) {
+                                                        el.style.height = 'auto';
+                                                        el.style.height = el.scrollHeight + 'px';
+                                                    }
+                                                }}
                                                 value={todo.title} 
                                                 onChange={(e) => updateTodoText(day.id, todo.id, e.target.value)}
                                                 readOnly={todo.completed}
+                                                rows={1}
                                                 className={cn(
-                                                    "flex-1 bg-transparent border-transparent px-0 h-auto py-1 text-sm focus-visible:ring-0 focus-visible:border-b focus-visible:border-[#3182F6] rounded-none placeholder:text-[#B0B8C1] shadow-none",
+                                                    "flex-1 bg-transparent border-0 px-0 py-0 text-sm leading-snug resize-none overflow-hidden focus:outline-none focus:ring-0 placeholder:text-[#B0B8C1]",
                                                     todo.completed ? "text-[#B0B8C1] line-through" : "text-[#333D4B]"
                                                 )}
+                                                style={{ minHeight: '20px' }}
+                                                onInput={(e) => {
+                                                    const target = e.target as HTMLTextAreaElement;
+                                                    target.style.height = 'auto';
+                                                    target.style.height = target.scrollHeight + 'px';
+                                                }}
                                                 placeholder="할 일을 입력하세요"
                                             />
+                                            <span className="text-[10px] text-[#B0B8C1] font-medium flex-shrink-0">{todoIdx + 1}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -1231,15 +1245,21 @@ export default function KompassDetail() {
                     세부 실행 과제
                   </Label>
                   {goalModalData.description.includes('•') ? (
-                    <div className="space-y-2 bg-[#F9FAFB] rounded-xl p-4">
+                    <div className="space-y-2 bg-gradient-to-br from-[#F9FAFB] to-[#F2F4F6] rounded-xl p-4">
                       {goalModalData.description.split('\n').filter(line => line.trim()).map((line, i) => (
-                        <div key={i} className="flex items-center gap-3 group">
+                        <div key={i} className="flex items-start gap-3 group bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
                           {line.trim().startsWith('•') ? (
                             <>
-                              <div className="w-6 h-6 rounded-full bg-[#3182F6]/10 flex items-center justify-center flex-shrink-0">
-                                <span className="text-[#3182F6] font-bold text-sm">•</span>
+                              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#3182F6] to-[#60A5FA] flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <span className="text-white font-bold text-xs">{i + 1}</span>
                               </div>
-                              <Input
+                              <textarea
+                                ref={(el) => {
+                                  if (el) {
+                                    el.style.height = 'auto';
+                                    el.style.height = el.scrollHeight + 'px';
+                                  }
+                                }}
                                 value={line.replace('• ', '')}
                                 onChange={(e) => {
                                   const lines = goalModalData.description.split('\n');
@@ -1249,7 +1269,14 @@ export default function KompassDetail() {
                                     setGoalModalData({ ...goalModalData, description: lines.join('\n') });
                                   }
                                 }}
-                                className="flex-1 h-10 text-sm border-[#E5E8EB] rounded-lg bg-white focus-visible:ring-[#3182F6]"
+                                rows={1}
+                                className="flex-1 text-sm border-0 bg-transparent px-0 py-0 leading-relaxed resize-none overflow-hidden focus:outline-none focus:ring-0 text-[#333D4B]"
+                                style={{ minHeight: '24px' }}
+                                onInput={(e) => {
+                                  const target = e.target as HTMLTextAreaElement;
+                                  target.style.height = 'auto';
+                                  target.style.height = target.scrollHeight + 'px';
+                                }}
                               />
                               <button
                                 onClick={() => {
