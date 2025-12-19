@@ -334,6 +334,35 @@ export default function TokenRecharge() {
           </CardContent>
         </Card>
 
+        {/* Policy & Terms */}
+        <Card className="bg-[#F9FAFB] border-[#E5E8EB] mb-8">
+          <CardContent className="p-5 space-y-4">
+            <div>
+              <h4 className="font-bold text-[#333D4B] mb-2 flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-[#8B95A1]" />
+                환불 규정
+              </h4>
+              <ul className="text-sm text-[#6B7684] space-y-1.5 ml-6 list-disc">
+                <li>환불은 결제에 사용된 동일 계좌로만 가능합니다.</li>
+                <li>자금세탁방지법에 따라 다른 계좌로의 환불은 불가합니다.</li>
+                <li>보너스 포인트 및 이벤트 지급 포인트는 환불 대상에서 제외됩니다.</li>
+                <li>실제 결제하신 금액에 해당하는 포인트만 환불 가능합니다.</li>
+              </ul>
+            </div>
+            <div className="border-t border-[#E5E8EB] pt-4">
+              <h4 className="font-bold text-[#333D4B] mb-2 flex items-center gap-2">
+                <Coins className="h-4 w-4 text-[#8B95A1]" />
+                포인트 소멸 기한
+              </h4>
+              <ul className="text-sm text-[#6B7684] space-y-1.5 ml-6 list-disc">
+                <li>구매한 포인트는 결제일로부터 <span className="font-bold text-[#333D4B]">90일간</span> 유효합니다.</li>
+                <li>90일이 지나면 구매한 포인트는 자동으로 소멸됩니다.</li>
+                <li>소멸된 포인트는 복구되지 않으니 기간 내에 사용해 주세요.</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Transaction History */}
         <h3 className="text-lg font-bold text-[#191F28] mb-4 flex items-center gap-2">
           <History className="h-5 w-5 text-[#8B95A1]" /> 포인트 내역
