@@ -432,12 +432,30 @@ export default function KompassDetail() {
     
     const ancestorChain = buildAncestorChain(level);
     
+    // Calculate dynamic count based on level
+    let count: number | undefined;
+    if (level === 'week') {
+      // Get the number of weeks in the selected month (from the actual children array)
+      const year = vision.children.find(y => y.id === selectedYearId);
+      const half = year?.children.find(h => h.id === selectedHalfYearId);
+      const month = half?.children.find(m => m.id === selectedMonthId);
+      count = month?.children.length || 4; // Default to 4 if not found
+    } else if (level === 'day') {
+      // Get the number of days in the selected week
+      const year = vision.children.find(y => y.id === selectedYearId);
+      const half = year?.children.find(h => h.id === selectedHalfYearId);
+      const month = half?.children.find(m => m.id === selectedMonthId);
+      const week = month?.children.find(w => w.id === selectedWeekId);
+      count = week?.children.length || 7; // Default to 7 if not found
+    }
+    
     aiSuggestMutation.mutate({
       level,
       visionTitle: vision.title,
       visionDescription: vision.description,
       targetYear: vision.targetYear,
       ancestorChain,
+      count,
     });
   };
 
