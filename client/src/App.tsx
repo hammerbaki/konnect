@@ -13,6 +13,7 @@ import { Suspense, lazy, useEffect } from "react";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
+const EmailPasswordLogin = lazy(() => import("./pages/EmailPasswordLogin"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const NotFound = lazy(() => import("./pages/not-found"));
@@ -78,6 +79,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />
+        <Route path="/login/email" component={EmailPasswordLogin} />
         <Route path="/auth/callback" component={AuthCallback} />
         <Route path="/dashboard">
           {(params) => (

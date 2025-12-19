@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/AuthContext";
-import { Loader2, Sparkles, Mail, ArrowLeft } from "lucide-react";
+import { Loader2, Sparkles, Mail, ArrowLeft, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Login() {
@@ -295,6 +295,13 @@ export default function Login() {
                     </button>
                   </form>
                 )}
+
+                <Link href="/login/email">
+                  <a className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#E5E8EB] hover:border-[#3182F6]/30 hover:bg-[#F9FAFB] transition-all" data-testid="link-email-password-login">
+                    <Lock className="h-5 w-5 text-[#8B95A1]" />
+                    <span className="text-sm text-[#4E5968] font-medium">이메일/비밀번호로 로그인</span>
+                  </a>
+                </Link>
 
                 <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#F9FAFB]">
                   <Sparkles className="h-5 w-5 text-[#3182F6]" />

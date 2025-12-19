@@ -26,6 +26,8 @@ interface AuthContextType {
   signInWithKakao: () => Promise<void>;
   signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
   verifyOtp: (email: string, token: string) => Promise<{ error: Error | null }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUpWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   getAccessToken: () => Promise<string | null>;
 }
 
@@ -180,6 +182,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const signInWithPassword = async (email: string, password: string) => {
+    if (!supabaseClient) return { error: new Error("Supabase not initialized") };
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error };
+  };
+
+  const signUpWithPassword = async (email: string, password: string) => {
+    if (!supabaseClient) return { error: new Error("Supabase not initialized") };
+    const { error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    return { error };
+  };
+
   const getAccessToken = async () => {
     if (!supabaseClient) return null;
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -201,6 +224,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithKakao,
         signInWithOtp,
         verifyOtp,
+        signInWithPassword,
+        signUpWithPassword,
         getAccessToken,
       }}
     >
