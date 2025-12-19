@@ -2,7 +2,6 @@ import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile, cp } from "fs/promises";
 import { existsSync } from "fs";
-import { execSync } from "child_process";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -29,16 +28,6 @@ const allowlist = [
 
 async function buildAll() {
   await rm("dist", { recursive: true, force: true });
-
-  // Run database migrations to ensure schema is up to date
-  console.log("running database migrations...");
-  try {
-    execSync("npx drizzle-kit push", { stdio: "inherit" });
-    console.log("database migrations completed successfully");
-  } catch (error) {
-    console.error("database migration failed:", error);
-    throw error;
-  }
 
   console.log("building client...");
   await viteBuild();
