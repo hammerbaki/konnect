@@ -340,24 +340,26 @@ export default function TokenRecharge() {
             <div>
               <h4 className="font-bold text-[#333D4B] mb-2 flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-[#8B95A1]" />
-                환불 규정
+                환불(환급) 안내
               </h4>
               <ul className="text-sm text-[#6B7684] space-y-1.5 ml-6 list-disc">
-                <li>환불은 결제에 사용된 동일 계좌로만 가능합니다.</li>
-                <li>자금세탁방지법에 따라 다른 계좌로의 환불은 불가합니다.</li>
-                <li>보너스 포인트 및 이벤트 지급 포인트는 환불 대상에서 제외됩니다.</li>
-                <li>실제 결제하신 금액에 해당하는 포인트만 환불 가능합니다.</li>
+                <li>환불은 원칙적으로 결제에 사용된 <span className="font-bold text-[#333D4B]">동일 결제수단(동일 카드/동일 계좌)</span>으로만 처리됩니다. 다른 결제수단 또는 제3자 계좌로는 환불이 불가합니다.</li>
+                <li>환불 가능 금액은 고객이 실제 결제한 <span className="font-bold text-[#333D4B]">유상 포인트(구매 포인트) 잔액 범위</span>에 한합니다.</li>
+                <li>보너스 포인트(이벤트/프로모션 등 무상 제공 포인트)는 환불(환급) 대상이 아닙니다.</li>
               </ul>
             </div>
             <div className="border-t border-[#E5E8EB] pt-4">
               <h4 className="font-bold text-[#333D4B] mb-2 flex items-center gap-2">
                 <Coins className="h-4 w-4 text-[#8B95A1]" />
-                포인트 소멸 기한
+                포인트 유효기간 안내
               </h4>
-              <ul className="text-sm text-[#6B7684] space-y-1.5 ml-6 list-disc">
-                <li>구매한 포인트는 결제일로부터 <span className="font-bold text-[#333D4B]">90일간</span> 유효합니다.</li>
-                <li>90일이 지나면 구매한 포인트는 자동으로 소멸됩니다.</li>
-                <li>소멸된 포인트는 복구되지 않으니 기간 내에 사용해 주세요.</li>
+              <ul className="text-sm text-[#6B7684] space-y-2 ml-6 list-disc">
+                <li>
+                  <span className="font-bold text-[#333D4B]">유상 포인트(구매 포인트)</span>: 구매일(충전일)로부터 <span className="font-bold text-[#3182F6]">5년간</span> 사용 가능합니다. 사용 가능 기간이 경과한 경우에도 관련 법령 및 약관에 따라 구매일(충전일)로부터 5년 이내에는 잔액 환급을 청구할 수 있습니다.
+                </li>
+                <li>
+                  <span className="font-bold text-[#333D4B]">무상 포인트(보너스/이벤트 포인트)</span>: 지급일로부터 <span className="font-bold text-[#FF6B6B]">90일간</span> 사용 가능하며, 기간 경과 시 자동 소멸됩니다.
+                </li>
               </ul>
             </div>
           </CardContent>
