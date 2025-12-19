@@ -138,6 +138,15 @@ const profileTypeLabels: Record<string, string> = {
     elementary: '초등학생',
 };
 
+// Profile display order: general on top, then university, high, middle, elementary
+const profileTypeOrder: Record<string, number> = {
+    general: 1,
+    university: 2,
+    high: 3,
+    middle: 4,
+    elementary: 5,
+};
+
 const recommendationSectionTitles: Record<string, string> = {
     elementary: '추천 꿈 직업',
     middle: '추천 진로 방향',
@@ -467,7 +476,7 @@ export default function Analysis() {
                         ))}
                     </div>
                 ) : profiles && profiles.length > 0 ? (
-                    profiles.map((profile: any) => {
+                    [...profiles].sort((a: any, b: any) => (profileTypeOrder[a.type] || 99) - (profileTypeOrder[b.type] || 99)).map((profile: any) => {
                         const Icon = profileTypeIcons[profile.type] || Briefcase;
                         const isActive = activeProfileId === profile.id;
                         const colorClass = profileTypeColors[profile.type] || 'text-gray-600 bg-gray-50';

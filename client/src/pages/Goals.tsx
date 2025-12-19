@@ -50,6 +50,15 @@ interface Profile {
   type: string;
 }
 
+// Profile display order: general on top, then university, high, middle, elementary
+const profileTypeOrder: Record<string, number> = {
+  general: 1,
+  university: 2,
+  high: 3,
+  middle: 4,
+  elementary: 5,
+};
+
 export default function Goals() {
   const [_, setLocation] = useLocation();
   const { setAction } = useMobileAction();
@@ -422,7 +431,7 @@ export default function Goals() {
                             <SelectValue placeholder="프로필을 선택하세요" />
                           </SelectTrigger>
                           <SelectContent>
-                            {profiles.map((profile) => (
+                            {[...profiles].sort((a, b) => (profileTypeOrder[a.type] || 99) - (profileTypeOrder[b.type] || 99)).map((profile) => (
                               <SelectItem key={profile.id} value={profile.id}>
                                 {profile.title}
                               </SelectItem>
