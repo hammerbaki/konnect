@@ -28,6 +28,7 @@ interface ImportedCareerData {
   };
   strengths: string[];
   weaknesses: string[];
+  profileId?: string; // Auto-select the analyzed profile
 }
 
 interface KompassItem {
@@ -169,6 +170,11 @@ export default function Goals() {
           ...(data.actions?.mindset || []).map(a => `💭 ${a}`),
         ];
         setNewDescription(actionItems.join('\n'));
+        
+        // Auto-select the analyzed profile if provided
+        if (data.profileId) {
+          setSelectedProfileId(data.profileId);
+        }
         
         setIsCreateModalOpen(true);
         sessionStorage.removeItem('kompass_import');

@@ -10,6 +10,7 @@ import { useMobileAction } from "@/lib/MobileActionContext";
 import { useAuth } from "@/lib/AuthContext";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useSearch } from "wouter";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DateWheelPicker, SalaryWheelPicker, WheelPicker } from "@/components/ui/wheel-picker";
@@ -404,6 +405,7 @@ type ProfileDataType = {
   univ_serviceBarriers: string;
   univ_careerReadiness: string;
   univ_careerGoalClear: string;
+  univ_desiredIndustry: string;
   univ_internshipStatus: string;
   univ_skillsToDevelop: string[];
   gen_currentStatus: string;
@@ -495,6 +497,7 @@ const getDefaultProfileData = (type: ProfileDataType["type"] = "general"): Profi
   univ_serviceBarriers: "",
   univ_careerReadiness: "",
   univ_careerGoalClear: "",
+  univ_desiredIndustry: "",
   univ_internshipStatus: "",
   univ_skillsToDevelop: [],
   gen_currentStatus: "",
@@ -518,6 +521,7 @@ export default function Profile() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const searchString = useSearch();
 
   // Build user's full name from auth context (Korean style: LastName + FirstName, no space)
   const userName = user ? 
@@ -531,6 +535,7 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedType, setSelectedType] = useState<ProfileDataType["type"]>("general");
   const isInitialLoad = useRef(true);
+  const hasScrolledToField = useRef(false);
   
   // Dialog states for adding work experience and language scores
   const [showWorkExperienceDialog, setShowWorkExperienceDialog] = useState(false);
@@ -547,6 +552,54 @@ export default function Profile() {
   useEffect(() => { profileDataRef.current = profileData; }, [profileData]);
   useEffect(() => { selectedTypeRef.current = selectedType; }, [selectedType]);
   useEffect(() => { isSavingRef.current = isSaving; }, [isSaving]);
+
+  // Scroll to field from query parameter (e.g., /profile?field=high_hopeUniversity)
+  useEffect(() => {
+    if (hasScrolledToField.current) return;
+    
+    const params = new URLSearchParams(searchString);
+    const fieldKey = params.get('field');
+    
+    if (fieldKey) {
+      // Map field key to profile type prefix
+      const fieldTypeMap: Record<string, ProfileDataType["type"]> = {
+        'high_': 'high',
+        'univ_': 'university',
+        'gen_': 'general',
+        'elem_': 'elementary',
+        'mid_': 'middle',
+      };
+      
+      // Determine which profile type the field belongs to
+      const prefix = Object.keys(fieldTypeMap).find(p => fieldKey.startsWith(p));
+      const targetProfileType = prefix ? fieldTypeMap[prefix] : null;
+      
+      // Switch to the correct profile type if needed
+      if (targetProfileType && targetProfileType !== selectedType) {
+        setSelectedType(targetProfileType);
+        return; // Wait for re-render with new profile type
+      }
+      
+      // Retry scrolling until element exists (handles async profile type switch)
+      const attemptScroll = (attemptsLeft: number) => {
+        const element = document.getElementById(`field-${fieldKey}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Highlight the field briefly
+          element.classList.add('ring-2', 'ring-[#3182F6]', 'ring-offset-2');
+          setTimeout(() => {
+            element.classList.remove('ring-2', 'ring-[#3182F6]', 'ring-offset-2');
+          }, 3000);
+          hasScrolledToField.current = true;
+        } else if (attemptsLeft > 0) {
+          setTimeout(() => attemptScroll(attemptsLeft - 1), 200);
+        }
+      };
+      
+      // Start scrolling after a short delay to allow DOM render
+      setTimeout(() => attemptScroll(10), 300);
+    }
+  }, [searchString, selectedType]);
 
   // Fetch user identity (shared across all profile types)
   const { data: userIdentity, isLoading: isLoadingIdentity } = useQuery({
@@ -1245,7 +1298,7 @@ export default function Profile() {
                                 </Select>
                             </div>
 
-                            <div className="space-y-2">
+                            <div id="field-high_hopeUniversity" className="space-y-2 transition-all duration-300">
                                 <Label>희망 대학</Label>
                                 <Input 
                                     placeholder="예: 서울대학교, 연세대학교" 
@@ -1255,7 +1308,7 @@ export default function Profile() {
                                 />
                             </div>
 
-                            <div className="space-y-2">
+                            <div id="field-high_careerHope" className="space-y-2 transition-all duration-300">
                                 <Label>진로 희망</Label>
                                 <Input 
                                     placeholder="예: 소프트웨어 개발자, 의사" 
@@ -1431,7 +1484,7 @@ export default function Profile() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-2">
+                            <div id="field-univ_majorName" className="space-y-2 transition-all duration-300">
                                 <Label>상세 전공 (학과명)</Label>
                                 <Input 
                                     placeholder="예: 경영학과, 컴퓨터공학부" 
@@ -1591,6 +1644,16 @@ export default function Profile() {
                                         <SelectItem value="1">전혀 없음</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+
+                            <div id="field-univ_desiredIndustry" className="space-y-2 transition-all duration-300">
+                                <Label>희망 산업 분야</Label>
+                                <Input 
+                                    placeholder="예: IT/플랫폼, 금융, 헬스케어, 제조업" 
+                                    value={profileData.univ_desiredIndustry}
+                                    onChange={(e) => setProfileData({...profileData, univ_desiredIndustry: e.target.value})}
+                                    className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                                />
                             </div>
 
                             <div className="space-y-2">
@@ -2001,7 +2064,7 @@ export default function Profile() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="space-y-2">
+                            <div id="field-gen_desiredIndustry" className="space-y-2 transition-all duration-300">
                                 <Label>희망 산업 분야</Label>
                                 <Input 
                                     placeholder="예: IT/플랫폼, 금융, 헬스케어" 
@@ -2010,7 +2073,7 @@ export default function Profile() {
                                     className="h-12 rounded-xl bg-[#F2F4F6] border-none"
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div id="field-gen_desiredRole" className="space-y-2 transition-all duration-300">
                                 <Label>희망 직무</Label>
                                 <Input 
                                     placeholder="예: 서비스 기획자, 마케터" 

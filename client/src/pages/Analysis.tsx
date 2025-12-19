@@ -435,7 +435,8 @@ export default function Analysis() {
             title: career.title,
             actions: career.actions,
             strengths: career.strengths,
-            weaknesses: career.weaknesses
+            weaknesses: career.weaknesses,
+            profileId: activeProfileId, // Pass the analyzed profile ID for auto-selection
         };
         sessionStorage.setItem('kompass_import', JSON.stringify(goalData));
         navigate('/goals');
@@ -733,14 +734,18 @@ export default function Analysis() {
                             <AlertTitle>프로필 정보 부족</AlertTitle>
                             <AlertDescription>
                                 분석을 실행하려면 다음 정보를 입력해주세요:
-                                <ul className="mt-2 list-disc list-inside">
+                                <ul className="mt-2 space-y-1">
                                     {profileValidation.missingFields.map(field => (
-                                        <li key={field.key}>{field.label}</li>
+                                        <li key={field.key}>
+                                            <Link 
+                                                href={`/profile?field=${field.key}`}
+                                                className="inline-flex items-center text-sm font-medium underline hover:text-red-700"
+                                            >
+                                                {field.label} <ChevronRight className="h-3 w-3 ml-0.5" />
+                                            </Link>
+                                        </li>
                                     ))}
                                 </ul>
-                                <Link href="/profile" className="inline-flex items-center mt-2 text-sm font-medium underline">
-                                    프로필 수정하기 <ChevronRight className="h-3 w-3 ml-1" />
-                                </Link>
                             </AlertDescription>
                         </Alert>
                     )}
@@ -778,14 +783,18 @@ export default function Analysis() {
                         <AlertTitle>프로필 정보 부족</AlertTitle>
                         <AlertDescription>
                             다시 분석하려면 다음 정보를 입력해주세요:
-                            <ul className="mt-2 list-disc list-inside">
+                            <ul className="mt-2 space-y-1">
                                 {profileValidation.missingFields.map(field => (
-                                    <li key={field.key}>{field.label}</li>
+                                    <li key={field.key}>
+                                        <Link 
+                                            href={`/profile?field=${field.key}`}
+                                            className="inline-flex items-center text-sm font-medium underline hover:text-red-700"
+                                        >
+                                            {field.label} <ChevronRight className="h-3 w-3 ml-0.5" />
+                                        </Link>
+                                    </li>
                                 ))}
                             </ul>
-                            <Link href="/profile" className="inline-flex items-center mt-2 text-sm font-medium underline">
-                                프로필 수정하기 <ChevronRight className="h-3 w-3 ml-1" />
-                            </Link>
                         </AlertDescription>
                     </Alert>
                 )}
