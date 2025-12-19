@@ -291,9 +291,18 @@ export function generateTree(idSuffix: string, title: string, targetYear: number
     return vision;
 }
 
+// Calculate actual number of weeks in a month based on calendar
+// A week belongs to the month where Thursday falls (ISO week rule approximation)
+// For simplicity, we use: weeks = ceil(daysInMonth / 7) which gives 4 or 5 weeks
+function getWeeksInMonth(year: number, month: number): number {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    return Math.ceil(daysInMonth / 7);
+}
+
 // Full tree generator for Kompass creation
 // Creates complete structure for all years with months/weeks/days
-export function generateLightTree(idSuffix: string, title: string, targetYear: number, description: string = ""): VisionGoal {
+// startMonth: 1-12, the month when the Kompass starts
+export function generateLightTree(idSuffix: string, title: string, targetYear: number, description: string = "", startMonth: number = 1): VisionGoal {
     const startYear = new Date().getFullYear();
     const yearsCount = Math.min(Math.max(targetYear - startYear + 1, 1), 3); // 1-3 years maximum
     
@@ -306,9 +315,30 @@ export function generateLightTree(idSuffix: string, title: string, targetYear: n
         children: []
     };
 
-    // Create full yearly structure for all years
+    // Build list of months to include for each year based on startMonth
+    // Year 1: startMonth to 12
+    // Year 2: 1 to 12 (full year)
+    // Year 3: 1 to (startMonth - 1)
+    
     for (let y = 0; y < yearsCount; y++) {
         const yearVal = startYear + y;
+        
+        // Determine which months to include for this year
+        let monthsToInclude: number[] = [];
+        if (y === 0) {
+            // First year: from startMonth to December
+            for (let m = startMonth; m <= 12; m++) monthsToInclude.push(m);
+        } else if (y === yearsCount - 1 && startMonth > 1) {
+            // Last year (if startMonth > 1): from January to (startMonth - 1)
+            for (let m = 1; m < startMonth; m++) monthsToInclude.push(m);
+        } else {
+            // Middle years or if startMonth is 1: full year
+            for (let m = 1; m <= 12; m++) monthsToInclude.push(m);
+        }
+        
+        // Skip this year if no months to include
+        if (monthsToInclude.length === 0) continue;
+        
         const year: YearlyGoal = {
             id: `year-${yearVal}-${idSuffix}`,
             title: `${yearVal}년 목표`,
@@ -318,64 +348,95 @@ export function generateLightTree(idSuffix: string, title: string, targetYear: n
             children: []
         };
 
-        // 2 half years per year
-        for (let h = 1; h <= 2; h++) {
+        // Group months into half-years (based on actual months, not position)
+        const h1Months = monthsToInclude.filter(m => m <= 6);
+        const h2Months = monthsToInclude.filter(m => m > 6);
+        
+        // Create first half-year if it has months
+        if (h1Months.length > 0) {
             const half: HalfYearlyGoal = {
-                id: `h${h}-${yearVal}-${idSuffix}`,
-                title: `${h === 1 ? "상반기" : "하반기"} 목표`,
+                id: `h1-${yearVal}-${idSuffix}`,
+                title: `상반기 목표`,
                 description: "",
-                dateDisplay: h === 1 ? "01-06" : "07-12",
+                dateDisplay: `${String(h1Months[0]).padStart(2, '0')}-${String(h1Months[h1Months.length - 1]).padStart(2, '0')}`,
                 progress: 0,
                 children: []
             };
-
-            // Create months for all years
-            for (let m = 1; m <= 6; m++) {
-                const monthNum = (h - 1) * 6 + m;
-                const month: MonthlyGoal = {
-                    id: `m${monthNum}-${yearVal}-${idSuffix}`,
-                    title: `${monthNum}월 목표`,
-                    description: "",
-                    dateDisplay: String(monthNum).padStart(2, '0'),
-                    progress: 0,
-                    children: []
-                };
-
-                // 4 weeks per month
-                for (let w = 1; w <= 4; w++) {
-                    const week: WeeklyGoal = {
-                        id: `w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
-                        title: `${w}주차 목표`,
-                        description: "",
-                        dateDisplay: `${String(monthNum).padStart(2, '0')}.${String((w-1)*7+1).padStart(2, '0')}`,
-                        progress: 0,
-                        children: []
-                    };
-
-                    // 7 days per week
-                    for (let d = 1; d <= 7; d++) {
-                        const dayNum = (w - 1) * 7 + d;
-                        if (dayNum > 28) continue; // Cap at 28 days
-                        
-                        const day: DailyGoal = {
-                            id: `d${dayNum}-w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
-                            title: `Day ${dayNum}`,
-                            dateDisplay: `${yearVal}.${String(monthNum).padStart(2, '0')}.${String(dayNum).padStart(2, '0')}`,
-                            progress: 0,
-                            todos: []
-                        };
-                        week.children.push(day);
-                    }
-                    month.children.push(week);
-                }
+            
+            for (const monthNum of h1Months) {
+                const month = createMonthNode(yearVal, monthNum, idSuffix);
                 half.children.push(month);
             }
             year.children.push(half);
         }
+        
+        // Create second half-year if it has months
+        if (h2Months.length > 0) {
+            const half: HalfYearlyGoal = {
+                id: `h2-${yearVal}-${idSuffix}`,
+                title: `하반기 목표`,
+                description: "",
+                dateDisplay: `${String(h2Months[0]).padStart(2, '0')}-${String(h2Months[h2Months.length - 1]).padStart(2, '0')}`,
+                progress: 0,
+                children: []
+            };
+            
+            for (const monthNum of h2Months) {
+                const month = createMonthNode(yearVal, monthNum, idSuffix);
+                half.children.push(month);
+            }
+            year.children.push(half);
+        }
+        
         vision.children.push(year);
     }
 
     return vision;
+}
+
+// Helper function to create a month node with dynamic weeks
+function createMonthNode(yearVal: number, monthNum: number, idSuffix: string): MonthlyGoal {
+    const daysInMonth = new Date(yearVal, monthNum, 0).getDate();
+    const numberOfWeeks = Math.ceil(daysInMonth / 7);
+    
+    const month: MonthlyGoal = {
+        id: `m${monthNum}-${yearVal}-${idSuffix}`,
+        title: `${monthNum}월 목표`,
+        description: "",
+        dateDisplay: String(monthNum).padStart(2, '0'),
+        progress: 0,
+        children: []
+    };
+
+    // Dynamic weeks based on actual days in month
+    for (let w = 1; w <= numberOfWeeks; w++) {
+        const weekStartDay = (w - 1) * 7 + 1;
+        const weekEndDay = Math.min(w * 7, daysInMonth);
+        
+        const week: WeeklyGoal = {
+            id: `w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
+            title: `${w}주차 목표`,
+            description: "",
+            dateDisplay: `${String(monthNum).padStart(2, '0')}.${String(weekStartDay).padStart(2, '0')}-${String(monthNum).padStart(2, '0')}.${String(weekEndDay).padStart(2, '0')}`,
+            progress: 0,
+            children: []
+        };
+
+        // Days in this week
+        for (let d = weekStartDay; d <= weekEndDay; d++) {
+            const day: DailyGoal = {
+                id: `d${d}-w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
+                title: `Day ${d}`,
+                dateDisplay: `${yearVal}.${String(monthNum).padStart(2, '0')}.${String(d).padStart(2, '0')}`,
+                progress: 0,
+                todos: []
+            };
+            week.children.push(day);
+        }
+        month.children.push(week);
+    }
+    
+    return month;
 }
 
 export const MOCK_VISION = generateTree('1', "CPO (Chief Product Officer)", 2028);

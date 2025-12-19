@@ -220,6 +220,7 @@ export const kompassGoals = pgTable("kompass_goals", {
     .notNull()
     .references(() => profiles.id, { onDelete: "cascade" }),
   targetYear: integer("target_year").notNull(),
+  startMonth: integer("start_month").notNull().default(1), // 1-12, month when the Kompass starts
   visionData: jsonb("vision_data").notNull(),
   progress: integer("progress").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
