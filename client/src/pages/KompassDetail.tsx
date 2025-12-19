@@ -34,6 +34,7 @@ interface KompassData {
   id: string;
   profileId: string;
   targetYear: number;
+  startMonth?: number;
   visionData: VisionGoal;
   progress: number;
 }

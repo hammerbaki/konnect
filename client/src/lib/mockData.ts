@@ -291,14 +291,6 @@ export function generateTree(idSuffix: string, title: string, targetYear: number
     return vision;
 }
 
-// Calculate actual number of weeks in a month based on calendar
-// A week belongs to the month where Thursday falls (ISO week rule approximation)
-// For simplicity, we use: weeks = ceil(daysInMonth / 7) which gives 4 or 5 weeks
-function getWeeksInMonth(year: number, month: number): number {
-    const daysInMonth = new Date(year, month, 0).getDate();
-    return Math.ceil(daysInMonth / 7);
-}
-
 // Full tree generator for Kompass creation
 // Creates complete structure for all years with months/weeks/days
 // startMonth: 1-12, the month when the Kompass starts
