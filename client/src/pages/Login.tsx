@@ -296,11 +296,9 @@ export default function Login() {
                   </form>
                 )}
 
-                <Link href="/login/email">
-                  <a className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#E5E8EB] hover:border-[#3182F6]/30 hover:bg-[#F9FAFB] transition-all" data-testid="link-email-password-login">
-                    <Lock className="h-5 w-5 text-[#8B95A1]" />
-                    <span className="text-sm text-[#4E5968] font-medium">이메일/비밀번호로 로그인</span>
-                  </a>
+                <Link href="/login/email" className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#E5E8EB] hover:border-[#3182F6]/30 hover:bg-[#F9FAFB] transition-all" data-testid="link-email-password-login">
+                  <Lock className="h-5 w-5 text-[#8B95A1]" />
+                  <span className="text-sm text-[#4E5968] font-medium">이메일/비밀번호로 로그인</span>
                 </Link>
 
                 <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#F9FAFB]">

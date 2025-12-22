@@ -136,11 +136,9 @@ export default function EmailPasswordLogin() {
 
           <Card className="toss-card border-none shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-[24px] overflow-hidden bg-white">
             <CardHeader className="space-y-2 pt-8 px-8 pb-4">
-              <Link href="/login">
-                <a className="flex items-center gap-2 text-[#8B95A1] hover:text-[#4E5968] transition-colors mb-2" data-testid="link-back-login">
-                  <ArrowLeft className="h-4 w-4" />
-                  <span className="text-sm">다른 방법으로 로그인</span>
-                </a>
+              <Link href="/login" className="flex items-center gap-2 text-[#8B95A1] hover:text-[#4E5968] transition-colors mb-2" data-testid="link-back-login">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="text-sm">다른 방법으로 로그인</span>
               </Link>
               <CardTitle className="text-2xl font-bold text-[#191F28]">
                 {isSignUp ? "회원가입" : "이메일 로그인"}
