@@ -36,6 +36,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   credits: integer("credits").notNull().default(1000),
+  giftPoints: integer("gift_points").notNull().default(0), // GP - Gift Points balance (cached, computed from ledger)
   role: varchar("role", { length: 20 }).notNull().default('user'), // 'user' | 'staff' | 'admin'
   // Shared identity fields (consistent across all profile types)
   displayName: varchar("display_name", { length: 100 }),
@@ -594,7 +595,109 @@ export type SystemSettings = typeof systemSettings.$inferSelect;
 // Default system settings
 export const DEFAULT_SYSTEM_SETTINGS: Record<string, { value: string; description: string }> = {
   signup_bonus: { value: '1000', description: '신규 가입 시 지급되는 포인트' },
+  gp_default_expiration_days: { value: '365', description: '기프트 포인트 기본 만료 기간 (일)' },
 };
+
+// ===== GIFT POINT LEDGER TABLE (GP - Gift Points with expiration) =====
+// GP is used before normal credits, supports FIFO consumption by expiration date
+export type GiftPointSourceType = 'coupon' | 'bonus' | 'referral' | 'admin' | 'promotion' | 'event';
+
+export const giftPointLedger = pgTable("gift_point_ledger", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  amount: integer("amount").notNull(), // Original amount awarded
+  remainingAmount: integer("remaining_amount").notNull(), // Current balance (decreases as GP is used)
+  source: varchar("source", { length: 30 }).notNull(), // GiftPointSourceType
+  sourceId: varchar("source_id"), // ID of coupon/referral/etc that triggered this GP
+  description: text("description"),
+  expiresAt: timestamp("expires_at").notNull(), // Expiration date (FIFO based on this)
+  isExpired: integer("is_expired").notNull().default(0), // 0 = active, 1 = expired/depleted
+  createdBy: varchar("created_by").references(() => users.id), // Admin who added (if admin source)
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_gp_ledger_user").on(table.userId),
+  index("IDX_gp_ledger_expires").on(table.expiresAt),
+  index("IDX_gp_ledger_user_active").on(table.userId, table.isExpired),
+]);
+
+export const giftPointLedgerRelations = relations(giftPointLedger, ({ one }) => ({
+  user: one(users, {
+    fields: [giftPointLedger.userId],
+    references: [users.id],
+  }),
+  creator: one(users, {
+    fields: [giftPointLedger.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const insertGiftPointLedgerSchema = createInsertSchema(giftPointLedger).omit({
+  id: true,
+  isExpired: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const createGiftPointSchema = z.object({
+  userId: z.string(),
+  amount: z.coerce.number().int().positive("GP는 양수여야 합니다"),
+  source: z.enum(['coupon', 'bonus', 'referral', 'admin', 'promotion', 'event']),
+  sourceId: z.string().nullable().optional(),
+  description: z.string().optional(),
+  expiresAt: z.preprocess(
+    (val) => (typeof val === 'string' && val ? new Date(val) : val),
+    z.date()
+  ).optional(), // If not provided, uses default expiration period
+});
+
+export type InsertGiftPointLedger = z.infer<typeof insertGiftPointLedgerSchema>;
+export type CreateGiftPoint = z.infer<typeof createGiftPointSchema>;
+export type GiftPointLedger = typeof giftPointLedger.$inferSelect;
+
+// ===== GIFT POINT TRANSACTIONS TABLE (GP usage history) =====
+export const giftPointTransactions = pgTable("gift_point_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  ledgerId: varchar("ledger_id")
+    .references(() => giftPointLedger.id, { onDelete: "set null" }), // Which GP entry was affected
+  amount: integer("amount").notNull(), // Positive for credit, negative for debit
+  balanceAfter: integer("balance_after").notNull(), // Total GP balance after transaction
+  type: varchar("type", { length: 30 }).notNull(), // 'award' | 'usage' | 'expire' | 'admin_add' | 'admin_deduct'
+  description: text("description"),
+  createdBy: varchar("created_by").references(() => users.id), // For admin operations
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_gp_transactions_user").on(table.userId),
+  index("IDX_gp_transactions_type").on(table.type),
+]);
+
+export const giftPointTransactionsRelations = relations(giftPointTransactions, ({ one }) => ({
+  user: one(users, {
+    fields: [giftPointTransactions.userId],
+    references: [users.id],
+  }),
+  ledger: one(giftPointLedger, {
+    fields: [giftPointTransactions.ledgerId],
+    references: [giftPointLedger.id],
+  }),
+  creator: one(users, {
+    fields: [giftPointTransactions.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const insertGiftPointTransactionSchema = createInsertSchema(giftPointTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertGiftPointTransaction = z.infer<typeof insertGiftPointTransactionSchema>;
+export type GiftPointTransaction = typeof giftPointTransactions.$inferSelect;
 
 // ===== REDEMPTION CODES TABLE (Coupon codes for points) =====
 export const redemptionCodes = pgTable("redemption_codes", {

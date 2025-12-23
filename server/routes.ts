@@ -21,7 +21,8 @@ import { createRateLimitMiddleware, checkRedisConnection, redis } from "./rateLi
 import { startWorker, submitQueuedJob } from "./aiWorker";
 import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
-import { desc } from "drizzle-orm";
+import { desc, count, sum, and, eq, gte, lte } from "drizzle-orm";
+import { giftPointLedger } from "@shared/schema";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -244,7 +245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Redeem token code for credits (uses database-backed redemption codes)
+  // Redeem token code for GP (Gift Points) - uses database-backed redemption codes
   app.post('/api/redeem', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -254,19 +255,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "유효한 코드를 입력해 주세요." });
       }
       
-      // Use database-backed redemption system
+      // Use database-backed redemption system (now awards GP instead of credits)
       const result = await storage.redeemCode(userId, code.trim());
       
       if (!result.success) {
         return res.status(400).json({ message: result.message });
       }
       
-      // Get updated user credits
+      // Get updated user balances
       const user = await storage.getUser(userId);
       
       res.json({ 
         message: result.message,
-        creditsAdded: result.pointsAwarded,
+        gpAdded: result.pointsAwarded, // Gift Points added
+        isGiftPoints: result.isGiftPoints,
+        totalGiftPoints: user?.giftPoints || 0,
         totalCredits: user?.credits || 0,
       });
     } catch (error) {
@@ -868,16 +871,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const user = await storage.getUser(userId);
       const analysisCost = await storage.getServiceCost('analysis');
-      if (!user || user.credits < analysisCost) {
-        return res.status(402).json({ message: `포인트가 부족합니다. 분석을 생성하려면 최소 ${analysisCost} 포인트가 필요합니다.` });
-      }
-
-      const deducted = await storage.deductUserCredits(userId, analysisCost);
-      if (!deducted) {
+      
+      // Deduct with GP priority (GP first, then regular credits) - includes balance check
+      const deductResult = await storage.deductUserPointsWithPriority(userId, analysisCost, '진로 분석 생성');
+      if (!deductResult.success) {
+        if (deductResult.errorCode === 'insufficient_balance') {
+          return res.status(402).json({ 
+            message: `포인트가 부족합니다. 분석을 생성하려면 최소 ${analysisCost} 포인트가 필요합니다.`,
+            requiredCredits: deductResult.totalRequired,
+            currentCredits: deductResult.creditBalance,
+            giftPoints: deductResult.gpBalance,
+          });
+        }
         return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
       }
+
+      // Get user for profile data
+      const user = await storage.getUser(userId);
 
       // Get user identity for comprehensive profile data
       const userIdentity = {
@@ -939,14 +950,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "카테고리와 주제는 필수입니다." });
       }
 
-      const user = await storage.getUser(userId);
       const essayCost = await storage.getServiceCost('essay');
-      if (!user || user.credits < essayCost) {
-        return res.status(402).json({ message: `포인트가 부족합니다. 자기소개서 생성을 위해 최소 ${essayCost} 포인트가 필요합니다.` });
-      }
-
-      const deducted = await storage.deductUserCredits(userId, essayCost);
-      if (!deducted) {
+      
+      // Deduct with GP priority (GP first, then regular credits) - includes balance check
+      const deductResult = await storage.deductUserPointsWithPriority(userId, essayCost, '자기소개서 생성');
+      if (!deductResult.success) {
+        if (deductResult.errorCode === 'insufficient_balance') {
+          return res.status(402).json({ 
+            message: `포인트가 부족합니다. 자기소개서 생성을 위해 최소 ${essayCost} 포인트가 필요합니다.`,
+            requiredCredits: deductResult.totalRequired,
+            currentCredits: deductResult.creditBalance,
+            giftPoints: deductResult.gpBalance,
+          });
+        }
         return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
       }
 
@@ -1143,17 +1159,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (isStrategicLevel) {
         goalCost = await storage.getServiceCost('goal_strategic');
-        const user = await storage.getUser(userId);
-        if (!user || user.credits < goalCost) {
-          return res.status(402).json({ 
-            message: `포인트가 부족합니다. 연도/반기 목표 생성을 위해 최소 ${goalCost} 포인트가 필요합니다.`,
-            requiredCredits: goalCost,
-            currentCredits: user?.credits || 0,
-          });
-        }
-
-        const deducted = await storage.deductUserCredits(userId, goalCost);
-        if (!deducted) {
+        
+        // Deduct with GP priority (GP first, then regular credits) - includes balance check
+        const deductResult = await storage.deductUserPointsWithPriority(userId, goalCost, '목표 생성');
+        if (!deductResult.success) {
+          if (deductResult.errorCode === 'insufficient_balance') {
+            return res.status(402).json({ 
+              message: `포인트가 부족합니다. 연도/반기 목표 생성을 위해 최소 ${goalCost} 포인트가 필요합니다.`,
+              requiredCredits: deductResult.totalRequired,
+              currentCredits: deductResult.creditBalance,
+              giftPoints: deductResult.gpBalance,
+            });
+          }
           return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
         }
       }
@@ -1246,19 +1263,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Check and deduct credits if required
+      // Check and deduct credits if required (using GP priority)
       if (requiredCredits > 0) {
-        const user = await storage.getUser(userId);
-        if (!user || user.credits < requiredCredits) {
-          return res.status(402).json({ 
-            message: `포인트가 부족합니다. ${requiredCredits} 포인트가 필요합니다.`,
-            requiredCredits,
-            currentCredits: user?.credits || 0,
-          });
-        }
-        
-        const deducted = await storage.deductUserCredits(userId, requiredCredits);
-        if (!deducted) {
+        // Deduct with GP priority (GP first, then regular credits) - includes balance check
+        const deductResult = await storage.deductUserPointsWithPriority(userId, requiredCredits, 'AI 서비스 사용');
+        if (!deductResult.success) {
+          if (deductResult.errorCode === 'insufficient_balance') {
+            return res.status(402).json({ 
+              message: `포인트가 부족합니다. ${requiredCredits} 포인트가 필요합니다.`,
+              requiredCredits: deductResult.totalRequired,
+              currentCredits: deductResult.creditBalance,
+              giftPoints: deductResult.gpBalance,
+            });
+          }
           return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
         }
       }
@@ -2283,7 +2300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rawResponse: tossResult,
       });
       
-      // Add points to user
+      // Add points to user (regular credits for purchased points)
       await storage.addUserPoints(
         userId,
         payment.pointsToAdd,
@@ -2292,6 +2309,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         undefined,
         payment.id
       );
+      
+      // Check if package has bonus points and award as GP
+      let bonusGpAwarded = 0;
+      if (payment.packageId) {
+        const pkg = await storage.getPointPackage(payment.packageId);
+        if (pkg && pkg.bonusPoints > 0) {
+          await storage.addGiftPoints(userId, pkg.bonusPoints, 'bonus', {
+            sourceId: payment.id,
+            description: `${payment.orderName} 보너스 GP`,
+          });
+          bonusGpAwarded = pkg.bonusPoints;
+        }
+      }
       
       // Get updated user
       const user = await storage.getUser(userId);
@@ -2302,10 +2332,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: payment.id,
           amount: payment.amount,
           pointsAdded: payment.pointsToAdd,
+          bonusGpAdded: bonusGpAwarded,
           method: tossResult.method,
           receiptUrl: tossResult.receipt?.url,
         },
         newBalance: user?.credits || 0,
+        newGiftPoints: user?.giftPoints || 0,
       });
     } catch (error: any) {
       console.error("Error confirming payment:", error);
@@ -2354,6 +2386,211 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching point history:", error);
       res.status(500).json({ message: "포인트 내역 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // ===== GIFT POINTS (GP) API ENDPOINTS =====
+
+  // Get user's GP balance and summary
+  app.get('/api/gift-points/balance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      const gpBalance = await storage.getUserGiftPointBalance(userId);
+      const expiringIn30Days = await storage.getExpiringGiftPoints(userId, 30);
+      
+      // Calculate expiring amount
+      const expiringAmount = expiringIn30Days.reduce((sum, entry) => sum + entry.remainingAmount, 0);
+      
+      res.json({
+        giftPoints: gpBalance,
+        credits: user?.credits || 0,
+        totalBalance: gpBalance + (user?.credits || 0),
+        expiringIn30Days: expiringAmount,
+        expiringEntries: expiringIn30Days.map(e => ({
+          id: e.id,
+          amount: e.remainingAmount,
+          expiresAt: e.expiresAt,
+          source: e.source,
+        })),
+      });
+    } catch (error: any) {
+      console.error("Error fetching GP balance:", error);
+      res.status(500).json({ message: "GP 잔액 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get user's GP ledger (all entries)
+  app.get('/api/gift-points/ledger', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const ledger = await storage.getGiftPointLedger(userId, limit);
+      res.json(ledger);
+    } catch (error: any) {
+      console.error("Error fetching GP ledger:", error);
+      res.status(500).json({ message: "GP 원장 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get user's GP transaction history
+  app.get('/api/gift-points/transactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const transactions = await storage.getGiftPointTransactions(userId, limit);
+      res.json(transactions);
+    } catch (error: any) {
+      console.error("Error fetching GP transactions:", error);
+      res.status(500).json({ message: "GP 내역 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Add GP to user
+  app.post('/api/admin/gift-points/add', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const adminId = req.user.id;
+      const { userId, amount, description, expiresAt } = req.body;
+      
+      if (!userId || !amount || amount <= 0) {
+        return res.status(400).json({ message: "유효한 사용자 ID와 금액을 입력해 주세요." });
+      }
+      
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+      }
+      
+      const entry = await storage.addGiftPoints(userId, amount, 'admin', {
+        description: description || `관리자 지급 (by ${adminId})`,
+        expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+        createdBy: adminId,
+      });
+      
+      // Get updated balances
+      const updatedUser = await storage.getUser(userId);
+      
+      res.json({
+        success: true,
+        message: `${amount.toLocaleString()} GP가 지급되었습니다.`,
+        entry,
+        newGiftPoints: updatedUser?.giftPoints || 0,
+        newCredits: updatedUser?.credits || 0,
+      });
+    } catch (error: any) {
+      console.error("Error adding GP:", error);
+      res.status(500).json({ message: "GP 지급 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Get GP statistics
+  app.get('/api/admin/gift-points/stats', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      // Get aggregate stats
+      const activeEntries = await db
+        .select({
+          count: count(),
+          totalRemaining: sum(giftPointLedger.remainingAmount),
+        })
+        .from(giftPointLedger)
+        .where(and(
+          eq(giftPointLedger.isExpired, 0),
+          gte(giftPointLedger.expiresAt, new Date())
+        ));
+      
+      // Get entries expiring in next 30 days
+      const thirtyDaysLater = new Date();
+      thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
+      
+      const expiringSoon = await db
+        .select({
+          count: count(),
+          totalRemaining: sum(giftPointLedger.remainingAmount),
+        })
+        .from(giftPointLedger)
+        .where(and(
+          eq(giftPointLedger.isExpired, 0),
+          gte(giftPointLedger.expiresAt, new Date()),
+          lte(giftPointLedger.expiresAt, thirtyDaysLater)
+        ));
+      
+      res.json({
+        activeEntries: Number(activeEntries[0]?.count) || 0,
+        totalActiveGP: Number(activeEntries[0]?.totalRemaining) || 0,
+        expiringIn30Days: {
+          entries: Number(expiringSoon[0]?.count) || 0,
+          totalGP: Number(expiringSoon[0]?.totalRemaining) || 0,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error fetching GP stats:", error);
+      res.status(500).json({ message: "GP 통계 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Manually expire old GP entries
+  app.post('/api/admin/gift-points/expire', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const expiredCount = await storage.expireOldGiftPoints();
+      res.json({
+        success: true,
+        message: `${expiredCount}개의 만료된 GP 항목이 처리되었습니다.`,
+        expiredCount,
+      });
+    } catch (error: any) {
+      console.error("Error expiring GP:", error);
+      res.status(500).json({ message: "GP 만료 처리 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Get user's GP ledger
+  app.get('/api/admin/users/:userId/gift-points', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const [gpBalance, ledger, transactions] = await Promise.all([
+        storage.getUserGiftPointBalance(userId),
+        storage.getGiftPointLedger(userId, limit),
+        storage.getGiftPointTransactions(userId, limit),
+      ]);
+      
+      res.json({
+        balance: gpBalance,
+        ledger,
+        transactions,
+      });
+    } catch (error: any) {
+      console.error("Error fetching user GP:", error);
+      res.status(500).json({ message: "사용자 GP 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Update GP default expiration setting
+  app.put('/api/admin/gift-points/settings', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const adminId = req.user.id;
+      const { defaultExpirationDays } = req.body;
+      
+      if (!defaultExpirationDays || defaultExpirationDays < 1 || defaultExpirationDays > 3650) {
+        return res.status(400).json({ message: "만료 기간은 1일에서 3650일 사이여야 합니다." });
+      }
+      
+      await storage.upsertSystemSetting(
+        'gp_default_expiration_days',
+        String(defaultExpirationDays),
+        '기프트 포인트 기본 만료 기간 (일)',
+        adminId
+      );
+      
+      res.json({
+        success: true,
+        message: `GP 기본 만료 기간이 ${defaultExpirationDays}일로 설정되었습니다.`,
+        defaultExpirationDays,
+      });
+    } catch (error: any) {
+      console.error("Error updating GP settings:", error);
+      res.status(500).json({ message: "GP 설정 업데이트 중 오류가 발생했습니다." });
     }
   });
 

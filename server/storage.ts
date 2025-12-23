@@ -15,6 +15,8 @@ import {
   pointTransactions,
   servicePricing,
   notifications,
+  giftPointLedger,
+  giftPointTransactions,
   type User,
   type UpsertUser,
   type Profile,
@@ -55,6 +57,11 @@ import {
   type RedemptionHistory,
   type Notification,
   type InsertNotification,
+  type GiftPointLedger,
+  type InsertGiftPointLedger,
+  type GiftPointTransaction,
+  type InsertGiftPointTransaction,
+  type GiftPointSourceType,
   systemSettings,
   redemptionCodes,
   redemptionHistory,
@@ -220,6 +227,31 @@ export interface IStorage {
   markNotificationAsRead(id: string): Promise<Notification>;
   markAllNotificationsAsRead(userId: string): Promise<void>;
   deleteNotification(id: string): Promise<void>;
+
+  // Gift Points (GP)
+  getUserGiftPointBalance(userId: string): Promise<number>;
+  getActiveGiftPointLedger(userId: string): Promise<GiftPointLedger[]>;
+  addGiftPoints(userId: string, amount: number, source: GiftPointSourceType, options?: {
+    sourceId?: string;
+    description?: string;
+    expiresAt?: Date;
+    createdBy?: string;
+  }): Promise<GiftPointLedger>;
+  deductGiftPoints(userId: string, amount: number, description: string): Promise<{ gpUsed: number; creditsUsed: number }>;
+  getExpiringGiftPoints(userId: string, withinDays: number): Promise<GiftPointLedger[]>;
+  expireOldGiftPoints(): Promise<number>; // Returns count of expired entries
+  getGiftPointLedger(userId: string, limit?: number): Promise<GiftPointLedger[]>;
+  getGiftPointTransactions(userId: string, limit?: number): Promise<GiftPointTransaction[]>;
+  updateUserGiftPoints(userId: string, giftPoints: number): Promise<void>;
+  deductUserPointsWithPriority(userId: string, amount: number, description: string): Promise<{ 
+    gpUsed: number; 
+    creditsUsed: number; 
+    success: boolean;
+    errorCode?: 'user_not_found' | 'insufficient_balance';
+    gpBalance?: number;
+    creditBalance?: number;
+    totalRequired?: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1312,7 +1344,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(redemptionCodes).where(eq(redemptionCodes.id, id));
   }
 
-  async redeemCode(userId: string, code: string): Promise<{ success: boolean; message: string; pointsAwarded?: number }> {
+  async redeemCode(userId: string, code: string): Promise<{ success: boolean; message: string; pointsAwarded?: number; isGiftPoints?: boolean }> {
     const redemption = await this.getRedemptionCodeByCode(code);
     
     if (!redemption) {
@@ -1344,8 +1376,11 @@ export class DatabaseStorage implements IStorage {
       return { success: false, message: '이미 사용한 쿠폰입니다' };
     }
     
-    // Award points
-    await this.addUserPoints(userId, redemption.pointAmount, 'coupon', `쿠폰 사용: ${redemption.code}`);
+    // Award Gift Points (GP) instead of regular credits
+    await this.addGiftPoints(userId, redemption.pointAmount, 'coupon', {
+      sourceId: redemption.id,
+      description: `쿠폰 사용: ${redemption.code}`,
+    });
     
     // Record redemption history
     await db.insert(redemptionHistory).values({
@@ -1362,8 +1397,9 @@ export class DatabaseStorage implements IStorage {
     
     return { 
       success: true, 
-      message: `${redemption.pointAmount.toLocaleString()} 포인트가 지급되었습니다!`,
-      pointsAwarded: redemption.pointAmount 
+      message: `${redemption.pointAmount.toLocaleString()} GP(기프트 포인트)가 지급되었습니다!`,
+      pointsAwarded: redemption.pointAmount,
+      isGiftPoints: true
     };
   }
 
@@ -1422,6 +1458,289 @@ export class DatabaseStorage implements IStorage {
 
   async deleteNotification(id: string): Promise<void> {
     await db.delete(notifications).where(eq(notifications.id, id));
+  }
+
+  // Gift Points (GP) Implementation
+  async getUserGiftPointBalance(userId: string): Promise<number> {
+    const result = await db
+      .select({ total: sum(giftPointLedger.remainingAmount) })
+      .from(giftPointLedger)
+      .where(and(
+        eq(giftPointLedger.userId, userId),
+        eq(giftPointLedger.isExpired, 0),
+        gte(giftPointLedger.expiresAt, new Date())
+      ));
+    return Number(result[0]?.total) || 0;
+  }
+
+  async getActiveGiftPointLedger(userId: string): Promise<GiftPointLedger[]> {
+    return db
+      .select()
+      .from(giftPointLedger)
+      .where(and(
+        eq(giftPointLedger.userId, userId),
+        eq(giftPointLedger.isExpired, 0),
+        gte(giftPointLedger.expiresAt, new Date())
+      ))
+      .orderBy(giftPointLedger.expiresAt); // FIFO by expiration date
+  }
+
+  async addGiftPoints(
+    userId: string, 
+    amount: number, 
+    source: GiftPointSourceType, 
+    options?: {
+      sourceId?: string;
+      description?: string;
+      expiresAt?: Date;
+      createdBy?: string;
+    }
+  ): Promise<GiftPointLedger> {
+    // Get default expiration period if not specified
+    let expiresAt = options?.expiresAt;
+    if (!expiresAt) {
+      const defaultDays = await this.getSystemSetting('gp_default_expiration_days');
+      const days = parseInt(defaultDays || '365', 10);
+      expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + days);
+    }
+
+    // Create ledger entry
+    const [ledgerEntry] = await db
+      .insert(giftPointLedger)
+      .values({
+        userId,
+        amount,
+        remainingAmount: amount,
+        source,
+        sourceId: options?.sourceId || null,
+        description: options?.description || null,
+        expiresAt,
+        createdBy: options?.createdBy || null,
+      })
+      .returning();
+
+    // Update user's cached GP balance
+    const newBalance = await this.getUserGiftPointBalance(userId);
+    await this.updateUserGiftPoints(userId, newBalance);
+
+    // Create transaction record
+    await db.insert(giftPointTransactions).values({
+      userId,
+      ledgerId: ledgerEntry.id,
+      amount,
+      balanceAfter: newBalance,
+      type: 'award',
+      description: options?.description || `${source} GP 지급`,
+      createdBy: options?.createdBy || null,
+    });
+
+    console.log(`Added ${amount} GP to user ${userId} (source: ${source}, expires: ${expiresAt.toISOString()})`);
+    return ledgerEntry;
+  }
+
+  async deductGiftPoints(userId: string, amount: number, description: string): Promise<{ gpUsed: number; creditsUsed: number }> {
+    // Get active ledger entries sorted by expiration (FIFO)
+    const activeEntries = await this.getActiveGiftPointLedger(userId);
+    
+    let remainingToDeduct = amount;
+    let gpUsed = 0;
+
+    for (const entry of activeEntries) {
+      if (remainingToDeduct <= 0) break;
+
+      const deductFromEntry = Math.min(entry.remainingAmount, remainingToDeduct);
+      const newRemaining = entry.remainingAmount - deductFromEntry;
+
+      await db
+        .update(giftPointLedger)
+        .set({ 
+          remainingAmount: newRemaining,
+          isExpired: newRemaining === 0 ? 1 : 0,
+          updatedAt: new Date()
+        })
+        .where(eq(giftPointLedger.id, entry.id));
+
+      gpUsed += deductFromEntry;
+      remainingToDeduct -= deductFromEntry;
+    }
+
+    // Update user's cached GP balance
+    const newBalance = await this.getUserGiftPointBalance(userId);
+    await this.updateUserGiftPoints(userId, newBalance);
+
+    // Create transaction record for GP usage
+    if (gpUsed > 0) {
+      await db.insert(giftPointTransactions).values({
+        userId,
+        ledgerId: null,
+        amount: -gpUsed,
+        balanceAfter: newBalance,
+        type: 'usage',
+        description,
+      });
+    }
+
+    return { gpUsed, creditsUsed: remainingToDeduct };
+  }
+
+  async getExpiringGiftPoints(userId: string, withinDays: number): Promise<GiftPointLedger[]> {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + withinDays);
+
+    return db
+      .select()
+      .from(giftPointLedger)
+      .where(and(
+        eq(giftPointLedger.userId, userId),
+        eq(giftPointLedger.isExpired, 0),
+        gte(giftPointLedger.expiresAt, new Date()),
+        lte(giftPointLedger.expiresAt, futureDate)
+      ))
+      .orderBy(giftPointLedger.expiresAt);
+  }
+
+  async expireOldGiftPoints(): Promise<number> {
+    const now = new Date();
+    
+    // Find entries to expire
+    const toExpire = await db
+      .select()
+      .from(giftPointLedger)
+      .where(and(
+        eq(giftPointLedger.isExpired, 0),
+        lte(giftPointLedger.expiresAt, now)
+      ));
+
+    if (toExpire.length === 0) return 0;
+
+    // Mark them as expired
+    await db
+      .update(giftPointLedger)
+      .set({ isExpired: 1, updatedAt: now })
+      .where(and(
+        eq(giftPointLedger.isExpired, 0),
+        lte(giftPointLedger.expiresAt, now)
+      ));
+
+    // Update affected users' cached GP balance and create transaction records
+    const userIds = Array.from(new Set(toExpire.map(e => e.userId)));
+    for (const userId of userIds) {
+      const expiredAmount = toExpire
+        .filter(e => e.userId === userId)
+        .reduce((sum, e) => sum + e.remainingAmount, 0);
+
+      if (expiredAmount > 0) {
+        const newBalance = await this.getUserGiftPointBalance(userId);
+        await this.updateUserGiftPoints(userId, newBalance);
+
+        await db.insert(giftPointTransactions).values({
+          userId,
+          ledgerId: null,
+          amount: -expiredAmount,
+          balanceAfter: newBalance,
+          type: 'expire',
+          description: '기프트 포인트 만료',
+        });
+      }
+    }
+
+    console.log(`Expired ${toExpire.length} GP entries for ${userIds.length} users`);
+    return toExpire.length;
+  }
+
+  async getGiftPointLedger(userId: string, limit: number = 50): Promise<GiftPointLedger[]> {
+    return db
+      .select()
+      .from(giftPointLedger)
+      .where(eq(giftPointLedger.userId, userId))
+      .orderBy(desc(giftPointLedger.createdAt))
+      .limit(limit);
+  }
+
+  async getGiftPointTransactions(userId: string, limit: number = 50): Promise<GiftPointTransaction[]> {
+    return db
+      .select()
+      .from(giftPointTransactions)
+      .where(eq(giftPointTransactions.userId, userId))
+      .orderBy(desc(giftPointTransactions.createdAt))
+      .limit(limit);
+  }
+
+  async updateUserGiftPoints(userId: string, giftPoints: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ giftPoints })
+      .where(eq(users.id, userId));
+  }
+
+  async deductUserPointsWithPriority(
+    userId: string, 
+    amount: number, 
+    description: string
+  ): Promise<{ 
+    gpUsed: number; 
+    creditsUsed: number; 
+    success: boolean;
+    errorCode?: 'user_not_found' | 'insufficient_balance';
+    gpBalance?: number;
+    creditBalance?: number;
+    totalRequired?: number;
+  }> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      return { 
+        gpUsed: 0, 
+        creditsUsed: 0, 
+        success: false,
+        errorCode: 'user_not_found',
+      };
+    }
+
+    // Check total available (GP + credits)
+    const gpBalance = await this.getUserGiftPointBalance(userId);
+    const totalAvailable = gpBalance + user.credits;
+
+    if (totalAvailable < amount) {
+      return { 
+        gpUsed: 0, 
+        creditsUsed: 0, 
+        success: false,
+        errorCode: 'insufficient_balance',
+        gpBalance,
+        creditBalance: user.credits,
+        totalRequired: amount,
+      };
+    }
+
+    // First, try to use GP (FIFO by expiration)
+    const { gpUsed, creditsUsed: remainingAfterGP } = await this.deductGiftPoints(userId, amount, description);
+
+    // If GP wasn't enough, deduct from regular credits
+    let creditsUsed = 0;
+    if (remainingAfterGP > 0) {
+      creditsUsed = remainingAfterGP;
+      const newCredits = user.credits - creditsUsed;
+      await this.updateUserCredits(userId, newCredits);
+
+      // Log credit usage in point transactions
+      await this.createPointTransaction({
+        userId,
+        amount: -creditsUsed,
+        balanceAfter: newCredits,
+        type: 'usage',
+        description,
+      });
+    }
+
+    console.log(`Deducted ${amount} points from user ${userId}: ${gpUsed} GP + ${creditsUsed} credits`);
+    return { 
+      gpUsed, 
+      creditsUsed, 
+      success: true,
+      gpBalance: gpBalance - gpUsed,
+      creditBalance: user.credits - creditsUsed,
+    };
   }
 }
 
