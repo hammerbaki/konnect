@@ -415,7 +415,7 @@ export default function Admin() {
       }
       return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/gift-points/stats'] });
       setSelectedUserForGP(null);
@@ -423,7 +423,7 @@ export default function Admin() {
       setGpReason("");
       toast({ 
         title: "기프트 포인트 지급 완료", 
-        description: `${data.amount}GP가 지급되었습니다. 새 GP 잔액: ${data.newGiftPoints}GP` 
+        description: `${variables.amount.toLocaleString()}GP가 지급되었습니다. 새 GP 잔액: ${data.newGiftPoints.toLocaleString()}GP` 
       });
     },
     onError: (error: Error) => {
