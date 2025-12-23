@@ -1,0 +1,188 @@
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+Auth error: error: column "gift_points" of relation "users" does not exist
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+position: '96',
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+constraint: undefined,
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+where: undefined,
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+}
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+severity: 'ERROR',
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+routine: 'checkInsertTargets'
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+length: 129,
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+column: undefined,
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+hint: undefined,
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+code: '42703',
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+at async Rc.upsertUser (/home/runner/workspace/dist/index.cjs:63:89605)
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+file: 'parse_target.c',
+2025-12-23 15:28:11.86
+d56ef0c5
+User
+6:28:11 AM [express] GET /api/notifications/unread-count 401 in 2230ms :: {"message":"Unauthorized"}
+2025-12-23 15:28:11.89
+d56ef0c5
+User
+✓ Database connection established
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+detail: undefined,
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+position: '96',
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+at async A (/home/runner/workspace/dist/index.cjs:63:112670) {
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+constraint: undefined,
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+file: 'parse_target.c',
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+hint: undefined,
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+column: undefined,
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+internalPosition: undefined,
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+Auth error: error: column "gift_points" of relation "users" does not exist
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+schema: undefined,
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+code: '42703',
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+internalQuery: undefined,
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+length: 129,
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+line: '1065',
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+at async Rc.upsertUser (/home/runner/workspace/dist/index.cjs:63:89605)
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+severity: 'ERROR',
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+where: undefined,
+2025-12-23 15:28:11.91
+d56ef0c5
+User
+table: undefined,
+2025-12-23 15:28:12.06
+d56ef0c5
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2025-12-23 15:28:12.06
+d56ef0c5
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2025-12-23 15:28:12.06
+d56ef0c5
+User
+internalQuery: undefined,
+2025-12-23 15:28:12.06
+d56ef0c5
+User
+at async Rc.upsertUser (/home/runner/workspace/dist/index.cjs:63:89605)
+2025-12-23 15:28:12.06
+d56ef0c5
+User
+hint: undefined,
+2025-12-23 15:28:12.06
+d56ef0c5
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-23 15:28:12.06
+d56ef0c5
+User
+severity: 'ERROR',
+2025-12-23 15:28:12.06
+d56ef0c5
+User
+at async A (/home/runner/workspace/dist/index.cjs:63:112670) {
