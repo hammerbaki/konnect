@@ -1,4 +1,4 @@
-import { Search, Coins, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,28 +72,16 @@ export function Header() {
       <div className="hidden md:block flex-1" />
 
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
-        <div className="hidden md:flex items-center gap-3 mr-2 bg-white px-4 py-2 rounded-full shadow-sm">
-          <div className="flex items-center gap-1.5" title="기프트 포인트 (무료)">
-            <Coins className="h-4 w-4 text-[#10B981]" />
-            <span className="text-sm font-bold text-[#10B981]">{giftPoints.toLocaleString()}</span>
-          </div>
-          <div className="w-px h-4 bg-gray-200" />
-          <div className="flex items-center gap-1.5" title="유료 포인트">
-            <Coins className="h-4 w-4 text-[#FFB300]" />
-            <span className="text-sm font-bold text-[#191F28]">{credits.toLocaleString()}</span>
-          </div>
+        <div className="hidden md:flex items-center mr-2 bg-white px-4 py-2 rounded-full shadow-sm" data-testid="header-points-display">
+          <span className="text-sm font-bold text-[#10B981]" title="기프트 포인트 (무료)">{giftPoints.toLocaleString()}GP</span>
+          <span className="mx-2 text-gray-300">|</span>
+          <span className="text-sm font-bold text-[#191F28]" title="유료 포인트">{credits.toLocaleString()}P</span>
         </div>
         {/* Mobile Token Display Compact */}
-        <div className="md:hidden flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-full shadow-sm">
-           <div className="flex items-center gap-0.5" title="GP">
-             <Coins className="h-3 w-3 text-[#10B981]" />
-             <span className="text-xs font-bold text-[#10B981]">{giftPoints.toLocaleString()}</span>
-           </div>
-           <div className="w-px h-3 bg-gray-200" />
-           <div className="flex items-center gap-0.5" title="포인트">
-             <Coins className="h-3 w-3 text-[#FFB300]" />
-             <span className="text-xs font-bold text-[#191F28]">{credits.toLocaleString()}</span>
-           </div>
+        <div className="md:hidden flex items-center bg-white px-2.5 py-1.5 rounded-full shadow-sm" data-testid="header-points-display-mobile">
+          <span className="text-xs font-bold text-[#10B981]">{giftPoints.toLocaleString()}GP</span>
+          <span className="mx-1.5 text-gray-300">|</span>
+          <span className="text-xs font-bold text-[#191F28]">{credits.toLocaleString()}P</span>
         </div>
 
         <div className="hidden md:block">

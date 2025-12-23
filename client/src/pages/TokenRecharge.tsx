@@ -267,20 +267,12 @@ export default function TokenRecharge() {
             </div>
             <div className="flex gap-6 pt-3 border-t border-white/20">
               <div>
-                <p className="text-xs text-blue-100 mb-0.5">기프트 포인트 (GP)</p>
-                <div className="flex items-center gap-1.5">
-                  <Coins className="h-4 w-4 text-emerald-300" />
-                  <span className="text-lg font-bold text-emerald-300" data-testid="text-gift-points">{giftPoints.toLocaleString()}</span>
-                  <span className="text-sm text-emerald-200">P</span>
-                </div>
+                <p className="text-xs text-blue-100 mb-0.5">기프트 포인트</p>
+                <span className="text-lg font-bold text-emerald-300" data-testid="text-gift-points">{giftPoints.toLocaleString()}GP</span>
               </div>
               <div>
                 <p className="text-xs text-blue-100 mb-0.5">유료 포인트</p>
-                <div className="flex items-center gap-1.5">
-                  <Coins className="h-4 w-4 text-amber-300" />
-                  <span className="text-lg font-bold text-amber-300" data-testid="text-paid-credits">{credits.toLocaleString()}</span>
-                  <span className="text-sm text-amber-200">P</span>
-                </div>
+                <span className="text-lg font-bold text-amber-300" data-testid="text-paid-credits">{credits.toLocaleString()}P</span>
               </div>
             </div>
           </CardContent>
