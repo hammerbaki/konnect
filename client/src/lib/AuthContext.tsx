@@ -10,6 +10,7 @@ interface User {
   displayName: string | null;
   profileImageUrl: string | null;
   credits: number;
+  giftPoints: number;
   role: 'user' | 'staff' | 'admin';
 }
 

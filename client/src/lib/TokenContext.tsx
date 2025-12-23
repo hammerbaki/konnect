@@ -4,6 +4,8 @@ import { useAuth } from "@/lib/AuthContext";
 
 interface TokenContextType {
   credits: number;
+  giftPoints: number;
+  totalBalance: number;
   isLoading: boolean;
   refreshCredits: () => Promise<void>;
   deductCredit: (amount?: number) => boolean;
@@ -15,13 +17,17 @@ const TokenContext = createContext<TokenContextType | undefined>(undefined);
 
 export function TokenProvider({ children }: { children: React.ReactNode }) {
   const [credits, setCredits] = useState(0);
+  const [giftPoints, setGiftPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const { user, isAuthenticated, getAccessToken, refreshUser } = useAuth();
   const { toast } = useToast();
 
+  const totalBalance = credits + giftPoints;
+
   const refreshCredits = useCallback(async () => {
     if (!isAuthenticated) {
       setCredits(0);
+      setGiftPoints(0);
       setIsLoading(false);
       return;
     }
@@ -42,6 +48,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         setCredits(userData.credits || 0);
+        setGiftPoints(userData.giftPoints || 0);
       }
     } catch (error) {
       console.error("Failed to fetch credits:", error);
@@ -53,17 +60,22 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (user) {
       setCredits(user.credits || 0);
+      setGiftPoints(user.giftPoints || 0);
       setIsLoading(false);
     }
   }, [user]);
 
   const deductCredit = useCallback((amount: number = 100) => {
-    if (credits >= amount) {
-      setCredits(prev => prev - amount);
+    if (totalBalance >= amount) {
+      // GP is deducted first on the server, so we just update total optimistically
+      const gpToDeduct = Math.min(giftPoints, amount);
+      const creditsToDeduct = amount - gpToDeduct;
+      setGiftPoints(prev => prev - gpToDeduct);
+      setCredits(prev => prev - creditsToDeduct);
       return true;
     }
     return false;
-  }, [credits]);
+  }, [totalBalance, giftPoints]);
   
   const restoreCredits = useCallback((amount: number) => {
     setCredits(prev => prev + amount);
@@ -78,7 +90,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
   }, [toast]);
 
   return (
-    <TokenContext.Provider value={{ credits, isLoading, refreshCredits, deductCredit, addCredits, restoreCredits }}>
+    <TokenContext.Provider value={{ credits, giftPoints, totalBalance, isLoading, refreshCredits, deductCredit, addCredits, restoreCredits }}>
       {children}
     </TokenContext.Provider>
   );

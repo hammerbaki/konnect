@@ -22,7 +22,7 @@ import { Sidebar } from "./Sidebar";
 import { Link, useLocation } from "wouter";
 
 export function Header() {
-  const { credits } = useTokens();
+  const { credits, giftPoints, totalBalance } = useTokens();
   const { logout, user } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -72,14 +72,28 @@ export function Header() {
       <div className="hidden md:block flex-1" />
 
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
-        <div className="hidden md:flex items-center gap-2 mr-2 bg-white px-4 py-2 rounded-full shadow-sm">
-          <Coins className="h-5 w-5 text-[#FFB300]" />
-          <span className="text-sm font-bold text-[#191F28]">{credits} 포인트</span>
+        <div className="hidden md:flex items-center gap-3 mr-2 bg-white px-4 py-2 rounded-full shadow-sm">
+          <div className="flex items-center gap-1.5" title="기프트 포인트 (무료)">
+            <Coins className="h-4 w-4 text-[#10B981]" />
+            <span className="text-sm font-bold text-[#10B981]">{giftPoints.toLocaleString()}</span>
+          </div>
+          <div className="w-px h-4 bg-gray-200" />
+          <div className="flex items-center gap-1.5" title="유료 포인트">
+            <Coins className="h-4 w-4 text-[#FFB300]" />
+            <span className="text-sm font-bold text-[#191F28]">{credits.toLocaleString()}</span>
+          </div>
         </div>
         {/* Mobile Token Display Compact */}
-        <div className="md:hidden flex items-center bg-white px-2.5 py-1.5 rounded-full shadow-sm">
-           <Coins className="h-3.5 w-3.5 text-[#FFB300] mr-1" />
-           <span className="text-xs font-bold text-[#191F28]">{credits}</span>
+        <div className="md:hidden flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-full shadow-sm">
+           <div className="flex items-center gap-0.5" title="GP">
+             <Coins className="h-3 w-3 text-[#10B981]" />
+             <span className="text-xs font-bold text-[#10B981]">{giftPoints.toLocaleString()}</span>
+           </div>
+           <div className="w-px h-3 bg-gray-200" />
+           <div className="flex items-center gap-0.5" title="포인트">
+             <Coins className="h-3 w-3 text-[#FFB300]" />
+             <span className="text-xs font-bold text-[#191F28]">{credits.toLocaleString()}</span>
+           </div>
         </div>
 
         <div className="hidden md:block">
