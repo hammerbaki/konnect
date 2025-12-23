@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
@@ -535,9 +535,9 @@ export default function Landing() {
               />
             </div>
             <div className="flex items-center gap-6 text-sm text-white/40">
-              <span className="hover:text-white/60 cursor-pointer transition-colors">개인정보처리방침</span>
-              <span className="hover:text-white/60 cursor-pointer transition-colors">이용약관</span>
-              <span className="hover:text-white/60 cursor-pointer transition-colors">고객센터</span>
+              <Link href="/privacy" className="hover:text-white/60 transition-colors" data-testid="link-privacy">개인정보처리방침</Link>
+              <Link href="/terms" className="hover:text-white/60 transition-colors" data-testid="link-terms">이용약관</Link>
+              <a href="https://kjobs.co.kr/qna" target="_blank" rel="noopener noreferrer" className="hover:text-white/60 transition-colors" data-testid="link-support">고객센터</a>
             </div>
             <p className="text-sm text-white/30">
               &copy; 2025 Konnect.careers. All rights reserved.

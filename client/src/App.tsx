@@ -27,6 +27,8 @@ const Explorer = lazy(() => import("./pages/Explorer"));
 const Settings = lazy(() => import("./pages/Settings"));
 const TokenRecharge = lazy(() => import("./pages/TokenRecharge"));
 const Admin = lazy(() => import("./pages/Admin"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 
 function LoadingSpinner() {
   return (
@@ -78,6 +80,8 @@ function Router() {
     <Suspense fallback={<PageLoader />}>
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/terms" component={Terms} />
         <Route path="/login" component={Login} />
         <Route path="/login/email" component={EmailPasswordLogin} />
         <Route path="/auth/callback" component={AuthCallback} />
