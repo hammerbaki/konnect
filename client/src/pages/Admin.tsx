@@ -206,6 +206,7 @@ export default function Admin() {
   const [selectedUserForGP, setSelectedUserForGP] = useState<AdminUser | null>(null);
   const [gpAmount, setGpAmount] = useState<number>(100);
   const [gpReason, setGpReason] = useState<string>("");
+  const [gpExpiresAt, setGpExpiresAt] = useState<string>("");
 
   const { user: currentUser, isLoading: userLoading } = useAuth();
 
@@ -407,8 +408,13 @@ export default function Admin() {
   });
 
   const addGPMutation = useMutation({
-    mutationFn: async ({ userId, amount, reason }: { userId: string; amount: number; reason: string }) => {
-      const res = await apiRequest('POST', '/api/admin/gift-points/add', { userId, amount, reason });
+    mutationFn: async ({ userId, amount, reason, expiresAt }: { userId: string; amount: number; reason: string; expiresAt?: string }) => {
+      const res = await apiRequest('POST', '/api/admin/gift-points/add', { 
+        userId, 
+        amount, 
+        description: reason,
+        expiresAt: expiresAt || undefined 
+      });
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.message || '기프트 포인트 지급에 실패했습니다.');
@@ -421,6 +427,7 @@ export default function Admin() {
       setSelectedUserForGP(null);
       setGpAmount(100);
       setGpReason("");
+      setGpExpiresAt("");
       toast({ 
         title: "기프트 포인트 지급 완료", 
         description: `${variables.amount.toLocaleString()}GP가 지급되었습니다. 새 GP 잔액: ${data.newGiftPoints.toLocaleString()}GP` 
@@ -2072,7 +2079,7 @@ export default function Admin() {
                             취소
                           </Button>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                           <div>
                             <label className="text-sm font-medium text-[#4E5968] mb-1 block">지급할 GP</label>
                             <Input
@@ -2082,6 +2089,16 @@ export default function Admin() {
                               className="bg-white"
                               placeholder="100"
                               data-testid="input-gp-amount"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-[#4E5968] mb-1 block">만료일 (선택)</label>
+                            <Input
+                              type="date"
+                              value={gpExpiresAt}
+                              onChange={(e) => setGpExpiresAt(e.target.value)}
+                              className="bg-white"
+                              data-testid="input-gp-expires"
                             />
                           </div>
                           <div className="md:col-span-2">
@@ -2095,12 +2112,16 @@ export default function Admin() {
                             />
                           </div>
                         </div>
+                        <p className="text-xs text-[#8B95A1] mt-2">
+                          만료일을 지정하지 않으면 기본 90일 후 만료됩니다.
+                        </p>
                         <div className="flex gap-2 mt-4">
                           <Button
                             onClick={() => addGPMutation.mutate({
                               userId: selectedUserForGP.id,
                               amount: gpAmount,
-                              reason: gpReason || '관리자 지급'
+                              reason: gpReason || '관리자 지급',
+                              expiresAt: gpExpiresAt || undefined
                             })}
                             disabled={addGPMutation.isPending || gpAmount <= 0}
                             className="bg-[#10B981] hover:bg-[#059669] text-white"
