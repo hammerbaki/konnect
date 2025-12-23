@@ -22,7 +22,7 @@ import { Sidebar } from "./Sidebar";
 import { Link, useLocation } from "wouter";
 
 export function Header() {
-  const { credits, giftPoints, totalBalance } = useTokens();
+  const { credits, giftPoints } = useTokens();
   const { logout, user } = useAuth();
   const [, setLocation] = useLocation();
 

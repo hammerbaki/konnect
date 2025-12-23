@@ -36,7 +36,7 @@ interface PointTransaction {
 }
 
 export default function TokenRecharge() {
-  const { credits, refreshCredits } = useTokens();
+  const { credits, giftPoints, totalBalance, refreshCredits } = useTokens();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -251,17 +251,37 @@ export default function TokenRecharge() {
         )}
 
         {/* Current Balance */}
-        <Card className="bg-[#3182F6] text-white border-none mb-8 shadow-lg shadow-blue-500/30" data-testid="card-balance">
-          <CardContent className="p-6 flex justify-between items-center">
-            <div>
-              <p className="text-blue-100 font-medium mb-1">현재 보유 포인트</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-bold" data-testid="text-balance">{credits.toLocaleString()}</span>
-                <span className="text-xl font-medium text-blue-100">P</span>
+        <Card className="bg-gradient-to-r from-[#3182F6] to-[#5B9CF9] text-white border-none mb-8 shadow-lg shadow-blue-500/30" data-testid="card-balance">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <p className="text-blue-100 font-medium mb-1">총 보유 포인트</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold" data-testid="text-balance">{totalBalance.toLocaleString()}</span>
+                  <span className="text-xl font-medium text-blue-100">P</span>
+                </div>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                <Coins className="h-6 w-6 text-white" />
               </div>
             </div>
-            <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
-              <Coins className="h-6 w-6 text-white" />
+            <div className="flex gap-6 pt-3 border-t border-white/20">
+              <div>
+                <p className="text-xs text-blue-100 mb-0.5">기프트 포인트 (GP)</p>
+                <div className="flex items-center gap-1.5">
+                  <Coins className="h-4 w-4 text-emerald-300" />
+                  <span className="text-lg font-bold text-emerald-300" data-testid="text-gift-points">{giftPoints.toLocaleString()}</span>
+                  <span className="text-sm text-emerald-200">P</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-blue-100 mb-0.5">유료 포인트</p>
+                <div className="flex items-center gap-1.5">
+                  <Coins className="h-4 w-4 text-amber-300" />
+                  <span className="text-lg font-bold text-amber-300" data-testid="text-paid-credits">{credits.toLocaleString()}</span>
+                  <span className="text-sm text-amber-200">P</span>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
