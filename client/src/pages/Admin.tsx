@@ -11,7 +11,7 @@ import {
   Users, Settings, Coins, Activity, 
   RefreshCw, Search, Shield, User, Crown,
   BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
-  ChevronUp, ChevronDown
+  ChevronUp, ChevronDown, Gift, Plus, Minus
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -28,8 +28,28 @@ interface AdminUser {
   lastName: string | null;
   displayName: string | null;
   credits: number;
+  giftPoints: number;
   role: string;
   createdAt: string | null;
+}
+
+interface GiftPointStats {
+  totalGiftPoints: number;
+  totalUsersWithGP: number;
+  expiringIn30Days: number;
+  expiringIn30DaysUsers: number;
+}
+
+interface GiftPointLedgerEntry {
+  id: string;
+  userId: string;
+  originalAmount: number;
+  remainingAmount: number;
+  reason: string | null;
+  expiresAt: string;
+  isExpired: number;
+  createdAt: string;
+  user?: { email: string | null; displayName: string | null };
 }
 
 interface SystemStats {
@@ -182,6 +202,10 @@ export default function Admin() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isRefreshingQueue, setIsRefreshingQueue] = useState(false);
   const [isRefreshingJobs, setIsRefreshingJobs] = useState(false);
+  const [gpSearchQuery, setGpSearchQuery] = useState("");
+  const [selectedUserForGP, setSelectedUserForGP] = useState<AdminUser | null>(null);
+  const [gpAmount, setGpAmount] = useState<number>(100);
+  const [gpReason, setGpReason] = useState<string>("");
 
   const { user: currentUser, isLoading: userLoading } = useAuth();
 
@@ -259,6 +283,12 @@ export default function Admin() {
 
   const { data: redemptionCodes = [], refetch: refetchCoupons } = useQuery<RedemptionCode[]>({
     queryKey: ['/api/admin/redemption-codes'],
+    enabled: isStaffOrAdmin,
+    retry: false,
+  });
+
+  const { data: gpStats, refetch: refetchGPStats } = useQuery<GiftPointStats>({
+    queryKey: ['/api/admin/gift-points/stats'],
     enabled: isStaffOrAdmin,
     retry: false,
   });
@@ -373,6 +403,31 @@ export default function Admin() {
     },
     onError: () => {
       toast({ title: "오류", description: "쿠폰 삭제에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
+  const addGPMutation = useMutation({
+    mutationFn: async ({ userId, amount, reason }: { userId: string; amount: number; reason: string }) => {
+      const res = await apiRequest('POST', '/api/admin/gift-points/add', { userId, amount, reason });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || '기프트 포인트 지급에 실패했습니다.');
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/gift-points/stats'] });
+      setSelectedUserForGP(null);
+      setGpAmount(100);
+      setGpReason("");
+      toast({ 
+        title: "기프트 포인트 지급 완료", 
+        description: `${data.amount}GP가 지급되었습니다. 새 GP 잔액: ${data.newGiftPoints}GP` 
+      });
+    },
+    onError: (error: Error) => {
+      toast({ title: "오류", description: error.message, variant: "destructive" });
     },
   });
 
@@ -689,6 +744,10 @@ export default function Admin() {
             <TabsTrigger value="pages" className="rounded-lg px-4" data-testid="tab-pages">
               <Eye className="h-4 w-4 mr-2" />
               페이지 관리
+            </TabsTrigger>
+            <TabsTrigger value="giftpoints" className="rounded-lg px-4" data-testid="tab-giftpoints">
+              <Gift className="h-4 w-4 mr-2" />
+              기프트 포인트
             </TabsTrigger>
           </TabsList>
 
@@ -2171,6 +2230,197 @@ export default function Admin() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="giftpoints" className="space-y-6">
+            {/* GP Stats Overview */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="toss-card">
+                <CardContent className="p-4">
+                  <p className="text-sm text-[#8B95A1] mb-1">총 GP 잔액</p>
+                  <p className="text-2xl font-bold text-[#10B981]">{(gpStats?.totalGiftPoints || 0).toLocaleString()}GP</p>
+                </CardContent>
+              </Card>
+              <Card className="toss-card">
+                <CardContent className="p-4">
+                  <p className="text-sm text-[#8B95A1] mb-1">GP 보유 회원</p>
+                  <p className="text-2xl font-bold text-[#191F28]">{gpStats?.totalUsersWithGP || 0}명</p>
+                </CardContent>
+              </Card>
+              <Card className="toss-card">
+                <CardContent className="p-4">
+                  <p className="text-sm text-[#8B95A1] mb-1">30일 내 만료 GP</p>
+                  <p className="text-2xl font-bold text-amber-500">{(gpStats?.expiringIn30Days || 0).toLocaleString()}GP</p>
+                </CardContent>
+              </Card>
+              <Card className="toss-card">
+                <CardContent className="p-4">
+                  <p className="text-sm text-[#8B95A1] mb-1">30일 내 만료 대상</p>
+                  <p className="text-2xl font-bold text-amber-500">{gpStats?.expiringIn30DaysUsers || 0}명</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* GP Management */}
+            <Card className="toss-card">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Gift className="h-5 w-5 text-[#10B981]" />
+                  기프트 포인트 지급
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* User Search */}
+                  <div className="flex gap-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
+                      <Input
+                        placeholder="회원 이메일 또는 이름으로 검색..."
+                        value={gpSearchQuery}
+                        onChange={(e) => setGpSearchQuery(e.target.value)}
+                        className="pl-10 bg-[#F2F4F6] border-none rounded-xl h-12"
+                        data-testid="input-gp-search"
+                      />
+                    </div>
+                  </div>
+
+                  {/* User List for Selection */}
+                  {gpSearchQuery.length >= 2 && (
+                    <div className="border rounded-xl max-h-48 overflow-y-auto divide-y">
+                      {users
+                        .filter(u => {
+                          const query = gpSearchQuery.toLowerCase();
+                          return (
+                            (u.email || '').toLowerCase().includes(query) ||
+                            (u.displayName || '').toLowerCase().includes(query) ||
+                            (u.firstName || '').toLowerCase().includes(query) ||
+                            (u.lastName || '').toLowerCase().includes(query)
+                          );
+                        })
+                        .slice(0, 10)
+                        .map(u => (
+                          <div
+                            key={u.id}
+                            className={`p-3 cursor-pointer hover:bg-[#F2F4F6] flex items-center justify-between ${selectedUserForGP?.id === u.id ? 'bg-blue-50' : ''}`}
+                            onClick={() => setSelectedUserForGP(u)}
+                            data-testid={`gp-user-select-${u.id}`}
+                          >
+                            <div>
+                              <p className="font-medium text-[#191F28]">{u.displayName || u.email || 'Unknown'}</p>
+                              <p className="text-sm text-[#8B95A1]">{u.email}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-bold text-[#10B981]">{(u.giftPoints || 0).toLocaleString()}GP</p>
+                              <p className="text-xs text-[#8B95A1]">{u.credits.toLocaleString()}P</p>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {/* Selected User & GP Form */}
+                  {selectedUserForGP && (
+                    <Card className="border-[#10B981] bg-emerald-50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <p className="font-bold text-[#191F28]">{selectedUserForGP.displayName || selectedUserForGP.email}</p>
+                            <p className="text-sm text-[#8B95A1]">{selectedUserForGP.email}</p>
+                            <p className="text-sm text-[#10B981] mt-1">현재 GP: {(selectedUserForGP.giftPoints || 0).toLocaleString()}GP</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedUserForGP(null)}
+                            className="text-[#8B95A1]"
+                          >
+                            취소
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="text-sm font-medium text-[#4E5968] mb-1 block">지급할 GP</label>
+                            <Input
+                              type="number"
+                              value={gpAmount}
+                              onChange={(e) => setGpAmount(parseInt(e.target.value) || 0)}
+                              className="bg-white"
+                              placeholder="100"
+                              data-testid="input-gp-amount"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="text-sm font-medium text-[#4E5968] mb-1 block">지급 사유</label>
+                            <Input
+                              value={gpReason}
+                              onChange={(e) => setGpReason(e.target.value)}
+                              className="bg-white"
+                              placeholder="예: 이벤트 당첨, 보상 지급 등"
+                              data-testid="input-gp-reason"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button
+                            onClick={() => addGPMutation.mutate({
+                              userId: selectedUserForGP.id,
+                              amount: gpAmount,
+                              reason: gpReason || '관리자 지급'
+                            })}
+                            disabled={addGPMutation.isPending || gpAmount <= 0}
+                            className="bg-[#10B981] hover:bg-[#059669] text-white"
+                            data-testid="button-add-gp"
+                          >
+                            {addGPMutation.isPending ? '처리 중...' : (
+                              <>
+                                <Plus className="h-4 w-4 mr-1" />
+                                {gpAmount.toLocaleString()}GP 지급
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Users with GP List */}
+            <Card className="toss-card">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="h-5 w-5 text-[#3182F6]" />
+                  GP 보유 회원 목록
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y divide-[#F2F4F6]">
+                  {users
+                    .filter(u => (u.giftPoints || 0) > 0)
+                    .sort((a, b) => (b.giftPoints || 0) - (a.giftPoints || 0))
+                    .slice(0, 20)
+                    .map(u => (
+                      <div key={u.id} className="p-4 flex items-center justify-between" data-testid={`gp-user-row-${u.id}`}>
+                        <div>
+                          <p className="font-bold text-[#191F28]">{u.displayName || u.email || 'Unknown'}</p>
+                          <p className="text-sm text-[#8B95A1]">{u.email}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-[#10B981]">{(u.giftPoints || 0).toLocaleString()}GP</p>
+                          <p className="text-sm text-[#8B95A1]">{u.credits.toLocaleString()}P</p>
+                        </div>
+                      </div>
+                    ))}
+                  {users.filter(u => (u.giftPoints || 0) > 0).length === 0 && (
+                    <div className="p-8 text-center text-[#8B95A1]">
+                      GP를 보유한 회원이 없습니다.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
