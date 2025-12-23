@@ -51,11 +51,13 @@ export function Sidebar() {
   return (
     <div className="h-full flex flex-col bg-white border-r border-[#E5E8EB]">
       <div className="flex h-16 items-center px-6 mb-6">
-        <img
-          src="/konnect-logo.png"
-          alt="Konnect Logo"
-          className="h-8 w-auto"
-        />
+        <Link href="/" data-testid="link-sidebar-logo-home">
+          <img
+            src="/konnect-logo.png"
+            alt="Konnect Logo"
+            className="h-8 w-auto cursor-pointer"
+          />
+        </Link>
       </div>
 
       <div className="flex-1 px-4 flex flex-col">

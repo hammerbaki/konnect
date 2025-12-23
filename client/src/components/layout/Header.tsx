@@ -52,7 +52,9 @@ export function Header() {
 
       {/* Mobile Logo */}
       <div className="md:hidden flex-1">
-        <img src="/konnect-logo.png" alt="Konnect" className="h-6 w-auto" />
+        <Link href="/" data-testid="link-logo-home">
+          <img src="/konnect-logo.png" alt="Konnect" className="h-6 w-auto cursor-pointer" />
+        </Link>
       </div>
 
       {/* Desktop Search - Hidden for now */}
