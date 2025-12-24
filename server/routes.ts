@@ -21,8 +21,8 @@ import { createRateLimitMiddleware, checkRedisConnection, redis } from "./rateLi
 import { startWorker, submitQueuedJob } from "./aiWorker";
 import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
-import { desc, count, sum, and, eq, gte, lte } from "drizzle-orm";
-import { giftPointLedger } from "@shared/schema";
+import { desc, count, sum, and, eq, gte, lte, gt } from "drizzle-orm";
+import { giftPointLedger, users } from "@shared/schema";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -2486,17 +2486,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Get GP statistics
   app.get('/api/admin/gift-points/stats', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
     try {
-      // Get aggregate stats
-      const activeEntries = await db
+      // Get total GP from all users
+      const totalGPResult = await db
+        .select({
+          total: sum(users.giftPoints),
+        })
+        .from(users);
+      
+      // Get count of users with GP > 0
+      const usersWithGPResult = await db
         .select({
           count: count(),
-          totalRemaining: sum(giftPointLedger.remainingAmount),
         })
-        .from(giftPointLedger)
-        .where(and(
-          eq(giftPointLedger.isExpired, 0),
-          gte(giftPointLedger.expiresAt, new Date())
-        ));
+        .from(users)
+        .where(gt(users.giftPoints, 0));
       
       // Get entries expiring in next 30 days
       const thirtyDaysLater = new Date();
@@ -2504,7 +2507,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const expiringSoon = await db
         .select({
-          count: count(),
           totalRemaining: sum(giftPointLedger.remainingAmount),
         })
         .from(giftPointLedger)
@@ -2514,13 +2516,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lte(giftPointLedger.expiresAt, thirtyDaysLater)
         ));
       
+      // Get count of unique users with expiring GP
+      const expiringUsersResult = await db
+        .selectDistinct({
+          userId: giftPointLedger.userId,
+        })
+        .from(giftPointLedger)
+        .where(and(
+          eq(giftPointLedger.isExpired, 0),
+          gte(giftPointLedger.expiresAt, new Date()),
+          lte(giftPointLedger.expiresAt, thirtyDaysLater),
+          gt(giftPointLedger.remainingAmount, 0)
+        ));
+      
       res.json({
-        activeEntries: Number(activeEntries[0]?.count) || 0,
-        totalActiveGP: Number(activeEntries[0]?.totalRemaining) || 0,
-        expiringIn30Days: {
-          entries: Number(expiringSoon[0]?.count) || 0,
-          totalGP: Number(expiringSoon[0]?.totalRemaining) || 0,
-        },
+        totalGiftPoints: Number(totalGPResult[0]?.total) || 0,
+        totalUsersWithGP: Number(usersWithGPResult[0]?.count) || 0,
+        expiringIn30Days: Number(expiringSoon[0]?.totalRemaining) || 0,
+        expiringIn30DaysUsers: expiringUsersResult.length,
       });
     } catch (error: any) {
       console.error("Error fetching GP stats:", error);
