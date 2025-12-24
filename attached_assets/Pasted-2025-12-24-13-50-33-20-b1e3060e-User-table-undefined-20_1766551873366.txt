@@ -1,0 +1,172 @@
+2025-12-24 13:50:33.20
+b1e3060e
+User
+table: undefined,
+2025-12-24 13:50:33.20
+b1e3060e
+User
+hint: undefined,
+2025-12-24 13:50:33.20
+b1e3060e
+User
+file: 'parse_target.c',
+2025-12-24 13:50:33.20
+b1e3060e
+User
+code: '42703',
+2025-12-24 13:50:33.20
+b1e3060e
+User
+line: '1065',
+2025-12-24 13:50:33.20
+b1e3060e
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2025-12-24 13:50:33.20
+b1e3060e
+User
+column: undefined,
+2025-12-24 13:50:33.20
+b1e3060e
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2025-12-24 13:50:33.20
+b1e3060e
+User
+at async Nc.upsertUser (/home/runner/workspace/dist/index.cjs:63:91048)
+2025-12-24 13:50:33.20
+b1e3060e
+User
+constraint: undefined,
+2025-12-24 13:50:33.20
+b1e3060e
+User
+routine: 'checkInsertTargets'
+2025-12-24 13:50:33.20
+b1e3060e
+User
+internalQuery: undefined,
+2025-12-24 13:50:33.20
+b1e3060e
+User
+severity: 'ERROR',
+2025-12-24 13:50:33.20
+b1e3060e
+User
+4:50:33 AM [express] GET /api/auth/user 401 in 1751ms :: {"message":"Unauthorized"}
+2025-12-24 13:50:36.28
+b1e3060e
+User
+4:50:36 AM [express] GET /api/config 200 in 182ms :: [object:2]
+2025-12-24 13:50:37.98
+b1e3060e
+User
+✓ Database connection established
+2025-12-24 13:50:38.15
+b1e3060e
+User
+Auth error: error: column "referral_code" of relation "users" does not exist
+2025-12-24 13:50:38.15
+b1e3060e
+User
+at async A (/home/runner/workspace/dist/index.cjs:63:116296) {
+2025-12-24 13:50:38.15
+b1e3060e
+User
+code: '42703',
+2025-12-24 13:50:38.15
+b1e3060e
+User
+line: '1065',
+2025-12-24 13:50:38.15
+b1e3060e
+User
+}
+2025-12-24 13:50:38.15
+b1e3060e
+User
+table: undefined,
+2025-12-24 13:50:38.15
+b1e3060e
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2025-12-24 13:50:38.15
+b1e3060e
+User
+column: undefined,
+2025-12-24 13:50:38.15
+b1e3060e
+User
+severity: 'ERROR',
+2025-12-24 13:50:38.15
+b1e3060e
+User
+internalQuery: undefined,
+2025-12-24 13:50:38.15
+b1e3060e
+User
+routine: 'checkInsertTargets'
+2025-12-24 13:50:38.15
+b1e3060e
+User
+hint: undefined,
+2025-12-24 13:50:38.15
+b1e3060e
+User
+schema: undefined,
+2025-12-24 13:50:38.15
+b1e3060e
+User
+detail: undefined,
+2025-12-24 13:50:38.15
+b1e3060e
+User
+where: undefined,
+2025-12-24 13:50:38.15
+b1e3060e
+User
+file: 'parse_target.c',
+2025-12-24 13:50:38.15
+b1e3060e
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2025-12-24 13:50:38.15
+b1e3060e
+User
+length: 132,
+2025-12-24 13:50:38.15
+b1e3060e
+User
+internalPosition: undefined,
+2025-12-24 13:50:38.15
+b1e3060e
+User
+at async Nc.upsertUser (/home/runner/workspace/dist/index.cjs:63:91048)
+2025-12-24 13:50:38.15
+b1e3060e
+User
+4:50:38 AM [express] GET /api/notifications 401 in 1825ms :: {"message":"Unauthorized"}
+2025-12-24 13:50:38.30
+b1e3060e
+User
+✓ Database connection established
+2025-12-24 13:50:38.42
+b1e3060e
+User
+severity: 'ERROR',
+2025-12-24 13:50:38.42
+b1e3060e
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-24 13:50:38.42
+b1e3060e
+User
+Auth error: error: column "referral_code" of relation "users" does not exist
+2025-12-24 13:50:38.42
+b1e3060e
+User
+at async A (/home/runner/workspace/dist/index.cjs:63:116296) {
+2025-12-24 13:50:38.42
+b1e3060e
+User
+detail: undefined,
