@@ -17,6 +17,7 @@ import {
   notifications,
   giftPointLedger,
   giftPointTransactions,
+  referrals,
   type User,
   type UpsertUser,
   type Profile,
@@ -62,6 +63,7 @@ import {
   type GiftPointTransaction,
   type InsertGiftPointTransaction,
   type GiftPointSourceType,
+  type Referral,
   systemSettings,
   redemptionCodes,
   redemptionHistory,
@@ -251,6 +253,24 @@ export interface IStorage {
     gpBalance?: number;
     creditBalance?: number;
     totalRequired?: number;
+  }>;
+
+  // Referrals
+  getUserByReferralCode(code: string): Promise<User | undefined>;
+  generateReferralCode(userId: string): Promise<string>;
+  createReferral(inviterId: string, inviteeId: string, referralCode: string): Promise<Referral>;
+  getReferralByInvitee(inviteeId: string): Promise<Referral | undefined>;
+  getReferralsByInviter(inviterId: string): Promise<Array<Referral & { invitee: { email: string | null; displayName: string | null; createdAt: Date | null } | null }>>;
+  updateReferralRewards(referralId: string, inviterGp: number, inviteeGp: number): Promise<Referral>;
+  getReferralStats(): Promise<{
+    totalReferrals: number;
+    totalGpAwarded: number;
+    topInviters: Array<{ userId: string; displayName: string | null; email: string | null; referralCount: number; totalGpEarned: number }>;
+  }>;
+  getUserReferralSummary(userId: string): Promise<{
+    referralCode: string | null;
+    totalReferred: number;
+    totalGpEarned: number;
   }>;
 }
 
@@ -1740,6 +1760,174 @@ export class DatabaseStorage implements IStorage {
       success: true,
       gpBalance: gpBalance - gpUsed,
       creditBalance: user.credits - creditsUsed,
+    };
+  }
+
+  // Referral methods
+  async getUserByReferralCode(code: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.referralCode, code));
+    return user;
+  }
+
+  async generateReferralCode(userId: string): Promise<string> {
+    // Generate a unique 8-character code
+    const generateCode = (): string => {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed similar chars (0,O,1,I)
+      let code = '';
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    };
+
+    let code = generateCode();
+    let attempts = 0;
+    
+    // Ensure uniqueness
+    while (attempts < 10) {
+      const existing = await this.getUserByReferralCode(code);
+      if (!existing) break;
+      code = generateCode();
+      attempts++;
+    }
+
+    // Update user with the code
+    await db
+      .update(users)
+      .set({ referralCode: code })
+      .where(eq(users.id, userId));
+
+    return code;
+  }
+
+  async createReferral(inviterId: string, inviteeId: string, referralCode: string): Promise<Referral> {
+    const [referral] = await db
+      .insert(referrals)
+      .values({
+        inviterId,
+        inviteeId,
+        referralCode,
+        status: 'completed',
+      })
+      .returning();
+    return referral;
+  }
+
+  async getReferralByInvitee(inviteeId: string): Promise<Referral | undefined> {
+    const [referral] = await db
+      .select()
+      .from(referrals)
+      .where(eq(referrals.inviteeId, inviteeId));
+    return referral;
+  }
+
+  async getReferralsByInviter(inviterId: string): Promise<Array<Referral & { invitee: { email: string | null; displayName: string | null; createdAt: Date | null } | null }>> {
+    const result = await db
+      .select({
+        referral: referrals,
+        invitee: {
+          email: users.email,
+          displayName: users.displayName,
+          createdAt: users.createdAt,
+        },
+      })
+      .from(referrals)
+      .leftJoin(users, eq(referrals.inviteeId, users.id))
+      .where(eq(referrals.inviterId, inviterId))
+      .orderBy(desc(referrals.createdAt));
+
+    return result.map(r => ({
+      ...r.referral,
+      invitee: r.invitee,
+    }));
+  }
+
+  async updateReferralRewards(referralId: string, inviterGp: number, inviteeGp: number): Promise<Referral> {
+    const [referral] = await db
+      .update(referrals)
+      .set({
+        inviterGpAwarded: inviterGp,
+        inviteeGpAwarded: inviteeGp,
+        status: 'rewarded',
+        rewardedAt: new Date(),
+      })
+      .where(eq(referrals.id, referralId))
+      .returning();
+    return referral;
+  }
+
+  async getReferralStats(): Promise<{
+    totalReferrals: number;
+    totalGpAwarded: number;
+    topInviters: Array<{ userId: string; displayName: string | null; email: string | null; referralCount: number; totalGpEarned: number }>;
+  }> {
+    // Get total referrals count
+    const [countResult] = await db
+      .select({ count: count() })
+      .from(referrals);
+    const totalReferrals = countResult?.count ?? 0;
+
+    // Get total GP awarded
+    const [gpResult] = await db
+      .select({
+        inviterTotal: sum(referrals.inviterGpAwarded),
+        inviteeTotal: sum(referrals.inviteeGpAwarded),
+      })
+      .from(referrals);
+    const totalGpAwarded = (Number(gpResult?.inviterTotal) || 0) + (Number(gpResult?.inviteeTotal) || 0);
+
+    // Get top inviters
+    const topInvitersResult = await db
+      .select({
+        userId: referrals.inviterId,
+        referralCount: count(),
+        totalGpEarned: sum(referrals.inviterGpAwarded),
+      })
+      .from(referrals)
+      .groupBy(referrals.inviterId)
+      .orderBy(desc(count()))
+      .limit(10);
+
+    // Get user info for top inviters
+    const topInviters = await Promise.all(
+      topInvitersResult.map(async (r) => {
+        const user = await this.getUser(r.userId);
+        return {
+          userId: r.userId,
+          displayName: user?.displayName ?? null,
+          email: user?.email ?? null,
+          referralCount: r.referralCount,
+          totalGpEarned: Number(r.totalGpEarned) || 0,
+        };
+      })
+    );
+
+    return { totalReferrals, totalGpAwarded, topInviters };
+  }
+
+  async getUserReferralSummary(userId: string): Promise<{
+    referralCode: string | null;
+    totalReferred: number;
+    totalGpEarned: number;
+  }> {
+    const user = await this.getUser(userId);
+    
+    // Get referral count and GP earned
+    const [stats] = await db
+      .select({
+        totalReferred: count(),
+        totalGpEarned: sum(referrals.inviterGpAwarded),
+      })
+      .from(referrals)
+      .where(eq(referrals.inviterId, userId));
+
+    return {
+      referralCode: user?.referralCode ?? null,
+      totalReferred: stats?.totalReferred ?? 0,
+      totalGpEarned: Number(stats?.totalGpEarned) || 0,
     };
   }
 }

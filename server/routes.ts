@@ -22,7 +22,7 @@ import { startWorker, submitQueuedJob } from "./aiWorker";
 import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
 import { desc, count, sum, and, eq, gte, lte, gt } from "drizzle-orm";
-import { giftPointLedger, users } from "@shared/schema";
+import { giftPointLedger, users, referrals } from "@shared/schema";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -2604,6 +2604,224 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error updating GP settings:", error);
       res.status(500).json({ message: "GP 설정 업데이트 중 오류가 발생했습니다." });
+    }
+  });
+
+  // ===== REFERRAL ROUTES =====
+
+  // Get user's referral info (code, stats)
+  app.get('/api/referral/info', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      let summary = await storage.getUserReferralSummary(userId);
+      
+      // Generate referral code if not exists
+      if (!summary.referralCode) {
+        const code = await storage.generateReferralCode(userId);
+        summary = { ...summary, referralCode: code };
+      }
+      
+      // Get GP reward settings
+      const inviterGpSetting = await storage.getSystemSetting('referral_inviter_gp');
+      const inviteeGpSetting = await storage.getSystemSetting('referral_invitee_gp');
+      
+      res.json({
+        ...summary,
+        referralLink: `${req.protocol}://${req.get('host')}?ref=${summary.referralCode}`,
+        inviterReward: Number(inviterGpSetting) || 500,
+        inviteeReward: Number(inviteeGpSetting) || 500,
+      });
+    } catch (error: any) {
+      console.error("Error fetching referral info:", error);
+      res.status(500).json({ message: "추천 정보 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Get list of users referred by current user
+  app.get('/api/referral/invitees', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const referrals = await storage.getReferralsByInviter(userId);
+      res.json(referrals);
+    } catch (error: any) {
+      console.error("Error fetching invitees:", error);
+      res.status(500).json({ message: "추천 목록 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Claim referral reward (called after signup with referral code)
+  app.post('/api/referral/claim', isAuthenticated, async (req: any, res) => {
+    try {
+      const inviteeId = req.user.id;
+      const { referralCode } = req.body;
+      
+      if (!referralCode) {
+        return res.status(400).json({ message: "추천 코드가 필요합니다." });
+      }
+      
+      // Check if user was already referred
+      const existingReferral = await storage.getReferralByInvitee(inviteeId);
+      if (existingReferral) {
+        return res.status(400).json({ message: "이미 추천 보상을 받으셨습니다." });
+      }
+      
+      // Find inviter by referral code
+      const inviter = await storage.getUserByReferralCode(referralCode);
+      if (!inviter) {
+        return res.status(404).json({ message: "유효하지 않은 추천 코드입니다." });
+      }
+      
+      // Can't refer yourself
+      if (inviter.id === inviteeId) {
+        return res.status(400).json({ message: "자기 자신은 추천할 수 없습니다." });
+      }
+      
+      // Get GP reward amounts from settings
+      const inviterGpSetting = await storage.getSystemSetting('referral_inviter_gp');
+      const inviteeGpSetting = await storage.getSystemSetting('referral_invitee_gp');
+      const inviterGp = Number(inviterGpSetting) || 500;
+      const inviteeGp = Number(inviteeGpSetting) || 500;
+      
+      // Get GP expiration setting
+      const expirationDays = await storage.getSystemSetting('gp_default_expiration_days');
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + (Number(expirationDays) || 90));
+      
+      // Create referral record
+      const referral = await storage.createReferral(inviter.id, inviteeId, referralCode);
+      
+      // Award GP to both parties
+      if (inviterGp > 0) {
+        await storage.addGiftPoints(inviter.id, inviterGp, 'referral', {
+          sourceId: referral.id,
+          description: `친구 추천 보상 (피추천인: ${req.user.email || '신규 사용자'})`,
+          expiresAt: expirationDate,
+        });
+      }
+      
+      if (inviteeGp > 0) {
+        await storage.addGiftPoints(inviteeId, inviteeGp, 'referral', {
+          sourceId: referral.id,
+          description: `추천인 보상 (추천인: ${inviter.email || inviter.displayName || '회원'})`,
+          expiresAt: expirationDate,
+        });
+      }
+      
+      // Update referral with reward amounts
+      await storage.updateReferralRewards(referral.id, inviterGp, inviteeGp);
+      
+      // Update user's referred_by field
+      await db
+        .update(users)
+        .set({ referredByUserId: inviter.id })
+        .where(eq(users.id, inviteeId));
+      
+      res.json({
+        success: true,
+        message: `추천 보상이 지급되었습니다! ${inviteeGp}GP를 받으셨습니다.`,
+        gpAwarded: inviteeGp,
+      });
+    } catch (error: any) {
+      console.error("Error claiming referral:", error);
+      res.status(500).json({ message: "추천 보상 처리 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Get referral stats
+  app.get('/api/admin/referrals/stats', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const stats = await storage.getReferralStats();
+      
+      // Get current reward settings
+      const inviterGpSetting = await storage.getSystemSetting('referral_inviter_gp');
+      const inviteeGpSetting = await storage.getSystemSetting('referral_invitee_gp');
+      
+      res.json({
+        ...stats,
+        currentSettings: {
+          inviterGp: Number(inviterGpSetting) || 500,
+          inviteeGp: Number(inviteeGpSetting) || 500,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error fetching referral stats:", error);
+      res.status(500).json({ message: "추천 통계 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Get all referrals list
+  app.get('/api/admin/referrals', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const allReferrals = await db
+        .select({
+          referral: referrals,
+          inviter: {
+            id: users.id,
+            email: users.email,
+            displayName: users.displayName,
+          },
+        })
+        .from(referrals)
+        .leftJoin(users, eq(referrals.inviterId, users.id))
+        .orderBy(desc(referrals.createdAt))
+        .limit(100);
+      
+      // Get invitee info separately
+      const result = await Promise.all(
+        allReferrals.map(async (r) => {
+          const invitee = await storage.getUser(r.referral.inviteeId);
+          return {
+            ...r.referral,
+            inviter: r.inviter,
+            invitee: invitee ? {
+              id: invitee.id,
+              email: invitee.email,
+              displayName: invitee.displayName,
+            } : null,
+          };
+        })
+      );
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error fetching all referrals:", error);
+      res.status(500).json({ message: "추천 목록 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Update referral GP settings
+  app.put('/api/admin/referrals/settings', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const adminId = req.user.id;
+      const { inviterGp, inviteeGp } = req.body;
+      
+      if (inviterGp < 0 || inviteeGp < 0) {
+        return res.status(400).json({ message: "보상 금액은 0 이상이어야 합니다." });
+      }
+      
+      await storage.upsertSystemSetting(
+        'referral_inviter_gp',
+        String(inviterGp),
+        '추천인에게 지급되는 GP',
+        adminId
+      );
+      
+      await storage.upsertSystemSetting(
+        'referral_invitee_gp',
+        String(inviteeGp),
+        '피추천인에게 지급되는 GP',
+        adminId
+      );
+      
+      res.json({
+        success: true,
+        message: `추천 보상이 설정되었습니다. (추천인: ${inviterGp}GP, 피추천인: ${inviteeGp}GP)`,
+        inviterGp,
+        inviteeGp,
+      });
+    } catch (error: any) {
+      console.error("Error updating referral settings:", error);
+      res.status(500).json({ message: "추천 설정 업데이트 중 오류가 발생했습니다." });
     }
   });
 

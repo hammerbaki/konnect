@@ -1,6 +1,20 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { getSupabase } from "./supabase";
 import type { Session, User as SupabaseUser, SupabaseClient } from "@supabase/supabase-js";
+
+const REFERRAL_CODE_KEY = 'konnect_referral_code';
+
+function saveReferralCode(code: string) {
+  localStorage.setItem(REFERRAL_CODE_KEY, code);
+}
+
+function getReferralCode(): string | null {
+  return localStorage.getItem(REFERRAL_CODE_KEY);
+}
+
+function clearReferralCode() {
+  localStorage.removeItem(REFERRAL_CODE_KEY);
+}
 
 interface User {
   id: string;
@@ -40,8 +54,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
+  const referralClaimAttempted = useRef(false);
 
-  const fetchUserData = useCallback(async (accessToken: string) => {
+  // Capture referral code from URL on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      saveReferralCode(refCode);
+      // Clean URL without reload
+      const newUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
+
+  const claimReferralReward = useCallback(async (accessToken: string) => {
+    const referralCode = getReferralCode();
+    if (!referralCode || referralClaimAttempted.current) return;
+    
+    referralClaimAttempted.current = true;
+    
+    try {
+      const response = await fetch('/api/referral/claim', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ referralCode }),
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Referral claimed:', result.message);
+        clearReferralCode();
+      } else {
+        const error = await response.json();
+        console.log('Referral claim failed:', error.message);
+        // Clear code even on failure to prevent repeated attempts
+        clearReferralCode();
+      }
+    } catch (error) {
+      console.error('Error claiming referral:', error);
+      // Reset flag on network error to allow retry
+      referralClaimAttempted.current = false;
+    }
+  }, []);
+
+  const fetchUserData = useCallback(async (accessToken: string, isNewSession: boolean = false) => {
     try {
       const response = await fetch("/api/auth/user", {
         headers: {
@@ -52,6 +112,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+        
+        // Try to claim referral reward on new session
+        if (isNewSession) {
+          claimReferralReward(accessToken);
+        }
       } else {
         setUser(null);
       }
@@ -59,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Failed to fetch user:", error);
       setUser(null);
     }
-  }, []);
+  }, [claimReferralReward]);
 
   useEffect(() => {
     let subscription: { unsubscribe: () => void } | null = null;
@@ -78,11 +143,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
-          async (_event, session) => {
+          async (event, session) => {
             setSession(session);
             setSupabaseUser(session?.user ?? null);
             if (session?.access_token) {
-              await fetchUserData(session.access_token);
+              // Check if this is a new login/signup event
+              const isNewSession = event === 'SIGNED_IN' || event === 'USER_UPDATED';
+              await fetchUserData(session.access_token, isNewSession);
             } else {
               setUser(null);
             }

@@ -47,6 +47,9 @@ export const users = pgTable("users", {
   marketingConsent: integer("marketing_consent").notNull().default(0), // 0 = false, 1 = true
   emailNotifications: integer("email_notifications").notNull().default(1), // 0 = false, 1 = true
   pushNotifications: integer("push_notifications").notNull().default(1), // 0 = false, 1 = true
+  // Referral fields
+  referralCode: varchar("referral_code", { length: 12 }).unique(), // Unique code for sharing
+  referredByUserId: varchar("referred_by_user_id"), // User who referred this user (null if none)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -595,8 +598,50 @@ export type SystemSettings = typeof systemSettings.$inferSelect;
 // Default system settings
 export const DEFAULT_SYSTEM_SETTINGS: Record<string, { value: string; description: string }> = {
   signup_bonus: { value: '1000', description: '신규 가입 시 지급되는 포인트' },
-  gp_default_expiration_days: { value: '365', description: '기프트 포인트 기본 만료 기간 (일)' },
+  gp_default_expiration_days: { value: '90', description: '기프트 포인트 기본 만료 기간 (일)' },
+  referral_inviter_gp: { value: '500', description: '추천인에게 지급되는 GP' },
+  referral_invitee_gp: { value: '500', description: '피추천인에게 지급되는 GP' },
 };
+
+// ===== REFERRALS TABLE (Tracking who referred whom) =====
+export const referrals = pgTable("referrals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  inviterId: varchar("inviter_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  inviteeId: varchar("invitee_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  referralCode: varchar("referral_code", { length: 12 }).notNull(), // Snapshot of code used
+  status: varchar("status", { length: 20 }).notNull().default('completed'), // 'pending' | 'completed' | 'rewarded'
+  inviterGpAwarded: integer("inviter_gp_awarded").default(0),
+  inviteeGpAwarded: integer("invitee_gp_awarded").default(0),
+  rewardedAt: timestamp("rewarded_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_referrals_inviter").on(table.inviterId),
+  index("IDX_referrals_invitee").on(table.inviteeId),
+  uniqueIndex("IDX_referrals_invitee_unique").on(table.inviteeId), // Each user can only be referred once
+]);
+
+export const referralsRelations = relations(referrals, ({ one }) => ({
+  inviter: one(users, {
+    fields: [referrals.inviterId],
+    references: [users.id],
+  }),
+  invitee: one(users, {
+    fields: [referrals.inviteeId],
+    references: [users.id],
+  }),
+}));
+
+export const insertReferralSchema = createInsertSchema(referrals).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertReferral = z.infer<typeof insertReferralSchema>;
+export type Referral = typeof referrals.$inferSelect;
 
 // ===== GIFT POINT LEDGER TABLE (GP - Gift Points with expiration) =====
 // GP is used before normal credits, supports FIFO consumption by expiration date

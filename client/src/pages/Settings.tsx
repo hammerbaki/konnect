@@ -5,12 +5,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bell, Shield, Lock, UserX, Smartphone, ChevronRight, Loader2 } from "lucide-react";
+import { Bell, Shield, Lock, UserX, Smartphone, ChevronRight, Loader2, Gift, Copy, Check, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+
+interface ReferralInfo {
+    referralCode: string | null;
+    referralLink: string;
+    totalReferred: number;
+    totalGpEarned: number;
+    inviterReward: number;
+    inviteeReward: number;
+}
 
 interface UserSettings {
     phone: string | null;
@@ -102,6 +111,29 @@ export default function Settings() {
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [pushNotifications, setPushNotifications] = useState(true);
     const [hasChanges, setHasChanges] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    // Fetch referral info
+    const { data: referralInfo, isLoading: referralLoading } = useQuery<ReferralInfo>({
+        queryKey: ['/api/referral/info'],
+        queryFn: async () => {
+            const response = await apiRequest('GET', '/api/referral/info');
+            return response.json();
+        },
+        enabled: !!user,
+    });
+
+    const copyReferralLink = () => {
+        if (referralInfo?.referralLink) {
+            navigator.clipboard.writeText(referralInfo.referralLink);
+            setCopied(true);
+            toast({
+                title: "복사 완료",
+                description: "추천 링크가 클립보드에 복사되었습니다.",
+            });
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
 
     // Fetch settings from database
     const { data: settings, isLoading: settingsLoading } = useQuery<UserSettings>({
@@ -253,6 +285,85 @@ export default function Settings() {
                                         data-testid="switch-push-notifications"
                                     />
                                 </div>
+                            </CardContent>
+                        </Card>
+                    </section>
+
+                    {/* Referral Program */}
+                    <section>
+                        <h3 className="text-base sm:text-lg font-bold text-[#191F28] mb-3 flex items-center gap-2">
+                            <Gift className="h-5 w-5 text-[#10B981]" /> 친구 초대
+                        </h3>
+                        <Card className="toss-card">
+                            <CardContent className="p-4 sm:p-6">
+                                {referralLoading ? (
+                                    <div className="space-y-4">
+                                        <Skeleton className="h-4 w-48" />
+                                        <Skeleton className="h-12 w-full rounded-xl" />
+                                        <div className="flex gap-4">
+                                            <Skeleton className="h-16 flex-1 rounded-xl" />
+                                            <Skeleton className="h-16 flex-1 rounded-xl" />
+                                        </div>
+                                    </div>
+                                ) : referralInfo ? (
+                                    <div className="space-y-4">
+                                        <div className="bg-gradient-to-r from-[#10B981]/10 to-[#3182F6]/10 rounded-xl p-4 border border-[#10B981]/20">
+                                            <p className="text-sm text-[#4E5968] mb-2">
+                                                친구를 초대하면 <span className="font-bold text-[#10B981]">{referralInfo.inviterReward}GP</span>를 받고,
+                                                친구도 <span className="font-bold text-[#3182F6]">{referralInfo.inviteeReward}GP</span>를 받습니다!
+                                            </p>
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                            <Label className="text-[#4E5968] text-sm">나의 추천 링크</Label>
+                                            <div className="flex gap-2">
+                                                <Input 
+                                                    value={referralInfo.referralLink || ""}
+                                                    readOnly
+                                                    className="bg-[#F2F4F6] border-none rounded-xl h-11 sm:h-12 text-sm font-mono"
+                                                    data-testid="input-referral-link"
+                                                />
+                                                <Button
+                                                    onClick={copyReferralLink}
+                                                    variant="outline"
+                                                    className="h-11 sm:h-12 px-4 rounded-xl border-[#E5E8EB] hover:bg-[#F2F4F6]"
+                                                    data-testid="button-copy-referral"
+                                                >
+                                                    {copied ? (
+                                                        <Check className="h-5 w-5 text-[#10B981]" />
+                                                    ) : (
+                                                        <Copy className="h-5 w-5 text-[#4E5968]" />
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3 pt-2">
+                                            <div className="bg-[#F2F4F6] rounded-xl p-4 text-center">
+                                                <div className="flex items-center justify-center gap-1 mb-1">
+                                                    <Users className="h-4 w-4 text-[#4E5968]" />
+                                                    <span className="text-sm text-[#4E5968]">초대한 친구</span>
+                                                </div>
+                                                <p className="text-xl sm:text-2xl font-bold text-[#191F28]" data-testid="text-total-referred">
+                                                    {referralInfo.totalReferred}명
+                                                </p>
+                                            </div>
+                                            <div className="bg-[#10B981]/10 rounded-xl p-4 text-center">
+                                                <div className="flex items-center justify-center gap-1 mb-1">
+                                                    <Gift className="h-4 w-4 text-[#10B981]" />
+                                                    <span className="text-sm text-[#10B981]">받은 GP</span>
+                                                </div>
+                                                <p className="text-xl sm:text-2xl font-bold text-[#10B981]" data-testid="text-total-gp-earned">
+                                                    {referralInfo.totalGpEarned}GP
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-[#8B95A1] text-center py-4">
+                                        추천 정보를 불러올 수 없습니다.
+                                    </p>
+                                )}
                             </CardContent>
                         </Card>
                     </section>

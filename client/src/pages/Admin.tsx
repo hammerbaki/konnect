@@ -11,7 +11,7 @@ import {
   Users, Settings, Coins, Activity, 
   RefreshCw, Search, Shield, User, Crown,
   BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
-  ChevronUp, ChevronDown, Gift, Plus, Minus
+  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -207,6 +207,8 @@ export default function Admin() {
   const [gpAmount, setGpAmount] = useState<number>(100);
   const [gpReason, setGpReason] = useState<string>("");
   const [gpExpiresAt, setGpExpiresAt] = useState<string>("");
+  const [editingInviterGp, setEditingInviterGp] = useState<number | null>(null);
+  const [editingInviteeGp, setEditingInviteeGp] = useState<number | null>(null);
 
   const { user: currentUser, isLoading: userLoading } = useAuth();
 
@@ -290,6 +292,19 @@ export default function Admin() {
 
   const { data: gpStats, refetch: refetchGPStats } = useQuery<GiftPointStats>({
     queryKey: ['/api/admin/gift-points/stats'],
+    enabled: isStaffOrAdmin,
+    retry: false,
+  });
+
+  interface ReferralStats {
+    totalReferrals: number;
+    totalGpAwarded: number;
+    topInviters: Array<{ userId: string; displayName: string | null; email: string | null; referralCount: number; totalGpEarned: number }>;
+    currentSettings: { inviterGp: number; inviteeGp: number };
+  }
+
+  const { data: referralStats, refetch: refetchReferralStats } = useQuery<ReferralStats>({
+    queryKey: ['/api/admin/referrals/stats'],
     enabled: isStaffOrAdmin,
     retry: false,
   });
@@ -380,6 +395,22 @@ export default function Admin() {
     },
     onError: () => {
       toast({ title: "오류", description: "만료 기간 업데이트에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
+  const updateReferralSettingsMutation = useMutation({
+    mutationFn: async (data: { inviterGp: number; inviteeGp: number }) => {
+      const res = await apiRequest('PUT', '/api/admin/referrals/settings', data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/referrals/stats'] });
+      setEditingInviterGp(null);
+      setEditingInviteeGp(null);
+      toast({ title: "업데이트 완료", description: "추천 보상이 설정되었습니다." });
+    },
+    onError: () => {
+      toast({ title: "오류", description: "추천 보상 설정에 실패했습니다.", variant: "destructive" });
     },
   });
 
@@ -2288,6 +2319,174 @@ export default function Admin() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Referral Program Settings */}
+            <Card className="toss-card">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="h-5 w-5 text-[#3182F6]" />
+                  친구 추천 프로그램
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Referral Stats */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="bg-[#F2F4F6] rounded-xl p-4">
+                      <p className="text-sm text-[#8B95A1] mb-1">총 추천 수</p>
+                      <p className="text-2xl font-bold text-[#191F28]">{referralStats?.totalReferrals || 0}건</p>
+                    </div>
+                    <div className="bg-[#10B981]/10 rounded-xl p-4">
+                      <p className="text-sm text-[#10B981] mb-1">지급된 GP</p>
+                      <p className="text-2xl font-bold text-[#10B981]">{(referralStats?.totalGpAwarded || 0).toLocaleString()}GP</p>
+                    </div>
+                    <div className="bg-[#3182F6]/10 rounded-xl p-4 md:col-span-1 col-span-2">
+                      <p className="text-sm text-[#3182F6] mb-1">활성 추천인</p>
+                      <p className="text-2xl font-bold text-[#3182F6]">{referralStats?.topInviters?.length || 0}명</p>
+                    </div>
+                  </div>
+
+                  {/* Referral Reward Settings */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Inviter Reward */}
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Gift className="h-5 w-5 text-[#10B981]" />
+                          <p className="font-bold text-[#191F28]">추천인 보상</p>
+                        </div>
+                        {editingInviterGp === null && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingInviterGp(referralStats?.currentSettings?.inviterGp || 500);
+                              setEditingInviteeGp(referralStats?.currentSettings?.inviteeGp || 500);
+                            }}
+                            className="text-[#10B981] hover:text-[#059669]"
+                            data-testid="button-edit-referral-inviter"
+                          >
+                            수정
+                          </Button>
+                        )}
+                      </div>
+                      {editingInviterGp !== null ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              value={editingInviterGp}
+                              onChange={(e) => setEditingInviterGp(parseInt(e.target.value) || 0)}
+                              className="w-32 bg-white"
+                              min={0}
+                              data-testid="input-referral-inviter"
+                            />
+                            <span className="text-[#191F28] font-bold">GP</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-2xl font-bold text-[#10B981]">{(referralStats?.currentSettings?.inviterGp || 500).toLocaleString()}GP</p>
+                          <p className="text-sm text-[#8B95A1]">친구 초대 시 받는 GP</p>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Invitee Reward */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <UserPlus className="h-5 w-5 text-[#3182F6]" />
+                          <p className="font-bold text-[#191F28]">피추천인 보상</p>
+                        </div>
+                      </div>
+                      {editingInviteeGp !== null ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              value={editingInviteeGp}
+                              onChange={(e) => setEditingInviteeGp(parseInt(e.target.value) || 0)}
+                              className="w-32 bg-white"
+                              min={0}
+                              data-testid="input-referral-invitee"
+                            />
+                            <span className="text-[#191F28] font-bold">GP</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-2xl font-bold text-[#3182F6]">{(referralStats?.currentSettings?.inviteeGp || 500).toLocaleString()}GP</p>
+                          <p className="text-sm text-[#8B95A1]">초대받아 가입 시 받는 GP</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Save/Cancel buttons for referral settings */}
+                  {editingInviterGp !== null && (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => updateReferralSettingsMutation.mutate({
+                          inviterGp: editingInviterGp ?? 500,
+                          inviteeGp: editingInviteeGp ?? 500
+                        })}
+                        disabled={updateReferralSettingsMutation.isPending}
+                        className="bg-[#3182F6] hover:bg-[#2b72d7] text-white"
+                        data-testid="button-save-referral-settings"
+                      >
+                        {updateReferralSettingsMutation.isPending ? '저장 중...' : '추천 보상 저장'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setEditingInviterGp(null);
+                          setEditingInviteeGp(null);
+                        }}
+                        data-testid="button-cancel-referral-settings"
+                      >
+                        취소
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Top Inviters */}
+                  {referralStats?.topInviters && referralStats.topInviters.length > 0 && (
+                    <div>
+                      <p className="font-bold text-[#191F28] mb-3">상위 추천인</p>
+                      <div className="border rounded-xl overflow-hidden">
+                        <table className="w-full">
+                          <thead className="bg-[#F2F4F6]">
+                            <tr>
+                              <th className="p-3 text-left text-sm font-medium text-[#4E5968]">사용자</th>
+                              <th className="p-3 text-center text-sm font-medium text-[#4E5968]">추천 수</th>
+                              <th className="p-3 text-right text-sm font-medium text-[#4E5968]">받은 GP</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {referralStats.topInviters.map((inviter, index) => (
+                              <tr key={inviter.userId} className="hover:bg-[#F9FAFB]">
+                                <td className="p-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-bold text-[#8B95A1]">#{index + 1}</span>
+                                    <div>
+                                      <p className="font-medium text-[#191F28]">{inviter.displayName || inviter.email || 'Unknown'}</p>
+                                      <p className="text-xs text-[#8B95A1]">{inviter.email}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="p-3 text-center font-bold text-[#191F28]">{inviter.referralCount}명</td>
+                                <td className="p-3 text-right font-bold text-[#10B981]">{inviter.totalGpEarned.toLocaleString()}GP</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Coupon Code Management */}
             <Card className="toss-card">
