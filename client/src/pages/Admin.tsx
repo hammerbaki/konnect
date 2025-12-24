@@ -301,6 +301,8 @@ export default function Admin() {
   });
 
   const signupBonus = parseInt(systemSettings.signup_bonus?.value || '1000', 10);
+  const gpExpirationDays = parseInt(systemSettings.gp_default_expiration_days?.value || '90', 10);
+  const [editingGpExpirationDays, setEditingGpExpirationDays] = useState<number | null>(null);
 
   const initServicePricingMutation = useMutation({
     mutationFn: async () => {
@@ -360,6 +362,24 @@ export default function Admin() {
     },
     onError: () => {
       toast({ title: "오류", description: "보너스 업데이트에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
+  const updateGpExpirationMutation = useMutation({
+    mutationFn: async (days: number) => {
+      const res = await apiRequest('PATCH', '/api/admin/system-settings/gp_default_expiration_days', { 
+        value: days.toString(), 
+        description: '기프트 포인트 기본 만료 기간 (일)' 
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/system-settings'] });
+      setEditingGpExpirationDays(null);
+      toast({ title: "업데이트 완료", description: "GP 기본 만료 기간이 변경되었습니다." });
+    },
+    onError: () => {
+      toast({ title: "오류", description: "만료 기간 업데이트에 실패했습니다.", variant: "destructive" });
     },
   });
 
@@ -2142,67 +2162,132 @@ export default function Admin() {
               </CardContent>
             </Card>
 
-            {/* Signup Bonus */}
-            <Card className="toss-card border-emerald-200 bg-emerald-50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Gift className="h-5 w-5 text-[#10B981]" />
-                    <p className="font-bold text-[#191F28]">신규 가입 혜택</p>
-                  </div>
-                  {editingSignupBonus === null && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingSignupBonus(signupBonus)}
-                      className="text-[#10B981] hover:text-[#059669]"
-                      data-testid="button-edit-signup-bonus"
-                    >
-                      수정
-                    </Button>
-                  )}
-                </div>
-                {editingSignupBonus !== null ? (
-                  <div className="space-y-2">
+            {/* GP Global Settings */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Signup Bonus */}
+              <Card className="toss-card border-emerald-200 bg-emerald-50">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        value={editingSignupBonus}
-                        onChange={(e) => setEditingSignupBonus(parseInt(e.target.value) || 0)}
-                        className="w-32 bg-white"
-                        min={0}
-                        data-testid="input-signup-bonus"
-                      />
-                      <span className="text-[#191F28] font-bold">GP</span>
+                      <Gift className="h-5 w-5 text-[#10B981]" />
+                      <p className="font-bold text-[#191F28]">신규 가입 혜택</p>
                     </div>
-                    <div className="flex gap-2">
+                    {editingSignupBonus === null && (
                       <Button
+                        variant="ghost"
                         size="sm"
-                        onClick={() => updateSignupBonusMutation.mutate(editingSignupBonus)}
-                        disabled={updateSignupBonusMutation.isPending}
-                        className="bg-[#10B981] hover:bg-[#059669] text-white"
-                        data-testid="button-save-signup-bonus"
+                        onClick={() => setEditingSignupBonus(signupBonus)}
+                        className="text-[#10B981] hover:text-[#059669]"
+                        data-testid="button-edit-signup-bonus"
                       >
-                        저장
+                        수정
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditingSignupBonus(null)}
-                        data-testid="button-cancel-signup-bonus"
-                      >
-                        취소
-                      </Button>
-                    </div>
+                    )}
                   </div>
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold text-[#10B981]">{signupBonus.toLocaleString()}GP</p>
-                    <p className="text-sm text-[#8B95A1]">신규 가입 시 무료 제공</p>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                  {editingSignupBonus !== null ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          value={editingSignupBonus}
+                          onChange={(e) => setEditingSignupBonus(parseInt(e.target.value) || 0)}
+                          className="w-32 bg-white"
+                          min={0}
+                          data-testid="input-signup-bonus"
+                        />
+                        <span className="text-[#191F28] font-bold">GP</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => updateSignupBonusMutation.mutate(editingSignupBonus)}
+                          disabled={updateSignupBonusMutation.isPending}
+                          className="bg-[#10B981] hover:bg-[#059669] text-white"
+                          data-testid="button-save-signup-bonus"
+                        >
+                          저장
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingSignupBonus(null)}
+                          data-testid="button-cancel-signup-bonus"
+                        >
+                          취소
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-[#10B981]">{signupBonus.toLocaleString()}GP</p>
+                      <p className="text-sm text-[#8B95A1]">신규 가입 시 무료 제공</p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* GP Default Expiration */}
+              <Card className="toss-card border-amber-200 bg-amber-50">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-amber-600" />
+                      <p className="font-bold text-[#191F28]">GP 기본 유효기간</p>
+                    </div>
+                    {editingGpExpirationDays === null && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingGpExpirationDays(gpExpirationDays)}
+                        className="text-amber-600 hover:text-amber-700"
+                        data-testid="button-edit-gp-expiration"
+                      >
+                        수정
+                      </Button>
+                    )}
+                  </div>
+                  {editingGpExpirationDays !== null ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          value={editingGpExpirationDays}
+                          onChange={(e) => setEditingGpExpirationDays(parseInt(e.target.value) || 0)}
+                          className="w-32 bg-white"
+                          min={1}
+                          data-testid="input-gp-expiration-days"
+                        />
+                        <span className="text-[#191F28] font-bold">일</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => updateGpExpirationMutation.mutate(editingGpExpirationDays)}
+                          disabled={updateGpExpirationMutation.isPending}
+                          className="bg-amber-500 hover:bg-amber-600 text-white"
+                          data-testid="button-save-gp-expiration"
+                        >
+                          저장
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingGpExpirationDays(null)}
+                          data-testid="button-cancel-gp-expiration"
+                        >
+                          취소
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-amber-600">{gpExpirationDays.toLocaleString()}일</p>
+                      <p className="text-sm text-[#8B95A1]">신규 GP 지급 후 만료까지</p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Coupon Code Management */}
             <Card className="toss-card">
