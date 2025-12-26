@@ -1,0 +1,116 @@
+2025-12-26 11:10:44.51
+f5a3b5d4
+User
+2:10:44 AM [express] GET /api/notifications 304 in 728ms :: [array:20]
+2025-12-26 11:10:54.19
+f5a3b5d4
+User
+2:10:54 AM [express] GET /api/notifications 304 in 848ms :: [array:20]
+2025-12-26 11:10:54.30
+f5a3b5d4
+User
+2:10:54 AM [express] GET /api/notifications/unread-count 304 in 994ms :: {"count":5}
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+Error updating user settings: error: value too long for type character varying(20)
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+severity: 'ERROR',
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+file: 'varchar.c',
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+at async /home/runner/workspace/dist/index.cjs:400:13789 {
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+schema: undefined,
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+length: 98,
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+constraint: undefined,
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+2:10:56 AM [express] PATCH /api/user-settings 500 in 726ms :: {"message":"Failed to update user settings"}
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+line: '637',
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+position: undefined,
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+hint: undefined,
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+column: undefined,
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+where: undefined,
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+}
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+internalQuery: undefined,
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+internalPosition: undefined,
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+table: undefined,
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+code: '22001',
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+routine: 'varchar'
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+detail: undefined,
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+at async Oc.updateUserSettings (/home/runner/workspace/dist/index.cjs:63:92415)
+2025-12-26 11:10:56.83
+f5a3b5d4
+User
+dataType: undefined,
+2025-12-26 11:10:59.52
+f5a3b5d4
+User
+2:10:59 AM [express] GET /api/notifications/unread-count 304 in 734ms :: {"count":5}
