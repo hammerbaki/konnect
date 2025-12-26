@@ -1,0 +1,160 @@
+2025-12-26 14:45:24.26
+ccfacab1
+User
+schema: undefined,
+2025-12-26 14:45:24.26
+ccfacab1
+User
+constraint: undefined,
+2025-12-26 14:45:24.26
+ccfacab1
+User
+column: undefined,
+2025-12-26 14:45:24.26
+ccfacab1
+User
+severity: 'ERROR',
+2025-12-26 14:45:24.26
+ccfacab1
+User
+position: '260',
+2025-12-26 14:45:24.26
+ccfacab1
+User
+dataType: undefined,
+2025-12-26 14:45:24.26
+ccfacab1
+User
+at async Oc.upsertUser (/home/runner/workspace/dist/index.cjs:63:91191)
+2025-12-26 14:45:24.26
+ccfacab1
+User
+hint: undefined,
+2025-12-26 14:45:25.27
+ccfacab1
+User
+5:45:25 AM [express] POST /api/track/pageview 200 in 833ms :: {"tracked":true}
+2025-12-26 14:45:25.94
+ccfacab1
+User
+✓ Database connection established
+2025-12-26 14:45:26.10
+ccfacab1
+User
+line: '3716',
+2025-12-26 14:45:26.10
+ccfacab1
+User
+severity: 'ERROR',
+2025-12-26 14:45:26.10
+ccfacab1
+User
+where: undefined,
+2025-12-26 14:45:26.10
+ccfacab1
+User
+code: '42703',
+2025-12-26 14:45:26.10
+ccfacab1
+User
+detail: undefined,
+2025-12-26 14:45:26.10
+ccfacab1
+User
+at async Oc.getUser (/home/runner/workspace/dist/index.cjs:63:91039)
+2025-12-26 14:45:26.10
+ccfacab1
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2025-12-26 14:45:26.10
+ccfacab1
+User
+schema: undefined,
+2025-12-26 14:45:26.10
+ccfacab1
+User
+}
+2025-12-26 14:45:26.10
+ccfacab1
+User
+at async Oc.upsertUser (/home/runner/workspace/dist/index.cjs:63:91191)
+2025-12-26 14:45:26.10
+ccfacab1
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-26 14:45:26.10
+ccfacab1
+User
+internalQuery: undefined,
+2025-12-26 14:45:26.10
+ccfacab1
+User
+hint: undefined,
+2025-12-26 14:45:26.10
+ccfacab1
+User
+column: undefined,
+2025-12-26 14:45:26.10
+ccfacab1
+User
+at async A (/home/runner/workspace/dist/index.cjs:63:118619) {
+2025-12-26 14:45:26.10
+ccfacab1
+User
+internalPosition: undefined,
+2025-12-26 14:45:26.10
+ccfacab1
+User
+Auth error: error: column "signup_bonus_awarded" does not exist
+2025-12-26 14:45:26.10
+ccfacab1
+User
+dataType: undefined,
+2025-12-26 14:45:26.10
+ccfacab1
+User
+position: '260',
+2025-12-26 14:45:26.10
+ccfacab1
+User
+table: undefined,
+2025-12-26 14:45:26.10
+ccfacab1
+User
+constraint: undefined,
+2025-12-26 14:45:26.10
+ccfacab1
+User
+file: 'parse_relation.c',
+2025-12-26 14:45:26.10
+ccfacab1
+User
+length: 121,
+2025-12-26 14:45:26.10
+ccfacab1
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2025-12-26 14:45:26.56
+ccfacab1
+User
+where: undefined,
+2025-12-26 14:45:26.56
+ccfacab1
+User
+routine: 'errorMissingColumn'
+2025-12-26 14:45:26.56
+ccfacab1
+User
+schema: undefined,
+2025-12-26 14:45:26.56
+ccfacab1
+User
+constraint: undefined,
+2025-12-26 14:45:26.56
+ccfacab1
+User
+detail: undefined,
+2025-12-26 14:45:26.56
+ccfacab1
+User
+table: undefined,
