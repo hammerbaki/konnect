@@ -1,0 +1,176 @@
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+internalPosition: undefined,
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+where: undefined,
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+Auth error: error: duplicate key value violates unique constraint "users_email_unique"
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+}
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+routine: '_bt_check_unique'
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+at async Oc.upsertUser (/home/runner/workspace/dist/index.cjs:63:91048)
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+column: undefined,
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+hint: undefined,
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+file: 'nbtinsert.c',
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+dataType: undefined,
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+position: undefined,
+2025-12-26 11:38:24.32
+cb63cf2f
+User
+length: 219,
+2025-12-26 11:38:24.33
+cb63cf2f
+User
+2:38:24 AM [express] GET /api/notifications/unread-count 401 in 665ms :: {"message":"Unauthorized"}
+2025-12-26 11:38:25.68
+cb63cf2f
+User
+✓ Database connection established
+2025-12-26 11:38:25.84
+cb63cf2f
+User
+at async A (/home/runner/workspace/dist/index.cjs:63:116358) {
+2025-12-26 11:38:25.84
+cb63cf2f
+User
+schema: 'public',
+2025-12-26 11:38:25.84
+cb63cf2f
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2025-12-26 11:38:25.84
+cb63cf2f
+User
+constraint: 'users_email_unique',
+2025-12-26 11:38:25.84
+cb63cf2f
+User
+column: undefined,
+2025-12-26 11:38:25.84
+cb63cf2f
+User
+detail: 'Key (email)=(graceed1206@gmail.com) already exists.',
+2025-12-26 11:38:25.84
+cb63cf2f
+User
+internalPosition: undefined,
+2025-12-26 11:38:25.84
+cb63cf2f
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-12-26 11:38:25.84
+cb63cf2f
+User
+code: '23505',
+2025-12-26 11:38:25.84
+cb63cf2f
+User
+length: 219,
+2025-12-26 11:38:27.74
+cb63cf2f
+User
+severity: 'ERROR',
+2025-12-26 11:38:27.74
+cb63cf2f
+User
+detail: 'Key (email)=(graceed1206@gmail.com) already exists.',
+2025-12-26 11:38:27.74
+cb63cf2f
+User
+internalQuery: undefined,
+2025-12-26 11:38:27.74
+cb63cf2f
+User
+at async Oc.upsertUser (/home/runner/workspace/dist/index.cjs:63:91048)
+2025-12-26 11:38:27.74
+cb63cf2f
+User
+at async A (/home/runner/workspace/dist/index.cjs:63:116358) {
+2025-12-26 11:38:27.74
+cb63cf2f
+User
+hint: undefined,
+2025-12-26 11:38:27.74
+cb63cf2f
+User
+column: undefined,
+2025-12-26 11:38:27.74
+cb63cf2f
+User
+where: undefined,
+2025-12-26 11:38:27.74
+cb63cf2f
+User
+2:38:27 AM [express] GET /api/auth/user 401 in 1661ms :: {"message":"Unauthorized"}
+2025-12-26 11:38:30.19
+cb63cf2f
+User
+2:38:30 AM [express] POST /api/track/pageview 200 in 896ms :: {"tracked":true}
+2025-12-26 11:38:35.32
+cb63cf2f
+User
+✓ Database connection established
+2025-12-26 11:38:35.34
+cb63cf2f
+User
+✓ Database connection established
+2025-12-26 11:38:35.64
+cb63cf2f
+User
+2:38:35 AM [express] GET /api/notifications 304 in 1879ms :: [array:20]
+2025-12-26 11:38:35.66
+cb63cf2f
+User
+2:38:35 AM [express] GET /api/notifications/unread-count 304 in 1901ms :: {"count":5}
+2025-12-26 11:38:36.26
+cb63cf2f
+User
+2:38:36 AM [express] GET /api/config 200 in 179ms :: [object:2]
+2025-12-26 11:38:37.05
+cb63cf2f
+User
+constraint: 'users_email_unique',
+2025-12-26 11:38:37.05
+cb63cf2f
+User
+code: '23505',
+2025-12-26 11:38:37.05
+cb63cf2f
+User
+length: 219,
+2025-12-26 11:38:37.05
+cb63cf2f
+User
+detail: 'Key (email)=(graceed1206@gmail.com) already exists.',

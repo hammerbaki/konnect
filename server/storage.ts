@@ -282,6 +282,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    // Check if email exists with a different user ID (e.g., after account deletion and re-registration)
+    if (userData.email) {
+      const [existingByEmail] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, userData.email));
+      
+      if (existingByEmail && existingByEmail.id !== userData.id) {
+        // Delete the old record with the same email (orphaned from Supabase Auth)
+        await db.delete(users).where(eq(users.id, existingByEmail.id));
+        console.log(`Deleted orphaned user record with email ${userData.email} (old ID: ${existingByEmail.id}, new ID: ${userData.id})`);
+      }
+    }
+    
     const [user] = await db
       .insert(users)
       .values(userData)
