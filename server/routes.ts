@@ -1617,6 +1617,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete user (admin only)
+  app.delete('/api/admin/users/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const targetUserId = req.params.id;
+      const currentUserId = req.userId;
+      
+      // Prevent self-deletion
+      if (targetUserId === currentUserId) {
+        return res.status(400).json({ message: "자신의 계정은 삭제할 수 없습니다." });
+      }
+      
+      // Check if target user exists
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+      }
+      
+      // Delete from Supabase Auth first
+      try {
+        const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
+        if (authError) {
+          console.error("Error deleting user from Supabase Auth:", authError);
+          // Continue anyway - user might already be deleted from auth
+        }
+      } catch (authError) {
+        console.error("Error deleting user from Supabase Auth:", authError);
+        // Continue anyway
+      }
+      
+      // Delete from local database
+      await storage.deleteUser(targetUserId);
+      
+      console.log(`Admin deleted user: ${targetUserId} (${targetUser.email})`);
+      res.json({ success: true, message: "회원이 삭제되었습니다." });
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "회원 삭제 중 오류가 발생했습니다." });
+    }
+  });
+
   // Get system stats (admin/staff can view)
   app.get('/api/admin/stats/system', isAuthenticated, requireStaffOrAdmin, async (_req, res) => {
     try {

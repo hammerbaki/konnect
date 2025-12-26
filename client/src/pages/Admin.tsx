@@ -11,8 +11,18 @@ import {
   Users, Settings, Coins, Activity, 
   RefreshCw, Search, Shield, User, Crown,
   BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
-  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus
+  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -209,8 +219,10 @@ export default function Admin() {
   const [gpExpiresAt, setGpExpiresAt] = useState<string>("");
   const [editingInviterGp, setEditingInviterGp] = useState<number | null>(null);
   const [editingInviteeGp, setEditingInviteeGp] = useState<number | null>(null);
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const { user: currentUser, isLoading: userLoading } = useAuth();
+  const { user: currentUser, isLoading: userLoading, getAccessToken } = useAuth();
 
   const isAdmin = currentUser?.role === 'admin';
   const isStaff = currentUser?.role === 'staff';
@@ -648,6 +660,34 @@ export default function Admin() {
     },
   });
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      const token = await getAccessToken();
+      const response = await fetch(`/api/admin/users/${userToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+        toast({ title: "회원 삭제 완료", description: `${userToDelete.displayName || userToDelete.email || '사용자'}님이 삭제되었습니다.` });
+        setUserToDelete(null);
+      } else {
+        const data = await response.json();
+        toast({ title: "삭제 실패", description: data.message || "회원을 삭제하는 중 오류가 발생했습니다.", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "삭제 실패", description: "회원을 삭제하는 중 오류가 발생했습니다.", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const createPackageMutation = useMutation({
     mutationFn: async (pkg: Partial<PointPackage>) => {
       const res = await apiRequest('POST', '/api/admin/packages', pkg);
@@ -899,6 +939,17 @@ export default function Admin() {
                                 </SelectContent>
                               </Select>
                             ) : null}
+                            {isAdmin && user.id !== currentUser?.id && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => setUserToDelete(user)}
+                                data-testid={`button-delete-user-${user.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -2738,6 +2789,55 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              회원 삭제 확인
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="space-y-3 pt-2">
+                <p>
+                  <span className="font-bold text-[#191F28]">{userToDelete?.displayName || userToDelete?.email || '이 사용자'}</span>님을 정말 삭제하시겠습니까?
+                </p>
+                <p className="text-red-600 font-medium">
+                  경고: 이 작업은 되돌릴 수 없습니다!
+                </p>
+                <p className="text-sm">
+                  삭제 시 다음 정보가 모두 삭제됩니다:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>모든 프로필 정보</li>
+                  <li>저장된 분석 결과</li>
+                  <li>작성한 자기소개서</li>
+                  <li>목표 관리 데이터</li>
+                  <li>보유 포인트 및 GP</li>
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  삭제 중...
+                </>
+              ) : (
+                "회원 삭제"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 }
