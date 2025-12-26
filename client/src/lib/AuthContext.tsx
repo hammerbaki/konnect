@@ -5,11 +5,14 @@ import type { Session, User as SupabaseUser, SupabaseClient } from "@supabase/su
 const REFERRAL_CODE_KEY = 'konnect_referral_code';
 
 function saveReferralCode(code: string) {
+  console.log('[Referral] Saving referral code:', code);
   localStorage.setItem(REFERRAL_CODE_KEY, code);
 }
 
 function getReferralCode(): string | null {
-  return localStorage.getItem(REFERRAL_CODE_KEY);
+  const code = localStorage.getItem(REFERRAL_CODE_KEY);
+  console.log('[Referral] Retrieved referral code from localStorage:', code);
+  return code;
 }
 
 function clearReferralCode() {
@@ -62,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
+    console.log('[Referral] Checking URL for referral code:', refCode);
     if (refCode) {
       saveReferralCode(refCode);
       // Clean URL without reload
@@ -72,9 +76,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const claimReferralReward = useCallback(async (accessToken: string) => {
     const referralCode = getReferralCode();
-    if (!referralCode || referralClaimAttempted.current) return;
+    console.log('[Referral] claimReferralReward called, code:', referralCode, 'alreadyAttempted:', referralClaimAttempted.current);
+    if (!referralCode || referralClaimAttempted.current) {
+      console.log('[Referral] Skipping claim - no code or already attempted');
+      return;
+    }
     
     referralClaimAttempted.current = true;
+    console.log('[Referral] Attempting to claim referral with code:', referralCode);
     
     try {
       const response = await fetch('/api/referral/claim', {
@@ -88,22 +97,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (response.ok) {
         const result = await response.json();
-        console.log('Referral claimed:', result.message);
+        console.log('[Referral] Claim succeeded:', result.message);
         clearReferralCode();
       } else {
         const error = await response.json();
-        console.log('Referral claim failed:', error.message);
+        console.log('[Referral] Claim failed:', error.message);
         // Clear code even on failure to prevent repeated attempts
         clearReferralCode();
       }
     } catch (error) {
-      console.error('Error claiming referral:', error);
+      console.error('[Referral] Error claiming referral:', error);
       // Reset flag on network error to allow retry
       referralClaimAttempted.current = false;
     }
   }, []);
 
   const fetchUserData = useCallback(async (accessToken: string, isNewSession: boolean = false) => {
+    console.log('[Auth] fetchUserData called, isNewSession:', isNewSession);
     try {
       const response = await fetch("/api/auth/user", {
         headers: {
@@ -117,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Try to claim referral reward on new session
         if (isNewSession) {
+          console.log('[Referral] New session detected, triggering claim');
           claimReferralReward(accessToken);
         }
       } else {
