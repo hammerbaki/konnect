@@ -1,0 +1,187 @@
+2025-12-26 15:27:09.10
+7c28d560
+User
+6:27:09 AM [express] GET /api/notifications/unread-count 200 in 2384ms :: {"count":0}
+2025-12-26 15:27:09.96
+7c28d560
+User
+6:27:09 AM [express] GET /api/page-visibility 200 in 1182ms :: {"userRole":"user","pages":{"/recharge":true,"/settings":true,"/dashboard":true,"/profile":true,"/analysis":true,"/goals":true,"/kompass":true,"/essays":true,"/explorer":true,"/admin":false}}
+2025-12-26 15:27:09.96
+7c28d560
+User
+6:27:09 AM [express] GET /api/auth/user 200 in 1180ms :: [object:20]
+2025-12-26 15:27:10.68
+7c28d560
+User
+6:27:10 AM [express] GET /api/notifications/unread-count 304 in 1034ms :: {"count":0}
+2025-12-26 15:27:11.49
+7c28d560
+User
+6:27:11 AM [express] GET /api/profiles 200 in 1018ms :: []
+2025-12-26 15:27:11.50
+7c28d560
+User
+6:27:11 AM [express] GET /api/user-identity 200 in 1025ms :: {"id":"03ed69a6-4068-4c0b-9066-26796acaaa88","displayName":"MTSPioneers","email":"pioneersmts@gmail.com","gender":null,"birthDate":null}
+2025-12-26 15:27:11.61
+7c28d560
+User
+6:27:11 AM [express] GET /api/notifications/unread-count 304 in 1030ms :: {"count":5}
+2025-12-26 15:27:12.14
+7c28d560
+User
+✓ Database connection established
+2025-12-26 15:27:12.40
+7c28d560
+User
+6:27:12 AM [express] GET /api/notifications 304 in 1045ms :: []
+2025-12-26 15:27:12.77
+7c28d560
+User
+6:27:12 AM [express] GET /api/notifications 304 in 2183ms :: [array:20]
+2025-12-26 15:27:13.62
+7c28d560
+User
+6:27:13 AM [express] GET /api/notifications/unread-count 304 in 1030ms :: {"count":0}
+2025-12-26 15:27:15.60
+7c28d560
+User
+6:27:15 AM [express] GET /api/notifications 304 in 1020ms :: []
+2025-12-26 15:27:17.63
+7c28d560
+User
+6:27:17 AM [express] GET /api/notifications 304 in 1024ms :: [array:20]
+2025-12-26 15:27:18.62
+7c28d560
+User
+6:27:18 AM [express] GET /api/notifications/unread-count 304 in 1020ms :: {"count":5}
+2025-12-26 15:27:19.95
+7c28d560
+User
+6:27:19 AM [express] GET /api/auth/user 200 in 1177ms :: [object:20]
+2025-12-26 15:27:22.75
+7c28d560
+User
+6:27:22 AM [express] GET /api/notifications 401 in 163ms :: {"message":"Unauthorized"}
+2025-12-26 15:27:23.76
+7c28d560
+User
+6:27:23 AM [express] GET /api/notifications/unread-count 401 in 164ms :: {"message":"Unauthorized"}
+2025-12-26 15:27:24.74
+7c28d560
+User
+6:27:24 AM [express] GET /api/notifications 304 in 1132ms :: []
+2025-12-26 15:27:25.60
+7c28d560
+User
+6:27:25 AM [express] GET /api/notifications/unread-count 304 in 1016ms :: {"count":0}
+2025-12-26 15:27:26.86
+7c28d560
+User
+6:27:26 AM [express] GET /api/notifications/unread-count 304 in 1020ms :: {"count":0}
+2025-12-26 15:27:28.58
+7c28d560
+User
+6:27:28 AM [express] GET /api/notifications 304 in 1010ms :: []
+2025-12-26 15:27:28.66
+7c28d560
+User
+6:27:28 AM [express] GET /api/notifications/unread-count 304 in 1070ms :: {"count":5}
+2025-12-26 15:27:29.63
+7c28d560
+User
+6:27:29 AM [express] GET /api/notifications 304 in 1046ms :: [array:20]
+2025-12-26 15:27:30.69
+7c28d560
+User
+6:27:30 AM [express] GET /api/notifications/unread-count 304 in 1033ms :: {"count":0}
+2025-12-26 15:27:32.64
+7c28d560
+User
+6:27:32 AM [express] GET /api/notifications 304 in 1046ms :: []
+2025-12-26 15:27:34.65
+7c28d560
+User
+6:27:34 AM [express] GET /api/notifications 304 in 1045ms :: [array:20]
+2025-12-26 15:27:35.66
+7c28d560
+User
+6:27:35 AM [express] GET /api/notifications/unread-count 304 in 1054ms :: {"count":5}
+2025-12-26 15:27:38.75
+7c28d560
+User
+6:27:38 AM [express] GET /api/notifications 401 in 164ms :: {"message":"Unauthorized"}
+2025-12-26 15:27:39.76
+7c28d560
+User
+6:27:39 AM [express] GET /api/notifications/unread-count 401 in 169ms :: {"message":"Unauthorized"}
+2025-12-26 15:27:42.10
+7c28d560
+User
+6:27:42 AM [express] GET /api/notifications 304 in 1516ms :: []
+2025-12-26 15:27:42.63
+7c28d560
+User
+6:27:42 AM [express] GET /api/notifications/unread-count 304 in 1048ms :: {"count":0}
+2025-12-26 15:27:43.09
+7c28d560
+User
+6:27:43 AM [express] GET /api/notifications/unread-count 304 in 1054ms :: {"count":0}
+2025-12-26 15:27:44.82
+7c28d560
+User
+6:27:44 AM [express] GET /api/notifications 304 in 1061ms :: []
+2025-12-26 15:27:45.64
+7c28d560
+User
+6:27:45 AM [express] GET /api/notifications/unread-count 304 in 1051ms :: {"count":5}
+2025-12-26 15:27:47.02
+7c28d560
+User
+6:27:47 AM [express] GET /api/notifications 304 in 1441ms :: [array:20]
+2025-12-26 15:27:47.64
+7c28d560
+User
+6:27:47 AM [express] GET /api/notifications/unread-count 304 in 1039ms :: {"count":0}
+2025-12-26 15:27:49.62
+7c28d560
+User
+6:27:49 AM [express] GET /api/notifications 304 in 1038ms :: []
+2025-12-26 15:27:51.66
+7c28d560
+User
+6:27:51 AM [express] GET /api/notifications 304 in 1054ms :: [array:20]
+2025-12-26 15:27:52.65
+7c28d560
+User
+6:27:52 AM [express] GET /api/notifications/unread-count 304 in 1044ms :: {"count":5}
+2025-12-26 15:27:54.75
+7c28d560
+User
+6:27:54 AM [express] GET /api/notifications 401 in 164ms :: {"message":"Unauthorized"}
+2025-12-26 15:27:55.76
+7c28d560
+User
+6:27:55 AM [express] GET /api/notifications/unread-count 401 in 169ms :: {"message":"Unauthorized"}
+2025-12-26 15:27:59.04
+7c28d560
+User
+6:27:59 AM [express] GET /api/notifications 304 in 1446ms :: []
+2025-12-26 15:27:59.31
+7c28d560
+User
+6:27:59 AM [express] GET /api/notifications/unread-count 304 in 1045ms :: {"count":0}
+2025-12-26 15:28:00.08
+7c28d560
+User
+✓ Database connection established
+2025-12-26 15:28:00.72
+7c28d560
+User
+6:28:00 AM [express] GET /api/notifications/unread-count 304 in 2138ms :: {"count":0}
+2025-12-26 15:28:01.05
+7c28d560
+User
+6:28:01 AM [express] GET /api/notifications 304 in 1052ms :: []
+2025-12-26 15:28:02.66
+7c28d560
+User
