@@ -2770,20 +2770,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const referral = await storage.createReferral(inviter.id, inviteeId, referralCode);
       
       // Award GP to both parties
+      let inviterAwardSuccess = false;
+      let inviteeAwardSuccess = false;
+      
       if (inviterGp > 0) {
-        await storage.addGiftPoints(inviter.id, inviterGp, 'referral', {
-          sourceId: referral.id,
-          description: `친구 추천 보상 (피추천인: ${req.user.email || '신규 사용자'})`,
-          expiresAt: expirationDate,
-        });
+        try {
+          console.log(`Awarding ${inviterGp} GP to INVITER ${inviter.id} (${inviter.email})`);
+          await storage.addGiftPoints(inviter.id, inviterGp, 'referral', {
+            sourceId: referral.id,
+            description: `친구 추천 보상 (피추천인: ${req.user.email || '신규 사용자'})`,
+            expiresAt: expirationDate,
+          });
+          inviterAwardSuccess = true;
+          console.log(`Successfully awarded ${inviterGp} GP to INVITER ${inviter.id}`);
+        } catch (inviterError) {
+          console.error(`Failed to award GP to inviter ${inviter.id}:`, inviterError);
+          // Continue to award invitee even if inviter fails
+        }
+      } else {
+        inviterAwardSuccess = true; // No GP to award
       }
       
       if (inviteeGp > 0) {
-        await storage.addGiftPoints(inviteeId, inviteeGp, 'referral', {
-          sourceId: referral.id,
-          description: `추천인 보상 (추천인: ${inviter.email || inviter.displayName || '회원'})`,
-          expiresAt: expirationDate,
-        });
+        try {
+          console.log(`Awarding ${inviteeGp} GP to INVITEE ${inviteeId} (${req.user.email})`);
+          await storage.addGiftPoints(inviteeId, inviteeGp, 'referral', {
+            sourceId: referral.id,
+            description: `추천인 보상 (추천인: ${inviter.email || inviter.displayName || '회원'})`,
+            expiresAt: expirationDate,
+          });
+          inviteeAwardSuccess = true;
+          console.log(`Successfully awarded ${inviteeGp} GP to INVITEE ${inviteeId}`);
+        } catch (inviteeError) {
+          console.error(`Failed to award GP to invitee ${inviteeId}:`, inviteeError);
+        }
+      } else {
+        inviteeAwardSuccess = true; // No GP to award
+      }
+      
+      // Log partial failure warning
+      if (!inviterAwardSuccess || !inviteeAwardSuccess) {
+        console.warn(`Referral claim partial failure: inviter=${inviterAwardSuccess}, invitee=${inviteeAwardSuccess}`);
       }
       
       // Update referral with reward amounts

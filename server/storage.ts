@@ -319,26 +319,70 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     
-    // If new user, apply signup bonus as GP
-    if (isNewUser) {
-      try {
-        const signupBonusSetting = await this.getSystemSetting('signup_bonus');
-        const signupBonus = signupBonusSetting && !isNaN(Number(signupBonusSetting)) ? Number(signupBonusSetting) : 1000;
+    // Apply signup bonus - use ledger as source of truth
+    // Check flag first for efficiency, but rely on ledger check for correctness
+    if (user.signupBonusAwarded === 1) {
+      // Already awarded
+      return user;
+    }
+    
+    try {
+      // Check if bonus already exists in ledger (authoritative check)
+      const existingBonus = await db
+        .select({ id: giftPointLedger.id })
+        .from(giftPointLedger)
+        .where(and(
+          eq(giftPointLedger.userId, user.id),
+          eq(giftPointLedger.source, 'signup')
+        ))
+        .limit(1);
+      
+      if (existingBonus.length > 0) {
+        // Already awarded, just sync the flag
+        await db.update(users).set({ signupBonusAwarded: 1 }).where(eq(users.id, user.id));
+        return user;
+      }
+      
+      // Try to claim the flag atomically - prevents concurrent awards
+      const [claimed] = await db
+        .update(users)
+        .set({ signupBonusAwarded: 1 })
+        .where(and(
+          eq(users.id, user.id),
+          eq(users.signupBonusAwarded, 0)
+        ))
+        .returning({ id: users.id });
+      
+      if (!claimed) {
+        // Another request already claimed it
+        return user;
+      }
+      
+      // Get settings
+      const signupBonusSetting = await this.getSystemSetting('signup_bonus');
+      const signupBonus = signupBonusSetting && !isNaN(Number(signupBonusSetting)) ? Number(signupBonusSetting) : 1000;
+      
+      if (signupBonus > 0) {
+        const expirationDaysSetting = await this.getSystemSetting('gp_default_expiration_days');
+        const expirationDays = Number(expirationDaysSetting) || 90;
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + expirationDays);
         
-        if (signupBonus > 0) {
-          const expirationDays = await this.getSystemSetting('gp_default_expiration_days');
-          const expirationDate = new Date();
-          expirationDate.setDate(expirationDate.getDate() + (Number(expirationDays) || 90));
-          
+        try {
+          // Use the existing addGiftPoints method which handles all invariants correctly
           await this.addGiftPoints(user.id, signupBonus, 'signup', {
             description: '회원가입 축하 보너스',
-            expiresAt: expirationDate,
+            expiresAt,
           });
-          console.log(`Awarded ${signupBonus}GP signup bonus to new user ${user.id} (${user.email})`);
+          console.log(`Awarded ${signupBonus}GP signup bonus to user ${user.id} (${user.email})`);
+        } catch (gpError) {
+          // GP award failed - reset flag for retry
+          console.error('Error awarding signup bonus GP, resetting flag:', gpError);
+          await db.update(users).set({ signupBonusAwarded: 0 }).where(eq(users.id, user.id));
         }
-      } catch (error) {
-        console.error('Error applying signup bonus GP:', error);
       }
+    } catch (error) {
+      console.error('Error applying signup bonus GP:', error);
     }
     
     return user;

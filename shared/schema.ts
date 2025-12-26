@@ -50,6 +50,8 @@ export const users = pgTable("users", {
   // Referral fields
   referralCode: varchar("referral_code", { length: 12 }).unique(), // Unique code for sharing
   referredByUserId: varchar("referred_by_user_id"), // User who referred this user (null if none)
+  // Bonus tracking
+  signupBonusAwarded: integer("signup_bonus_awarded").notNull().default(0), // 0 = false, 1 = true (prevents double award)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
