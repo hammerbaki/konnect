@@ -215,6 +215,24 @@ export default function Settings() {
         saveMutation.mutate();
     };
 
+    const formatPhoneNumber = (value: string) => {
+        const numbers = value.replace(/[^\d]/g, '');
+        const limited = numbers.slice(0, 11);
+        
+        if (limited.length <= 3) {
+            return limited;
+        } else if (limited.length <= 7) {
+            return `${limited.slice(0, 3)}-${limited.slice(3)}`;
+        } else {
+            return `${limited.slice(0, 3)}-${limited.slice(3, 7)}-${limited.slice(7)}`;
+        }
+    };
+
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const formatted = formatPhoneNumber(e.target.value);
+        setPhone(formatted);
+    };
+
     const handlePasswordChange = async () => {
         if (newPassword.length < 6) {
             toast({
@@ -342,11 +360,13 @@ export default function Settings() {
                                     <Label className="text-[#4E5968] text-sm">휴대폰 번호</Label>
                                     <Input 
                                         value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
-                                        placeholder="휴대폰 번호를 입력하세요"
+                                        onChange={handlePhoneChange}
+                                        placeholder="010-1234-5678"
+                                        maxLength={13}
                                         className="bg-[#F2F4F6] border-none rounded-xl h-11 sm:h-12 text-sm sm:text-base" 
                                         data-testid="input-phone"
                                     />
+                                    <p className="text-xs text-[#8B95A1]">형식: 010-1234-5678</p>
                                 </div>
                             </CardContent>
                         </Card>
