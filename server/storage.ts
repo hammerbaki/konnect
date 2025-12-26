@@ -78,6 +78,7 @@ import { eq, desc, ilike, and, inArray, sql, count, gte, lte, sum, isNull } from
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  deleteUser(userId: string): Promise<void>;
   updateUserCredits(userId: string, credits: number): Promise<void>;
   deductUserCredits(userId: string, amount: number): Promise<boolean>;
   addUserCredits(userId: string, amount: number, reason?: string): Promise<boolean>;
@@ -296,6 +297,10 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, userId));
   }
 
   async updateUserCredits(userId: string, credits: number): Promise<void> {

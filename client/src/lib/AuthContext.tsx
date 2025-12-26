@@ -43,6 +43,8 @@ interface AuthContextType {
   verifyOtp: (email: string, token: string) => Promise<{ error: Error | null }>;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUpWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: Error | null }>;
   getAccessToken: () => Promise<string | null>;
 }
 
@@ -271,6 +273,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const updatePassword = async (newPassword: string) => {
+    if (!supabaseClient) return { error: new Error("Supabase not initialized") };
+    const { error } = await supabaseClient.auth.updateUser({
+      password: newPassword,
+    });
+    return { error };
+  };
+
+  const resetPasswordForEmail = async (email: string) => {
+    if (!supabaseClient) return { error: new Error("Supabase not initialized") };
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+    return { error };
+  };
+
   const getAccessToken = async () => {
     if (!supabaseClient) return null;
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -294,6 +312,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         verifyOtp,
         signInWithPassword,
         signUpWithPassword,
+        updatePassword,
+        resetPasswordForEmail,
         getAccessToken,
       }}
     >

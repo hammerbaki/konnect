@@ -5,12 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bell, Shield, Lock, UserX, Smartphone, ChevronRight, Loader2, Gift, Copy, Check, Users } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Bell, Shield, Lock, UserX, Smartphone, ChevronRight, Loader2, Gift, Copy, Check, Users, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/AuthContext";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 interface ReferralInfo {
     referralCode: string | null;
@@ -103,8 +105,9 @@ function SettingsSkeleton() {
 
 export default function Settings() {
     const { toast } = useToast();
-    const { user, isLoading } = useAuth();
+    const { user, isLoading, updatePassword, logout, getAccessToken } = useAuth();
     const queryClient = useQueryClient();
+    const [, setLocation] = useLocation();
     
     const [phone, setPhone] = useState("");
     const [marketingConsent, setMarketingConsent] = useState(false);
@@ -112,6 +115,19 @@ export default function Settings() {
     const [pushNotifications, setPushNotifications] = useState(true);
     const [hasChanges, setHasChanges] = useState(false);
     const [copied, setCopied] = useState(false);
+    
+    // Password change state
+    const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [passwordChanging, setPasswordChanging] = useState(false);
+    
+    // Account deletion state
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState("");
+    const [accountDeleting, setAccountDeleting] = useState(false);
 
     // Fetch referral info
     const { data: referralInfo, isLoading: referralLoading } = useQuery<ReferralInfo>({
@@ -197,6 +213,100 @@ export default function Settings() {
 
     const handleSave = () => {
         saveMutation.mutate();
+    };
+
+    const handlePasswordChange = async () => {
+        if (newPassword.length < 6) {
+            toast({
+                title: "비밀번호 오류",
+                description: "비밀번호는 최소 6자 이상이어야 합니다.",
+                variant: "destructive",
+            });
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            toast({
+                title: "비밀번호 불일치",
+                description: "새 비밀번호와 확인 비밀번호가 일치하지 않습니다.",
+                variant: "destructive",
+            });
+            return;
+        }
+        
+        setPasswordChanging(true);
+        try {
+            const { error } = await updatePassword(newPassword);
+            if (error) {
+                toast({
+                    title: "비밀번호 변경 실패",
+                    description: error.message || "비밀번호를 변경하는 중 오류가 발생했습니다.",
+                    variant: "destructive",
+                });
+            } else {
+                toast({
+                    title: "비밀번호 변경 완료",
+                    description: "비밀번호가 성공적으로 변경되었습니다.",
+                });
+                setShowPasswordDialog(false);
+                setNewPassword("");
+                setConfirmPassword("");
+            }
+        } catch (error) {
+            toast({
+                title: "비밀번호 변경 실패",
+                description: "비밀번호를 변경하는 중 오류가 발생했습니다.",
+                variant: "destructive",
+            });
+        } finally {
+            setPasswordChanging(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (deleteConfirmText !== "회원탈퇴") {
+            toast({
+                title: "입력 오류",
+                description: "'회원탈퇴'를 정확히 입력해주세요.",
+                variant: "destructive",
+            });
+            return;
+        }
+        
+        setAccountDeleting(true);
+        try {
+            const token = await getAccessToken();
+            const response = await fetch('/api/auth/delete-account', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            
+            if (response.ok) {
+                toast({
+                    title: "계정 삭제 완료",
+                    description: "계정이 성공적으로 삭제되었습니다.",
+                });
+                await logout();
+                setLocation('/');
+            } else {
+                const data = await response.json();
+                toast({
+                    title: "계정 삭제 실패",
+                    description: data.message || "계정을 삭제하는 중 오류가 발생했습니다.",
+                    variant: "destructive",
+                });
+            }
+        } catch (error) {
+            toast({
+                title: "계정 삭제 실패",
+                description: "계정을 삭제하는 중 오류가 발생했습니다.",
+                variant: "destructive",
+            });
+        } finally {
+            setAccountDeleting(false);
+        }
     };
 
     if (isLoading || settingsLoading) {
@@ -376,6 +486,7 @@ export default function Settings() {
                         <Card className="toss-card">
                             <CardContent className="p-0 divide-y divide-[#F2F4F6]">
                                 <button 
+                                    onClick={() => setShowPasswordDialog(true)}
                                     className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-[#F9FAFB] active:bg-[#F2F4F6] transition-colors text-left"
                                     data-testid="button-change-password"
                                 >
@@ -386,6 +497,7 @@ export default function Settings() {
                                     <ChevronRight className="h-5 w-5 text-[#B0B8C1]" />
                                 </button>
                                 <button 
+                                    onClick={() => setShowDeleteDialog(true)}
                                     className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-[#F9FAFB] active:bg-[#F2F4F6] transition-colors text-left"
                                     data-testid="button-delete-account"
                                 >
@@ -416,6 +528,162 @@ export default function Settings() {
                     </Button>
                 </div>
             </div>
+
+            {/* Password Change Dialog */}
+            <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Lock className="h-5 w-5" />
+                            비밀번호 변경
+                        </DialogTitle>
+                        <DialogDescription>
+                            새로운 비밀번호를 입력해주세요. 비밀번호는 최소 6자 이상이어야 합니다.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="new-password">새 비밀번호</Label>
+                            <div className="relative">
+                                <Input
+                                    id="new-password"
+                                    type={showNewPassword ? "text" : "password"}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="새 비밀번호 입력"
+                                    className="pr-10"
+                                    data-testid="input-new-password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B95A1]"
+                                >
+                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirm-password">비밀번호 확인</Label>
+                            <div className="relative">
+                                <Input
+                                    id="confirm-password"
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="비밀번호 확인"
+                                    className="pr-10"
+                                    data-testid="input-confirm-password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B95A1]"
+                                >
+                                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setShowPasswordDialog(false);
+                                setNewPassword("");
+                                setConfirmPassword("");
+                            }}
+                        >
+                            취소
+                        </Button>
+                        <Button
+                            onClick={handlePasswordChange}
+                            disabled={passwordChanging || !newPassword || !confirmPassword}
+                            className="bg-[#3182F6] hover:bg-[#2b72d7]"
+                            data-testid="button-submit-password-change"
+                        >
+                            {passwordChanging ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    변경 중...
+                                </>
+                            ) : (
+                                "변경하기"
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Account Deletion Dialog */}
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-red-600">
+                            <AlertTriangle className="h-5 w-5" />
+                            회원 탈퇴
+                        </DialogTitle>
+                        <DialogDescription className="text-left">
+                            <div className="space-y-3 pt-2">
+                                <p className="font-medium text-red-600">
+                                    경고: 이 작업은 되돌릴 수 없습니다!
+                                </p>
+                                <p>
+                                    회원 탈퇴 시 다음 정보가 모두 삭제됩니다:
+                                </p>
+                                <ul className="list-disc list-inside space-y-1 text-sm">
+                                    <li>모든 프로필 정보</li>
+                                    <li>저장된 분석 결과</li>
+                                    <li>작성한 자기소개서</li>
+                                    <li>목표 관리 데이터</li>
+                                    <li>보유 포인트 및 GP</li>
+                                </ul>
+                            </div>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="delete-confirm">
+                                확인을 위해 <span className="font-bold text-red-600">'회원탈퇴'</span>를 입력해주세요
+                            </Label>
+                            <Input
+                                id="delete-confirm"
+                                value={deleteConfirmText}
+                                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                placeholder="회원탈퇴"
+                                className="border-red-300 focus:border-red-500"
+                                data-testid="input-delete-confirm"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setShowDeleteDialog(false);
+                                setDeleteConfirmText("");
+                            }}
+                        >
+                            취소
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteAccount}
+                            disabled={accountDeleting || deleteConfirmText !== "회원탈퇴"}
+                            data-testid="button-confirm-delete-account"
+                        >
+                            {accountDeleting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    삭제 중...
+                                </>
+                            ) : (
+                                "회원 탈퇴"
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Layout>
     );
 }

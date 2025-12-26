@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./supabaseAuth";
+import { setupAuth, isAuthenticated, supabaseAdmin } from "./supabaseAuth";
 import {
   insertProfileSchema,
   insertCareerAnalysisSchema,
@@ -149,6 +149,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error logging out:", error);
       res.status(500).json({ message: "Failed to logout" });
+    }
+  });
+
+  // Delete account endpoint - removes user from Supabase and our database
+  app.delete('/api/auth/delete-account', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      if (!supabaseAdmin) {
+        return res.status(503).json({ message: "인증 서비스를 사용할 수 없습니다." });
+      }
+      
+      // Delete user from Supabase Auth
+      const { error: supabaseError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      
+      if (supabaseError) {
+        console.error("Supabase delete error:", supabaseError);
+        return res.status(500).json({ message: "계정 삭제에 실패했습니다. 잠시 후 다시 시도해주세요." });
+      }
+      
+      // Delete user data from our database (cascading should handle most relations)
+      try {
+        await storage.deleteUser(userId);
+      } catch (dbError) {
+        console.error("Database delete error (non-fatal, user already removed from auth):", dbError);
+      }
+      
+      res.json({ success: true, message: "계정이 성공적으로 삭제되었습니다." });
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      res.status(500).json({ message: "계정 삭제에 실패했습니다." });
     }
   });
 
