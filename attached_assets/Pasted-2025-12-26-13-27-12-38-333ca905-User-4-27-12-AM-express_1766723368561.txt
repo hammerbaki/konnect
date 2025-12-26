@@ -1,0 +1,140 @@
+2025-12-26 13:27:12.38
+333ca905
+User
+4:27:12 AM [express] GET /api/ai/queue/stats 304 in 1042ms :: {"goal":{"queued":0,"processing":0},"essay":{"queued":0,"processing":0},"essay_revision":{"queued":0,"processing":0},"analysis":{"queued":0,"processing":0},"totalProcessing":0}
+2025-12-26 13:27:14.82
+333ca905
+User
+4:27:14 AM [express] GET /api/admin/jobs/recent 304 in 1898ms :: [array:50]
+2025-12-26 13:27:16.98
+333ca905
+User
+4:27:16 AM [express] GET /api/ai/queue/stats 304 in 1431ms :: {"goal":{"queued":0,"processing":0},"essay":{"queued":0,"processing":0},"essay_revision":{"queued":0,"processing":0},"analysis":{"queued":0,"processing":0},"totalProcessing":0}
+2025-12-26 13:27:18.80
+333ca905
+User
+4:27:18 AM [express] POST /api/track/pageview 200 in 1073ms :: {"tracked":true}
+2025-12-26 13:27:19.15
+333ca905
+User
+4:27:19 AM [express] GET /api/user-settings 200 in 1132ms :: {"phone":null,"marketingConsent":false,"emailNotifications":true,"pushNotifications":true}
+2025-12-26 13:27:19.87
+333ca905
+User
+4:27:19 AM [express] GET /api/admin/jobs/recent 304 in 1877ms :: [array:50]
+2025-12-26 13:27:20.02
+333ca905
+User
+4:27:20 AM [express] GET /api/referral/info 200 in 2000ms :: {"referralCode":"JD3254ZW","totalReferred":0,"totalGpEarned":0,"referralLink":"https://konnect.careers?ref=JD3254ZW","inviterReward":1000,"inviteeReward":500}
+2025-12-26 13:27:20.18
+333ca905
+User
+4:27:20 AM [express] GET /api/notifications 304 in 901ms :: [array:20]
+2025-12-26 13:27:20.21
+333ca905
+User
+4:27:20 AM [express] GET /api/notifications/unread-count 304 in 914ms :: {"count":5}
+2025-12-26 13:27:21.20
+333ca905
+User
+4:27:21 AM [express] GET /api/ai/queue/stats 304 in 1055ms :: {"goal":{"queued":0,"processing":0},"essay":{"queued":0,"processing":0},"essay_revision":{"queued":0,"processing":0},"analysis":{"queued":0,"processing":0},"totalProcessing":0}
+2025-12-26 13:27:23.53
+333ca905
+User
+4:27:23 AM [express] GET /api/notifications/unread-count 304 in 889ms :: {"count":5}
+2025-12-26 13:27:23.62
+333ca905
+User
+4:27:23 AM [express] GET /api/notifications 304 in 898ms :: []
+2025-12-26 13:27:23.80
+333ca905
+User
+4:27:23 AM [express] GET /api/notifications 401 in 160ms :: {"message":"Unauthorized"}
+2025-12-26 13:27:23.82
+333ca905
+User
+4:27:23 AM [express] GET /api/notifications/unread-count 401 in 179ms :: {"message":"Unauthorized"}
+2025-12-26 13:27:24.73
+333ca905
+User
+4:27:24 AM [express] GET /api/notifications/unread-count 304 in 889ms :: {"count":0}
+2025-12-26 13:27:24.96
+333ca905
+User
+4:27:24 AM [express] GET /api/admin/jobs/recent 304 in 1902ms :: [array:50]
+2025-12-26 13:27:25.45
+333ca905
+User
+4:27:25 AM [express] GET /api/ai/queue/stats 304 in 1073ms :: {"goal":{"queued":0,"processing":0},"essay":{"queued":0,"processing":0},"essay_revision":{"queued":0,"processing":0},"analysis":{"queued":0,"processing":0},"totalProcessing":0}
+2025-12-26 13:27:25.54
+333ca905
+User
+4:27:25 AM [express] GET /api/notifications 304 in 903ms :: [array:20]
+2025-12-26 13:27:29.89
+333ca905
+User
+4:27:29 AM [express] GET /api/ai/queue/stats 304 in 1267ms :: {"goal":{"queued":0,"processing":0},"essay":{"queued":0,"processing":0},"essay_revision":{"queued":0,"processing":0},"analysis":{"queued":0,"processing":0},"totalProcessing":0}
+2025-12-26 13:27:30.08
+333ca905
+User
+4:27:30 AM [express] GET /api/admin/jobs/recent 304 in 1940ms :: [array:50]
+2025-12-26 13:27:30.22
+333ca905
+User
+Completely deleted user 7d6eaebf-e51e-48eb-9343-38bc4cc947ca and all related data
+2025-12-26 13:27:30.22
+333ca905
+User
+4:27:30 AM [express] DELETE /api/auth/delete-account 200 in 2957ms :: {"success":true,"message":"계정이 성공적으로 삭제되었습니다."}
+2025-12-26 13:27:30.77
+333ca905
+User
+4:27:30 AM [express] POST /api/auth/logout 401 in 383ms :: {"message":"Unauthorized"}
+2025-12-26 13:27:31.85
+333ca905
+User
+4:27:31 AM [express] POST /api/track/pageview 200 in 838ms :: {"tracked":true}
+2025-12-26 13:27:34.11
+333ca905
+User
+4:27:34 AM [express] GET /api/ai/queue/stats 304 in 1057ms :: {"goal":{"queued":0,"processing":0},"essay":{"queued":0,"processing":0},"essay_revision":{"queued":0,"processing":0},"analysis":{"queued":0,"processing":0},"totalProcessing":0}
+2025-12-26 13:27:35.18
+333ca905
+User
+4:27:35 AM [express] GET /api/admin/jobs/recent 304 in 1920ms :: [array:50]
+2025-12-26 13:27:36.23
+333ca905
+User
+4:27:36 AM [express] GET /api/notifications 304 in 877ms :: [array:20]
+2025-12-26 13:27:36.29
+333ca905
+User
+4:27:36 AM [express] GET /api/notifications/unread-count 304 in 903ms :: {"count":5}
+2025-12-26 13:27:38.05
+333ca905
+User
+4:27:38 AM [express] POST /api/track/pageview 200 in 1488ms :: {"tracked":true}
+2025-12-26 13:27:38.24
+333ca905
+User
+4:27:38 AM [express] GET /api/referral/info 200 in 1381ms :: {"referralCode":"97VKB9RZ","totalReferred":0,"totalGpEarned":0,"referralLink":"https://konnect.careers?ref=97VKB9RZ","inviterReward":1000,"inviteeReward":500}
+2025-12-26 13:27:38.39
+333ca905
+User
+4:27:38 AM [express] GET /api/user-settings 200 in 1533ms :: {"phone":"010-1223-4444","marketingConsent":false,"emailNotifications":false,"pushNotifications":true}
+2025-12-26 13:27:38.95
+333ca905
+User
+4:27:38 AM [express] GET /api/notifications 401 in 160ms :: {"message":"Unauthorized"}
+2025-12-26 13:27:40.00
+333ca905
+User
+4:27:40 AM [express] GET /api/notifications/unread-count 401 in 337ms :: {"message":"Unauthorized"}
+2025-12-26 13:27:40.01
+333ca905
+User
+4:27:40 AM [express] GET /api/notifications 401 in 346ms :: {"message":"Unauthorized"}
+2025-12-26 13:27:40.08
+333ca905
+User
+4:27:40 AM [express] GET /api/notifications/unread-count 401 in 181ms :: {"message":"Unauthorized"}

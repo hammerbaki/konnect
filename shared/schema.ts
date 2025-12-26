@@ -35,7 +35,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  credits: integer("credits").notNull().default(1000),
+  credits: integer("credits").notNull().default(0),
   giftPoints: integer("gift_points").notNull().default(0), // GP - Gift Points balance (cached, computed from ledger)
   role: varchar("role", { length: 20 }).notNull().default('user'), // 'user' | 'staff' | 'admin'
   // Shared identity fields (consistent across all profile types)
@@ -645,7 +645,7 @@ export type Referral = typeof referrals.$inferSelect;
 
 // ===== GIFT POINT LEDGER TABLE (GP - Gift Points with expiration) =====
 // GP is used before normal credits, supports FIFO consumption by expiration date
-export type GiftPointSourceType = 'coupon' | 'bonus' | 'referral' | 'admin' | 'promotion' | 'event';
+export type GiftPointSourceType = 'coupon' | 'bonus' | 'referral' | 'admin' | 'promotion' | 'event' | 'signup';
 
 export const giftPointLedger = pgTable("gift_point_ledger", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

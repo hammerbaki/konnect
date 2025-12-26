@@ -1,0 +1,132 @@
+25-12-26 13:27:54.47
+333ca905
+User
+4:27:54 AM [express] GET /api/notifications 401 in 348ms :: {"message":"Unauthorized"}
+2025-12-26 13:27:54.98
+333ca905
+User
+4:27:54 AM [express] GET /api/config 304 in 334ms :: [object:2]
+2025-12-26 13:27:55.66
+333ca905
+User
+4:27:55 AM [express] GET /api/notifications 401 in 348ms :: {"message":"Unauthorized"}
+2025-12-26 13:27:55.68
+333ca905
+User
+4:27:55 AM [express] GET /api/notifications/unread-count 401 in 334ms :: {"message":"Unauthorized"}
+2025-12-26 13:27:56.02
+333ca905
+User
+4:27:56 AM [express] GET /api/notifications 401 in 348ms :: {"message":"Unauthorized"}
+2025-12-26 13:27:56.06
+333ca905
+User
+4:27:56 AM [express] GET /api/notifications/unread-count 401 in 392ms :: {"message":"Unauthorized"}
+2025-12-26 13:27:56.43
+333ca905
+User
+4:27:56 AM [express] POST /api/track/pageview 200 in 1784ms :: {"tracked":true}
+2025-12-26 13:27:58.03
+333ca905
+User
+4:27:58 AM [express] GET /api/notifications/unread-count 304 in 1345ms :: {"count":5}
+2025-12-26 13:28:00.01
+333ca905
+User
+4:28:00 AM [express] GET /api/notifications 304 in 1383ms :: [array:20]
+2025-12-26 13:28:03.02
+333ca905
+User
+4:28:03 AM [express] POST /api/track/pageview 200 in 1626ms :: {"tracked":true}
+2025-12-26 13:28:04.34
+333ca905
+User
+4:28:04 AM [express] GET /api/config 304 in 181ms :: [object:2]
+2025-12-26 13:28:05.56
+333ca905
+User
+4:28:05 AM [express] POST /api/track/pageview 200 in 1406ms :: {"tracked":true}
+2025-12-26 13:28:06.10
+333ca905
+User
+4:28:06 AM [express] POST /api/track/pageview 200 in 1289ms :: {"tracked":true}
+2025-12-26 13:28:06.18
+333ca905
+User
+4:28:06 AM [express] GET /api/notifications/unread-count 304 in 1375ms :: {"count":0}
+2025-12-26 13:28:06.61
+333ca905
+User
+4:28:06 AM [express] GET /api/auth/user 200 in 1796ms :: [object:19]
+2025-12-26 13:28:07.58
+333ca905
+User
+✓ Database connection established
+2025-12-26 13:28:08.12
+333ca905
+User
+4:28:08 AM [express] GET /api/auth/user 200 in 1333ms :: [object:19]
+2025-12-26 13:28:08.45
+333ca905
+User
+4:28:08 AM [express] GET /api/notifications 304 in 3641ms :: []
+2025-12-26 13:28:08.95
+333ca905
+User
+4:28:08 AM [express] GET /api/page-visibility 304 in 2166ms :: {"userRole":"user","pages":{"/recharge":true,"/settings":true,"/dashboard":true,"/profile":true,"/analysis":true,"/goals":true,"/kompass":true,"/essays":true,"/explorer":true,"/admin":false}}
+2025-12-26 13:28:09.62
+333ca905
+User
+4:28:09 AM [express] GET /api/notifications 304 in 1451ms :: [array:20]
+2025-12-26 13:28:10.08
+333ca905
+User
+4:28:10 AM [express] GET /api/notifications/unread-count 304 in 1412ms :: {"count":5}
+2025-12-26 13:28:10.63
+333ca905
+User
+4:28:10 AM [express] GET /api/user-identity 200 in 1206ms :: {"id":"6fe2c1d2-1156-41e6-ac3f-b04952e54616","displayName":"JesusSanjaaHulan","email":"graceed1206@gmail.com","gender":null,"birthDate":null}
+2025-12-26 13:28:10.67
+333ca905
+User
+4:28:10 AM [express] GET /api/profiles 304 in 1240ms :: []
+2025-12-26 13:28:11.84
+333ca905
+User
+4:28:11 AM [express] GET /api/notifications 401 in 181ms :: {"message":"Unauthorized"}
+2025-12-26 13:28:12.00
+333ca905
+User
+4:28:12 AM [express] GET /api/notifications/unread-count 401 in 348ms :: {"message":"Unauthorized"}
+2025-12-26 13:28:15.09
+333ca905
+User
+4:28:15 AM [express] GET /api/notifications/unread-count 304 in 1448ms :: {"count":5}
+2025-12-26 13:28:16.93
+333ca905
+User
+4:28:16 AM [express] GET /api/notifications 304 in 1299ms :: [array:20]
+2025-12-26 13:28:22.61
+333ca905
+User
+4:28:22 AM [express] GET /api/notifications/unread-count 304 in 1253ms :: {"count":0}
+2025-12-26 13:28:24.64
+333ca905
+User
+4:28:24 AM [express] GET /api/notifications 304 in 1022ms :: []
+2025-12-26 13:28:25.73
+333ca905
+User
+4:28:25 AM [express] GET /api/notifications 304 in 948ms :: [array:20]
+2025-12-26 13:28:26.14
+333ca905
+User
+4:28:26 AM [express] GET /api/notifications/unread-count 304 in 890ms :: {"count":5}
+2025-12-26 13:28:27.85
+333ca905
+User
+4:28:27 AM [express] GET /api/notifications 401 in 157ms :: {"message":"Unauthorized"}
+2025-12-26 13:28:28.05
+333ca905
+User
+4:28:28 AM [express] GET /api/notifications/unread-count 401 in 356ms :: {"message":"Unauthorized"}

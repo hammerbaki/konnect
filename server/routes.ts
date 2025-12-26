@@ -2726,24 +2726,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const inviteeId = req.user.id;
       const { referralCode } = req.body;
       
+      console.log(`Referral claim attempt: inviteeId=${inviteeId}, referralCode=${referralCode}`);
+      
       if (!referralCode) {
+        console.log('Referral claim failed: No referral code provided');
         return res.status(400).json({ message: "추천 코드가 필요합니다." });
       }
       
       // Check if user was already referred
       const existingReferral = await storage.getReferralByInvitee(inviteeId);
       if (existingReferral) {
+        console.log(`Referral claim failed: User ${inviteeId} already has referral`);
         return res.status(400).json({ message: "이미 추천 보상을 받으셨습니다." });
       }
       
       // Find inviter by referral code
       const inviter = await storage.getUserByReferralCode(referralCode);
       if (!inviter) {
+        console.log(`Referral claim failed: Invalid referral code ${referralCode}`);
         return res.status(404).json({ message: "유효하지 않은 추천 코드입니다." });
       }
       
+      console.log(`Found inviter: ${inviter.id} (${inviter.email}) for code ${referralCode}`);
+      
       // Can't refer yourself
       if (inviter.id === inviteeId) {
+        console.log('Referral claim failed: Self-referral attempt');
         return res.status(400).json({ message: "자기 자신은 추천할 수 없습니다." });
       }
       
@@ -2786,6 +2794,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .update(users)
         .set({ referredByUserId: inviter.id })
         .where(eq(users.id, inviteeId));
+      
+      console.log(`Referral claim SUCCESS: inviter=${inviter.id} (+${inviterGp}GP), invitee=${inviteeId} (+${inviteeGp}GP)`);
       
       res.json({
         success: true,

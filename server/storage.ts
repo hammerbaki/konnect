@@ -282,6 +282,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    // Check if this is a new user
+    const userId = userData.id;
+    if (!userId) {
+      throw new Error('User ID is required for upsert');
+    }
+    const existingUser = await this.getUser(userId);
+    const isNewUser = !existingUser;
+    
     // Check if email exists with a different user ID (e.g., after account deletion and re-registration)
     if (userData.email) {
       const [existingByEmail] = await db
@@ -289,7 +297,7 @@ export class DatabaseStorage implements IStorage {
         .from(users)
         .where(eq(users.email, userData.email));
       
-      if (existingByEmail && existingByEmail.id !== userData.id) {
+      if (existingByEmail && existingByEmail.id !== userId) {
         // Delete the old record with the same email (orphaned from Supabase Auth)
         await db.delete(users).where(eq(users.id, existingByEmail.id));
         console.log(`Deleted orphaned user record with email ${userData.email} (old ID: ${existingByEmail.id}, new ID: ${userData.id})`);
@@ -310,6 +318,29 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
+    
+    // If new user, apply signup bonus as GP
+    if (isNewUser) {
+      try {
+        const signupBonusSetting = await this.getSystemSetting('signup_bonus');
+        const signupBonus = signupBonusSetting && !isNaN(Number(signupBonusSetting)) ? Number(signupBonusSetting) : 1000;
+        
+        if (signupBonus > 0) {
+          const expirationDays = await this.getSystemSetting('gp_default_expiration_days');
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + (Number(expirationDays) || 90));
+          
+          await this.addGiftPoints(user.id, signupBonus, 'signup', {
+            description: '회원가입 축하 보너스',
+            expiresAt: expirationDate,
+          });
+          console.log(`Awarded ${signupBonus}GP signup bonus to new user ${user.id} (${user.email})`);
+        }
+      } catch (error) {
+        console.error('Error applying signup bonus GP:', error);
+      }
+    }
+    
     return user;
   }
 
