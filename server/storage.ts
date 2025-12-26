@@ -314,7 +314,53 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(userId: string): Promise<void> {
+    // Delete all related data in proper order (respecting foreign keys)
+    // Note: Some tables have ON DELETE CASCADE, others need manual deletion
+    
+    // 1. Delete gift point transactions and ledger
+    await db.delete(giftPointTransactions).where(eq(giftPointTransactions.userId, userId));
+    await db.delete(giftPointLedger).where(eq(giftPointLedger.userId, userId));
+    
+    // 2. Delete referrals (as inviter or invitee)
+    await db.delete(referrals).where(eq(referrals.inviterId, userId));
+    await db.delete(referrals).where(eq(referrals.inviteeId, userId));
+    
+    // 3. Delete notifications
+    await db.delete(notifications).where(eq(notifications.userId, userId));
+    
+    // 4. Delete point transactions and payments
+    await db.delete(pointTransactions).where(eq(pointTransactions.userId, userId));
+    await db.delete(payments).where(eq(payments.userId, userId));
+    
+    // 5. Delete user sessions
+    await db.delete(userSessions).where(eq(userSessions.userId, userId));
+    
+    // 6. Delete AI jobs
+    await db.delete(aiJobs).where(eq(aiJobs.userId, userId));
+    
+    // 7. Delete kompass goals (linked to profiles, but some may be orphaned)
+    const userProfiles = await db.select({ id: profiles.id }).from(profiles).where(eq(profiles.userId, userId));
+    for (const profile of userProfiles) {
+      await db.delete(kompassGoals).where(eq(kompassGoals.profileId, profile.id));
+    }
+    
+    // 8. Delete personal essays
+    for (const profile of userProfiles) {
+      await db.delete(personalEssays).where(eq(personalEssays.profileId, profile.id));
+    }
+    
+    // 9. Delete career analyses
+    for (const profile of userProfiles) {
+      await db.delete(careerAnalyses).where(eq(careerAnalyses.profileId, profile.id));
+    }
+    
+    // 10. Delete profiles
+    await db.delete(profiles).where(eq(profiles.userId, userId));
+    
+    // 11. Finally, delete the user
     await db.delete(users).where(eq(users.id, userId));
+    
+    console.log(`Completely deleted user ${userId} and all related data`);
   }
 
   async updateUserCredits(userId: string, credits: number): Promise<void> {
