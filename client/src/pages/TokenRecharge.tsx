@@ -3,7 +3,15 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Coins, CreditCard, History, Loader2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import {
+  Coins,
+  CreditCard,
+  History,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+} from "lucide-react";
 import { useTokens } from "@/lib/TokenContext";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -86,12 +94,43 @@ export default function TokenRecharge() {
   });
 
   // Default packages if none in DB
-  const displayPackages: PointPackage[] = packages.length > 0 ? packages : [
-    { id: "pkg_100", name: "스타터", points: 100, price: 5000, bonusPoints: 0, description: null },
-    { id: "pkg_300", name: "베이직", points: 300, price: 10000, bonusPoints: 30, description: "인기" },
-    { id: "pkg_500", name: "스탠다드", points: 500, price: 15000, bonusPoints: 50, description: null },
-    { id: "pkg_1000", name: "프리미엄", points: 1000, price: 25000, bonusPoints: 150, description: null },
-  ];
+  const displayPackages: PointPackage[] =
+    packages.length > 0
+      ? packages
+      : [
+          {
+            id: "pkg_100",
+            name: "스타터",
+            points: 100,
+            price: 5000,
+            bonusPoints: 0,
+            description: null,
+          },
+          {
+            id: "pkg_300",
+            name: "베이직",
+            points: 300,
+            price: 10000,
+            bonusPoints: 30,
+            description: "인기",
+          },
+          {
+            id: "pkg_500",
+            name: "스탠다드",
+            points: 500,
+            price: 15000,
+            bonusPoints: 50,
+            description: null,
+          },
+          {
+            id: "pkg_1000",
+            name: "프리미엄",
+            points: 1000,
+            price: 25000,
+            bonusPoints: 150,
+            description: null,
+          },
+        ];
 
   // Handle payment success callback
   useEffect(() => {
@@ -107,7 +146,15 @@ export default function TokenRecharge() {
 
   // Confirm payment mutation
   const confirmPayment = useMutation({
-    mutationFn: async ({ paymentKey, orderId, amount }: { paymentKey: string; orderId: string; amount: string }) => {
+    mutationFn: async ({
+      paymentKey,
+      orderId,
+      amount,
+    }: {
+      paymentKey: string;
+      orderId: string;
+      amount: string;
+    }) => {
       const res = await apiRequest("POST", "/api/payments/confirm", {
         paymentKey,
         orderId,
@@ -139,7 +186,11 @@ export default function TokenRecharge() {
     },
   });
 
-  const handlePaymentConfirm = async (paymentKey: string, orderId: string, amount: string) => {
+  const handlePaymentConfirm = async (
+    paymentKey: string,
+    orderId: string,
+    amount: string,
+  ) => {
     setIsProcessing(true);
     try {
       await confirmPayment.mutateAsync({ paymentKey, orderId, amount });
@@ -182,7 +233,9 @@ export default function TokenRecharge() {
 
       // 2. Initialize Toss Payment
       const tossPayments = window.TossPayments(tossConfig.clientKey);
-      const payment = tossPayments.payment({ customerKey: `customer_${Date.now()}` });
+      const payment = tossPayments.payment({
+        customerKey: `customer_${Date.now()}`,
+      });
 
       // 3. Request payment
       await payment.requestPayment({
@@ -236,7 +289,12 @@ export default function TokenRecharge() {
   return (
     <Layout>
       <div className="max-w-2xl mx-auto pb-20">
-        <h2 className="text-[28px] font-bold text-[#191F28] mb-6" data-testid="text-page-title">포인트 충전</h2>
+        <h2
+          className="text-[28px] font-bold text-[#191F28] mb-6"
+          data-testid="text-page-title"
+        >
+          포인트 충전
+        </h2>
 
         {/* Processing overlay */}
         {isProcessing && (
@@ -251,13 +309,21 @@ export default function TokenRecharge() {
         )}
 
         {/* Current Balance */}
-        <Card className="bg-gradient-to-r from-[#3182F6] to-[#5B9CF9] text-white border-none mb-8 shadow-lg shadow-blue-500/30" data-testid="card-balance">
+        <Card
+          className="bg-gradient-to-r from-[#3182F6] to-[#5B9CF9] text-white border-none mb-8 shadow-lg shadow-blue-500/30"
+          data-testid="card-balance"
+        >
           <CardContent className="p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <p className="text-blue-100 font-medium mb-1">총 보유 포인트</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold" data-testid="text-balance">{totalBalance.toLocaleString()}</span>
+                  <span
+                    className="text-4xl font-bold"
+                    data-testid="text-balance"
+                  >
+                    {totalBalance.toLocaleString()}
+                  </span>
                   <span className="text-xl font-medium text-blue-100">P</span>
                 </div>
               </div>
@@ -268,11 +334,21 @@ export default function TokenRecharge() {
             <div className="flex gap-6 pt-3 border-t border-white/20">
               <div>
                 <p className="text-xs text-blue-100 mb-0.5">기프트 포인트</p>
-                <span className="text-lg font-bold text-emerald-300" data-testid="text-gift-points">{giftPoints.toLocaleString()}GP</span>
+                <span
+                  className="text-lg font-bold text-emerald-300"
+                  data-testid="text-gift-points"
+                >
+                  {giftPoints.toLocaleString()}GP
+                </span>
               </div>
               <div>
                 <p className="text-xs text-blue-100 mb-0.5">유료 포인트</p>
-                <span className="text-lg font-bold text-amber-300" data-testid="text-paid-credits">{credits.toLocaleString()}P</span>
+                <span
+                  className="text-lg font-bold text-amber-300"
+                  data-testid="text-paid-credits"
+                >
+                  {credits.toLocaleString()}P
+                </span>
               </div>
             </div>
           </CardContent>
@@ -289,19 +365,21 @@ export default function TokenRecharge() {
             </div>
           ) : (
             displayPackages.map((pkg) => {
-              const hasBadge = pkg.description && pkg.description.trim() !== '';
+              const hasBadge = pkg.description && pkg.description.trim() !== "";
               const isHighlighted = hasBadge || pkg.bonusPoints > 0;
               return (
-                <Card 
-                  key={pkg.id} 
-                  className={`toss-card cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isHighlighted ? 'border-[#3182F6] ring-1 ring-[#3182F6]' : ''}`}
+                <Card
+                  key={pkg.id}
+                  className={`toss-card cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isHighlighted ? "border-[#3182F6] ring-1 ring-[#3182F6]" : ""}`}
                   onClick={() => handleRecharge(pkg)}
                   data-testid={`card-package-${pkg.id}`}
                 >
                   <CardContent className="p-5 flex justify-between items-center">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xl font-bold text-[#191F28]">{pkg.points.toLocaleString()} 포인트</span>
+                        <span className="text-xl font-bold text-[#191F28]">
+                          {pkg.points.toLocaleString()} 포인트
+                        </span>
                         {pkg.bonusPoints > 0 && (
                           <Badge className="bg-green-100 text-green-600 border-none hover:bg-green-100">
                             +{pkg.bonusPoints.toLocaleString()} 보너스
@@ -313,16 +391,26 @@ export default function TokenRecharge() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-[#8B95A1] text-sm">AI 커리어 분석 {Math.floor((pkg.points + pkg.bonusPoints) / 100)}회 가능</p>
+                      <p className="text-[#8B95A1] text-sm">
+                        AI 커리어 분석{" "}
+                        {Math.floor((pkg.points + pkg.bonusPoints) / 100)}회
+                        가능
+                      </p>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="text-lg font-bold text-[#333D4B]">{formatPrice(pkg.price)}</span>
-                      <Button 
-                        className={`rounded-full h-10 px-5 font-bold ${isHighlighted ? 'bg-[#3182F6] hover:bg-[#2b72d7]' : 'bg-[#F2F4F6] text-[#3182F6] hover:bg-[#E5E8EB]'}`}
+                      <span className="text-lg font-bold text-[#333D4B]">
+                        {formatPrice(pkg.price)}
+                      </span>
+                      <Button
+                        className={`rounded-full h-10 px-5 font-bold ${isHighlighted ? "bg-[#3182F6] hover:bg-[#2b72d7]" : "bg-[#F2F4F6] text-[#3182F6] hover:bg-[#E5E8EB]"}`}
                         disabled={isProcessing}
                         data-testid={`button-buy-${pkg.id}`}
                       >
-                        {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : "구매"}
+                        {isProcessing ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "구매"
+                        )}
                       </Button>
                     </div>
                   </CardContent>
@@ -339,8 +427,8 @@ export default function TokenRecharge() {
             <div>
               <p className="font-medium text-amber-800">테스트 모드</p>
               <p className="text-sm text-amber-700">
-                현재 Toss Payments 테스트 환경에서 실행 중입니다. 실제 결제가 이루어지지 않습니다.
-                테스트 카드번호: 1111-2222-3333-4444
+                현재 Toss Payments 테스트 환경에서 실행 중입니다. 실제 결제가
+                이루어지지 않습니다. 테스트 카드번호: 1111-2222-3333-4444
               </p>
             </div>
           </CardContent>
@@ -355,10 +443,26 @@ export default function TokenRecharge() {
                 환불(환급) 안내
               </h4>
               <ul className="text-sm text-[#6B7684] space-y-1.5 ml-6 list-disc">
-                <li>환불은 원칙적으로 결제에 사용된 <span className="font-bold text-[#333D4B]">동일 결제수단(동일 카드/동일 계좌)</span>으로만 처리됩니다. 다른 결제수단 또는 제3자 계좌로는 환불이 불가합니다.</li>
-                <li>환불 가능 금액은 고객이 실제 결제한 <span className="font-bold text-[#333D4B]">유상 포인트(구매 포인트) 잔액 범위</span>에 한합니다.</li>
-                <li>보너스 포인트(이벤트/프로모션 등 무상 제공 포인트)는 환불(환급) 대상이 아닙니다.</li>
-                <li>환불규정은 소비자보호법에 따른다.</li>
+                <li>
+                  환불은 원칙적으로 결제에 사용된{" "}
+                  <span className="font-bold text-[#333D4B]">
+                    동일 결제수단(동일 카드/동일 계좌)
+                  </span>
+                  으로만 처리됩니다. 다른 결제수단 또는 제3자 계좌로는 환불이
+                  불가합니다.
+                </li>
+                <li>
+                  환불 가능 금액은 고객이 실제 결제한{" "}
+                  <span className="font-bold text-[#333D4B]">
+                    유상 포인트(구매 포인트) 잔액 범위
+                  </span>
+                  에 한합니다.
+                </li>
+                <li>
+                  보너스 포인트(이벤트/프로모션 등 무상 제공 포인트)는
+                  환불(환급) 대상이 아닙니다.
+                </li>
+                <li>환불규정은 소비자보호법에 따릅니다.</li>
               </ul>
             </div>
             <div className="border-t border-[#E5E8EB] pt-4">
@@ -368,10 +472,22 @@ export default function TokenRecharge() {
               </h4>
               <ul className="text-sm text-[#6B7684] space-y-2 ml-6 list-disc">
                 <li>
-                  <span className="font-bold text-[#333D4B]">유상 포인트(구매 포인트)</span>: 구매일(충전일)로부터 <span className="font-bold text-[#3182F6]">1년간</span> 사용 가능합니다. 사용 가능 기간이 경과한 경우에도 관련 법령 및 약관에 따라 구매일(충전일)로부터 1년 이내에는 잔액 환급을 청구할 수 있습니다.
+                  <span className="font-bold text-[#333D4B]">
+                    유상 포인트(구매 포인트)
+                  </span>
+                  : 구매일(충전일)로부터{" "}
+                  <span className="font-bold text-[#3182F6]">1년간</span> 사용
+                  가능합니다. 사용 가능 기간이 경과한 경우에도 관련 법령 및
+                  약관에 따라 구매일(충전일)로부터 1년 이내에는 잔액 환급을
+                  청구할 수 있습니다.
                 </li>
                 <li>
-                  <span className="font-bold text-[#333D4B]">무상 포인트(보너스/이벤트 포인트)</span>: 지급일로부터 <span className="font-bold text-[#FF6B6B]">90일간</span> 사용 가능하며, 기간 경과 시 자동 소멸됩니다.
+                  <span className="font-bold text-[#333D4B]">
+                    무상 포인트(보너스/이벤트 포인트)
+                  </span>
+                  : 지급일로부터{" "}
+                  <span className="font-bold text-[#FF6B6B]">90일간</span> 사용
+                  가능하며, 기간 경과 시 자동 소멸됩니다.
                 </li>
               </ul>
             </div>
@@ -395,27 +511,38 @@ export default function TokenRecharge() {
               </div>
             ) : (
               transactions.map((tx: PointTransaction) => (
-                <div 
-                  key={tx.id} 
+                <div
+                  key={tx.id}
                   className="p-5 flex justify-between items-center hover:bg-[#F9FAFB] transition-colors"
                   data-testid={`row-transaction-${tx.id}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${tx.amount > 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                    <div
+                      className={`h-10 w-10 rounded-full flex items-center justify-center ${tx.amount > 0 ? "bg-green-50" : "bg-red-50"}`}
+                    >
                       {getTransactionIcon(tx.type, tx.amount)}
                     </div>
                     <div>
-                      <p className="font-bold text-[#333D4B]">{tx.description || getTransactionLabel(tx.type)}</p>
+                      <p className="font-bold text-[#333D4B]">
+                        {tx.description || getTransactionLabel(tx.type)}
+                      </p>
                       <p className="text-sm text-[#8B95A1]">
-                        {tx.createdAt ? format(new Date(tx.createdAt), "yyyy.MM.dd HH:mm") : "-"}
+                        {tx.createdAt
+                          ? format(new Date(tx.createdAt), "yyyy.MM.dd HH:mm")
+                          : "-"}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                      {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()} P
+                    <p
+                      className={`font-bold ${tx.amount > 0 ? "text-green-600" : "text-red-500"}`}
+                    >
+                      {tx.amount > 0 ? "+" : ""}
+                      {tx.amount.toLocaleString()} P
                     </p>
-                    <p className="text-sm text-[#8B95A1]">잔액 {tx.balanceAfter.toLocaleString()}</p>
+                    <p className="text-sm text-[#8B95A1]">
+                      잔액 {tx.balanceAfter.toLocaleString()}
+                    </p>
                   </div>
                 </div>
               ))
