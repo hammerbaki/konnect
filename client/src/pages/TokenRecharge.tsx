@@ -358,6 +358,7 @@ export default function TokenRecharge() {
                 <li>환불은 원칙적으로 결제에 사용된 <span className="font-bold text-[#333D4B]">동일 결제수단(동일 카드/동일 계좌)</span>으로만 처리됩니다. 다른 결제수단 또는 제3자 계좌로는 환불이 불가합니다.</li>
                 <li>환불 가능 금액은 고객이 실제 결제한 <span className="font-bold text-[#333D4B]">유상 포인트(구매 포인트) 잔액 범위</span>에 한합니다.</li>
                 <li>보너스 포인트(이벤트/프로모션 등 무상 제공 포인트)는 환불(환급) 대상이 아닙니다.</li>
+                <li>환불규정은 소비자보호법에 따른다.</li>
               </ul>
             </div>
             <div className="border-t border-[#E5E8EB] pt-4">
@@ -367,7 +368,7 @@ export default function TokenRecharge() {
               </h4>
               <ul className="text-sm text-[#6B7684] space-y-2 ml-6 list-disc">
                 <li>
-                  <span className="font-bold text-[#333D4B]">유상 포인트(구매 포인트)</span>: 구매일(충전일)로부터 <span className="font-bold text-[#3182F6]">5년간</span> 사용 가능합니다. 사용 가능 기간이 경과한 경우에도 관련 법령 및 약관에 따라 구매일(충전일)로부터 5년 이내에는 잔액 환급을 청구할 수 있습니다.
+                  <span className="font-bold text-[#333D4B]">유상 포인트(구매 포인트)</span>: 구매일(충전일)로부터 <span className="font-bold text-[#3182F6]">1년간</span> 사용 가능합니다. 사용 가능 기간이 경과한 경우에도 관련 법령 및 약관에 따라 구매일(충전일)로부터 1년 이내에는 잔액 환급을 청구할 수 있습니다.
                 </li>
                 <li>
                   <span className="font-bold text-[#333D4B]">무상 포인트(보너스/이벤트 포인트)</span>: 지급일로부터 <span className="font-bold text-[#FF6B6B]">90일간</span> 사용 가능하며, 기간 경과 시 자동 소멸됩니다.
