@@ -44,6 +44,11 @@ The following UI elements have been temporarily hidden and can be restored by un
 ### Sidebar.tsx (`client/src/components/layout/Sidebar.tsx`)
 1. **HIDDEN_POINTS_SIDEBAR** (line ~43): Sidebar "포인트 충전" navigation item - commented out in allBottomItems array
 
+### Settings.tsx (`client/src/pages/Settings.tsx`)
+1. **HIDDEN_POINTS_SETTINGS_REWARD_START to END** (lines ~443-450): Referral GP reward description box
+2. **HIDDEN_POINTS_SETTINGS_GP_EARNED_START to END** (lines ~486-496): "받은 GP" stats card
+3. **HIDDEN_POINTS_SETTINGS_DELETE_INFO** (line ~666): "보유 포인트 및 GP" in account deletion warning
+
 To restore: Search for "HIDDEN_POINTS" and uncomment the marked code blocks.
 
 ## External Dependencies
