@@ -49,6 +49,9 @@ The following UI elements have been temporarily hidden and can be restored by un
 2. **HIDDEN_POINTS_SETTINGS_GP_EARNED_START to END** (lines ~486-496): "받은 GP" stats card
 3. **HIDDEN_POINTS_SETTINGS_DELETE_INFO** (line ~666): "보유 포인트 및 GP" in account deletion warning
 
+### Dashboard.tsx (`client/src/pages/Dashboard.tsx`)
+1. **HIDDEN_POINTS_DASHBOARD_START to END** (lines ~210-220): "보유 포인트" card in welcome section
+
 To restore: Search for "HIDDEN_POINTS" and uncomment the marked code blocks.
 
 ## External Dependencies
