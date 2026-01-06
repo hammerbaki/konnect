@@ -33,6 +33,19 @@ The database schema includes `users`, `profiles`, `career_analyses`, `personal_e
 - **Profile Validation System**: Enforces minimum required fields before AI analysis/essay generation. Different profile types (high school, university, general) have type-specific required fields. UI displays user-friendly Korean labels for missing fields with links to profile editing. Both Analysis and PersonalStatement pages validate profiles and disable actions until requirements are met.
 - **Mandatory Target Info for Essays**: Essay generation requires target company/school name input. Target section has prominent blue-bordered UI with "필수" (required) badge. Web scraping feature fetches company info from URLs to enhance AI-generated essays with specific, tailored content.
 
+## Temporarily Hidden UI Elements (Points/Tokens)
+The following UI elements have been temporarily hidden and can be restored by uncommenting the marked sections:
+
+### Header.tsx (`client/src/components/layout/Header.tsx`)
+1. **HIDDEN_POINTS_START to HIDDEN_POINTS_END** (lines ~80-96): Desktop and mobile points display (GP/P badges) and RedeemDialog button
+2. **HIDDEN_POINTS_MOBILE_START to HIDDEN_POINTS_MOBILE_END** (lines ~117-126): Mobile dropdown "포인트 충전" button
+3. **HIDDEN_POINTS_DROPDOWN_START to HIDDEN_POINTS_DROPDOWN_END** (lines ~138-145): Desktop dropdown "포인트 충전" button
+
+### Sidebar.tsx (`client/src/components/layout/Sidebar.tsx`)
+1. **HIDDEN_POINTS_SIDEBAR** (line ~43): Sidebar "포인트 충전" navigation item - commented out in allBottomItems array
+
+To restore: Search for "HIDDEN_POINTS" and uncomment the marked code blocks.
+
 ## External Dependencies
 
 ### Third-Party Services
