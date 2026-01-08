@@ -5,6 +5,48 @@ import { createServer } from "http";
 import helmet from "helmet";
 import compression from "compression";
 
+// CORS configuration for mobile apps and web clients
+function configureCORS(app: express.Express) {
+  const allowedOrigins = [
+    'https://konnect.careers',
+    'https://www.konnect.careers',
+    'http://localhost:19006',  // Expo web dev
+    'http://localhost:8081',   // Expo/Metro
+    'http://localhost:3000',   // Local dev
+    'http://localhost:5000',
+    'capacitor://localhost',   // iOS Capacitor
+    'http://localhost',        // Android Capacitor
+  ];
+
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    
+    // Allow requests with no Origin header (mobile apps, server-to-server)
+    if (!origin) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    } else if (allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    } else if (process.env.NODE_ENV !== 'production') {
+      // In development, allow all origins for testing
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours cache
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.status(204).end();
+    }
+    
+    next();
+  });
+  
+  console.log('✓ CORS configured for mobile apps and web clients');
+}
+
 // Validate critical environment variables (log warnings but don't exit)
 function validateEnvironment() {
   const required = ['DATABASE_URL'];
@@ -29,6 +71,9 @@ validateEnvironment();
 
 const app = express();
 const httpServer = createServer(app);
+
+// CORS must be configured FIRST before other middleware
+configureCORS(app);
 
 // Security: Disable X-Powered-By header
 app.disable('x-powered-by');
