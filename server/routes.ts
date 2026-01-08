@@ -3058,9 +3058,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Verify the product_id matches
           const latestReceipt = verifyResult.latest_receipt_info?.[0] || verifyResult.receipt?.in_app?.[0];
           
-          if (latestReceipt && latestReceipt.product_id === validatedData.productId) {
-            // Success - award points
-            const result = await storage.processVerifiedIapPurchase(userId, validatedData.transactionId, validatedData.productId);
+          if (!latestReceipt) {
+            await storage.updateIapTransactionStatus(validatedData.transactionId, 'failed', {
+              errorMessage: 'No receipt info found in Apple response',
+              rawResponse: verifyResult,
+            });
+            return res.status(400).json({ message: "Invalid receipt data from Apple" });
+          }
+          
+          // Extract Apple's canonical transaction ID (this is what we should use for uniqueness)
+          const appleTransactionId = latestReceipt.transaction_id || latestReceipt.original_transaction_id;
+          const appleOriginalTransactionId = latestReceipt.original_transaction_id;
+          
+          if (!appleTransactionId) {
+            await storage.updateIapTransactionStatus(validatedData.transactionId, 'failed', {
+              errorMessage: 'No transaction ID in Apple response',
+              rawResponse: verifyResult,
+            });
+            return res.status(400).json({ message: "Invalid transaction data from Apple" });
+          }
+          
+          // SECURITY: Check for replay attack - see if this Apple transaction was already processed
+          const existingAppleTx = await storage.getIapTransactionByTransactionId(appleTransactionId);
+          if (existingAppleTx && existingAppleTx.status === 'verified') {
+            // This Apple receipt was already used - prevent replay attack
+            return res.status(400).json({ 
+              message: "This purchase has already been processed",
+              alreadyProcessed: true,
+            });
+          }
+          
+          if (latestReceipt.product_id === validatedData.productId) {
+            // Update transaction record with Apple's canonical transaction ID
+            await storage.updateIapTransactionStatus(validatedData.transactionId, 'pending', {
+              rawResponse: verifyResult,
+            });
+            
+            // Success - award points using Apple's canonical transaction ID
+            const result = await storage.processVerifiedIapPurchase(userId, appleTransactionId, validatedData.productId);
             
             await storage.updateIapTransactionStatus(validatedData.transactionId, 'verified', {
               verifiedAt: new Date(),
@@ -3074,6 +3109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               message: result.message,
               pointsAwarded: result.pointsAwarded,
               newBalance: user?.credits || 0,
+              appleTransactionId: appleTransactionId,
             });
           } else {
             // Product mismatch
@@ -3103,8 +3139,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (sandboxResult.status === 0) {
             const latestReceipt = sandboxResult.latest_receipt_info?.[0] || sandboxResult.receipt?.in_app?.[0];
             
-            if (latestReceipt && latestReceipt.product_id === validatedData.productId) {
-              const result = await storage.processVerifiedIapPurchase(userId, validatedData.transactionId, validatedData.productId);
+            if (!latestReceipt) {
+              await storage.updateIapTransactionStatus(validatedData.transactionId, 'failed', {
+                errorMessage: 'No receipt info in sandbox response',
+                rawResponse: sandboxResult,
+              });
+              return res.status(400).json({ message: "Invalid sandbox receipt data" });
+            }
+            
+            // Extract Apple's canonical transaction ID
+            const appleTransactionId = latestReceipt.transaction_id || latestReceipt.original_transaction_id;
+            
+            if (!appleTransactionId) {
+              await storage.updateIapTransactionStatus(validatedData.transactionId, 'failed', {
+                errorMessage: 'No transaction ID in sandbox response',
+                rawResponse: sandboxResult,
+              });
+              return res.status(400).json({ message: "Invalid sandbox transaction data" });
+            }
+            
+            // SECURITY: Check for replay attack
+            const existingAppleTx = await storage.getIapTransactionByTransactionId(appleTransactionId);
+            if (existingAppleTx && existingAppleTx.status === 'verified') {
+              return res.status(400).json({ 
+                message: "This purchase has already been processed",
+                alreadyProcessed: true,
+              });
+            }
+            
+            if (latestReceipt.product_id === validatedData.productId) {
+              const result = await storage.processVerifiedIapPurchase(userId, appleTransactionId, validatedData.productId);
               
               await storage.updateIapTransactionStatus(validatedData.transactionId, 'verified', {
                 verifiedAt: new Date(),
@@ -3119,6 +3183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 pointsAwarded: result.pointsAwarded,
                 newBalance: user?.credits || 0,
                 sandbox: true,
+                appleTransactionId: appleTransactionId,
               });
             }
           }
@@ -3153,8 +3218,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (productionResult.status === 0) {
             const latestReceipt = productionResult.latest_receipt_info?.[0] || productionResult.receipt?.in_app?.[0];
             
-            if (latestReceipt && latestReceipt.product_id === validatedData.productId) {
-              const result = await storage.processVerifiedIapPurchase(userId, validatedData.transactionId, validatedData.productId);
+            if (!latestReceipt) {
+              await storage.updateIapTransactionStatus(validatedData.transactionId, 'failed', {
+                errorMessage: 'No receipt info in production response',
+                rawResponse: productionResult,
+              });
+              return res.status(400).json({ message: "Invalid production receipt data" });
+            }
+            
+            // Extract Apple's canonical transaction ID
+            const appleTransactionId = latestReceipt.transaction_id || latestReceipt.original_transaction_id;
+            
+            if (!appleTransactionId) {
+              await storage.updateIapTransactionStatus(validatedData.transactionId, 'failed', {
+                errorMessage: 'No transaction ID in production response',
+                rawResponse: productionResult,
+              });
+              return res.status(400).json({ message: "Invalid production transaction data" });
+            }
+            
+            // SECURITY: Check for replay attack
+            const existingAppleTx = await storage.getIapTransactionByTransactionId(appleTransactionId);
+            if (existingAppleTx && existingAppleTx.status === 'verified') {
+              return res.status(400).json({ 
+                message: "This purchase has already been processed",
+                alreadyProcessed: true,
+              });
+            }
+            
+            if (latestReceipt.product_id === validatedData.productId) {
+              const result = await storage.processVerifiedIapPurchase(userId, appleTransactionId, validatedData.productId);
               
               await storage.updateIapTransactionStatus(validatedData.transactionId, 'verified', {
                 verifiedAt: new Date(),
@@ -3168,6 +3261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 message: result.message,
                 pointsAwarded: result.pointsAwarded,
                 newBalance: user?.credits || 0,
+                appleTransactionId: appleTransactionId,
               });
             }
           }
