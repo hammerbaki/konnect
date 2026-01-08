@@ -18,6 +18,7 @@ import {
   giftPointLedger,
   giftPointTransactions,
   referrals,
+  iapTransactions,
   type User,
   type UpsertUser,
   type Profile,
@@ -64,6 +65,10 @@ import {
   type InsertGiftPointTransaction,
   type GiftPointSourceType,
   type Referral,
+  type IapTransaction,
+  type InsertIapTransaction,
+  type IapStatus,
+  IAP_PRODUCTS,
   systemSettings,
   redemptionCodes,
   redemptionHistory,
@@ -2069,6 +2074,97 @@ export class DatabaseStorage implements IStorage {
       totalReferred: stats?.totalReferred ?? 0,
       totalGpEarned: Number(stats?.totalGpEarned) || 0,
     };
+  }
+
+  // ===== IAP (In-App Purchase) Methods =====
+  
+  async createIapTransaction(data: InsertIapTransaction): Promise<IapTransaction> {
+    const [result] = await db.insert(iapTransactions).values(data).returning();
+    return result;
+  }
+
+  async getIapTransactionByTransactionId(transactionId: string): Promise<IapTransaction | undefined> {
+    const [result] = await db
+      .select()
+      .from(iapTransactions)
+      .where(eq(iapTransactions.transactionId, transactionId));
+    return result;
+  }
+
+  async getIapTransactionsByUser(userId: string, limit: number = 50): Promise<IapTransaction[]> {
+    return db
+      .select()
+      .from(iapTransactions)
+      .where(eq(iapTransactions.userId, userId))
+      .orderBy(desc(iapTransactions.createdAt))
+      .limit(limit);
+  }
+
+  async updateIapTransactionStatus(
+    transactionId: string,
+    status: IapStatus,
+    options?: {
+      verifiedAt?: Date;
+      rawResponse?: any;
+      errorMessage?: string;
+    }
+  ): Promise<IapTransaction | undefined> {
+    const updateData: any = {
+      status,
+      updatedAt: new Date(),
+    };
+    
+    if (options?.verifiedAt) updateData.verifiedAt = options.verifiedAt;
+    if (options?.rawResponse) updateData.rawResponse = options.rawResponse;
+    if (options?.errorMessage) updateData.errorMessage = options.errorMessage;
+
+    const [result] = await db
+      .update(iapTransactions)
+      .set(updateData)
+      .where(eq(iapTransactions.transactionId, transactionId))
+      .returning();
+    return result;
+  }
+
+  async processVerifiedIapPurchase(
+    userId: string,
+    transactionId: string,
+    productId: string
+  ): Promise<{ success: boolean; pointsAwarded: number; message: string }> {
+    // Check if product exists
+    const product = IAP_PRODUCTS[productId];
+    if (!product) {
+      return { success: false, pointsAwarded: 0, message: `Unknown product: ${productId}` };
+    }
+
+    // Check if already processed (idempotency)
+    const existing = await this.getIapTransactionByTransactionId(transactionId);
+    if (existing?.status === 'verified') {
+      return { 
+        success: true, 
+        pointsAwarded: existing.pointsAwarded, 
+        message: 'Purchase already processed' 
+      };
+    }
+
+    const totalPoints = product.points + product.bonusPoints;
+
+    // Award credits (paid points, not GP)
+    await this.addUserCredits(userId, totalPoints, 'purchase', `인앱결제: ${product.displayName}`, undefined);
+
+    return { 
+      success: true, 
+      pointsAwarded: totalPoints, 
+      message: `${totalPoints.toLocaleString()} 포인트가 지급되었습니다!` 
+    };
+  }
+
+  getIapProductInfo(productId: string): { points: number; bonusPoints: number; displayName: string } | undefined {
+    return IAP_PRODUCTS[productId];
+  }
+
+  getAllIapProducts(): Record<string, { points: number; bonusPoints: number; displayName: string }> {
+    return IAP_PRODUCTS;
   }
 }
 
