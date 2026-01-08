@@ -803,6 +803,601 @@ curl https://konnect.careers/api/user \
 
 ---
 
+## UI Design Guide
+
+Konnect uses the **Toss Design System** - a clean, modern Korean fintech design language known for clarity, accessibility, and delightful micro-interactions.
+
+### Design Philosophy
+
+- **Mobile-First**: All designs optimized for mobile screens first
+- **Clean & Minimal**: Generous whitespace, clear hierarchy
+- **Accessible**: High contrast, large touch targets (min 44px)
+- **Korean Typography**: Optimized for Korean text with `word-break: keep-all`
+
+---
+
+### Color Palette
+
+#### Primary Colors
+
+| Name | Hex | RGB | Usage |
+|------|-----|-----|-------|
+| **Toss Blue** | `#3182F6` | `rgb(49, 130, 246)` | Primary actions, links, highlights |
+| **Toss Blue Dark** | `#1B64DA` | `rgb(27, 100, 218)` | Hover/pressed states |
+| **Toss Blue Light** | `#E8F3FF` | `rgb(232, 243, 255)` | Blue backgrounds, badges |
+
+#### Neutral Colors
+
+| Name | Hex | RGB | Usage |
+|------|-----|-----|-------|
+| **Gray 900** | `#191F28` | `rgb(25, 31, 40)` | Primary text, headings |
+| **Gray 700** | `#333D4B` | `rgb(51, 61, 75)` | Secondary text |
+| **Gray 500** | `#6B7684` | `rgb(107, 118, 132)` | Tertiary text, captions |
+| **Gray 400** | `#8B95A1` | `rgb(139, 149, 161)` | Placeholder text, disabled |
+| **Gray 200** | `#E5E8EB` | `rgb(229, 232, 235)` | Borders, dividers |
+| **Gray 100** | `#F2F4F6` | `rgb(242, 244, 246)` | Background |
+| **White** | `#FFFFFF` | `rgb(255, 255, 255)` | Cards, surfaces |
+
+#### Semantic Colors
+
+| Name | Hex | Usage |
+|------|-----|-------|
+| **Success** | `#00C853` | Success states, positive values |
+| **Warning** | `#FF9800` | Warnings, pending states |
+| **Error** | `#F44336` | Errors, destructive actions |
+| **Info** | `#2196F3` | Information, tips |
+
+#### Profile Type Colors
+
+| Profile Type | Hex | Korean Name |
+|-------------|-----|-------------|
+| General | `#3182F6` | 일반 |
+| University | `#7C3AED` | 대학생 |
+| High School | `#059669` | 고등학생 |
+| Middle School | `#D97706` | 중학생 |
+| Elementary | `#EC4899` | 초등학생 |
+
+---
+
+### Typography
+
+#### Font Family
+
+```css
+font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Inter', sans-serif;
+```
+
+For React Native:
+```javascript
+// Use system fonts or install Pretendard
+const fontFamily = Platform.select({
+  ios: 'Apple SD Gothic Neo',
+  android: 'sans-serif',
+});
+```
+
+#### Font Sizes
+
+| Name | Size | Line Height | Weight | Usage |
+|------|------|-------------|--------|-------|
+| **Display** | 32px | 40px | Bold (700) | Hero headings |
+| **H1** | 24px | 32px | Bold (700) | Page titles |
+| **H2** | 20px | 28px | SemiBold (600) | Section headings |
+| **H3** | 18px | 26px | SemiBold (600) | Card titles |
+| **Body Large** | 16px | 24px | Regular (400) | Primary content |
+| **Body** | 14px | 22px | Regular (400) | Default text |
+| **Body Small** | 13px | 20px | Regular (400) | Secondary info |
+| **Caption** | 12px | 18px | Regular (400) | Labels, hints |
+| **Tiny** | 11px | 16px | Medium (500) | Badges, tags |
+
+#### React Native Typography
+
+```typescript
+// styles/typography.ts
+export const typography = {
+  display: { fontSize: 32, lineHeight: 40, fontWeight: '700' },
+  h1: { fontSize: 24, lineHeight: 32, fontWeight: '700' },
+  h2: { fontSize: 20, lineHeight: 28, fontWeight: '600' },
+  h3: { fontSize: 18, lineHeight: 26, fontWeight: '600' },
+  bodyLarge: { fontSize: 16, lineHeight: 24, fontWeight: '400' },
+  body: { fontSize: 14, lineHeight: 22, fontWeight: '400' },
+  bodySmall: { fontSize: 13, lineHeight: 20, fontWeight: '400' },
+  caption: { fontSize: 12, lineHeight: 18, fontWeight: '400' },
+  tiny: { fontSize: 11, lineHeight: 16, fontWeight: '500' },
+};
+```
+
+---
+
+### Spacing System
+
+Use 4px base unit:
+
+| Token | Size | Usage |
+|-------|------|-------|
+| `xs` | 4px | Tight spacing, icon gaps |
+| `sm` | 8px | Compact elements |
+| `md` | 12px | Default component padding |
+| `lg` | 16px | Section padding |
+| `xl` | 24px | Card padding, major gaps |
+| `2xl` | 32px | Page margins |
+| `3xl` | 48px | Section separators |
+
+```typescript
+// styles/spacing.ts
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  '2xl': 32,
+  '3xl': 48,
+};
+```
+
+---
+
+### Border Radius
+
+| Token | Size | Usage |
+|-------|------|-------|
+| `sm` | 4px | Small buttons, tags |
+| `md` | 8px | Input fields, small cards |
+| `lg` | 12px | Cards, modals |
+| `xl` | 16px | Large cards, bottom sheets |
+| `full` | 9999px | Circular elements, pills |
+
+```typescript
+export const borderRadius = {
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  full: 9999,
+};
+```
+
+---
+
+### Shadows
+
+Toss uses subtle, soft shadows:
+
+```typescript
+// React Native shadows
+export const shadows = {
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+};
+```
+
+---
+
+### Component Styles
+
+#### Cards
+
+```typescript
+const cardStyle = {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 16,
+  padding: 20,
+  ...shadows.md,
+};
+```
+
+#### Buttons
+
+**Primary Button**
+```typescript
+const primaryButton = {
+  backgroundColor: '#3182F6',
+  borderRadius: 12,
+  paddingVertical: 14,
+  paddingHorizontal: 24,
+  minHeight: 48,
+};
+
+const primaryButtonText = {
+  color: '#FFFFFF',
+  fontSize: 16,
+  fontWeight: '600',
+  textAlign: 'center',
+};
+```
+
+**Secondary Button**
+```typescript
+const secondaryButton = {
+  backgroundColor: '#F2F4F6',
+  borderRadius: 12,
+  paddingVertical: 14,
+  paddingHorizontal: 24,
+  minHeight: 48,
+};
+
+const secondaryButtonText = {
+  color: '#333D4B',
+  fontSize: 16,
+  fontWeight: '600',
+  textAlign: 'center',
+};
+```
+
+**Ghost Button**
+```typescript
+const ghostButton = {
+  backgroundColor: 'transparent',
+  paddingVertical: 14,
+  paddingHorizontal: 24,
+};
+
+const ghostButtonText = {
+  color: '#3182F6',
+  fontSize: 16,
+  fontWeight: '600',
+};
+```
+
+#### Input Fields
+
+```typescript
+const inputField = {
+  backgroundColor: '#F2F4F6',
+  borderRadius: 12,
+  paddingVertical: 14,
+  paddingHorizontal: 16,
+  fontSize: 16,
+  color: '#191F28',
+  minHeight: 48,
+};
+
+const inputPlaceholder = {
+  color: '#8B95A1',
+};
+
+const inputFocused = {
+  backgroundColor: '#FFFFFF',
+  borderWidth: 2,
+  borderColor: '#3182F6',
+};
+
+const inputError = {
+  borderWidth: 2,
+  borderColor: '#F44336',
+};
+```
+
+#### List Items
+
+```typescript
+const listItem = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingVertical: 16,
+  paddingHorizontal: 20,
+  backgroundColor: '#FFFFFF',
+  borderBottomWidth: 1,
+  borderBottomColor: '#F2F4F6',
+};
+```
+
+---
+
+### Icons
+
+Use **Lucide Icons** for consistency with web:
+
+```bash
+npm install lucide-react-native
+```
+
+```typescript
+import { Home, User, Settings, ChevronRight } from 'lucide-react-native';
+
+// Icon sizes
+const iconSizes = {
+  sm: 16,
+  md: 20,
+  lg: 24,
+  xl: 32,
+};
+
+// Usage
+<Home size={24} color="#191F28" />
+<ChevronRight size={20} color="#8B95A1" />
+```
+
+---
+
+### Navigation Patterns
+
+#### Bottom Tab Bar
+
+```typescript
+const tabBar = {
+  backgroundColor: '#FFFFFF',
+  borderTopWidth: 1,
+  borderTopColor: '#E5E8EB',
+  height: 56 + safeAreaBottom,
+  paddingBottom: safeAreaBottom,
+};
+
+const tabItem = {
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingVertical: 8,
+};
+
+const tabLabel = {
+  fontSize: 11,
+  marginTop: 4,
+};
+
+const tabLabelActive = {
+  color: '#3182F6',
+  fontWeight: '600',
+};
+
+const tabLabelInactive = {
+  color: '#8B95A1',
+  fontWeight: '400',
+};
+```
+
+#### Header
+
+```typescript
+const header = {
+  height: 56,
+  backgroundColor: '#FFFFFF',
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 16,
+  borderBottomWidth: 1,
+  borderBottomColor: '#E5E8EB',
+};
+
+const headerTitle = {
+  fontSize: 18,
+  fontWeight: '600',
+  color: '#191F28',
+  flex: 1,
+  textAlign: 'center',
+};
+```
+
+---
+
+### Screen Layouts
+
+#### Standard Screen
+
+```typescript
+const screenContainer = {
+  flex: 1,
+  backgroundColor: '#F2F4F6',
+};
+
+const screenContent = {
+  flex: 1,
+  padding: 20,
+};
+```
+
+#### White Screen (Forms, Details)
+
+```typescript
+const whiteScreen = {
+  flex: 1,
+  backgroundColor: '#FFFFFF',
+  padding: 20,
+};
+```
+
+---
+
+### Animations
+
+Use subtle, quick animations:
+
+```typescript
+// Animation durations
+const durations = {
+  fast: 150,
+  normal: 250,
+  slow: 350,
+};
+
+// Spring config for bouncy feel
+const springConfig = {
+  damping: 15,
+  stiffness: 150,
+  mass: 0.5,
+};
+
+// Button press animation
+const buttonPressScale = 0.97;
+```
+
+Using `react-native-reanimated`:
+
+```typescript
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring 
+} from 'react-native-reanimated';
+
+function AnimatedButton({ children, onPress }) {
+  const scale = useSharedValue(1);
+  
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+  
+  const handlePressIn = () => {
+    scale.value = withSpring(0.97);
+  };
+  
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+  
+  return (
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={onPress}
+    >
+      <Animated.View style={animatedStyle}>
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
+}
+```
+
+---
+
+### Safe Area Handling
+
+```typescript
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+function Screen() {
+  const insets = useSafeAreaInsets();
+  
+  return (
+    <View style={{ 
+      flex: 1,
+      paddingTop: insets.top,
+      paddingBottom: insets.bottom,
+    }}>
+      {/* Content */}
+    </View>
+  );
+}
+```
+
+---
+
+### Dark Mode (Optional)
+
+The web app currently supports light mode only. If implementing dark mode:
+
+```typescript
+const darkColors = {
+  background: '#0D1117',
+  card: '#161B22',
+  text: '#E6EDF3',
+  textSecondary: '#8B949E',
+  border: '#30363D',
+  primary: '#58A6FF',
+};
+```
+
+---
+
+### Design Tokens Summary
+
+```typescript
+// theme.ts - Complete theme object
+export const theme = {
+  colors: {
+    primary: '#3182F6',
+    primaryDark: '#1B64DA',
+    primaryLight: '#E8F3FF',
+    
+    background: '#F2F4F6',
+    surface: '#FFFFFF',
+    
+    text: '#191F28',
+    textSecondary: '#6B7684',
+    textTertiary: '#8B95A1',
+    textDisabled: '#B0B8C1',
+    
+    border: '#E5E8EB',
+    divider: '#F2F4F6',
+    
+    success: '#00C853',
+    warning: '#FF9800',
+    error: '#F44336',
+    info: '#2196F3',
+    
+    profileGeneral: '#3182F6',
+    profileUniversity: '#7C3AED',
+    profileHigh: '#059669',
+    profileMiddle: '#D97706',
+    profileElementary: '#EC4899',
+  },
+  
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24,
+    '2xl': 32,
+    '3xl': 48,
+  },
+  
+  borderRadius: {
+    sm: 4,
+    md: 8,
+    lg: 12,
+    xl: 16,
+    full: 9999,
+  },
+  
+  typography: {
+    display: { fontSize: 32, lineHeight: 40, fontWeight: '700' },
+    h1: { fontSize: 24, lineHeight: 32, fontWeight: '700' },
+    h2: { fontSize: 20, lineHeight: 28, fontWeight: '600' },
+    h3: { fontSize: 18, lineHeight: 26, fontWeight: '600' },
+    bodyLarge: { fontSize: 16, lineHeight: 24, fontWeight: '400' },
+    body: { fontSize: 14, lineHeight: 22, fontWeight: '400' },
+    caption: { fontSize: 12, lineHeight: 18, fontWeight: '400' },
+  },
+};
+```
+
+---
+
+### Key Design Principles
+
+1. **Touch Targets**: Minimum 44x44px for all interactive elements
+2. **Content Hierarchy**: Use size, weight, and color to establish importance
+3. **Whitespace**: Generous padding and margins for readability
+4. **Feedback**: Immediate visual feedback on all interactions
+5. **Loading States**: Always show skeleton loaders, never blank screens
+6. **Error States**: Clear, actionable error messages in Korean
+7. **Empty States**: Helpful illustrations and guidance
+8. **Consistency**: Same components behave the same way everywhere
+
+---
+
 ## Support
 
 For API issues or questions, contact the backend team.
