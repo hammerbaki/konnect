@@ -3084,26 +3084,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.status(400).json({ message: "Product verification failed - ID mismatch" });
           }
         } else if (verifyResult.status === 21007) {
-          // Sandbox receipt - in production, you'd retry with sandbox URL
-          // For development, we'll accept it
-          if (process.env.NODE_ENV !== 'production') {
-            const result = await storage.processVerifiedIapPurchase(userId, validatedData.transactionId, validatedData.productId);
+          // Sandbox receipt sent to production - retry with sandbox URL
+          console.log("Received sandbox receipt (21007), retrying with sandbox URL");
+          
+          const sandboxUrl = 'https://sandbox.itunes.apple.com/verifyReceipt';
+          const sandboxResponse = await fetch(sandboxUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              'receipt-data': validatedData.receiptData,
+              'password': appleSharedSecret || '',
+              'exclude-old-transactions': true,
+            }),
+          });
+          
+          const sandboxResult = await sandboxResponse.json();
+          
+          if (sandboxResult.status === 0) {
+            const latestReceipt = sandboxResult.latest_receipt_info?.[0] || sandboxResult.receipt?.in_app?.[0];
             
-            await storage.updateIapTransactionStatus(validatedData.transactionId, 'verified', {
-              verifiedAt: new Date(),
-              rawResponse: { ...verifyResult, note: 'Sandbox receipt accepted in development' },
-            });
+            if (latestReceipt && latestReceipt.product_id === validatedData.productId) {
+              const result = await storage.processVerifiedIapPurchase(userId, validatedData.transactionId, validatedData.productId);
+              
+              await storage.updateIapTransactionStatus(validatedData.transactionId, 'verified', {
+                verifiedAt: new Date(),
+                rawResponse: { ...sandboxResult, note: 'Sandbox receipt verified via retry' },
+              });
 
-            const user = await storage.getUser(userId);
-            
-            return res.json({
-              success: true,
-              message: result.message,
-              pointsAwarded: result.pointsAwarded,
-              newBalance: user?.credits || 0,
-              sandbox: true,
-            });
+              const user = await storage.getUser(userId);
+              
+              return res.json({
+                success: true,
+                message: result.message,
+                pointsAwarded: result.pointsAwarded,
+                newBalance: user?.credits || 0,
+                sandbox: true,
+              });
+            }
           }
+          
+          // Sandbox retry also failed
+          await storage.updateIapTransactionStatus(validatedData.transactionId, 'failed', {
+            errorMessage: `Sandbox verification failed with status: ${sandboxResult.status}`,
+            rawResponse: sandboxResult,
+          });
+          
+          return res.status(400).json({ 
+            message: "Sandbox verification failed",
+            appleStatus: sandboxResult.status,
+          });
+        } else if (verifyResult.status === 21008) {
+          // Production receipt sent to sandbox - retry with production URL
+          console.log("Received production receipt (21008), retrying with production URL");
+          
+          const productionUrl = 'https://buy.itunes.apple.com/verifyReceipt';
+          const productionResponse = await fetch(productionUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              'receipt-data': validatedData.receiptData,
+              'password': appleSharedSecret || '',
+              'exclude-old-transactions': true,
+            }),
+          });
+          
+          const productionResult = await productionResponse.json();
+          
+          if (productionResult.status === 0) {
+            const latestReceipt = productionResult.latest_receipt_info?.[0] || productionResult.receipt?.in_app?.[0];
+            
+            if (latestReceipt && latestReceipt.product_id === validatedData.productId) {
+              const result = await storage.processVerifiedIapPurchase(userId, validatedData.transactionId, validatedData.productId);
+              
+              await storage.updateIapTransactionStatus(validatedData.transactionId, 'verified', {
+                verifiedAt: new Date(),
+                rawResponse: { ...productionResult, note: 'Production receipt verified via retry' },
+              });
+
+              const user = await storage.getUser(userId);
+              
+              return res.json({
+                success: true,
+                message: result.message,
+                pointsAwarded: result.pointsAwarded,
+                newBalance: user?.credits || 0,
+              });
+            }
+          }
+          
+          // Production retry also failed
+          await storage.updateIapTransactionStatus(validatedData.transactionId, 'failed', {
+            errorMessage: `Production verification failed with status: ${productionResult.status}`,
+            rawResponse: productionResult,
+          });
+          
+          return res.status(400).json({ 
+            message: "Production verification failed",
+            appleStatus: productionResult.status,
+          });
         }
 
         // Verification failed
