@@ -154,6 +154,21 @@ export default function Landing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
+            {/* Konnect Logo */}
+            <motion.div
+              className="mb-8"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+            >
+              <img 
+                src="/konnect-logo.png" 
+                alt="Konnect" 
+                className="h-16 md:h-20 w-auto mx-auto drop-shadow-[0_0_30px_rgba(49,130,246,0.4)]"
+                data-testid="logo-konnect"
+              />
+            </motion.div>
+
             {/* Badge */}
             <motion.div 
               className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full border border-white/10 mb-8"
