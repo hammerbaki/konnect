@@ -161,7 +161,7 @@ export default function Landing() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.5 }}
             >
-              <div className="inline-block p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-[0_0_40px_rgba(49,130,246,0.3)]">
+              <div className="inline-block p-4 backdrop-blur-md rounded-2xl border border-white/20 shadow-[0_0_40px_rgba(49,130,246,0.3)] bg-[#ffffff]">
                 <img 
                   src="/konnect-logo.png" 
                   alt="Konnect" 
@@ -296,7 +296,6 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
-
       {/* Problem Agitation Section */}
       <section className="py-20 bg-[#161B22]">
         <div className="max-w-4xl mx-auto px-4 text-center">
@@ -340,7 +339,6 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
-
       {/* Features Section */}
       <section ref={featuresRef} className="py-24 bg-[#0D1117]">
         <div className="max-w-6xl mx-auto px-4">
@@ -378,7 +376,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Stats Section */}
       <section className="py-20 bg-gradient-to-r from-[#3182F6] to-blue-600">
         <div className="max-w-6xl mx-auto px-4">
@@ -400,7 +397,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* How It Works */}
       <section className="py-24 bg-[#161B22]">
         <div className="max-w-6xl mx-auto px-4">
@@ -453,7 +449,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Testimonials */}
       <section className="py-24 bg-[#0D1117]">
         <div className="max-w-6xl mx-auto px-4">
@@ -499,7 +494,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Final CTA Section */}
       <section className="py-24 bg-gradient-to-br from-[#161B22] to-[#0D1117] relative overflow-hidden">
         <div className="absolute inset-0 opacity-50">
@@ -539,7 +533,6 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="py-12 bg-[#0D1117] border-t border-white/10">
         <div className="max-w-6xl mx-auto px-4">
