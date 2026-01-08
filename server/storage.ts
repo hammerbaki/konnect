@@ -2150,7 +2150,7 @@ export class DatabaseStorage implements IStorage {
     const totalPoints = product.points + product.bonusPoints;
 
     // Award credits (paid points, not GP)
-    await this.addUserCredits(userId, totalPoints, 'purchase', `인앱결제: ${product.displayName}`, undefined);
+    await this.addUserPoints(userId, totalPoints, 'purchase', `인앱결제: ${product.displayName}`);
 
     return { 
       success: true, 
