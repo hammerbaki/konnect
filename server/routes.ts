@@ -186,6 +186,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== MOBILE APP API ENDPOINTS =====
+  // Unified user endpoint for mobile apps (combines identity, credits, settings)
+  app.get('/api/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get GP balance
+      const gpBalance = await storage.getGiftPointBalance(userId);
+      
+      // Return comprehensive user data for mobile apps
+      res.json({
+        id: user.id,
+        email: user.email || '',
+        displayName: user.displayName || (user.lastName && user.firstName 
+          ? `${user.lastName}${user.firstName}` 
+          : user.lastName || user.firstName || user.email?.split('@')[0] || ''),
+        firstName: user.firstName || null,
+        lastName: user.lastName || null,
+        profileImageUrl: user.profileImageUrl || null,
+        gender: user.gender || null,
+        birthDate: user.birthDate || null,
+        credits: user.credits || 0,
+        giftPoints: gpBalance || 0,
+        referralCode: user.referralCode || null,
+        createdAt: user.createdAt,
+      });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user data" });
+    }
+  });
+
   // Get user identity (shared info from users table)
   app.get('/api/user-identity', isAuthenticated, async (req: any, res) => {
     try {
