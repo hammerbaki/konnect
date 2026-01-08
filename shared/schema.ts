@@ -846,3 +846,67 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
+
+// ===== IAP TRANSACTIONS TABLE (In-App Purchase verification records) =====
+export type IapPlatform = 'apple' | 'google';
+export type IapStatus = 'pending' | 'verified' | 'failed' | 'refunded' | 'canceled';
+
+export const iapTransactions = pgTable("iap_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  platform: varchar("platform", { length: 10 }).notNull(), // 'apple' | 'google'
+  productId: varchar("product_id", { length: 200 }).notNull(), // App Store/Play Store product ID
+  transactionId: varchar("transaction_id", { length: 200 }).notNull().unique(), // Store's transaction ID
+  originalTransactionId: varchar("original_transaction_id", { length: 200 }), // For subscriptions/renewals
+  receiptData: text("receipt_data"), // Base64 encoded receipt (Apple) or purchase token (Google)
+  pointsAwarded: integer("points_awarded").notNull(),
+  priceAmount: integer("price_amount"), // Price in smallest currency unit (e.g., cents, won)
+  priceCurrency: varchar("price_currency", { length: 10 }), // ISO currency code
+  status: varchar("status", { length: 20 }).notNull().default('pending'), // IapStatus
+  verifiedAt: timestamp("verified_at"),
+  expiresAt: timestamp("expires_at"), // For subscriptions
+  rawResponse: jsonb("raw_response"), // Full verification response from Apple/Google
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_iap_transactions_user_id").on(table.userId),
+  index("IDX_iap_transactions_transaction_id").on(table.transactionId),
+  index("IDX_iap_transactions_platform").on(table.platform),
+  index("IDX_iap_transactions_status").on(table.status),
+]);
+
+export const iapTransactionsRelations = relations(iapTransactions, ({ one }) => ({
+  user: one(users, {
+    fields: [iapTransactions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertIapTransactionSchema = createInsertSchema(iapTransactions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const verifyIapSchema = z.object({
+  platform: z.enum(['apple', 'google']),
+  productId: z.string().min(1, "Product ID is required"),
+  transactionId: z.string().min(1, "Transaction ID is required"),
+  receiptData: z.string().min(1, "Receipt data is required"),
+  originalTransactionId: z.string().optional(),
+});
+
+export type InsertIapTransaction = z.infer<typeof insertIapTransactionSchema>;
+export type IapTransaction = typeof iapTransactions.$inferSelect;
+export type VerifyIapRequest = z.infer<typeof verifyIapSchema>;
+
+// IAP Product configurations (map store product IDs to points)
+export const IAP_PRODUCTS: Record<string, { points: number; bonusPoints: number; displayName: string }> = {
+  'com.konnect.points.1000': { points: 1000, bonusPoints: 0, displayName: '1,000 포인트' },
+  'com.konnect.points.3000': { points: 3000, bonusPoints: 300, displayName: '3,000 + 300 포인트' },
+  'com.konnect.points.5000': { points: 5000, bonusPoints: 700, displayName: '5,000 + 700 포인트' },
+  'com.konnect.points.10000': { points: 10000, bonusPoints: 2000, displayName: '10,000 + 2,000 포인트' },
+};
