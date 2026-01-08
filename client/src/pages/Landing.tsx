@@ -161,7 +161,7 @@ export default function Landing() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.5 }}
             >
-              <div className="inline-block p-4 backdrop-blur-md rounded-2xl border border-white/20 shadow-[0_0_40px_rgba(49,130,246,0.3)] bg-[#ffffff0a]">
+              <div className="inline-block p-4 backdrop-blur-md rounded-2xl border border-white/20 shadow-[0_0_40px_rgba(49,130,246,0.3)] bg-[#ffffff1c]">
                 <img 
                   src="/konnect-logo.png" 
                   alt="Konnect" 
