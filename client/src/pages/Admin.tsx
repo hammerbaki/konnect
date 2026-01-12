@@ -11,7 +11,7 @@ import {
   Users, Settings, Coins, Activity, 
   RefreshCw, Search, Shield, User, Crown,
   BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
-  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2
+  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download
 } from "lucide-react";
 import {
   AlertDialog,
@@ -320,6 +320,49 @@ export default function Admin() {
     enabled: isStaffOrAdmin,
     retry: false,
   });
+
+  const downloadTrafficCSV = () => {
+    if (!trafficStats?.dailyData || trafficStats.dailyData.length === 0) {
+      toast({ title: "다운로드 실패", description: "다운로드할 데이터가 없습니다.", variant: "destructive" });
+      return;
+    }
+    
+    const headers = ['날짜', '페이지뷰', '순 방문자'];
+    const rows = trafficStats.dailyData.map(row => [
+      new Date(row.date).toLocaleDateString('ko-KR'),
+      row.pageViews.toString(),
+      row.uniqueVisitors.toString()
+    ]);
+    
+    const summaryRows = [
+      [],
+      ['=== 요약 ==='],
+      ['기간', '페이지뷰', '순 방문자'],
+      ['오늘', trafficStats.today.pageViews.toString(), trafficStats.today.uniqueVisitors.toString()],
+      ['어제', trafficStats.yesterday.pageViews.toString(), trafficStats.yesterday.uniqueVisitors.toString()],
+      ['최근 7일', trafficStats.last7Days.pageViews.toString(), trafficStats.last7Days.uniqueVisitors.toString()],
+      ['최근 30일', trafficStats.last30Days.pageViews.toString(), trafficStats.last30Days.uniqueVisitors.toString()],
+    ];
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(',')),
+      ...summaryRows.map(row => row.join(','))
+    ].join('\n');
+    
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `konnect_traffic_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast({ title: "다운로드 완료", description: "트래픽 데이터가 CSV 파일로 저장되었습니다." });
+  };
 
   // Merge database pricing with defaults for display
   const servicePricing = Object.entries(DEFAULT_SERVICE_PRICING).map(([id, defaults]) => {
@@ -1751,6 +1794,17 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="traffic" className="space-y-6">
+            <div className="flex justify-end mb-2">
+              <Button 
+                onClick={downloadTrafficCSV}
+                variant="outline"
+                className="rounded-lg"
+                data-testid="button-download-traffic-csv"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                CSV 다운로드
+              </Button>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="toss-card">
                 <CardContent className="p-4">
