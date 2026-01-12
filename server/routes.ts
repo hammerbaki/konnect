@@ -3554,9 +3554,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await redis.del(pageViewKey);
           }
           
-          // Update unique visitors count for the day (only on last hour check)
+          // Update unique visitors count for the day (SET instead of ADD to avoid double-counting)
           if (hoursAgo === 1 && uniqueVisitors && Number(uniqueVisitors) > 0) {
-            await storage.upsertVisitorMetrics(date, 0, 0, Number(uniqueVisitors), 0);
+            await storage.setDailyUniqueVisitors(date, Number(uniqueVisitors));
           }
         } catch (err) {
           console.error(`Failed to flush metrics for ${date}:${hour}`, err);

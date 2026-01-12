@@ -163,6 +163,7 @@ export interface IStorage {
 
   // Visitor Metrics
   upsertVisitorMetrics(date: string, hour: number, pageViews: number, uniqueVisitors: number, newUsers?: number): Promise<VisitorMetrics>;
+  setDailyUniqueVisitors(date: string, uniqueVisitors: number): Promise<VisitorMetrics>;
   getVisitorMetricsByDateRange(startDate: string, endDate: string): Promise<VisitorMetrics[]>;
   getTodayMetrics(): Promise<{ pageViews: number; uniqueVisitors: number; newUsers: number }>;
   getTrafficOverview(): Promise<{
@@ -976,6 +977,22 @@ export class DatabaseStorage implements IStorage {
           pageViews: sql`${visitorMetrics.pageViews} + ${pageViews}`,
           uniqueVisitors: sql`${visitorMetrics.uniqueVisitors} + ${uniqueVisitors}`,
           newUsers: sql`${visitorMetrics.newUsers} + ${newUsers}`,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return metrics;
+  }
+
+  // Set unique visitors count (replaces instead of adding - for daily totals from Redis SET)
+  async setDailyUniqueVisitors(date: string, uniqueVisitors: number): Promise<VisitorMetrics> {
+    const [metrics] = await db
+      .insert(visitorMetrics)
+      .values({ date, hour: 0, pageViews: 0, uniqueVisitors, newUsers: 0 })
+      .onConflictDoUpdate({
+        target: [visitorMetrics.date, visitorMetrics.hour],
+        set: { 
+          uniqueVisitors: uniqueVisitors,
           updatedAt: new Date(),
         },
       })
