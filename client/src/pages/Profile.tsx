@@ -1986,84 +1986,165 @@ export default function Profile() {
                         </CardContent>
                     </Card>
 
-                    {/* Skills & Experience */}
+                    {/* Experience Section - Separated */}
                     <Card className="toss-card">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-lg">
-                                <BrainCircuit className="h-5 w-5 text-[#00BFA5]" /> 보유 역량 및 경력
+                                <Briefcase className="h-5 w-5 text-[#6366F1]" /> 경력 사항
                             </CardTitle>
+                            <CardDescription>주요 경력과 근무 이력을 입력하세요</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {profileData.gen_workExperience.map((exp) => (
+                                <div key={exp.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-3 relative group">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h4 className="font-bold text-[#191F28] text-lg">{exp.role}</h4>
+                                            <p className="text-[#4E5968] font-medium">{exp.company}</p>
+                                        </div>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50"
+                                            onClick={() => deleteWorkExperience(exp.id)}
+                                            data-testid={`button-delete-work-exp-${exp.id}`}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
+                                        <CalendarIcon className="h-4 w-4" />
+                                        <span>{exp.startDate ? format(exp.startDate, 'yyyy.MM') : ''} - {exp.endDate ? format(exp.endDate, 'yyyy.MM') : '현재'}</span>
+                                    </div>
+
+                                    {exp.description && (
+                                        <p className="text-sm text-[#4E5968] whitespace-pre-line pl-3 border-l-2 border-[#E5E8EB]">
+                                            {exp.description}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+
+                            <Button 
+                                type="button"
+                                variant="outline" 
+                                className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setShowWorkExperienceDialog(true);
+                                }}
+                                data-testid="button-add-work-experience"
+                            >
+                                <Plus className="h-5 w-5 mr-2" /> 경력 추가하기
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Skills Section - Enhanced with Categories */}
+                    <Card className="toss-card">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <BrainCircuit className="h-5 w-5 text-[#00BFA5]" /> 보유 역량 및 스킬
+                            </CardTitle>
+                            <CardDescription>보유한 역량을 선택하거나 직접 입력하세요</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                             {/* Work Experience List */}
-                             <div className="space-y-3 mb-6">
-                                <Label>주요 경력 사항</Label>
-                                {profileData.gen_workExperience.map((exp) => (
-                                    <div key={exp.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-3 relative group">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <h4 className="font-bold text-[#191F28] text-lg">{exp.role}</h4>
-                                                <p className="text-[#4E5968] font-medium">{exp.company}</p>
-                                            </div>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon" 
-                                                className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50"
-                                                onClick={() => deleteWorkExperience(exp.id)}
-                                                data-testid={`button-delete-work-exp-${exp.id}`}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        
-                                        <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
-                                            <CalendarIcon className="h-4 w-4" />
-                                            <span>{exp.startDate ? format(exp.startDate, 'yyyy.MM') : ''} - {exp.endDate ? format(exp.endDate, 'yyyy.MM') : '현재'}</span>
-                                        </div>
-
-                                        {exp.description && (
-                                            <p className="text-sm text-[#4E5968] whitespace-pre-line pl-3 border-l-2 border-[#E5E8EB]">
-                                                {exp.description}
-                                            </p>
-                                        )}
-                                    </div>
-                                ))}
-
-                                <Button 
-                                    type="button"
-                                    variant="outline" 
-                                    className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setShowWorkExperienceDialog(true);
-                                    }}
-                                    data-testid="button-add-work-experience"
-                                >
-                                    <Plus className="h-5 w-5 mr-2" /> 경력 추가하기
-                                </Button>
-                            </div>
-
-                            <div className="space-y-3">
-                                <Label>보유 핵심 스킬 (Transferable Skills)</Label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {["프로젝트 관리", "데이터 분석", "커뮤니케이션", "영업/협상", "마케팅", "디자인", "개발/코딩", "문서 작성", "외국어"].map((skill) => (
-                                        <div key={skill} className="flex items-center space-x-2">
-                                            <Checkbox 
-                                                id={`skill-${skill}`} 
-                                                checked={profileData.gen_skills.includes(skill)}
-                                                onCheckedChange={(checked) => {
-                                                    if (checked) {
-                                                        setProfileData({...profileData, gen_skills: [...profileData.gen_skills, skill]});
-                                                    } else {
-                                                        setProfileData({...profileData, gen_skills: profileData.gen_skills.filter(s => s !== skill)});
-                                                    }
-                                                }}
-                                            />
-                                            <label htmlFor={`skill-${skill}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                                {skill}
-                                            </label>
-                                        </div>
+                            {/* Selected Skills Display */}
+                            {profileData.gen_skills.length > 0 && (
+                                <div className="flex flex-wrap gap-2 p-3 bg-[#F9FAFB] rounded-xl">
+                                    {profileData.gen_skills.map((skill) => (
+                                        <Badge 
+                                            key={skill} 
+                                            variant="secondary" 
+                                            className="bg-[#E8F3FF] text-[#3182F6] hover:bg-[#D0E8FF] cursor-pointer px-3 py-1.5 text-sm font-medium"
+                                            onClick={() => setProfileData({...profileData, gen_skills: profileData.gen_skills.filter(s => s !== skill)})}
+                                        >
+                                            {skill}
+                                            <X className="h-3 w-3 ml-1.5" />
+                                        </Badge>
                                     ))}
+                                </div>
+                            )}
+
+                            {/* Skills by Category */}
+                            {[
+                                { category: "기획/PM", skills: ["프로젝트 관리", "서비스 기획", "제품 기획", "UX 기획", "전략 기획", "요구사항 분석", "일정 관리", "리스크 관리"] },
+                                { category: "데이터/분석", skills: ["데이터 분석", "SQL", "Python", "통계 분석", "BI 도구", "A/B 테스트", "데이터 시각화", "머신러닝"] },
+                                { category: "개발", skills: ["프론트엔드", "백엔드", "모바일 앱", "DevOps", "클라우드", "API 설계", "데이터베이스", "보안"] },
+                                { category: "디자인", skills: ["UI 디자인", "UX 디자인", "그래픽 디자인", "브랜딩", "Figma", "Adobe Suite", "모션 그래픽", "프로토타이핑"] },
+                                { category: "마케팅/세일즈", skills: ["디지털 마케팅", "콘텐츠 마케팅", "퍼포먼스 마케팅", "영업", "고객 관리", "브랜드 마케팅", "SNS 마케팅", "광고 운영"] },
+                                { category: "운영/CS", skills: ["서비스 운영", "고객 응대", "CS 관리", "품질 관리", "프로세스 개선", "VoC 분석", "클레임 처리", "운영 자동화"] },
+                                { category: "문서/리서치", skills: ["문서 작성", "보고서 작성", "프레젠테이션", "시장 조사", "경쟁사 분석", "사용자 리서치", "인터뷰", "설문 설계"] },
+                                { category: "언어/커뮤니케이션", skills: ["영어", "일본어", "중국어", "커뮤니케이션", "협상", "발표", "미팅 진행", "갈등 조정"] },
+                            ].map((categoryGroup) => (
+                                <div key={categoryGroup.category} className="space-y-2">
+                                    <Label className="text-sm font-bold text-[#4E5968]">{categoryGroup.category}</Label>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {categoryGroup.skills.map((skill) => {
+                                            const isSelected = profileData.gen_skills.includes(skill);
+                                            return (
+                                                <button
+                                                    key={skill}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (isSelected) {
+                                                            setProfileData({...profileData, gen_skills: profileData.gen_skills.filter(s => s !== skill)});
+                                                        } else {
+                                                            setProfileData({...profileData, gen_skills: [...profileData.gen_skills, skill]});
+                                                        }
+                                                    }}
+                                                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                                                        isSelected 
+                                                            ? "bg-[#3182F6] text-white shadow-sm" 
+                                                            : "bg-[#F2F4F6] text-[#6B7684] hover:bg-[#E5E8EB]"
+                                                    }`}
+                                                >
+                                                    {isSelected && <Check className="h-3 w-3 inline mr-1" />}
+                                                    {skill}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Custom Skill Input */}
+                            <div className="pt-3 border-t border-[#F2F4F6]">
+                                <Label className="text-sm font-bold text-[#4E5968] mb-2 block">직접 입력</Label>
+                                <div className="flex gap-2">
+                                    <Input 
+                                        placeholder="보유한 스킬을 직접 입력하세요"
+                                        className="flex-1 h-10 rounded-xl bg-[#F2F4F6] border-none"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                const input = e.currentTarget;
+                                                const value = input.value.trim();
+                                                if (value && !profileData.gen_skills.includes(value)) {
+                                                    setProfileData({...profileData, gen_skills: [...profileData.gen_skills, value]});
+                                                    input.value = '';
+                                                }
+                                            }
+                                        }}
+                                        data-testid="input-custom-skill"
+                                    />
+                                    <Button 
+                                        type="button"
+                                        variant="outline"
+                                        className="h-10 px-4 rounded-xl"
+                                        onClick={(e) => {
+                                            const input = (e.currentTarget.previousSibling as HTMLInputElement);
+                                            const value = input.value.trim();
+                                            if (value && !profileData.gen_skills.includes(value)) {
+                                                setProfileData({...profileData, gen_skills: [...profileData.gen_skills, value]});
+                                                input.value = '';
+                                            }
+                                        }}
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
                                 </div>
                             </div>
                         </CardContent>
