@@ -1931,7 +1931,8 @@ export default function Profile() {
                                 </Select>
                             </div>
 
-                            <div className="space-y-2">
+                            {/* REMOVED: 직무 만족도 필드 - 데이터 호환을 위해 저장 로직은 유지, UI에서만 제거 */}
+                            {/* <div className="space-y-2">
                                 <Label>이전(또는 현재) 직무 만족도</Label>
                                 <Select 
                                     value={profileData.gen_prevJobSatisfaction} 
@@ -1948,10 +1949,10 @@ export default function Profile() {
                                         <SelectItem value="1">매우 불만족 (1점)</SelectItem>
                                     </SelectContent>
                                 </Select>
-                            </div>
+                            </div> */}
 
                             <div className="space-y-2">
-                                <Label>새로운 일을 찾는 주된 이유</Label>
+                                <Label>구직사유</Label>
                                 <Select 
                                     value={profileData.gen_reasonForChange} 
                                     onValueChange={(val) => setProfileData({...profileData, gen_reasonForChange: val})}
@@ -2304,7 +2305,7 @@ export default function Profile() {
             <Label className="text-[#4E5968] font-bold mb-3 block">프로필 유형 선택</Label>
             <div className="flex flex-wrap gap-2">
                 {[
-                    { id: 'general', label: '일반 (직장인)' },
+                    { id: 'general', label: '구직자' },
                     { id: 'university', label: '대학생' },
                     { id: 'high', label: '고등학생' },
                     { id: 'middle', label: '중학생' },
