@@ -553,6 +553,18 @@ export default function Profile() {
   useEffect(() => { selectedTypeRef.current = selectedType; }, [selectedType]);
   useEffect(() => { isSavingRef.current = isSaving; }, [isSaving]);
 
+  // Handle URL type parameter for sidebar navigation (e.g., /profile?type=general)
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const typeParam = params.get('type') as ProfileDataType["type"] | null;
+    
+    if (typeParam && ['elementary', 'middle', 'high', 'university', 'general'].includes(typeParam)) {
+      if (typeParam !== selectedType) {
+        setSelectedType(typeParam);
+      }
+    }
+  }, [searchString]);
+
   // Scroll to field from query parameter (e.g., /profile?field=high_hopeUniversity)
   useEffect(() => {
     if (hasScrolledToField.current) return;
@@ -2326,129 +2338,128 @@ export default function Profile() {
             </div>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-[320px_1fr]">
-          {/* Profile Overview Card */}
-          <div className="space-y-6">
-            <Card className="toss-card">
-              <CardContent className="pt-8 flex flex-col items-center text-center">
-                <div className="relative mb-4 group cursor-pointer">
-                  {userProfileImage ? (
-                    <img 
-                      src={userProfileImage} 
-                      alt="Profile" 
-                      className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-lg group-hover:scale-105 transition-transform"
-                    />
-                  ) : (
-                    <div className="h-24 w-24 rounded-full bg-[#F2F4F6] flex items-center justify-center text-2xl font-bold text-[#3182F6] border-4 border-white shadow-lg group-hover:scale-105 transition-transform">
-                      {profileData.basic_name ? profileData.basic_name.charAt(0).toUpperCase() : "U"}
-                    </div>
-                  )}
-                  <div className="absolute bottom-0 right-0 h-8 w-8 bg-white rounded-full border shadow-sm flex items-center justify-center">
-                      <Edit2 className="h-4 w-4 text-[#8B95A1]" />
+        {/* Horizontal Basic Info Section */}
+        <Card className="toss-card">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="relative shrink-0">
+                {userProfileImage ? (
+                  <img 
+                    src={userProfileImage} 
+                    alt="Profile" 
+                    className="h-16 w-16 rounded-full object-cover border-2 border-white shadow-md"
+                  />
+                ) : (
+                  <div className="h-16 w-16 rounded-full bg-[#F2F4F6] flex items-center justify-center text-xl font-bold text-[#3182F6] border-2 border-white shadow-md">
+                    {profileData.basic_name ? profileData.basic_name.charAt(0).toUpperCase() : "U"}
                   </div>
-                </div>
-                
-                {/* Editable Name & Role */}
-                <div className="w-full space-y-2 mb-6">
-                    <Input 
-                        value={profileData.basic_name}
-                        onChange={(e) => setProfileData({...profileData, basic_name: e.target.value})}
-                        className="text-center text-xl font-bold border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 hover:bg-[#F2F4F6] rounded-lg transition-colors"
-                    />
-                    <Input 
-                        value={profileData.basic_role}
-                        onChange={(e) => setProfileData({...profileData, basic_role: e.target.value})}
-                        className="text-center text-[#8B95A1] font-medium border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 hover:bg-[#F2F4F6] rounded-lg transition-colors"
-                        placeholder="직책 또는 한 줄 소개 입력"
-                    />
-                </div>
-                
-                <div className="mt-2 w-full space-y-3 text-left">
-                  <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB] group focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-                    <Mail className="h-4 w-4 text-[#B0B8C1] shrink-0" />
-                    <Input 
-                        value={profileData.basic_email}
-                        onChange={(e) => setProfileData({...profileData, basic_email: e.target.value})}
-                        className="border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 text-sm text-[#4E5968]"
-                    />
-                  </div>
-                  <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB] group focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-                    <MapPin className="h-4 w-4 text-[#B0B8C1] shrink-0" />
-                    <Input 
-                        value={profileData.basic_location}
-                        onChange={(e) => setProfileData({...profileData, basic_location: e.target.value})}
-                        className="border-none shadow-none focus-visible:ring-0 bg-transparent h-auto p-0 text-sm text-[#4E5968]"
-                    />
-                  </div>
-                  
-                  {/* Gender / Birthdate - Clickable Trigger */}
-                  <ResponsiveModal
-                        trigger={
-                            <div className="flex items-center gap-3 text-[#4E5968] text-sm font-medium p-3 rounded-xl bg-[#F9FAFB] hover:bg-[#E8F3FF] hover:text-[#3182F6] cursor-pointer transition-colors">
-                                <User className="h-4 w-4 text-[#B0B8C1]" />
-                                <span>
-                                    {profileData.basic_gender === 'male' ? '남성' : profileData.basic_gender === 'female' ? '여성' : '성별'} 
-                                    {' / '} 
-                                    {profileData.basic_birthDate ? format(profileData.basic_birthDate, 'yyyy.MM.dd') : '생년월일'}
-                                </span>
-                            </div>
-                        }
-                        title="기본 정보 수정"
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-[#191F28] truncate">{profileData.basic_name || "이름을 입력하세요"}</h3>
+                <p className="text-sm text-[#8B95A1]">{profileData.basic_email || userEmail}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#8B95A1] font-medium">이름</Label>
+                <Input 
+                  value={profileData.basic_name}
+                  onChange={(e) => setProfileData({...profileData, basic_name: e.target.value})}
+                  placeholder="홍길동"
+                  className="h-11 rounded-xl bg-[#F9FAFB] border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100"
+                  data-testid="input-basic-name"
+                />
+              </div>
+              
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#8B95A1] font-medium">이메일</Label>
+                <Input 
+                  value={profileData.basic_email}
+                  onChange={(e) => setProfileData({...profileData, basic_email: e.target.value})}
+                  placeholder="email@example.com"
+                  className="h-11 rounded-xl bg-[#F9FAFB] border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100"
+                  data-testid="input-basic-email"
+                />
+              </div>
+              
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#8B95A1] font-medium">소속국가</Label>
+                <Input 
+                  value={profileData.basic_location}
+                  onChange={(e) => setProfileData({...profileData, basic_location: e.target.value})}
+                  placeholder="대한민국"
+                  className="h-11 rounded-xl bg-[#F9FAFB] border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100"
+                  data-testid="input-basic-location"
+                />
+              </div>
+              
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#8B95A1] font-medium">생년월일</Label>
+                <ResponsiveModal
+                  trigger={
+                    <button 
+                      className="w-full h-11 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] px-3 text-left text-sm text-[#4E5968] hover:bg-[#E8F3FF] hover:border-[#3182F6] transition-colors flex items-center gap-2"
+                      data-testid="button-basic-birthdate"
                     >
-                        <div className="space-y-6 p-4">
-                            <div className="space-y-2">
-                                <Label className="text-xs text-[#8B95A1]">성별</Label>
-                                <div className="flex gap-2">
-                                    <Button 
-                                        variant="outline" 
-                                        className={`flex-1 h-12 rounded-xl border-[#E5E8EB] ${profileData.basic_gender === 'male' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
-                                        onClick={() => setProfileData({...profileData, basic_gender: 'male'})}
-                                    >
-                                        남성
-                                    </Button>
-                                    <Button 
-                                        variant="outline" 
-                                        className={`flex-1 h-12 rounded-xl border-[#E5E8EB] ${profileData.basic_gender === 'female' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'text-[#4E5968]'}`}
-                                        onClick={() => setProfileData({...profileData, basic_gender: 'female'})}
-                                    >
-                                        여성
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label className="text-xs text-[#8B95A1]">생년월일</Label>
-                                <ResponsiveDatePickerContent 
-                                    value={profileData.basic_birthDate} 
-                                    onChange={(date) => setProfileData(prev => ({ ...prev, basic_birthDate: date }))} 
-                                    hideButton={true}
-                                />
-                            </div>
-                            <ResponsiveClose asChild>
-                                <Button className="w-full rounded-xl h-12 text-lg font-bold bg-[#3182F6]">완료</Button>
-                            </ResponsiveClose>
-                        </div>
-                    </ResponsiveModal>
+                      <CalendarIcon className="h-4 w-4 text-[#B0B8C1]" />
+                      <span>{profileData.basic_birthDate ? format(profileData.basic_birthDate, 'yyyy.MM.dd') : '선택'}</span>
+                    </button>
+                  }
+                  title="생년월일 선택"
+                >
+                  <ResponsiveDatePickerContent 
+                    value={profileData.basic_birthDate} 
+                    onChange={(date) => setProfileData(prev => ({ ...prev, basic_birthDate: date }))} 
+                  />
+                </ResponsiveModal>
+              </div>
+              
+              <div className="space-y-1.5 sm:col-span-2 lg:col-span-3 xl:col-span-1">
+                <Label className="text-xs text-[#8B95A1] font-medium">한줄소개</Label>
+                <Input 
+                  value={profileData.basic_bio}
+                  onChange={(e) => setProfileData({...profileData, basic_bio: e.target.value})}
+                  placeholder="간단한 자기소개를 입력하세요"
+                  className="h-11 rounded-xl bg-[#F9FAFB] border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100"
+                  data-testid="input-basic-bio"
+                />
+              </div>
+            </div>
+            
+            {/* Additional Info Section (Gender - hidden by default but preserved) */}
+            <div className="mt-4 pt-4 border-t border-[#F2F4F6]">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-[#8B95A1] font-medium">성별</Label>
+                  <div className="flex gap-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className={`h-8 px-3 rounded-lg text-xs ${profileData.basic_gender === 'male' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'border-[#E5E8EB] text-[#8B95A1]'}`}
+                      onClick={() => setProfileData({...profileData, basic_gender: 'male'})}
+                    >
+                      남성
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className={`h-8 px-3 rounded-lg text-xs ${profileData.basic_gender === 'female' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'border-[#E5E8EB] text-[#8B95A1]'}`}
+                      onClick={() => setProfileData({...profileData, basic_gender: 'female'})}
+                    >
+                      여성
+                    </Button>
+                  </div>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-                <Separator className="my-6 bg-[#E5E8EB]" />
-                
-                <div className="w-full space-y-2">
-                    <Label className="text-left block mb-2 text-[#4E5968]">한 줄 소개</Label>
-                    <Textarea 
-                        value={profileData.basic_bio}
-                        onChange={(e) => setProfileData({...profileData, basic_bio: e.target.value})}
-                        className="bg-[#F9FAFB] border-none rounded-xl min-h-[80px] text-sm resize-none focus-visible:ring-2 focus-visible:ring-blue-100 transition-all"
-                    />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Form Area - Dynamic based on Type */}
-          <div className="space-y-6">
-               {renderProfileFields()}
-          </div>
+        {/* Main Form Area - Dynamic based on Type */}
+        <div className="space-y-6">
+          {renderProfileFields()}
         </div>
       </div>
 
