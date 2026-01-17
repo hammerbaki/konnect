@@ -542,6 +542,7 @@ export default function Profile() {
   const [workExpForm, setWorkExpForm] = useState({ company: '', role: '', startDate: null as Date | null, endDate: null as Date | null, description: '' });
   const [showLanguageScoreDialog, setShowLanguageScoreDialog] = useState(false);
   const [languageScoreForm, setLanguageScoreForm] = useState({ type: '', score: '' });
+  const [skillSearchQuery, setSkillSearchQuery] = useState('');
   
   // Use refs for stable callbacks to prevent infinite loops
   const profileDataRef = useRef(profileData);
@@ -2042,7 +2043,7 @@ export default function Profile() {
                         </CardContent>
                     </Card>
 
-                    {/* Skills Section - Enhanced with Categories */}
+                    {/* Skills Section - Enhanced with Categories and Search */}
                     <Card className="toss-card">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-lg">
@@ -2051,6 +2052,26 @@ export default function Profile() {
                             <CardDescription>보유한 역량을 선택하거나 직접 입력하세요</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            {/* Skill Search Input */}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#B0B8C1]" />
+                                <Input 
+                                    value={skillSearchQuery}
+                                    onChange={(e) => setSkillSearchQuery(e.target.value)}
+                                    placeholder="스킬 검색..."
+                                    className="pl-10 h-11 rounded-xl bg-[#F9FAFB] border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100"
+                                    data-testid="input-skill-search"
+                                />
+                                {skillSearchQuery && (
+                                    <button
+                                        onClick={() => setSkillSearchQuery('')}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#B0B8C1] hover:text-[#4E5968]"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                )}
+                            </div>
+
                             {/* Selected Skills Display */}
                             {profileData.gen_skills.length > 0 && (
                                 <div className="flex flex-wrap gap-2 p-3 bg-[#F9FAFB] rounded-xl">
@@ -2068,47 +2089,72 @@ export default function Profile() {
                                 </div>
                             )}
 
-                            {/* Skills by Category */}
-                            {[
-                                { category: "기획/PM", skills: ["프로젝트 관리", "서비스 기획", "제품 기획", "UX 기획", "전략 기획", "요구사항 분석", "일정 관리", "리스크 관리"] },
-                                { category: "데이터/분석", skills: ["데이터 분석", "SQL", "Python", "통계 분석", "BI 도구", "A/B 테스트", "데이터 시각화", "머신러닝"] },
-                                { category: "개발", skills: ["프론트엔드", "백엔드", "모바일 앱", "DevOps", "클라우드", "API 설계", "데이터베이스", "보안"] },
-                                { category: "디자인", skills: ["UI 디자인", "UX 디자인", "그래픽 디자인", "브랜딩", "Figma", "Adobe Suite", "모션 그래픽", "프로토타이핑"] },
-                                { category: "마케팅/세일즈", skills: ["디지털 마케팅", "콘텐츠 마케팅", "퍼포먼스 마케팅", "영업", "고객 관리", "브랜드 마케팅", "SNS 마케팅", "광고 운영"] },
-                                { category: "운영/CS", skills: ["서비스 운영", "고객 응대", "CS 관리", "품질 관리", "프로세스 개선", "VoC 분석", "클레임 처리", "운영 자동화"] },
-                                { category: "문서/리서치", skills: ["문서 작성", "보고서 작성", "프레젠테이션", "시장 조사", "경쟁사 분석", "사용자 리서치", "인터뷰", "설문 설계"] },
-                                { category: "언어/커뮤니케이션", skills: ["영어", "일본어", "중국어", "커뮤니케이션", "협상", "발표", "미팅 진행", "갈등 조정"] },
-                            ].map((categoryGroup) => (
-                                <div key={categoryGroup.category} className="space-y-2">
-                                    <Label className="text-sm font-bold text-[#4E5968]">{categoryGroup.category}</Label>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {categoryGroup.skills.map((skill) => {
-                                            const isSelected = profileData.gen_skills.includes(skill);
-                                            return (
-                                                <button
-                                                    key={skill}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (isSelected) {
-                                                            setProfileData({...profileData, gen_skills: profileData.gen_skills.filter(s => s !== skill)});
-                                                        } else {
-                                                            setProfileData({...profileData, gen_skills: [...profileData.gen_skills, skill]});
-                                                        }
-                                                    }}
-                                                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                                                        isSelected 
-                                                            ? "bg-[#3182F6] text-white shadow-sm" 
-                                                            : "bg-[#F2F4F6] text-[#6B7684] hover:bg-[#E5E8EB]"
-                                                    }`}
-                                                >
-                                                    {isSelected && <Check className="h-3 w-3 inline mr-1" />}
-                                                    {skill}
-                                                </button>
-                                            );
-                                        })}
+                            {/* Skills by Category - Filtered by Search */}
+                            {(() => {
+                                const allCategories = [
+                                    { category: "기획/PM", skills: ["프로젝트 관리", "서비스 기획", "제품 기획", "UX 기획", "전략 기획", "요구사항 분석", "일정 관리", "리스크 관리"] },
+                                    { category: "데이터/분석", skills: ["데이터 분석", "SQL", "Python", "통계 분석", "BI 도구", "A/B 테스트", "데이터 시각화", "머신러닝"] },
+                                    { category: "개발", skills: ["프론트엔드", "백엔드", "모바일 앱", "DevOps", "클라우드", "API 설계", "데이터베이스", "보안"] },
+                                    { category: "디자인", skills: ["UI 디자인", "UX 디자인", "그래픽 디자인", "브랜딩", "Figma", "Adobe Suite", "모션 그래픽", "프로토타이핑"] },
+                                    { category: "마케팅/세일즈", skills: ["디지털 마케팅", "콘텐츠 마케팅", "퍼포먼스 마케팅", "영업", "고객 관리", "브랜드 마케팅", "SNS 마케팅", "광고 운영"] },
+                                    { category: "운영/CS", skills: ["서비스 운영", "고객 응대", "CS 관리", "품질 관리", "프로세스 개선", "VoC 분석", "클레임 처리", "운영 자동화"] },
+                                    { category: "문서/리서치", skills: ["문서 작성", "보고서 작성", "프레젠테이션", "시장 조사", "경쟁사 분석", "사용자 리서치", "인터뷰", "설문 설계"] },
+                                    { category: "언어/커뮤니케이션", skills: ["영어", "일본어", "중국어", "커뮤니케이션", "협상", "발표", "미팅 진행", "갈등 조정"] },
+                                ];
+                                
+                                const query = skillSearchQuery.toLowerCase().trim();
+                                const filteredCategories = query 
+                                    ? allCategories.map(cat => ({
+                                        ...cat,
+                                        skills: cat.skills.filter(skill => 
+                                            skill.toLowerCase().includes(query) || 
+                                            cat.category.toLowerCase().includes(query)
+                                        )
+                                    })).filter(cat => cat.skills.length > 0)
+                                    : allCategories;
+                                
+                                if (query && filteredCategories.length === 0) {
+                                    return (
+                                        <div className="text-center py-6 text-[#8B95A1]">
+                                            <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                            <p className="text-sm">'{skillSearchQuery}' 에 해당하는 스킬이 없습니다.</p>
+                                            <p className="text-xs mt-1">아래에서 직접 입력해 추가할 수 있어요.</p>
+                                        </div>
+                                    );
+                                }
+                                
+                                return filteredCategories.map((categoryGroup) => (
+                                    <div key={categoryGroup.category} className="space-y-2">
+                                        <Label className="text-sm font-bold text-[#4E5968]">{categoryGroup.category}</Label>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {categoryGroup.skills.map((skill) => {
+                                                const isSelected = profileData.gen_skills.includes(skill);
+                                                return (
+                                                    <button
+                                                        key={skill}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (isSelected) {
+                                                                setProfileData({...profileData, gen_skills: profileData.gen_skills.filter(s => s !== skill)});
+                                                            } else {
+                                                                setProfileData({...profileData, gen_skills: [...profileData.gen_skills, skill]});
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                                                            isSelected 
+                                                                ? "bg-[#3182F6] text-white shadow-sm" 
+                                                                : "bg-[#F2F4F6] text-[#6B7684] hover:bg-[#E5E8EB]"
+                                                        }`}
+                                                    >
+                                                        {isSelected && <Check className="h-3 w-3 inline mr-1" />}
+                                                        {skill}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ));
+                            })()}
 
                             {/* Custom Skill Input */}
                             <div className="pt-3 border-t border-[#F2F4F6]">
