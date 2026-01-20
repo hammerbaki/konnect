@@ -1,0 +1,140 @@
+2026-01-20 09:33:28.43
+f9f5a5fa
+User
+12:33:28 AM [express] GET /api/profiles/abd0b205-6590-4486-83cb-c31415ea02ec/analyses 304 in 1850ms :: [array:16]
+2026-01-20 09:33:30.67
+f9f5a5fa
+User
+12:33:30 AM [express] GET /api/notifications 304 in 1045ms :: [array:3]
+2026-01-20 09:33:30.93
+f9f5a5fa
+User
+12:33:30 AM [express] GET /api/notifications/unread-count 304 in 1304ms :: {"count":3}
+2026-01-20 09:33:33.04
+f9f5a5fa
+User
+Deducted 100 points from user 34b1d987-dc45-4694-b1e3-a03a74386bab: 100 GP + 0 credits
+2026-01-20 09:33:33.52
+f9f5a5fa
+User
+[AI Worker] Starting job d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 (type: analysis)
+2026-01-20 09:33:33.52
+f9f5a5fa
+User
+Job d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 starting immediately (type: analysis)
+2026-01-20 09:33:33.52
+f9f5a5fa
+User
+12:33:33 AM [express] POST /api/ai/jobs 200 in 3119ms :: {"jobId":"d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4","status":"processing","immediate":true}
+2026-01-20 09:33:33.83
+f9f5a5fa
+User
+[AI Worker] Processing analysis for job d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4...
+2026-01-20 09:33:33.99
+f9f5a5fa
+User
+Checking Claude rate limit (retry 0)...
+2026-01-20 09:33:34.15
+f9f5a5fa
+User
+Rate limit check passed, executing AI call...
+2026-01-20 09:33:34.81
+f9f5a5fa
+User
+12:33:34 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1069ms :: [object:9]
+2026-01-20 09:33:36.04
+f9f5a5fa
+User
+12:33:36 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1022ms :: [object:9]
+2026-01-20 09:33:37.31
+f9f5a5fa
+User
+12:33:37 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1050ms :: [object:9]
+2026-01-20 09:33:37.92
+f9f5a5fa
+User
+12:33:37 AM [express] GET /api/notifications/unread-count 304 in 1034ms :: {"count":9}
+2026-01-20 09:33:37.96
+f9f5a5fa
+User
+12:33:37 AM [express] GET /api/notifications 304 in 1065ms :: [array:20]
+2026-01-20 09:33:38.54
+f9f5a5fa
+User
+12:33:38 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1022ms :: [object:9]
+2026-01-20 09:33:39.80
+f9f5a5fa
+User
+12:33:39 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1044ms :: [object:9]
+2026-01-20 09:33:41.04
+f9f5a5fa
+User
+12:33:41 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1030ms :: [object:9]
+2026-01-20 09:33:42.27
+f9f5a5fa
+User
+12:33:42 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1014ms :: [object:9]
+2026-01-20 09:33:43.48
+f9f5a5fa
+User
+12:33:43 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1027ms :: [object:9]
+2026-01-20 09:33:44.70
+f9f5a5fa
+User
+12:33:44 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1032ms :: [object:9]
+2026-01-20 09:33:45.92
+f9f5a5fa
+User
+12:33:45 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1034ms :: [object:9]
+2026-01-20 09:33:47.12
+f9f5a5fa
+User
+12:33:47 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1023ms :: [object:9]
+2026-01-20 09:33:47.70
+f9f5a5fa
+User
+12:33:47 AM [express] GET /api/notifications 304 in 1063ms :: [array:3]
+2026-01-20 09:33:47.74
+f9f5a5fa
+User
+12:33:47 AM [express] GET /api/notifications/unread-count 304 in 1097ms :: {"count":3}
+2026-01-20 09:33:48.33
+f9f5a5fa
+User
+12:33:48 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1025ms :: [object:9]
+2026-01-20 09:33:49.56
+f9f5a5fa
+User
+12:33:49 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1039ms :: [object:9]
+2026-01-20 09:33:50.77
+f9f5a5fa
+User
+12:33:50 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1029ms :: [object:9]
+2026-01-20 09:33:52.00
+f9f5a5fa
+User
+12:33:52 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1043ms :: [object:9]
+2026-01-20 09:33:53.21
+f9f5a5fa
+User
+12:33:53 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1026ms :: [object:9]
+2026-01-20 09:33:54.18
+f9f5a5fa
+User
+12:33:54 AM [express] GET /api/notifications/unread-count 304 in 1039ms :: {"count":9}
+2026-01-20 09:33:54.25
+f9f5a5fa
+User
+12:33:54 AM [express] GET /api/notifications 304 in 1072ms :: [array:20]
+2026-01-20 09:33:54.45
+f9f5a5fa
+User
+12:33:54 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1060ms :: [object:9]
+2026-01-20 09:33:55.67
+f9f5a5fa
+User
+12:33:55 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1025ms :: [object:9]
+2026-01-20 09:33:56.90
+f9f5a5fa
+User
+12:33:56 AM [express] GET /api/ai/jobs/d3f15a92-7ad7-488b-a2b0-57bfdbdf3fe4 200 in 1048ms :: [object:9]
