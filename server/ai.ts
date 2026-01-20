@@ -204,6 +204,18 @@ class TokenBucket {
 const fallbackBucket = new TokenBucket(30, 60);
 
 /**
+ * Wrap a promise with a timeout.
+ */
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => 
+      setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+    )
+  ]);
+}
+
+/**
  * Throttle a Claude API call through the shared rate limiter.
  * Uses Redis-based limiter in production for cross-instance coordination.
  * Falls back to in-memory token bucket in development or if Redis fails.
@@ -211,11 +223,19 @@ const fallbackBucket = new TokenBucket(30, 60);
 async function throttleClaudeCall<T>(fn: () => Promise<T>, retryCount = 0): Promise<T> {
   const MAX_RETRIES = 5;
   const MAX_WAIT_MS = 60000; // Max 1 minute wait
+  const RATE_LIMIT_TIMEOUT_MS = 10000; // 10 second timeout for rate limit check
   
   // Try shared Redis limiter first (production)
   if (sharedClaudeLimiter) {
     try {
-      const result = await sharedClaudeLimiter.limit("claude-api");
+      console.log(`Checking Claude rate limit (retry ${retryCount})...`);
+      
+      // Add timeout to the rate limit check to prevent hanging
+      const result = await withTimeout(
+        sharedClaudeLimiter.limit("claude-api"),
+        RATE_LIMIT_TIMEOUT_MS,
+        "Rate limit check timed out"
+      );
       
       if (!result.success) {
         if (retryCount >= MAX_RETRIES) {
@@ -238,18 +258,20 @@ async function throttleClaudeCall<T>(fn: () => Promise<T>, retryCount = 0): Prom
         return throttleClaudeCall(fn, retryCount + 1);
       }
       
+      console.log("Rate limit check passed, executing AI call...");
       return fn();
     } catch (error) {
       // If it's a rate limit error, re-throw it
       if (error instanceof Error && error.message.includes('rate limit')) {
         throw error;
       }
-      // Redis connection failed, fall through to in-memory limiter
+      // Redis connection failed or timed out, fall through to in-memory limiter
       console.warn("Shared rate limiter failed, using fallback:", error);
     }
   }
   
   // Fallback to in-memory token bucket
+  console.log("Using fallback rate limiter...");
   await fallbackBucket.throttle();
   return fn();
 }

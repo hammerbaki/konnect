@@ -1,0 +1,184 @@
+
+9a976a62
+User
+12:23:00 AM [express] GET /api/notifications/unread-count 304 in 2524ms :: {"count":8}
+2026-01-20 09:23:01.19
+9a976a62
+User
+✓ Database connection established
+2026-01-20 09:23:01.24
+9a976a62
+User
+✓ Database connection established
+2026-01-20 09:23:02.01
+9a976a62
+User
+12:23:02 AM [express] GET /api/page-visibility 304 in 2360ms :: {"userRole":"admin","pages":{"/settings":true,"/recharge":true,"/dashboard":true,"/profile":true,"/analysis":true,"/goals":true,"/kompass":true,"/essays":true,"/explorer":true,"/admin":true}}
+2026-01-20 09:23:02.07
+9a976a62
+User
+12:23:02 AM [express] GET /api/auth/user 200 in 2418ms :: [object:20]
+2026-01-20 09:23:02.72
+9a976a62
+User
+12:23:02 AM [express] GET /api/notifications/unread-count 304 in 1072ms :: {"count":3}
+2026-01-20 09:23:02.77
+9a976a62
+User
+12:23:02 AM [express] GET /api/notifications 304 in 1121ms :: [array:3]
+2026-01-20 09:23:04.66
+9a976a62
+User
+12:23:04 AM [express] GET /api/profiles 304 in 1218ms :: [array:5]
+2026-01-20 09:23:06.62
+9a976a62
+User
+12:23:06 AM [express] GET /api/profiles/abd0b205-6590-4486-83cb-c31415ea02ec/analyses 304 in 1759ms :: [array:15]
+2026-01-20 09:23:13.42
+9a976a62
+User
+Deducted 100 points from user 34b1d987-dc45-4694-b1e3-a03a74386bab: 100 GP + 0 credits
+2026-01-20 09:23:13.90
+9a976a62
+User
+Job 0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 starting immediately (type: analysis)
+2026-01-20 09:23:13.90
+9a976a62
+User
+12:23:13 AM [express] POST /api/ai/jobs 200 in 3174ms :: {"jobId":"0b2a09af-bedd-4dc9-8786-d8dd1b7853c0","status":"processing","immediate":true}
+2026-01-20 09:23:15.17
+9a976a62
+User
+12:23:15 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1065ms :: [object:9]
+2026-01-20 09:23:15.56
+9a976a62
+User
+12:23:15 AM [express] GET /api/notifications 304 in 1061ms :: [array:20]
+2026-01-20 09:23:16.41
+9a976a62
+User
+12:23:16 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1052ms :: [object:9]
+2026-01-20 09:23:17.01
+9a976a62
+User
+12:23:17 AM [express] GET /api/notifications/unread-count 304 in 1092ms :: {"count":8}
+2026-01-20 09:23:17.64
+9a976a62
+User
+12:23:17 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1048ms :: [object:9]
+2026-01-20 09:23:17.73
+9a976a62
+User
+12:23:17 AM [express] GET /api/notifications 304 in 1103ms :: [array:3]
+2026-01-20 09:23:17.80
+9a976a62
+User
+12:23:17 AM [express] GET /api/notifications/unread-count 304 in 1172ms :: {"count":3}
+2026-01-20 09:23:18.91
+9a976a62
+User
+12:23:18 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1070ms :: [object:9]
+2026-01-20 09:23:19.75
+9a976a62
+User
+12:23:19 AM [express] GET /api/notifications/unread-count 304 in 1091ms :: {"count":3}
+2026-01-20 09:23:19.75
+9a976a62
+User
+12:23:19 AM [express] GET /api/notifications 304 in 1074ms :: [array:3]
+2026-01-20 09:23:20.18
+9a976a62
+User
+12:23:20 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1075ms :: [object:9]
+2026-01-20 09:23:21.44
+9a976a62
+User
+12:23:21 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1055ms :: [object:9]
+2026-01-20 09:23:22.69
+9a976a62
+User
+12:23:22 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1057ms :: [object:9]
+2026-01-20 09:23:23.97
+9a976a62
+User
+12:23:23 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1075ms :: [object:9]
+2026-01-20 09:23:25.26
+9a976a62
+User
+12:23:25 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1093ms :: [object:9]
+2026-01-20 09:23:26.52
+9a976a62
+User
+12:23:26 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1069ms :: [object:9]
+2026-01-20 09:23:27.79
+9a976a62
+User
+12:23:27 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1067ms :: [object:9]
+2026-01-20 09:23:29.05
+9a976a62
+User
+12:23:29 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1053ms :: [object:9]
+2026-01-20 09:23:30.52
+9a976a62
+User
+12:23:30 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1072ms :: [object:9]
+2026-01-20 09:23:31.79
+9a976a62
+User
+12:23:31 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1075ms :: [object:9]
+2026-01-20 09:23:32.45
+9a976a62
+User
+12:23:32 AM [express] GET /api/notifications 304 in 1081ms :: [array:20]
+2026-01-20 09:23:33.03
+9a976a62
+User
+12:23:33 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1067ms :: [object:9]
+2026-01-20 09:23:33.45
+9a976a62
+User
+12:23:33 AM [express] GET /api/notifications/unread-count 304 in 1076ms :: {"count":8}
+2026-01-20 09:23:34.36
+9a976a62
+User
+12:23:34 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1161ms :: [object:9]
+2026-01-20 09:23:34.71
+9a976a62
+User
+12:23:34 AM [express] GET /api/notifications 304 in 1078ms :: [array:3]
+2026-01-20 09:23:34.75
+9a976a62
+User
+12:23:34 AM [express] GET /api/notifications/unread-count 304 in 1112ms :: {"count":3}
+2026-01-20 09:23:35.67
+9a976a62
+User
+12:23:35 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1138ms :: [object:9]
+2026-01-20 09:23:36.73
+9a976a62
+User
+12:23:36 AM [express] GET /api/notifications/unread-count 304 in 1074ms :: {"count":3}
+2026-01-20 09:23:36.75
+9a976a62
+User
+12:23:36 AM [express] GET /api/notifications 304 in 1087ms :: [array:3]
+2026-01-20 09:23:36.96
+9a976a62
+User
+12:23:36 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1111ms :: [object:9]
+2026-01-20 09:23:38.20
+9a976a62
+User
+12:23:38 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1061ms :: [object:9]
+2026-01-20 09:23:39.46
+9a976a62
+User
+12:23:39 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1076ms :: [object:9]
+2026-01-20 09:23:40.29
+9a976a62
+User
+12:23:40 AM [express] GET /api/auth/user 200 in 1216ms :: [object:20]
+2026-01-20 09:23:40.72
+9a976a62
+User
+12:23:40 AM [express] GET /api/ai/jobs/0b2a09af-bedd-4dc9-8786-d8dd1b7853c0 200 in 1077ms :: [object:9]

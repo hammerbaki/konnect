@@ -186,9 +186,23 @@ export async function cleanupStaleProcessingJobs(): Promise<number> {
   }
 }
 
+// Maximum time for AI processing before considering it stuck
+const AI_PROCESSING_TIMEOUT_MS = 180000; // 3 minutes
+
+function withProcessingTimeout<T>(promise: Promise<T>, jobId: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => 
+      setTimeout(() => reject(new Error(`AI processing timed out after ${AI_PROCESSING_TIMEOUT_MS / 1000}s`)), AI_PROCESSING_TIMEOUT_MS)
+    )
+  ]);
+}
+
 export async function processJob(job: AiJob): Promise<any> {
   const type = job.type as AiJobType;
   const payload = job.payload as any;
+  
+  console.log(`[AI Worker] Starting job ${job.id} (type: ${type})`);
   
   await storage.updateAiJobStatus(job.id, "processing", 10);
   await markJobProcessing(job.id, type);
@@ -198,6 +212,7 @@ export async function processJob(job: AiJob): Promise<any> {
     
     switch (type) {
       case "analysis": {
+        console.log(`[AI Worker] Processing analysis for job ${job.id}...`);
         await storage.updateAiJobStatus(job.id, "processing", 30);
         // Construct a profile-like object for the AI function
         const profileForAnalysis = {
@@ -205,7 +220,10 @@ export async function processJob(job: AiJob): Promise<any> {
           title: payload.profileTitle || "프로필",
           profileData: payload.profileData || {},
         };
-        result = await generateCareerAnalysis(profileForAnalysis as any, payload.userIdentity);
+        result = await withProcessingTimeout(
+          generateCareerAnalysis(profileForAnalysis as any, payload.userIdentity),
+          job.id
+        );
         
         // Save analysis to analyses table so frontend query can fetch it
         if (job.profileId) {
@@ -228,38 +246,50 @@ export async function processJob(job: AiJob): Promise<any> {
         break;
       }
       case "essay": {
+        console.log(`[AI Worker] Processing essay for job ${job.id}...`);
         await storage.updateAiJobStatus(job.id, "processing", 30);
-        result = await generatePersonalEssay(
-          payload.profileType,
-          payload.category,
-          payload.topic,
-          payload.context,
-          payload.profileData,
-          payload.targetInfo
+        result = await withProcessingTimeout(
+          generatePersonalEssay(
+            payload.profileType,
+            payload.category,
+            payload.topic,
+            payload.context,
+            payload.profileData,
+            payload.targetInfo
+          ),
+          job.id
         );
         break;
       }
       case "essay_revision": {
+        console.log(`[AI Worker] Processing essay revision for job ${job.id}...`);
         await storage.updateAiJobStatus(job.id, "processing", 30);
-        result = await revisePersonalEssay(
-          payload.originalTitle,
-          payload.originalContent,
-          payload.revisionRequest
+        result = await withProcessingTimeout(
+          revisePersonalEssay(
+            payload.originalTitle,
+            payload.originalContent,
+            payload.revisionRequest
+          ),
+          job.id
         );
         break;
       }
       case "goal": {
+        console.log(`[AI Worker] Processing goal for job ${job.id}...`);
         await storage.updateAiJobStatus(job.id, "processing", 30);
-        result = await generateGoals(
-          payload.level as GoalLevel,
-          {
-            visionTitle: payload.visionTitle,
-            visionDescription: payload.visionDescription,
-            targetYear: payload.targetYear,
-            ancestorChain: payload.ancestorChain || [],
-            siblings: payload.siblings || [],
-          },
-          payload.count
+        result = await withProcessingTimeout(
+          generateGoals(
+            payload.level as GoalLevel,
+            {
+              visionTitle: payload.visionTitle,
+              visionDescription: payload.visionDescription,
+              targetYear: payload.targetYear,
+              ancestorChain: payload.ancestorChain || [],
+              siblings: payload.siblings || [],
+            },
+            payload.count
+          ),
+          job.id
         );
         break;
       }
@@ -277,6 +307,8 @@ export async function processJob(job: AiJob): Promise<any> {
       estimatedCostCents: result.tokenUsage.estimatedCostCents,
     } : undefined;
     
+    console.log(`[AI Worker] Job ${job.id} completed successfully`);
+    
     await storage.updateAiJobResult(job.id, result, tokenUsage);
     await markJobDone(job.id);
     
@@ -289,6 +321,7 @@ export async function processJob(job: AiJob): Promise<any> {
     return result;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[AI Worker] Job ${job.id} failed:`, errorMessage);
     await storage.updateAiJobError(job.id, errorMessage);
     await markJobDone(job.id);
     
