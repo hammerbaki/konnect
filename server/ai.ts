@@ -4,6 +4,92 @@ import { Redis } from "@upstash/redis";
 import type { Profile } from "@shared/schema";
 import { checkAIRateLimit, type RateLimitResult } from "./rateLimiter";
 
+// ============================================================================
+// JSON Repair Utility for AI Responses
+// AI sometimes returns truncated or malformed JSON - this attempts to fix it
+// ============================================================================
+
+function repairJSON(jsonString: string): string {
+  let repaired = jsonString.trim();
+  
+  // Remove any trailing text after the last valid closing brace
+  const lastBrace = repaired.lastIndexOf('}');
+  if (lastBrace !== -1 && lastBrace < repaired.length - 1) {
+    repaired = repaired.substring(0, lastBrace + 1);
+  }
+  
+  // Count open/close brackets and braces
+  let openBraces = 0;
+  let openBrackets = 0;
+  let inString = false;
+  let escapeNext = false;
+  
+  for (let i = 0; i < repaired.length; i++) {
+    const char = repaired[i];
+    
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+    
+    if (char === '\\') {
+      escapeNext = true;
+      continue;
+    }
+    
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    
+    if (!inString) {
+      if (char === '{') openBraces++;
+      else if (char === '}') openBraces--;
+      else if (char === '[') openBrackets++;
+      else if (char === ']') openBrackets--;
+    }
+  }
+  
+  // Close any unclosed strings (if we ended inside a string)
+  if (inString) {
+    repaired += '"';
+  }
+  
+  // Remove trailing comma before closing brackets/braces
+  repaired = repaired.replace(/,(\s*[\]\}])/g, '$1');
+  
+  // Add missing closing brackets and braces
+  while (openBrackets > 0) {
+    repaired += ']';
+    openBrackets--;
+  }
+  while (openBraces > 0) {
+    repaired += '}';
+    openBraces--;
+  }
+  
+  return repaired;
+}
+
+function safeParseJSON(jsonString: string): any {
+  // First try direct parsing
+  try {
+    return JSON.parse(jsonString);
+  } catch (e) {
+    // If that fails, try to repair the JSON
+    console.log("Initial JSON parse failed, attempting repair...");
+    const repaired = repairJSON(jsonString);
+    try {
+      const result = JSON.parse(repaired);
+      console.log("JSON repair successful");
+      return result;
+    } catch (e2) {
+      console.error("JSON repair failed:", (e2 as Error).message);
+      throw new Error(`Failed to parse AI response as JSON: ${(e as Error).message}`);
+    }
+  }
+}
+
 // Using Replit AI Integrations for Anthropic - no API key needed, charges to credits
 const anthropic = new Anthropic({
   apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
@@ -790,7 +876,7 @@ ${profileTypePrompt}
           throw new Error("No valid JSON found in response");
         }
 
-        const parsed = JSON.parse(jsonMatch[0]);
+        const parsed = safeParseJSON(jsonMatch[0]);
         
         // Transform career recommendations to ensure proper structure
         const careerRecommendations: CareerRecommendation[] = (parsed.careerRecommendations || []).map((rec: any) => ({
@@ -1019,7 +1105,7 @@ ${hasTarget ? `
           throw new Error("No valid JSON found in response");
         }
 
-        const parsed = JSON.parse(jsonMatch[0]);
+        const parsed = safeParseJSON(jsonMatch[0]);
         
         return {
           title: parsed.title || "자기소개서",
@@ -1101,7 +1187,7 @@ ${revisionRequest}
           throw new Error("No valid JSON found in response");
         }
 
-        const parsed = JSON.parse(jsonMatch[0]);
+        const parsed = safeParseJSON(jsonMatch[0]);
         
         return {
           title: parsed.title || originalTitle,
@@ -1253,7 +1339,7 @@ ${getLevelPrompt(level, count)}
           throw new Error("No valid JSON found in response");
         }
 
-        const parsed = JSON.parse(jsonMatch[0]);
+        const parsed = safeParseJSON(jsonMatch[0]);
         
         const suggestions: GeneratedGoal[] = (parsed.suggestions || []).map((s: any) => ({
           title: s.title || "목표",
