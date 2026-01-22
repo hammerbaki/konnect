@@ -655,6 +655,7 @@ export default function Profile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/profiles'] });
     },
   });
 
