@@ -305,6 +305,8 @@ export default function Analysis() {
             return response.json();
         },
         enabled: !!user,
+        staleTime: 0,
+        refetchOnMount: 'always',
     });
 
     // Handle profile query parameter from URL (e.g., /analysis?profile=xxx)
