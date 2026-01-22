@@ -12,7 +12,7 @@ import {
     ChevronRight, Plus, LayoutDashboard, History,
     CheckCircle2, AlertTriangle, Zap, User, ExternalLink,
     FolderOpen, Users, Heart, Lightbulb, LayoutGrid,
-    XCircle, Clock
+    XCircle, Clock, Download, FileText
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useAIJob } from "@/hooks/useAIJob";
 import { useTokens } from "@/lib/TokenContext";
 import { Bot } from "lucide-react";
+import { generateCareerReportPDF, CareerReportData, ReportMetadata } from "@/lib/pdfReportGenerator";
 
 const ANALYSIS_CREDIT_COST = 100;
 
@@ -529,6 +530,49 @@ export default function Analysis() {
     const CareerCard = ({ career, index }: { career: CareerRecommendation; index: number }) => {
         const isExpanded = expandedCareer === `career-${index}`;
         const profileType = activeProfile?.type || 'general';
+        const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+        const handleDownloadPDF = async () => {
+            if (!activeProfile || !latestAnalysis) return;
+            
+            setIsGeneratingPDF(true);
+            try {
+                const careerData: CareerReportData = {
+                    title: career.title,
+                    matchScore: career.matchScore,
+                    description: career.description,
+                    salary: career.salary || '',
+                    jobOutlook: career.jobOutlook || '',
+                    strengths: career.strengths || [],
+                    weaknesses: career.weaknesses || [],
+                    competencies: career.competencies,
+                    actions: career.actions,
+                };
+                
+                const metadata: ReportMetadata = {
+                    userName: user?.fullName || user?.username || 'User',
+                    profileType: activeProfile.type,
+                    analysisDate: new Date(latestAnalysis.createdAt).toLocaleDateString('ko-KR'),
+                    profileTitle: activeProfile.title,
+                };
+                
+                await generateCareerReportPDF(careerData, metadata);
+                
+                toast({
+                    title: "리포트 다운로드 완료",
+                    description: "Konnect 인증 리포트가 다운로드되었습니다.",
+                });
+            } catch (error) {
+                console.error('PDF generation error:', error);
+                toast({
+                    title: "오류",
+                    description: "리포트 생성 중 오류가 발생했습니다.",
+                    variant: "destructive",
+                });
+            } finally {
+                setIsGeneratingPDF(false);
+            }
+        };
         
         return (
             <Card className={cn(
@@ -708,15 +752,31 @@ export default function Analysis() {
                                     </div>
                                 )}
 
-                                <Button 
-                                    onClick={() => handleExportToKompass(career)}
-                                    className="w-full h-12 rounded-xl bg-gradient-to-r from-[#3182F6] to-[#1565C0] text-white font-bold hover:opacity-90 transition-opacity"
-                                    data-testid={`button-export-kompass-${index}`}
-                                >
-                                    <Compass className="h-5 w-5 mr-2" />
-                                    Kompass로 목표 세우기
-                                    <ArrowRight className="h-4 w-4 ml-2" />
-                                </Button>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Button 
+                                        onClick={handleDownloadPDF}
+                                        disabled={isGeneratingPDF}
+                                        variant="outline"
+                                        className="h-12 rounded-xl border-[#3182F6] text-[#3182F6] font-bold hover:bg-[#E8F3FF] transition-colors"
+                                        data-testid={`button-download-pdf-${index}`}
+                                    >
+                                        {isGeneratingPDF ? (
+                                            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                        ) : (
+                                            <FileText className="h-5 w-5 mr-2" />
+                                        )}
+                                        {isGeneratingPDF ? '생성중...' : 'PDF 리포트'}
+                                    </Button>
+                                    <Button 
+                                        onClick={() => handleExportToKompass(career)}
+                                        className="h-12 rounded-xl bg-gradient-to-r from-[#3182F6] to-[#1565C0] text-white font-bold hover:opacity-90 transition-opacity"
+                                        data-testid={`button-export-kompass-${index}`}
+                                    >
+                                        <Compass className="h-5 w-5 mr-2" />
+                                        Kompass
+                                        <ArrowRight className="h-4 w-4 ml-2" />
+                                    </Button>
+                                </div>
                             </div>
                         </AccordionContent>
                     </AccordionItem>
