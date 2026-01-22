@@ -102,6 +102,8 @@ export default function Dashboard() {
       return response.json();
     },
     enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Get first profile ID if exists

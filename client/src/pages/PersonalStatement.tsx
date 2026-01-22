@@ -307,6 +307,8 @@ export default function PersonalStatement() {
     // API Queries
     const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery<Profile[]>({
         queryKey: ["/api/profiles"],
+        staleTime: 0,
+        refetchOnMount: 'always',
     });
 
     const [activeProfileId, setActiveProfileId] = useState<string | null>(null);

@@ -552,7 +552,7 @@ export default function Analysis() {
                 };
                 
                 const metadata: ReportMetadata = {
-                    userName: user?.fullName || user?.username || 'User',
+                    userName: user?.displayName || user?.firstName || 'User',
                     profileType: activeProfile.type,
                     analysisDate: latestAnalysis.createdAt 
                         ? new Date(latestAnalysis.createdAt).toLocaleDateString('ko-KR')

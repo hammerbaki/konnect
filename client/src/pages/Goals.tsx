@@ -79,6 +79,8 @@ export default function Goals() {
 
   const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery<Profile[]>({
     queryKey: ['/api/profiles'],
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const createKompassMutation = useMutation({
