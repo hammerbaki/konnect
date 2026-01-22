@@ -12,7 +12,7 @@ import {
     ChevronRight, Plus, LayoutDashboard, History,
     CheckCircle2, AlertTriangle, Zap, User, ExternalLink,
     FolderOpen, Users, Heart, Lightbulb, LayoutGrid,
-    XCircle, Clock, Download, FileText
+    XCircle, Clock, FileText
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -552,7 +552,9 @@ export default function Analysis() {
                 const metadata: ReportMetadata = {
                     userName: user?.fullName || user?.username || 'User',
                     profileType: activeProfile.type,
-                    analysisDate: new Date(latestAnalysis.createdAt).toLocaleDateString('ko-KR'),
+                    analysisDate: latestAnalysis.createdAt 
+                        ? new Date(latestAnalysis.createdAt).toLocaleDateString('ko-KR')
+                        : new Date().toLocaleDateString('ko-KR'),
                     profileTitle: activeProfile.title,
                 };
                 
