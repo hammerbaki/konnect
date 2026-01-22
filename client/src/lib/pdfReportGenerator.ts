@@ -24,21 +24,22 @@ export interface ReportMetadata {
 }
 
 const COLORS = {
+  navy: [15, 30, 61] as [number, number, number],
   primary: [49, 130, 246] as [number, number, number],
-  secondary: [21, 101, 192] as [number, number, number],
+  gold: [212, 175, 55] as [number, number, number],
   accent: [0, 191, 165] as [number, number, number],
-  text: [25, 31, 40] as [number, number, number],
-  textLight: [78, 89, 104] as [number, number, number],
-  textMuted: [139, 149, 161] as [number, number, number],
-  success: [16, 185, 129] as [number, number, number],
-  warning: [245, 158, 11] as [number, number, number],
-  background: [249, 250, 251] as [number, number, number],
+  text: [33, 37, 41] as [number, number, number],
+  textSecondary: [73, 80, 87] as [number, number, number],
+  textMuted: [134, 142, 150] as [number, number, number],
+  success: [25, 135, 84] as [number, number, number],
+  warning: [255, 193, 7] as [number, number, number],
+  danger: [220, 53, 69] as [number, number, number],
+  light: [248, 249, 250] as [number, number, number],
   white: [255, 255, 255] as [number, number, number],
-  border: [229, 232, 235] as [number, number, number],
-  gold: [180, 140, 50] as [number, number, number],
+  border: [222, 226, 230] as [number, number, number],
 };
 
-function getProfileTypeLabel(type: string): string {
+function getProfileTypeKorean(type: string): string {
   const labels: Record<string, string> = {
     general: '구직자',
     university: '대학생',
@@ -60,9 +61,9 @@ async function loadFontAsBase64(url: string): Promise<string> {
   return btoa(binary);
 }
 
-async function loadLogoAsBase64(): Promise<string | null> {
+async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
-    const response = await fetch('/konnect-logo.png');
+    const response = await fetch(url);
     const blob = await response.blob();
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -79,18 +80,13 @@ export async function generateCareerReportPDF(
   career: CareerReportData,
   metadata: ReportMetadata
 ): Promise<void> {
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4',
-  });
-
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const marginLeft = 20;
-  const marginRight = 20;
-  const contentWidth = pageWidth - marginLeft - marginRight;
-  let y = 20;
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+  let y = 0;
+  let currentPage = 1;
 
   let koreanFontLoaded = false;
   try {
@@ -99,347 +95,385 @@ export async function generateCareerReportPDF(
     pdf.addFont('NotoSansKR-Regular.ttf', 'NotoSansKR', 'normal');
     koreanFontLoaded = true;
   } catch (e) {
-    console.warn('Could not load Korean font, using default:', e);
+    console.warn('Korean font not loaded:', e);
   }
 
-  const setKoreanFont = (size: number, style: 'normal' | 'bold' = 'normal') => {
+  const setFont = (size: number, weight: 'normal' | 'bold' = 'normal') => {
     if (koreanFontLoaded) {
-      pdf.setFont('NotoSansKR', style);
+      pdf.setFont('NotoSansKR', weight);
     } else {
-      pdf.setFont('helvetica', style);
+      pdf.setFont('helvetica', weight);
     }
     pdf.setFontSize(size);
   };
 
+  const wrapText = (text: string, maxWidth: number): string[] => {
+    return pdf.splitTextToSize(text, maxWidth);
+  };
+
+  const drawPageFooter = () => {
+    pdf.setFillColor(...COLORS.navy);
+    pdf.rect(0, pageHeight - 12, pageWidth, 12, 'F');
+    
+    pdf.setFontSize(7);
+    pdf.setTextColor(...COLORS.white);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Konnect AI Career Analysis Platform', margin, pageHeight - 5);
+    pdf.text(`Page ${currentPage}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+    pdf.text(`© ${new Date().getFullYear()} Konnect`, pageWidth - margin, pageHeight - 5, { align: 'right' });
+  };
+
   const addPage = () => {
     pdf.addPage();
+    currentPage++;
     y = 25;
-    drawHeader();
   };
 
   const checkPageBreak = (height: number): boolean => {
-    if (y + height > pageHeight - 25) {
+    if (y + height > pageHeight - 20) {
+      drawPageFooter();
       addPage();
       return true;
     }
     return false;
   };
 
-  const drawHeader = () => {
-    pdf.setDrawColor(...COLORS.primary);
-    pdf.setLineWidth(0.5);
-    pdf.line(marginLeft, 15, pageWidth - marginRight, 15);
-    
-    pdf.setFontSize(8);
-    pdf.setTextColor(...COLORS.textMuted);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text('Konnect AI Career Analysis Report', marginLeft, 12);
-    pdf.text(`Page ${pdf.getCurrentPageInfo().pageNumber}`, pageWidth - marginRight, 12, { align: 'right' });
-  };
+  pdf.setFillColor(...COLORS.navy);
+  pdf.rect(0, 0, pageWidth, 50, 'F');
 
-  const drawFooter = () => {
-    const footerY = pageHeight - 10;
-    pdf.setDrawColor(...COLORS.border);
-    pdf.setLineWidth(0.3);
-    pdf.line(marginLeft, footerY - 5, pageWidth - marginRight, footerY - 5);
-    
-    pdf.setFontSize(7);
-    pdf.setTextColor(...COLORS.textMuted);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text('Konnect - Your AI Career Solution', marginLeft, footerY);
-    pdf.text(`© ${new Date().getFullYear()} Konnect. All rights reserved.`, pageWidth - marginRight, footerY, { align: 'right' });
-  };
-
-  const wrapText = (text: string, maxWidth: number, fontSize: number): string[] => {
-    setKoreanFont(fontSize);
-    return pdf.splitTextToSize(text, maxWidth);
-  };
-
-  const logoBase64 = await loadLogoAsBase64();
-
+  const logoBase64 = await loadImageAsBase64('/konnect-logo.png');
   if (logoBase64) {
-    pdf.addImage(logoBase64, 'PNG', marginLeft, y, 50, 16);
+    pdf.addImage(logoBase64, 'PNG', margin, 10, 45, 15);
   } else {
-    pdf.setFontSize(24);
-    pdf.setTextColor(...COLORS.primary);
+    pdf.setFontSize(22);
+    pdf.setTextColor(...COLORS.white);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('KONNECT', marginLeft, y + 12);
+    pdf.text('KONNECT', margin, 22);
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Your AI Career Solution', margin, 28);
   }
 
-  pdf.setFontSize(9);
-  pdf.setTextColor(...COLORS.textMuted);
-  pdf.setFont('helvetica', 'normal');
-  const reportId = `KR-${Date.now().toString(36).toUpperCase().slice(-8)}`;
-  pdf.text(`Report ID: ${reportId}`, pageWidth - marginRight, y + 4, { align: 'right' });
-  pdf.text(`Date: ${metadata.analysisDate || new Date().toLocaleDateString('ko-KR')}`, pageWidth - marginRight, y + 9, { align: 'right' });
-  pdf.text(`Profile: ${getProfileTypeLabel(metadata.profileType)}`, pageWidth - marginRight, y + 14, { align: 'right' });
-
-  y += 25;
-
-  pdf.setDrawColor(...COLORS.border);
-  pdf.setLineWidth(0.5);
-  pdf.line(marginLeft, y, pageWidth - marginRight, y);
-  y += 8;
-
-  pdf.setFillColor(...COLORS.primary);
-  pdf.circle(marginLeft + 18, y + 18, 16, 'F');
-  
-  pdf.setFontSize(20);
+  pdf.setFontSize(10);
   pdf.setTextColor(...COLORS.white);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`${career.matchScore}%`, marginLeft + 18, y + 20, { align: 'center' });
+  pdf.text('AI CAREER ANALYSIS REPORT', pageWidth - margin, 18, { align: 'right' });
   
-  pdf.setFontSize(7);
-  pdf.text('MATCH', marginLeft + 18, y + 27, { align: 'center' });
-
-  const titleX = marginLeft + 45;
-  const titleMaxWidth = contentWidth - 90;
-  
-  setKoreanFont(18, 'bold');
-  pdf.setTextColor(...COLORS.text);
-  const titleLines = wrapText(career.title, titleMaxWidth, 18);
-  pdf.text(titleLines, titleX, y + 10);
-  
-  const titleHeight = titleLines.length * 7;
-  
-  setKoreanFont(10);
-  pdf.setTextColor(...COLORS.textLight);
-  const descLines = wrapText(career.description, titleMaxWidth, 10);
-  const truncatedDesc = descLines.slice(0, 3);
-  if (descLines.length > 3) {
-    truncatedDesc[2] = truncatedDesc[2].substring(0, truncatedDesc[2].length - 3) + '...';
-  }
-  pdf.text(truncatedDesc, titleX, y + titleHeight + 16);
-
-  pdf.setFillColor(255, 251, 235);
-  pdf.setDrawColor(...COLORS.gold);
-  pdf.setLineWidth(1);
-  const certX = pageWidth - marginRight - 35;
-  pdf.roundedRect(certX, y, 35, 22, 2, 2, 'FD');
-  
-  pdf.setFontSize(7);
-  pdf.setTextColor(...COLORS.gold);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('CERTIFIED', certX + 17.5, y + 9, { align: 'center' });
-  pdf.setFontSize(5);
+  pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('KONNECT VERIFIED', certX + 17.5, y + 15, { align: 'center' });
+  pdf.setTextColor(200, 200, 220);
+  const reportId = `KR-${Date.now().toString(36).toUpperCase().slice(-8)}`;
+  pdf.text(`Report ID: ${reportId}`, pageWidth - margin, 26, { align: 'right' });
+  pdf.text(`Date: ${metadata.analysisDate || new Date().toLocaleDateString('ko-KR')}`, pageWidth - margin, 32, { align: 'right' });
 
-  y += 50;
+  pdf.setFillColor(...COLORS.gold);
+  pdf.roundedRect(pageWidth - margin - 28, 38, 28, 8, 1, 1, 'F');
+  pdf.setFontSize(6);
+  pdf.setTextColor(...COLORS.navy);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('CERTIFIED REPORT', pageWidth - margin - 14, 43.5, { align: 'center' });
+
+  y = 60;
+
+  pdf.setFillColor(...COLORS.light);
+  pdf.roundedRect(margin, y, contentWidth, 55, 4, 4, 'F');
+
+  pdf.setFillColor(...COLORS.primary);
+  pdf.circle(margin + 25, y + 27.5, 20, 'F');
+  
+  pdf.setFontSize(24);
+  pdf.setTextColor(...COLORS.white);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(`${career.matchScore}`, margin + 25, y + 26, { align: 'center' });
+  pdf.setFontSize(10);
+  pdf.text('%', margin + 25, y + 35, { align: 'center' });
+  
+  pdf.setFontSize(6);
+  pdf.text('MATCH SCORE', margin + 25, y + 43, { align: 'center' });
+
+  const titleX = margin + 55;
+  const titleMaxWidth = contentWidth - 65;
+  
+  setFont(16, 'bold');
+  pdf.setTextColor(...COLORS.text);
+  const titleLines = wrapText(career.title, titleMaxWidth);
+  pdf.text(titleLines.slice(0, 2), titleX, y + 15);
+  
+  const titleHeight = Math.min(titleLines.length, 2) * 6;
+  
+  setFont(9);
+  pdf.setTextColor(...COLORS.textSecondary);
+  const descLines = wrapText(career.description, titleMaxWidth);
+  pdf.text(descLines.slice(0, 3), titleX, y + titleHeight + 22);
+
+  y += 65;
+
+  pdf.setFontSize(11);
+  pdf.setTextColor(...COLORS.navy);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('OVERVIEW', margin, y);
+  
+  pdf.setDrawColor(...COLORS.primary);
+  pdf.setLineWidth(2);
+  pdf.line(margin, y + 3, margin + 25, y + 3);
+  
+  y += 12;
 
   const boxWidth = (contentWidth - 10) / 2;
-  const boxHeight = 30;
   
-  pdf.setFillColor(...COLORS.background);
-  pdf.roundedRect(marginLeft, y, boxWidth, boxHeight, 3, 3, 'F');
+  pdf.setFillColor(...COLORS.white);
+  pdf.setDrawColor(...COLORS.border);
+  pdf.setLineWidth(0.5);
+  pdf.roundedRect(margin, y, boxWidth, 32, 3, 3, 'FD');
+  
+  pdf.setFillColor(...COLORS.primary);
+  pdf.roundedRect(margin, y, 4, 32, 2, 0, 'F');
   
   pdf.setFontSize(8);
-  pdf.setTextColor(...COLORS.primary);
+  pdf.setTextColor(...COLORS.textMuted);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('INFORMATION', marginLeft + 8, y + 10);
+  pdf.text('COMPENSATION', margin + 10, y + 10);
   
+  setFont(10, 'bold');
+  pdf.setTextColor(...COLORS.text);
   if (career.salary) {
-    setKoreanFont(10, 'bold');
-    pdf.setTextColor(...COLORS.text);
-    const salaryLines = wrapText(career.salary, boxWidth - 16, 10);
-    pdf.text(salaryLines.slice(0, 2), marginLeft + 8, y + 20);
+    const salaryLines = wrapText(career.salary, boxWidth - 20);
+    pdf.text(salaryLines.slice(0, 2), margin + 10, y + 20);
   }
 
-  pdf.setFillColor(...COLORS.background);
-  pdf.roundedRect(marginLeft + boxWidth + 10, y, boxWidth, boxHeight, 3, 3, 'F');
+  pdf.setFillColor(...COLORS.white);
+  pdf.roundedRect(margin + boxWidth + 10, y, boxWidth, 32, 3, 3, 'FD');
+  
+  pdf.setFillColor(...COLORS.accent);
+  pdf.roundedRect(margin + boxWidth + 10, y, 4, 32, 2, 0, 'F');
   
   pdf.setFontSize(8);
-  pdf.setTextColor(...COLORS.accent);
+  pdf.setTextColor(...COLORS.textMuted);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('OUTLOOK', marginLeft + boxWidth + 18, y + 10);
+  pdf.text('MARKET OUTLOOK', margin + boxWidth + 20, y + 10);
   
+  setFont(10, 'bold');
+  pdf.setTextColor(...COLORS.text);
   if (career.jobOutlook) {
-    setKoreanFont(10, 'bold');
-    pdf.setTextColor(...COLORS.text);
-    const outlookLines = wrapText(career.jobOutlook, boxWidth - 16, 10);
-    pdf.text(outlookLines.slice(0, 2), marginLeft + boxWidth + 18, y + 20);
+    const outlookLines = wrapText(career.jobOutlook, boxWidth - 20);
+    pdf.text(outlookLines.slice(0, 2), margin + boxWidth + 20, y + 20);
   }
 
-  y += boxHeight + 12;
+  y += 42;
 
   if (career.competencies && career.competencies.length > 0) {
-    checkPageBreak(45);
+    checkPageBreak(55);
     
-    pdf.setFillColor(240, 244, 255);
-    pdf.roundedRect(marginLeft, y, contentWidth, 40, 3, 3, 'F');
-    
-    pdf.setFontSize(10);
-    pdf.setTextColor(...COLORS.primary);
+    pdf.setFontSize(11);
+    pdf.setTextColor(...COLORS.navy);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('COMPETENCY ANALYSIS', marginLeft + 8, y + 12);
+    pdf.text('COMPETENCY ANALYSIS', margin, y);
     
+    pdf.setDrawColor(...COLORS.primary);
+    pdf.setLineWidth(2);
+    pdf.line(margin, y + 3, margin + 45, y + 3);
+    
+    y += 15;
+
     const compCount = Math.min(career.competencies.length, 5);
-    const compWidth = (contentWidth - 20) / compCount;
+    const barHeight = 8;
+    const barSpacing = 14;
     
     career.competencies.slice(0, 5).forEach((comp, i) => {
-      const barX = marginLeft + 10 + i * compWidth;
+      const barY = y + i * barSpacing;
       const percentage = Math.round((comp.A / comp.fullMark) * 100);
-      const barMaxWidth = compWidth - 15;
       
-      pdf.setFillColor(...COLORS.border);
-      pdf.roundedRect(barX, y + 22, barMaxWidth, 6, 2, 2, 'F');
-      
-      pdf.setFillColor(...COLORS.primary);
-      const filledWidth = Math.max(4, barMaxWidth * (percentage / 100));
-      pdf.roundedRect(barX, y + 22, filledWidth, 6, 2, 2, 'F');
-      
-      setKoreanFont(7);
-      pdf.setTextColor(...COLORS.textLight);
-      pdf.text(comp.subject, barX, y + 34);
+      setFont(9);
+      pdf.setTextColor(...COLORS.text);
+      pdf.text(comp.subject, margin, barY + 5);
       
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...COLORS.primary);
-      pdf.text(`${percentage}%`, barX + barMaxWidth, y + 34, { align: 'right' });
+      pdf.text(`${percentage}%`, margin + contentWidth, barY + 5, { align: 'right' });
+      
+      const barStartX = margin + 50;
+      const barWidth = contentWidth - 80;
+      
+      pdf.setFillColor(...COLORS.light);
+      pdf.roundedRect(barStartX, barY, barWidth, barHeight, 2, 2, 'F');
+      
+      const gradientWidth = Math.max(4, barWidth * (percentage / 100));
+      if (percentage >= 70) {
+        pdf.setFillColor(...COLORS.success);
+      } else if (percentage >= 50) {
+        pdf.setFillColor(...COLORS.primary);
+      } else {
+        pdf.setFillColor(...COLORS.warning);
+      }
+      pdf.roundedRect(barStartX, barY, gradientWidth, barHeight, 2, 2, 'F');
     });
     
-    y += 48;
+    y += compCount * barSpacing + 10;
   }
 
   if (career.strengths?.length || career.weaknesses?.length) {
-    checkPageBreak(70);
+    checkPageBreak(75);
     
-    const halfWidth = (contentWidth - 10) / 2;
+    pdf.setFontSize(11);
+    pdf.setTextColor(...COLORS.navy);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('SWOT ANALYSIS', margin, y);
+    
+    pdf.setDrawColor(...COLORS.primary);
+    pdf.setLineWidth(2);
+    pdf.line(margin, y + 3, margin + 30, y + 3);
+    
+    y += 12;
+
+    const halfWidth = (contentWidth - 8) / 2;
     const sectionY = y;
+    const sectionHeight = 60;
     
     if (career.strengths?.length) {
       pdf.setFillColor(236, 253, 245);
-      pdf.roundedRect(marginLeft, sectionY, halfWidth, 60, 3, 3, 'F');
+      pdf.roundedRect(margin, sectionY, halfWidth, sectionHeight, 4, 4, 'F');
       
-      pdf.setDrawColor(...COLORS.success);
-      pdf.setLineWidth(3);
-      pdf.line(marginLeft, sectionY, marginLeft, sectionY + 60);
+      pdf.setFillColor(...COLORS.success);
+      pdf.roundedRect(margin, sectionY, halfWidth, 18, 4, 0, 'F');
+      pdf.rect(margin, sectionY + 14, halfWidth, 4, 'F');
       
-      pdf.setFontSize(10);
-      pdf.setTextColor(...COLORS.success);
+      pdf.setFontSize(9);
+      pdf.setTextColor(...COLORS.white);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('STRENGTHS', marginLeft + 10, sectionY + 12);
+      pdf.text('STRENGTHS', margin + halfWidth / 2, sectionY + 11, { align: 'center' });
       
-      setKoreanFont(9);
-      pdf.setTextColor(...COLORS.textLight);
+      setFont(8);
+      pdf.setTextColor(...COLORS.textSecondary);
       
-      let itemY = sectionY + 22;
+      let itemY = sectionY + 26;
       career.strengths.slice(0, 4).forEach((s, i) => {
-        const lines = wrapText(`${i + 1}. ${s}`, halfWidth - 20, 9);
-        pdf.text(lines[0], marginLeft + 10, itemY);
-        itemY += 10;
+        pdf.setFillColor(...COLORS.success);
+        pdf.circle(margin + 8, itemY - 1.5, 1.5, 'F');
+        
+        const lines = wrapText(s, halfWidth - 18);
+        pdf.text(lines[0], margin + 14, itemY);
+        itemY += 9;
       });
     }
     
     if (career.weaknesses?.length) {
-      pdf.setFillColor(254, 243, 199);
-      pdf.roundedRect(marginLeft + halfWidth + 10, sectionY, halfWidth, 60, 3, 3, 'F');
+      pdf.setFillColor(255, 243, 205);
+      pdf.roundedRect(margin + halfWidth + 8, sectionY, halfWidth, sectionHeight, 4, 4, 'F');
       
-      pdf.setDrawColor(...COLORS.warning);
-      pdf.setLineWidth(3);
-      pdf.line(marginLeft + halfWidth + 10, sectionY, marginLeft + halfWidth + 10, sectionY + 60);
+      pdf.setFillColor(...COLORS.danger);
+      pdf.roundedRect(margin + halfWidth + 8, sectionY, halfWidth, 18, 4, 0, 'F');
+      pdf.rect(margin + halfWidth + 8, sectionY + 14, halfWidth, 4, 'F');
       
-      pdf.setFontSize(10);
-      pdf.setTextColor(...COLORS.warning);
+      pdf.setFontSize(9);
+      pdf.setTextColor(...COLORS.white);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('AREAS TO IMPROVE', marginLeft + halfWidth + 20, sectionY + 12);
+      pdf.text('AREAS TO DEVELOP', margin + halfWidth + 8 + halfWidth / 2, sectionY + 11, { align: 'center' });
       
-      setKoreanFont(9);
-      pdf.setTextColor(...COLORS.textLight);
+      setFont(8);
+      pdf.setTextColor(...COLORS.textSecondary);
       
-      let itemY = sectionY + 22;
+      let itemY = sectionY + 26;
       career.weaknesses.slice(0, 4).forEach((w, i) => {
-        const lines = wrapText(`${i + 1}. ${w}`, halfWidth - 20, 9);
-        pdf.text(lines[0], marginLeft + halfWidth + 20, itemY);
-        itemY += 10;
+        pdf.setFillColor(...COLORS.danger);
+        pdf.circle(margin + halfWidth + 16, itemY - 1.5, 1.5, 'F');
+        
+        const lines = wrapText(w, halfWidth - 18);
+        pdf.text(lines[0], margin + halfWidth + 22, itemY);
+        itemY += 9;
       });
     }
     
-    y += 70;
+    y += sectionHeight + 10;
   }
 
   if (career.actions) {
     checkPageBreak(30);
     
-    pdf.setFontSize(12);
-    pdf.setTextColor(...COLORS.text);
+    pdf.setFontSize(11);
+    pdf.setTextColor(...COLORS.navy);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('ACTION PLAN', marginLeft, y);
-    y += 10;
+    pdf.text('RECOMMENDED ACTION PLAN', margin, y);
     
-    const drawActionSection = (
+    pdf.setDrawColor(...COLORS.primary);
+    pdf.setLineWidth(2);
+    pdf.line(margin, y + 3, margin + 55, y + 3);
+    
+    y += 12;
+    
+    const drawActionCard = (
       title: string,
-      koreanTitle: string,
+      subtitle: string,
       items: string[] | undefined,
-      color: [number, number, number],
+      iconLetter: string,
+      accentColor: [number, number, number],
       bgColor: [number, number, number]
     ) => {
       if (!items?.length) return;
       
-      checkPageBreak(45);
+      checkPageBreak(50);
       
       pdf.setFillColor(...bgColor);
-      pdf.roundedRect(marginLeft, y, contentWidth, 40, 3, 3, 'F');
+      pdf.roundedRect(margin, y, contentWidth, 42, 4, 4, 'F');
       
-      pdf.setFillColor(...color);
-      pdf.circle(marginLeft + 12, y + 12, 7, 'F');
+      pdf.setFillColor(...accentColor);
+      pdf.circle(margin + 15, y + 14, 10, 'F');
       
-      pdf.setFontSize(10);
+      pdf.setFontSize(14);
       pdf.setTextColor(...COLORS.white);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(title.charAt(0), marginLeft + 12, y + 14, { align: 'center' });
+      pdf.text(iconLetter, margin + 15, y + 17, { align: 'center' });
       
       pdf.setFontSize(11);
-      pdf.setTextColor(...color);
+      pdf.setTextColor(...COLORS.text);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(title, marginLeft + 25, y + 13);
+      pdf.text(title, margin + 32, y + 12);
       
-      setKoreanFont(8);
+      setFont(8);
       pdf.setTextColor(...COLORS.textMuted);
-      pdf.text(koreanTitle, marginLeft + 25 + pdf.getTextWidth(title) + 3, y + 13);
+      pdf.text(subtitle, margin + 32, y + 19);
       
-      setKoreanFont(9);
-      pdf.setTextColor(...COLORS.textLight);
+      setFont(8);
+      pdf.setTextColor(...COLORS.textSecondary);
       
-      let itemY = y + 24;
-      items.slice(0, 3).forEach((item, i) => {
-        const lines = wrapText(`${i + 1}. ${item}`, contentWidth - 30, 9);
-        pdf.text(lines[0], marginLeft + 12, itemY);
-        itemY += 8;
+      let itemY = y + 28;
+      items.slice(0, 2).forEach((item, i) => {
+        const lines = wrapText(`${i + 1}. ${item}`, contentWidth - 40);
+        pdf.text(lines[0], margin + 32, itemY);
+        itemY += 7;
       });
       
       y += 48;
     };
     
-    drawActionSection('Portfolio', '포트폴리오', career.actions.portfolio, COLORS.primary, [239, 246, 255]);
-    drawActionSection('Networking', '네트워킹', career.actions.networking, [147, 51, 234], [250, 245, 255]);
-    drawActionSection('Mindset', '마인드셋', career.actions.mindset, [244, 63, 94], [255, 241, 242]);
+    drawActionCard('Portfolio', '포트폴리오 구축', career.actions.portfolio, 'P', COLORS.primary, [239, 246, 255]);
+    drawActionCard('Networking', '네트워크 확장', career.actions.networking, 'N', [139, 92, 246], [245, 243, 255]);
+    drawActionCard('Mindset', '마인드셋 개발', career.actions.mindset, 'M', [236, 72, 153], [253, 242, 248]);
   }
 
-  checkPageBreak(35);
-  y += 8;
-  
-  pdf.setFillColor(248, 250, 252);
-  pdf.roundedRect(marginLeft, y, contentWidth, 25, 3, 3, 'F');
+  checkPageBreak(25);
+  y += 5;
   
   pdf.setDrawColor(...COLORS.border);
   pdf.setLineWidth(0.5);
-  pdf.roundedRect(marginLeft, y, contentWidth, 25, 3, 3, 'S');
+  pdf.line(margin, y, pageWidth - margin, y);
+  
+  y += 8;
   
   pdf.setFontSize(7);
   pdf.setTextColor(...COLORS.textMuted);
   pdf.setFont('helvetica', 'italic');
-  pdf.text('This report was generated by Konnect AI Career Analysis System.', marginLeft + 8, y + 8);
-  pdf.text('Results are for reference only. Professional career counseling is recommended for actual career decisions.', marginLeft + 8, y + 14);
+  pdf.text('Disclaimer: This report was generated by Konnect AI Career Analysis System.', margin, y);
+  pdf.text('The results provided are for informational purposes only and should not replace professional career counseling.', margin, y + 5);
   
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`Generated: ${new Date().toLocaleDateString('en-US')} | Profile: ${getProfileTypeLabel(metadata.profileType)}`, marginLeft + 8, y + 20);
+  pdf.text(`Profile Type: ${getProfileTypeKorean(metadata.profileType)} | Generated: ${new Date().toISOString().slice(0, 10)}`, margin, y + 12);
 
-  drawFooter();
+  drawPageFooter();
 
   const safeTitle = career.title
     .replace(/[^a-zA-Z0-9가-힣\s]/g, '')
     .replace(/\s+/g, '_')
     .substring(0, 20);
-  const fileName = `Konnect_Report_${safeTitle}_${new Date().toISOString().slice(0, 10)}.pdf`;
+  const fileName = `Konnect_Career_Report_${safeTitle}_${new Date().toISOString().slice(0, 10)}.pdf`;
   pdf.save(fileName);
 }
