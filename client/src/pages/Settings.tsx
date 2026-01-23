@@ -437,14 +437,12 @@ export default function Settings() {
                                     </div>
                                 ) : referralInfo ? (
                                     <div className="space-y-4">
-                                        {/* HIDDEN_POINTS_SETTINGS_REWARD_START */}
-                                        {/* <div className="bg-gradient-to-r from-[#10B981]/10 to-[#3182F6]/10 rounded-xl p-4 border border-[#10B981]/20">
+                                        <div className="bg-gradient-to-r from-[#10B981]/10 to-[#3182F6]/10 rounded-xl p-4 border border-[#10B981]/20">
                                             <p className="text-sm text-[#4E5968] mb-2">
                                                 친구를 초대하면 <span className="font-bold text-[#10B981]">{referralInfo.inviterReward}GP</span>를 받고,
                                                 친구도 <span className="font-bold text-[#3182F6]">{referralInfo.inviteeReward}GP</span>를 받습니다!
                                             </p>
-                                        </div> */}
-                                        {/* HIDDEN_POINTS_SETTINGS_REWARD_END */}
+                                        </div>
                                         
                                         <div className="space-y-2">
                                             <Label className="text-[#4E5968] text-sm">나의 추천 링크</Label>
@@ -480,8 +478,7 @@ export default function Settings() {
                                                     {referralInfo.totalReferred}명
                                                 </p>
                                             </div>
-                                            {/* HIDDEN_POINTS_SETTINGS_GP_EARNED_START */}
-                                            {/* <div className="bg-[#10B981]/10 rounded-xl p-4 text-center">
+                                            <div className="bg-[#10B981]/10 rounded-xl p-4 text-center">
                                                 <div className="flex items-center justify-center gap-1 mb-1">
                                                     <Gift className="h-4 w-4 text-[#10B981]" />
                                                     <span className="text-sm text-[#10B981]">받은 GP</span>
@@ -489,8 +486,7 @@ export default function Settings() {
                                                 <p className="text-xl sm:text-2xl font-bold text-[#10B981]" data-testid="text-total-gp-earned">
                                                     {referralInfo.totalGpEarned}GP
                                                 </p>
-                                            </div> */}
-                                            {/* HIDDEN_POINTS_SETTINGS_GP_EARNED_END */}
+                                            </div>
                                         </div>
                                     </div>
                                 ) : (
@@ -660,7 +656,7 @@ export default function Settings() {
                                     <li>저장된 분석 결과</li>
                                     <li>작성한 자기소개서</li>
                                     <li>목표 관리 데이터</li>
-                                    {/* HIDDEN_POINTS_SETTINGS_DELETE_INFO: <li>보유 포인트 및 GP</li> */}
+                                    <li>보유 포인트 및 GP</li>
                                 </ul>
                             </div>
                         </DialogDescription>

@@ -74,23 +74,22 @@ export function Header() {
       <div className="hidden md:block flex-1" />
 
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
-        {/* HIDDEN_POINTS_START - Desktop Points Display */}
-        {/* <div className="hidden md:flex items-center mr-2 bg-white px-4 py-2 rounded-full shadow-sm" data-testid="header-points-display">
+        {/* Desktop Points Display */}
+        <div className="hidden md:flex items-center mr-2 bg-white px-4 py-2 rounded-full shadow-sm" data-testid="header-points-display">
           <span className="text-sm font-bold text-[#10B981]" title="기프트 포인트 (무료)">{giftPoints.toLocaleString()}GP</span>
           <span className="mx-2 text-gray-300">|</span>
           <span className="text-sm font-bold text-[#191F28]" title="유료 포인트">{credits.toLocaleString()}P</span>
-        </div> */}
+        </div>
         {/* Mobile Token Display Compact */}
-        {/* <div className="md:hidden flex items-center bg-white px-2.5 py-1.5 rounded-full shadow-sm" data-testid="header-points-display-mobile">
+        <div className="md:hidden flex items-center bg-white px-2.5 py-1.5 rounded-full shadow-sm" data-testid="header-points-display-mobile">
           <span className="text-xs font-bold text-[#10B981]">{giftPoints.toLocaleString()}GP</span>
           <span className="mx-1.5 text-gray-300">|</span>
           <span className="text-xs font-bold text-[#191F28]">{credits.toLocaleString()}P</span>
-        </div> */}
+        </div>
 
-        {/* <div className="hidden md:block">
+        <div className="hidden md:block">
             <RedeemDialog />
-        </div> */}
-        {/* HIDDEN_POINTS_END */}
+        </div>
 
         <NotificationBell />
         
@@ -111,16 +110,15 @@ export function Header() {
             <DropdownMenuLabel className="px-3 py-2 text-sm font-bold text-[#191F28]">내 계정</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-[#F2F4F6]" />
             
-            {/* Mobile Only Items - HIDDEN_POINTS_MOBILE_START */}
-            {/* <div className="md:hidden">
+            {/* Mobile Only Items */}
+            <div className="md:hidden">
                 <RedeemDialog>
                   <button className="w-full text-left rounded-lg px-3 py-2.5 font-medium cursor-pointer text-[#4E5968] hover:bg-[#F2F4F6] hover:text-[#191F28] text-sm">
                       포인트 충전
                   </button>
                 </RedeemDialog>
                  <DropdownMenuSeparator className="bg-[#F2F4F6]" />
-            </div> */}
-            {/* HIDDEN_POINTS_MOBILE_END */}
+            </div>
 
             <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 text-[#4E5968] focus:bg-[#F2F4F6] focus:text-[#191F28] font-medium cursor-pointer">
               <Link href="/profile">
@@ -132,14 +130,12 @@ export function Header() {
                 환경설정
               </Link>
             </DropdownMenuItem>
-            {/* HIDDEN_POINTS_DROPDOWN_START */}
-            {/* <RedeemDialog>
+            <RedeemDialog>
               <button className="w-full text-left rounded-lg px-3 py-2.5 text-[#4E5968] hover:bg-[#F2F4F6] hover:text-[#191F28] font-medium cursor-pointer text-sm">
                 포인트 충전
               </button>
             </RedeemDialog>
-            <DropdownMenuSeparator className="bg-[#F2F4F6]" /> */}
-            {/* HIDDEN_POINTS_DROPDOWN_END */}
+            <DropdownMenuSeparator className="bg-[#F2F4F6]" />
             <DropdownMenuItem 
               onClick={handleLogout}
               className="rounded-lg px-3 py-2.5 text-[#E44E48] focus:bg-red-50 focus:text-[#E44E48] font-medium cursor-pointer"

@@ -54,7 +54,7 @@ export function Sidebar() {
   ];
 
   const allBottomItems = [
-    // HIDDEN_POINTS_SIDEBAR: { href: "/recharge", slug: "/recharge", icon: Coins, label: "포인트 충전" },
+    { href: "/recharge", slug: "/recharge", icon: Coins, label: "포인트 충전" },
     { href: "/settings", slug: "/settings", icon: Settings, label: "설정" },
     { href: "/admin", slug: "/admin", icon: Shield, label: "관리자", adminOnly: true },
   ];

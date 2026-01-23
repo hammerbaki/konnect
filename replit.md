@@ -35,29 +35,13 @@ The database schema includes `users`, `profiles`, `career_analyses`, `personal_e
 - **In-App Purchase (IAP) System**: Server-side receipt verification for mobile app purchases. Supports Apple App Store (verifyReceipt API with 21007/21008 retry logic) and Google Play Store. Products defined in `IAP_PRODUCTS` constant with point packages (1000P, 3000P+300 bonus, 5000P+700 bonus, 10000P+2000 bonus). Development mode supports `IAP_SKIP_VERIFICATION=true` for testing. Transaction history stored in `iap_transactions` table with idempotency checks.
 - **PDF Report Download**: Client-side PDF generation for career analysis recommendations using jsPDF + html2canvas. Features Konnect branding, "Certified Report" badge, competency analysis, strengths/weaknesses, and action plans. Korean text rendered via html2canvas to work around jsPDF font limitations. No server disk usage - generates on-demand in browser. Located at `client/src/lib/pdfReportGenerator.ts`.
 
-## Temporarily Hidden UI Elements (Points/Tokens)
-The following UI elements have been temporarily hidden and can be restored by uncommenting the marked sections:
-
-### Header.tsx (`client/src/components/layout/Header.tsx`)
-1. **HIDDEN_POINTS_START to HIDDEN_POINTS_END** (lines ~80-96): Desktop and mobile points display (GP/P badges) and RedeemDialog button
-2. **HIDDEN_POINTS_MOBILE_START to HIDDEN_POINTS_MOBILE_END** (lines ~117-126): Mobile dropdown "포인트 충전" button
-3. **HIDDEN_POINTS_DROPDOWN_START to HIDDEN_POINTS_DROPDOWN_END** (lines ~138-145): Desktop dropdown "포인트 충전" button
-
-### Sidebar.tsx (`client/src/components/layout/Sidebar.tsx`)
-1. **HIDDEN_POINTS_SIDEBAR** (line ~43): Sidebar "포인트 충전" navigation item - commented out in allBottomItems array
-
-### Settings.tsx (`client/src/pages/Settings.tsx`)
-1. **HIDDEN_POINTS_SETTINGS_REWARD_START to END** (lines ~443-450): Referral GP reward description box
-2. **HIDDEN_POINTS_SETTINGS_GP_EARNED_START to END** (lines ~486-496): "받은 GP" stats card
-3. **HIDDEN_POINTS_SETTINGS_DELETE_INFO** (line ~666): "보유 포인트 및 GP" in account deletion warning
-
-### Dashboard.tsx (`client/src/pages/Dashboard.tsx`)
-1. **HIDDEN_POINTS_DASHBOARD_START to END** (lines ~210-220): "보유 포인트" card in welcome section
+## Temporarily Hidden UI Elements
+The following UI elements are temporarily hidden and can be restored by uncommenting the marked sections:
 
 ### Analysis.tsx (`client/src/pages/Analysis.tsx`)
 1. **HIDDEN_PDF_BUTTON_START to HIDDEN_PDF_BUTTON_END** (lines ~763-778): PDF report download button - feature incomplete, hidden until ready
 
-To restore: Search for "HIDDEN_POINTS" or "HIDDEN_PDF" and uncomment the marked code blocks.
+To restore: Search for "HIDDEN_PDF" and uncomment the marked code blocks.
 
 ## External Dependencies
 

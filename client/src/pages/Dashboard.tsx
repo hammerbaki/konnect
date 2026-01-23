@@ -209,8 +209,7 @@ export default function Dashboard() {
             </p>
           </div>
           
-          {/* HIDDEN_POINTS_DASHBOARD_START - Credits Display */}
-          {/* <Card className="hidden md:flex toss-card px-5 py-4 items-center gap-3 w-fit">
+          <Card className="hidden md:flex toss-card px-5 py-4 items-center gap-3 w-fit">
             <div className="p-2.5 bg-amber-50 rounded-xl">
               <Coins className="h-5 w-5 text-[#FFB300]" />
             </div>
@@ -218,8 +217,7 @@ export default function Dashboard() {
               <p className="text-sm text-[#8B95A1] font-medium">보유 포인트</p>
               <p className="text-xl font-bold text-[#191F28]">{credits}개</p>
             </div>
-          </Card> */}
-          {/* HIDDEN_POINTS_DASHBOARD_END */}
+          </Card>
         </div>
 
         {/* Quick Actions Grid - Horizontal scroll on small screens */}
