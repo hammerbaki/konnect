@@ -21,6 +21,7 @@ const MiddleSchoolForm = lazy(() => import("@/components/profile/MiddleSchoolFor
 const HighSchoolForm = lazy(() => import("@/components/profile/HighSchoolForm").then(m => ({ default: m.HighSchoolForm })));
 const UniversityForm = lazy(() => import("@/components/profile/UniversityForm").then(m => ({ default: m.UniversityForm })));
 const GeneralForm = lazy(() => import("@/components/profile/GeneralForm").then(m => ({ default: m.GeneralForm })));
+const InternationalStudentForm = lazy(() => import("@/components/profile/InternationalStudentForm").then(m => ({ default: m.InternationalStudentForm })));
 
 const ProfileFormSkeleton = memo(() => (
   <div className="space-y-6 animate-pulse">
@@ -37,6 +38,7 @@ const ProfileFormSkeleton = memo(() => (
 
 const PROFILE_TYPE_OPTIONS = [
   { id: 'general' as ProfileType, label: '구직자' },
+  { id: 'international' as ProfileType, label: '외국인유학생' },
   { id: 'university' as ProfileType, label: '대학생' },
   { id: 'high' as ProfileType, label: '고등학생' },
   { id: 'middle' as ProfileType, label: '중학생' },
@@ -483,6 +485,8 @@ export default function ProfileOptimized() {
         return <HighSchoolForm {...formProps} />;
       case 'university':
         return <UniversityForm {...formProps} />;
+      case 'international':
+        return <InternationalStudentForm {...formProps} />;
       case 'general':
       default:
         return <GeneralForm {...formProps} />;

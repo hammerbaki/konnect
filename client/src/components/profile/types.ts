@@ -1,4 +1,4 @@
-export type ProfileType = "elementary" | "middle" | "high" | "university" | "general";
+export type ProfileType = "elementary" | "middle" | "high" | "university" | "general" | "international";
 
 export type ProfileDataType = {
   type: ProfileType;
@@ -94,6 +94,49 @@ export type ProfileDataType = {
   gen_awards: AwardItem[];
   gen_references: ReferenceItem[];
   gen_educations: EducationItem[];
+  // International Student Profile Fields
+  intl_nationality: string;
+  intl_gender: "male" | "female" | "" | undefined;
+  intl_phone: string;
+  intl_address: string;
+  // Visa Information
+  intl_currentVisaType: string;
+  intl_visaExpiryDate: string;
+  intl_availableWorkType: string;
+  intl_partTimeHoursPerWeek: string;
+  // Job Preference
+  intl_desiredPosition: string;
+  intl_preferredLocation: string;
+  intl_expectedSalary: string;
+  intl_availableStartDate: string;
+  // Education (CRUD)
+  intl_educations: IntlEducationItem[];
+  // Work Experience (CRUD)
+  intl_experienceStatus: string;
+  intl_workExperiences: IntlWorkExperienceItem[];
+  // Language Skills
+  intl_nativeLanguage: string;
+  intl_koreanLevel: string;
+  intl_topikLevel: string;
+  intl_englishLevel: string;
+  intl_englishTestName: string;
+  intl_englishTestScore: string;
+  intl_otherLanguages: string;
+  // Skills & Competencies
+  intl_jobRelatedSkills: string;
+  intl_computerItSkills: string;
+  intl_certificates: string;
+  // Self Introduction
+  intl_reasonForKoreaEmployment: string;
+  intl_strengthsAndPersonality: string;
+  intl_contributionToCompany: string;
+  // Additional Information
+  intl_availableDaysHours: string;
+  intl_specialNotes: string;
+  // Certification
+  intl_certifyTrue: boolean;
+  intl_dateSigned: string;
+  intl_applicantSignatureName: string;
 };
 
 export type WorkExperience = {
@@ -170,6 +213,27 @@ export type EducationItem = {
   dayNight?: "day" | "night";
   region?: string;
   majorCategory?: string;
+};
+
+export type IntlEducationItem = {
+  id: number;
+  schoolName: string;
+  schoolCountry: string;
+  major: string;
+  degree: string;
+  periodStart: string;
+  periodEnd: string;
+  isEnrolled: boolean;
+};
+
+export type IntlWorkExperienceItem = {
+  id: number;
+  companyName: string;
+  companyCountry: string;
+  positionAndRole: string;
+  periodStart: string;
+  periodEnd: string;
+  mainTasksAndAchievements: string;
 };
 
 export const getDefaultProfileData = (type: ProfileType = "general"): ProfileDataType => ({
@@ -266,6 +330,40 @@ export const getDefaultProfileData = (type: ProfileType = "general"): ProfileDat
   gen_awards: [],
   gen_references: [],
   gen_educations: [],
+  // International Student Profile Defaults
+  intl_nationality: "",
+  intl_gender: undefined,
+  intl_phone: "",
+  intl_address: "",
+  intl_currentVisaType: "",
+  intl_visaExpiryDate: "",
+  intl_availableWorkType: "",
+  intl_partTimeHoursPerWeek: "",
+  intl_desiredPosition: "",
+  intl_preferredLocation: "",
+  intl_expectedSalary: "",
+  intl_availableStartDate: "",
+  intl_educations: [],
+  intl_experienceStatus: "",
+  intl_workExperiences: [],
+  intl_nativeLanguage: "",
+  intl_koreanLevel: "",
+  intl_topikLevel: "",
+  intl_englishLevel: "",
+  intl_englishTestName: "",
+  intl_englishTestScore: "",
+  intl_otherLanguages: "",
+  intl_jobRelatedSkills: "",
+  intl_computerItSkills: "",
+  intl_certificates: "",
+  intl_reasonForKoreaEmployment: "",
+  intl_strengthsAndPersonality: "",
+  intl_contributionToCompany: "",
+  intl_availableDaysHours: "",
+  intl_specialNotes: "",
+  intl_certifyTrue: false,
+  intl_dateSigned: "",
+  intl_applicantSignatureName: "",
 });
 
 export interface ProfileFormProps {
