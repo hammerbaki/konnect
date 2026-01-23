@@ -133,7 +133,7 @@ const profileTypeColors: Record<string, string> = {
 };
 
 const profileTypeLabels: Record<string, string> = {
-    general: '일반 (직장인)',
+    general: '구직자',
     international: '외국인유학생',
     university: '대학생',
     high: '고등학생',
