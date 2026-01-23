@@ -158,7 +158,31 @@ const BasicInfoCard = memo(({
           </ResponsiveModal>
         </div>
         
-        <div className="space-y-1.5 sm:col-span-2 lg:col-span-3 xl:col-span-1">
+        <div className="space-y-1.5">
+          <Label className="text-xs text-[#8B95A1] font-medium">성별</Label>
+          <div className="flex gap-1 h-11 items-center">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className={`h-8 px-3 rounded-lg text-xs ${profileData.basic_gender === 'male' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'border-[#E5E8EB] text-[#8B95A1]'}`}
+              onClick={() => updateField('basic_gender', 'male')}
+            >
+              남성
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className={`h-8 px-3 rounded-lg text-xs ${profileData.basic_gender === 'female' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'border-[#E5E8EB] text-[#8B95A1]'}`}
+              onClick={() => updateField('basic_gender', 'female')}
+            >
+              여성
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      <div className="mt-4 pt-4 border-t border-[#F2F4F6]">
+        <div className="space-y-1.5">
           <Label className="text-xs text-[#8B95A1] font-medium">한줄소개</Label>
           <Input 
             value={profileData.basic_bio}
@@ -167,32 +191,6 @@ const BasicInfoCard = memo(({
             className="h-11 rounded-xl bg-[#F9FAFB] border-[#E5E8EB] focus:border-[#3182F6] focus:ring-2 focus:ring-blue-100"
             data-testid="input-basic-bio"
           />
-        </div>
-      </div>
-      
-      <div className="mt-4 pt-4 border-t border-[#F2F4F6]">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Label className="text-xs text-[#8B95A1] font-medium">성별</Label>
-            <div className="flex gap-1">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className={`h-8 px-3 rounded-lg text-xs ${profileData.basic_gender === 'male' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'border-[#E5E8EB] text-[#8B95A1]'}`}
-                onClick={() => updateField('basic_gender', 'male')}
-              >
-                남성
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className={`h-8 px-3 rounded-lg text-xs ${profileData.basic_gender === 'female' ? 'bg-blue-50 border-[#3182F6] text-[#3182F6] font-bold' : 'border-[#E5E8EB] text-[#8B95A1]'}`}
-                onClick={() => updateField('basic_gender', 'female')}
-              >
-                여성
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
     </CardContent>
