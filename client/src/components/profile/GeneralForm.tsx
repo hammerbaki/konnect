@@ -12,9 +12,9 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "@
 import { 
   Briefcase, BrainCircuit, TrendingUp, Sparkles, PenTool, DollarSign, Smile, Shield, Zap, 
   Armchair, HardHat, AlertTriangle, Plus, Trash2, X, Check, Search, Calendar as CalendarIcon,
-  Languages, Award, BadgeCheck, Users, Edit2
+  Languages, Award, BadgeCheck, Users, Edit2, GraduationCap
 } from "lucide-react";
-import { ProfileFormProps, LanguageTest, LicenseItem, AwardItem, ReferenceItem } from './types';
+import { ProfileFormProps, LanguageTest, LicenseItem, AwardItem, ReferenceItem, EducationItem } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { format } from 'date-fns';
@@ -119,6 +119,41 @@ const REFERENCE_RELATION_OPTIONS = [
   { value: "other", label: "기타" },
 ];
 
+const EDUCATION_LEVEL_OPTIONS = [
+  { value: "elementary", label: "초등학교 졸업" },
+  { value: "middle", label: "중학교 졸업" },
+  { value: "high", label: "고등학교 졸업" },
+  { value: "university", label: "대학·대학원 이상 졸업" },
+  { value: "other", label: "기타 학력" },
+];
+
+const GRADUATION_STATUS_OPTIONS = [
+  { value: "graduated", label: "졸업" },
+  { value: "enrolled", label: "재학" },
+  { value: "expected", label: "졸업예정" },
+  { value: "dropped", label: "중퇴" },
+  { value: "leave", label: "휴학" },
+];
+
+const UNIVERSITY_TYPE_OPTIONS = [
+  { value: "2year", label: "전문대 (2~3년제)" },
+  { value: "4year", label: "대학교 (4년제)" },
+  { value: "graduate", label: "대학원" },
+  { value: "abroad", label: "해외대학" },
+];
+
+const MAJOR_CATEGORY_OPTIONS = [
+  { value: "humanities", label: "인문계열" },
+  { value: "social", label: "사회계열" },
+  { value: "business", label: "상경계열" },
+  { value: "engineering", label: "공학계열" },
+  { value: "science", label: "자연계열" },
+  { value: "medical", label: "의약계열" },
+  { value: "art", label: "예체능계열" },
+  { value: "education", label: "교육계열" },
+  { value: "other", label: "기타" },
+];
+
 const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateField }) => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -149,6 +184,13 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
   const [editingReferenceId, setEditingReferenceId] = useState<number | null>(null);
   const [referenceForm, setReferenceForm] = useState<Omit<ReferenceItem, 'id'>>({
     relation: 'professor', name: '', organization: '', phone: '', email: '', note: ''
+  });
+
+  const [showEducationDialog, setShowEducationDialog] = useState(false);
+  const [editingEducationId, setEditingEducationId] = useState<number | null>(null);
+  const [educationForm, setEducationForm] = useState<Omit<EducationItem, 'id'>>({
+    educationLevel: 'university', schoolName: '', graduationStatus: 'graduated', entranceDate: '', graduationDate: '', 
+    isGed: false, isTransfer: false, universityType: '4year', major: '', subMajor: '', gpa: '', gpaScale: '4.5', dayNight: 'day', region: '', majorCategory: ''
   });
 
   const addWorkExperience = useCallback(() => {
@@ -344,6 +386,48 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
     updateField('gen_references', (profileData.gen_references || []).filter(r => r.id !== id));
     toast({ title: "추천인이 삭제되었습니다", duration: 2000 });
   }, [profileData.gen_references, updateField, toast]);
+
+  const resetEducationForm = useCallback(() => {
+    setEducationForm({
+      educationLevel: 'university', schoolName: '', graduationStatus: 'graduated', entranceDate: '', graduationDate: '',
+      isGed: false, isTransfer: false, universityType: '4year', major: '', subMajor: '', gpa: '', gpaScale: '4.5', dayNight: 'day', region: '', majorCategory: ''
+    });
+    setEditingEducationId(null);
+  }, []);
+
+  const addOrUpdateEducation = useCallback(() => {
+    if (!educationForm.schoolName || !educationForm.graduationStatus) {
+      toast({ title: "필수 항목을 입력해주세요", description: "학교명과 졸업여부는 필수입니다.", variant: "destructive", duration: 3000 });
+      return;
+    }
+    const edus = profileData.gen_educations || [];
+    if (editingEducationId !== null) {
+      updateField('gen_educations', edus.map(e => e.id === editingEducationId ? { ...educationForm, id: editingEducationId } : e));
+      toast({ title: "학력 정보가 수정되었습니다", duration: 2000 });
+    } else {
+      updateField('gen_educations', [...edus, { ...educationForm, id: Date.now() }]);
+      toast({ title: "학력이 추가되었습니다", duration: 2000 });
+    }
+    resetEducationForm();
+    setShowEducationDialog(false);
+  }, [educationForm, editingEducationId, profileData.gen_educations, updateField, toast, resetEducationForm]);
+
+  const editEducation = useCallback((item: EducationItem) => {
+    setEducationForm({
+      educationLevel: item.educationLevel, schoolName: item.schoolName, graduationStatus: item.graduationStatus, 
+      entranceDate: item.entranceDate, graduationDate: item.graduationDate || '',
+      isGed: item.isGed || false, isTransfer: item.isTransfer || false, universityType: item.universityType || '4year', 
+      major: item.major || '', subMajor: item.subMajor || '', gpa: item.gpa || '', gpaScale: item.gpaScale || '4.5', 
+      dayNight: item.dayNight || 'day', region: item.region || '', majorCategory: item.majorCategory || ''
+    });
+    setEditingEducationId(item.id);
+    setShowEducationDialog(true);
+  }, []);
+
+  const deleteEducation = useCallback((id: number) => {
+    updateField('gen_educations', (profileData.gen_educations || []).filter(e => e.id !== id));
+    toast({ title: "학력이 삭제되었습니다", duration: 2000 });
+  }, [profileData.gen_educations, updateField, toast]);
 
   const SalaryPickerContent = () => {
     if (isMobile) {
@@ -836,6 +920,58 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
       <Card className="toss-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
+            <GraduationCap className="h-5 w-5 text-[#6366F1]" /> 학력
+          </CardTitle>
+          <CardDescription>최종 학력 및 학력 사항을 입력하세요</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(profileData.gen_educations || []).map((item) => (
+            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-education-${item.id}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#191F28]" data-testid={`text-education-school-${item.id}`}>{item.schoolName}</h4>
+                    <Badge variant="outline" className="text-xs border-indigo-400 text-indigo-600" data-testid={`badge-education-level-${item.id}`}>
+                      {EDUCATION_LEVEL_OPTIONS.find(o => o.value === item.educationLevel)?.label}
+                    </Badge>
+                    <Badge variant="outline" className={`text-xs ${item.graduationStatus === 'graduated' ? 'border-green-400 text-green-600' : item.graduationStatus === 'enrolled' ? 'border-blue-400 text-blue-600' : 'border-amber-400 text-amber-600'}`} data-testid={`badge-education-status-${item.id}`}>
+                      {GRADUATION_STATUS_OPTIONS.find(o => o.value === item.graduationStatus)?.label}
+                    </Badge>
+                  </div>
+                  {item.major && <p className="text-[#4E5968] text-sm" data-testid={`text-education-major-${item.id}`}>{item.major}{item.subMajor ? ` / ${item.subMajor}` : ''}</p>}
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editEducation(item)} data-testid={`button-edit-education-${item.id}`}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteEducation(item.id)} data-testid={`button-delete-education-${item.id}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-[#8B95A1]">
+                {item.entranceDate && <span data-testid={`text-education-entrance-${item.id}`}>입학: {item.entranceDate}</span>}
+                {item.graduationDate && <span data-testid={`text-education-graduation-${item.id}`}>• 졸업: {item.graduationDate}</span>}
+                {item.gpa && <span data-testid={`text-education-gpa-${item.id}`}>• 학점: {item.gpa}/{item.gpaScale || '4.5'}</span>}
+                {item.isTransfer && <Badge variant="secondary" className="text-xs" data-testid={`badge-education-transfer-${item.id}`}>편입</Badge>}
+                {item.isGed && <Badge variant="secondary" className="text-xs" data-testid={`badge-education-ged-${item.id}`}>검정고시</Badge>}
+              </div>
+            </div>
+          ))}
+          <Button 
+            type="button" variant="outline" 
+            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+            onClick={(e) => { e.preventDefault(); resetEducationForm(); setShowEducationDialog(true); }}
+            data-testid="button-add-education"
+          >
+            <Plus className="h-5 w-5 mr-2" /> 학력 추가하기
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="toss-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Languages className="h-5 w-5 text-[#10B981]" /> 어학(외국어) 시험/역량
           </CardTitle>
           <CardDescription>보유한 어학 점수 및 역량을 입력하세요</CardDescription>
@@ -1320,6 +1456,146 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1 h-12 rounded-xl border-[#E5E8EB]" onClick={() => { resetReferenceForm(); setShowReferenceDialog(false); }} data-testid="button-cancel-reference">취소</Button>
             <Button className="flex-1 h-12 rounded-xl bg-[#3182F6] font-bold" onClick={addOrUpdateReference} data-testid="button-submit-reference">{editingReferenceId ? '수정하기' : '추가하기'}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showEducationDialog} onOpenChange={(open) => { if (!open) resetEducationForm(); setShowEducationDialog(open); }}>
+        <DialogContent className="sm:max-w-lg rounded-[24px] bg-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#191F28]">{editingEducationId ? '학력 수정' : '학력 추가'}</DialogTitle>
+            <DialogDescription className="text-sm text-[#8B95A1]">학력 정보를 입력하세요.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>학력 구분 *</Label>
+              <Select value={educationForm.educationLevel} onValueChange={(val) => setEducationForm({...educationForm, educationLevel: val as EducationItem['educationLevel']})}>
+                <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-education-level"><SelectValue placeholder="학력 구분 선택" /></SelectTrigger>
+                <SelectContent>
+                  {EDUCATION_LEVEL_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {educationForm.educationLevel === 'university' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>대학구분 *</Label>
+                  <Select value={educationForm.universityType || '4year'} onValueChange={(val) => setEducationForm({...educationForm, universityType: val as EducationItem['universityType']})}>
+                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-education-university-type"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {UNIVERSITY_TYPE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>전공계열</Label>
+                  <Select value={educationForm.majorCategory || ''} onValueChange={(val) => setEducationForm({...educationForm, majorCategory: val})}>
+                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-education-major-category"><SelectValue placeholder="선택" /></SelectTrigger>
+                    <SelectContent>
+                      {MAJOR_CATEGORY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>학교명 *</Label>
+                <Input placeholder="학교명 입력" value={educationForm.schoolName} onChange={(e) => setEducationForm({...educationForm, schoolName: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-education-school" />
+              </div>
+              <div className="space-y-2">
+                <Label>졸업여부 *</Label>
+                <Select value={educationForm.graduationStatus} onValueChange={(val) => setEducationForm({...educationForm, graduationStatus: val as EducationItem['graduationStatus']})}>
+                  <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-education-graduation-status"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {GRADUATION_STATUS_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {(educationForm.educationLevel === 'university' || educationForm.educationLevel === 'high') && (
+              <div className="flex items-center gap-4">
+                {educationForm.educationLevel === 'high' && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="edu-ged" checked={educationForm.isGed || false} onCheckedChange={(checked) => setEducationForm({...educationForm, isGed: checked as boolean})} data-testid="checkbox-education-ged" />
+                    <label htmlFor="edu-ged" className="text-sm font-medium leading-none">대입 검정고시</label>
+                  </div>
+                )}
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="edu-transfer" checked={educationForm.isTransfer || false} onCheckedChange={(checked) => setEducationForm({...educationForm, isTransfer: checked as boolean})} data-testid="checkbox-education-transfer" />
+                  <label htmlFor="edu-transfer" className="text-sm font-medium leading-none">편입</label>
+                </div>
+              </div>
+            )}
+
+            {educationForm.educationLevel === 'university' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>전공 *</Label>
+                  <Input placeholder="예: 경영학과" value={educationForm.major || ''} onChange={(e) => setEducationForm({...educationForm, major: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-education-major" />
+                </div>
+                <div className="space-y-2">
+                  <Label>추가전공</Label>
+                  <Input placeholder="복수/부전공" value={educationForm.subMajor || ''} onChange={(e) => setEducationForm({...educationForm, subMajor: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-education-sub-major" />
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>입학년월</Label>
+                <Input type="month" value={educationForm.entranceDate} onChange={(e) => setEducationForm({...educationForm, entranceDate: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-education-entrance" />
+              </div>
+              <div className="space-y-2">
+                <Label>졸업년월</Label>
+                <Input type="month" value={educationForm.graduationDate || ''} onChange={(e) => setEducationForm({...educationForm, graduationDate: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-education-graduation" />
+              </div>
+            </div>
+
+            {educationForm.educationLevel === 'university' && (
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-2">
+                  <Label>학점</Label>
+                  <Input placeholder="예: 3.8" value={educationForm.gpa || ''} onChange={(e) => setEducationForm({...educationForm, gpa: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-education-gpa" />
+                </div>
+                <div className="space-y-2">
+                  <Label>만점기준</Label>
+                  <Select value={educationForm.gpaScale || '4.5'} onValueChange={(val) => setEducationForm({...educationForm, gpaScale: val})}>
+                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-education-gpa-scale"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="4.5">4.5</SelectItem>
+                      <SelectItem value="4.3">4.3</SelectItem>
+                      <SelectItem value="4.0">4.0</SelectItem>
+                      <SelectItem value="100">100점</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>주/야간</Label>
+                  <Select value={educationForm.dayNight || 'day'} onValueChange={(val) => setEducationForm({...educationForm, dayNight: val as 'day' | 'night'})}>
+                    <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-education-day-night"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="day">주간</SelectItem>
+                      <SelectItem value="night">야간</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {educationForm.educationLevel === 'university' && (
+              <div className="space-y-2">
+                <Label>지역</Label>
+                <Input placeholder="예: 서울" value={educationForm.region || ''} onChange={(e) => setEducationForm({...educationForm, region: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-education-region" />
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1 h-12 rounded-xl border-[#E5E8EB]" onClick={() => { resetEducationForm(); setShowEducationDialog(false); }} data-testid="button-cancel-education">취소</Button>
+            <Button className="flex-1 h-12 rounded-xl bg-[#3182F6] font-bold" onClick={addOrUpdateEducation} data-testid="button-submit-education">{editingEducationId ? '수정하기' : '추가하기'}</Button>
           </div>
         </DialogContent>
       </Dialog>
