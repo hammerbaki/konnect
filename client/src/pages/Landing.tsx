@@ -49,11 +49,11 @@ export default function Landing() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0D1117]">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <Skeleton className="h-16 w-16 rounded-[22px] mx-auto mb-6 bg-white/10" />
-          <Skeleton className="h-9 w-32 mx-auto mb-2 bg-white/10" />
-          <Skeleton className="h-5 w-48 mx-auto bg-white/10" />
+          <Skeleton className="h-16 w-16 rounded-[22px] mx-auto mb-6 bg-gray-200" />
+          <Skeleton className="h-9 w-32 mx-auto mb-2 bg-gray-200" />
+          <Skeleton className="h-5 w-48 mx-auto bg-gray-200" />
         </div>
       </div>
     );
@@ -128,11 +128,11 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D1117] font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-white font-sans overflow-x-hidden">
       {/* Hero Section */}
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0D1117] via-[#161B22] to-[#0D1117]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-[#F8FAFC] to-white" />
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-bl from-[#3182F6]/20 to-transparent rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3" />
         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-violet-600/20 to-transparent rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3" />
         <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2" />
@@ -177,7 +177,7 @@ export default function Landing() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.5 }}
             >
-              <div className="inline-block p-4 backdrop-blur-md rounded-2xl border border-white/20 shadow-[0_0_40px_rgba(49,130,246,0.3)] bg-[#ffffff0d]">
+              <div className="inline-block p-4 backdrop-blur-md rounded-2xl border border-gray-200 shadow-[0_0_40px_rgba(49,130,246,0.2)] bg-white">
                 <img
                   src="/konnect-logo.png"
                   alt="Konnect"
@@ -189,20 +189,20 @@ export default function Landing() {
 
             {/* Badge */}
             <motion.div
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full border border-white/10 mb-8"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 backdrop-blur-sm rounded-full border border-gray-200 mb-8"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
             >
               <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-sm font-medium text-white/80">
-                가입 시 <span className="text-amber-400 font-bold">1,000P</span>{" "}
+              <span className="text-sm font-medium text-gray-700">
+                가입 시 <span className="text-amber-500 font-bold">1,000P</span>{" "}
                 무료 지급
               </span>
             </motion.div>
 
             {/* Main Headline */}
-            <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold text-[#191F28] leading-tight mb-6">
               진로 고민,
               <br />
               <span className="bg-gradient-to-r from-[#3182F6] via-cyan-400 to-violet-400 bg-clip-text text-transparent">
@@ -211,7 +211,7 @@ export default function Landing() {
             </h1>
 
             {/* Subheadline */}
-            <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-8 leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mb-8 leading-relaxed">
               빠르고 정밀한 맞춤형 커리어 분석
               <br className="md:hidden" />
               <span className="hidden md:inline"> · </span>
@@ -225,16 +225,16 @@ export default function Landing() {
               {targetAudiences.map((audience, idx) => (
                 <motion.div
                   key={idx}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm rounded-full border border-white/10"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-50 backdrop-blur-sm rounded-full border border-gray-200"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 + idx * 0.1 }}
                 >
                   <audience.icon className="w-4 h-4 text-[#3182F6]" />
-                  <span className="text-sm font-medium text-white/80">
+                  <span className="text-sm font-medium text-gray-700">
                     {audience.label}
                   </span>
-                  <span className="text-xs text-white/50">{audience.desc}</span>
+                  <span className="text-xs text-gray-500">{audience.desc}</span>
                 </motion.div>
               ))}
             </div>
@@ -256,7 +256,7 @@ export default function Landing() {
               </Button>
               <Button
                 variant="outline"
-                className="w-full sm:w-auto h-14 px-8 text-lg rounded-2xl border-2 border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/30 text-white transition-all"
+                className="w-full sm:w-auto h-14 px-8 text-lg rounded-2xl border-2 border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 text-gray-700 transition-all"
                 onClick={scrollToFeatures}
                 data-testid="button-learn-more"
               >
@@ -267,7 +267,7 @@ export default function Landing() {
 
             {/* Trust Indicators */}
             <motion.div
-              className="flex flex-wrap justify-center items-center gap-6 text-sm text-white/50"
+              className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-500"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
@@ -288,18 +288,18 @@ export default function Landing() {
 
             {/* Company Credit */}
             <motion.div
-              className="mt-10 pt-8 border-t border-white/10"
+              className="mt-10 pt-8 border-t border-gray-200"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
             >
-              <p className="text-sm text-white/40">
+              <p className="text-sm text-gray-400">
                 대한민국 AI 고용·취업 대표기업{" "}
                 <a
                   href="https://kjobs.co.kr/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/70 font-semibold hover:text-[#3182F6] transition-colors underline underline-offset-2"
+                  className="text-gray-600 font-semibold hover:text-[#3182F6] transition-colors underline underline-offset-2"
                 >
                   케이잡스
                 </a>
@@ -314,12 +314,12 @@ export default function Landing() {
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <ChevronDown className="w-8 h-8 text-white/30" />
+            <ChevronDown className="w-8 h-8 text-gray-300" />
           </motion.div>
         </div>
       </section>
       {/* Problem Agitation Section */}
-      <section className="py-20 bg-[#161B22]">
+      <section className="py-20 bg-[#F8FAFC]">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -327,7 +327,7 @@ export default function Landing() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-[#191F28] mb-6">
               이런 고민, 혼자 하고 계신가요?
             </h2>
             <div className="grid md:grid-cols-3 gap-6 mt-10">
@@ -341,14 +341,14 @@ export default function Landing() {
               ].map((item, idx) => (
                 <motion.div
                   key={idx}
-                  className="p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10"
+                  className="p-6 bg-white backdrop-blur-sm rounded-2xl border border-gray-200 shadow-sm"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1 }}
                 >
                   <div className="text-4xl mb-4">{item.emoji}</div>
-                  <p className="text-white/80 font-medium">{item.text}</p>
+                  <p className="text-gray-700 font-medium">{item.text}</p>
                 </motion.div>
               ))}
             </div>
@@ -365,7 +365,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Features Section */}
-      <section ref={featuresRef} className="py-24 bg-[#0D1117]">
+      <section ref={featuresRef} className="py-24 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <motion.div
             className="text-center mb-16"
@@ -373,10 +373,10 @@ export default function Landing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#191F28] mb-4">
               핵심 기능
             </h2>
-            <p className="text-lg text-white/50">
+            <p className="text-lg text-gray-500">
               AI가 당신의 커리어 전문 컨설턴트가 됩니다
             </p>
           </motion.div>
@@ -385,7 +385,7 @@ export default function Landing() {
             {features.map((feature, idx) => (
               <motion.div
                 key={idx}
-                className="relative p-8 rounded-3xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all hover:-translate-y-1"
+                className="relative p-8 rounded-3xl bg-white backdrop-blur-sm border border-gray-200 hover:border-gray-300 transition-all hover:-translate-y-1 shadow-sm hover:shadow-md"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -396,10 +396,10 @@ export default function Landing() {
                 >
                   <feature.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">
+                <h3 className="text-xl font-bold text-[#191F28] mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-white/60 leading-relaxed">
+                <p className="text-gray-500 leading-relaxed">
                   {feature.description}
                 </p>
               </motion.div>
@@ -431,7 +431,7 @@ export default function Landing() {
         </div>
       </section>
       {/* How It Works */}
-      <section className="py-24 bg-[#161B22]">
+      <section className="py-24 bg-[#F8FAFC]">
         <div className="max-w-6xl mx-auto px-4">
           <motion.div
             className="text-center mb-16"
@@ -439,10 +439,10 @@ export default function Landing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#191F28] mb-4">
               시작은 간단합니다
             </h2>
-            <p className="text-lg text-white/50">
+            <p className="text-lg text-gray-500">
               3단계로 나만의 커리어 로드맵을 받아보세요
             </p>
           </motion.div>
@@ -476,7 +476,7 @@ export default function Landing() {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.15 }}
               >
-                <div className="bg-white/5 backdrop-blur-sm p-8 rounded-2xl border border-white/10 h-full">
+                <div className="bg-white backdrop-blur-sm p-8 rounded-2xl border border-gray-200 shadow-sm h-full">
                   <div
                     className={`text-5xl font-bold bg-gradient-to-r ${
                       item.color === "blue"
@@ -488,13 +488,13 @@ export default function Landing() {
                   >
                     {item.step}
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">
+                  <h3 className="text-xl font-bold text-[#191F28] mb-2">
                     {item.title}
                   </h3>
-                  <p className="text-white/60">{item.desc}</p>
+                  <p className="text-gray-500">{item.desc}</p>
                 </div>
                 {idx < 2 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-white/30">
+                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-gray-300">
                     <ArrowRight className="w-8 h-8" />
                   </div>
                 )}
@@ -504,7 +504,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Testimonials */}
-      <section className="py-24 bg-[#0D1117]">
+      <section className="py-24 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <motion.div
             className="text-center mb-16"
@@ -512,10 +512,10 @@ export default function Landing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#191F28] mb-4">
               실제 사용자 후기
             </h2>
-            <p className="text-lg text-white/50">
+            <p className="text-lg text-gray-500">
               Konnect와 함께 커리어를 설계한 분들의 이야기
             </p>
           </motion.div>
@@ -524,7 +524,7 @@ export default function Landing() {
             {testimonials.map((testimonial, idx) => (
               <motion.div
                 key={idx}
-                className="bg-white/5 backdrop-blur-sm p-8 rounded-2xl border border-white/10"
+                className="bg-white backdrop-blur-sm p-8 rounded-2xl border border-gray-200 shadow-sm"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -538,16 +538,16 @@ export default function Landing() {
                     />
                   ))}
                 </div>
-                <p className="text-white/70 mb-6 leading-relaxed">
+                <p className="text-gray-600 mb-6 leading-relaxed">
                   "{testimonial.content}"
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="text-3xl">{testimonial.avatar}</div>
                   <div>
-                    <div className="font-semibold text-white">
+                    <div className="font-semibold text-[#191F28]">
                       {testimonial.name}
                     </div>
-                    <div className="text-sm text-white/50">
+                    <div className="text-sm text-gray-500">
                       {testimonial.role}
                     </div>
                   </div>
@@ -558,10 +558,10 @@ export default function Landing() {
         </div>
       </section>
       {/* Final CTA Section */}
-      <section className="py-24 bg-gradient-to-br from-[#161B22] to-[#0D1117] relative overflow-hidden">
+      <section className="py-24 bg-gradient-to-br from-[#F0F9FF] to-[#E0F2FE] relative overflow-hidden">
         <div className="absolute inset-0 opacity-50">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#3182F6]/30 to-transparent rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-violet-600/30 to-transparent rounded-full blur-3xl" />
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#3182F6]/20 to-transparent rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-violet-400/20 to-transparent rounded-full blur-3xl" />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
@@ -570,20 +570,20 @@ export default function Landing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 mb-8">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-sm font-medium text-white/90">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white backdrop-blur-sm rounded-full border border-gray-200 shadow-sm mb-8">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span className="text-sm font-medium text-gray-700">
                 지금 가입하면 1,000P 무료 지급
               </span>
             </div>
 
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+            <h2 className="text-3xl md:text-5xl font-bold text-[#191F28] mb-6">
               당신의 커리어,
               <br />
               지금 바로 시작하세요
             </h2>
 
-            <p className="text-lg text-white/60 mb-10 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-500 mb-10 max-w-2xl mx-auto">
               더 이상 혼자 고민하지 마세요.
               <br />
               AI 커리어 컨설턴트가 24시간 함께합니다.
@@ -601,27 +601,27 @@ export default function Landing() {
         </div>
       </section>
       {/* Footer */}
-      <footer className="py-12 bg-[#0D1117] border-t border-white/10">
+      <footer className="py-12 bg-white border-t border-gray-200">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
               <img
                 src="/konnect-logo.png"
                 alt="Konnect"
-                className="h-8 w-auto brightness-0 invert opacity-80"
+                className="h-8 w-auto opacity-80"
               />
             </div>
-            <div className="flex items-center gap-6 text-sm text-white/40">
+            <div className="flex items-center gap-6 text-sm text-gray-500">
               <Link
                 href="/privacy"
-                className="hover:text-white/60 transition-colors"
+                className="hover:text-gray-700 transition-colors"
                 data-testid="link-privacy"
               >
                 개인정보처리방침
               </Link>
               <Link
                 href="/terms"
-                className="hover:text-white/60 transition-colors"
+                className="hover:text-gray-700 transition-colors"
                 data-testid="link-terms"
               >
                 이용약관
@@ -630,13 +630,13 @@ export default function Landing() {
                 href="https://kjobs.co.kr/qna"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-white/60 transition-colors"
+                className="hover:text-gray-700 transition-colors"
                 data-testid="link-support"
               >
                 고객센터
               </a>
             </div>
-            <p className="text-sm text-white/30">
+            <p className="text-sm text-gray-400">
               &copy; 2025 Konnect.careers. All rights reserved.
             </p>
           </div>
