@@ -93,6 +93,7 @@ export type ProfileDataType = {
   gen_licenses: LicenseItem[];
   gen_awards: AwardItem[];
   gen_references: ReferenceItem[];
+  gen_educations: EducationItem[];
 };
 
 export type WorkExperience = {
@@ -150,6 +151,25 @@ export type ReferenceItem = {
   phone: string;
   email?: string;
   note?: string;
+};
+
+export type EducationItem = {
+  id: number;
+  educationLevel: "elementary" | "middle" | "high" | "university" | "other";
+  schoolName: string;
+  graduationStatus: "graduated" | "enrolled" | "expected" | "dropped" | "leave";
+  entranceDate: string;
+  graduationDate?: string;
+  isGed?: boolean;
+  isTransfer?: boolean;
+  universityType?: "2year" | "4year" | "graduate" | "abroad";
+  major?: string;
+  subMajor?: string;
+  gpa?: string;
+  gpaScale?: string;
+  dayNight?: "day" | "night";
+  region?: string;
+  majorCategory?: string;
 };
 
 export const getDefaultProfileData = (type: ProfileType = "general"): ProfileDataType => ({
@@ -245,6 +265,7 @@ export const getDefaultProfileData = (type: ProfileType = "general"): ProfileDat
   gen_licenses: [],
   gen_awards: [],
   gen_references: [],
+  gen_educations: [],
 });
 
 export interface ProfileFormProps {
