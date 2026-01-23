@@ -583,6 +583,200 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
       <Card className="toss-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
+            <GraduationCap className="h-5 w-5 text-[#6366F1]" /> 학력
+          </CardTitle>
+          <CardDescription>최종 학력 및 학력 사항을 입력하세요</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(profileData.gen_educations || []).map((item) => (
+            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-education-${item.id}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#191F28]" data-testid={`text-education-school-${item.id}`}>{item.schoolName}</h4>
+                    <Badge variant="outline" className="text-xs border-indigo-400 text-indigo-600" data-testid={`badge-education-level-${item.id}`}>
+                      {EDUCATION_LEVEL_OPTIONS.find(o => o.value === item.educationLevel)?.label}
+                    </Badge>
+                    <Badge variant="outline" className={`text-xs ${item.graduationStatus === 'graduated' ? 'border-green-400 text-green-600' : item.graduationStatus === 'enrolled' ? 'border-blue-400 text-blue-600' : 'border-amber-400 text-amber-600'}`} data-testid={`badge-education-status-${item.id}`}>
+                      {GRADUATION_STATUS_OPTIONS.find(o => o.value === item.graduationStatus)?.label}
+                    </Badge>
+                  </div>
+                  {item.major && <p className="text-[#4E5968] text-sm" data-testid={`text-education-major-${item.id}`}>{item.major}{item.subMajor ? ` / ${item.subMajor}` : ''}</p>}
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editEducation(item)} data-testid={`button-edit-education-${item.id}`}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteEducation(item.id)} data-testid={`button-delete-education-${item.id}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-[#8B95A1]">
+                {item.entranceDate && <span data-testid={`text-education-entrance-${item.id}`}>입학: {item.entranceDate}</span>}
+                {item.graduationDate && <span data-testid={`text-education-graduation-${item.id}`}>• 졸업: {item.graduationDate}</span>}
+                {item.gpa && <span data-testid={`text-education-gpa-${item.id}`}>• 학점: {item.gpa}/{item.gpaScale || '4.5'}</span>}
+                {item.isTransfer && <Badge variant="secondary" className="text-xs" data-testid={`badge-education-transfer-${item.id}`}>편입</Badge>}
+                {item.isGed && <Badge variant="secondary" className="text-xs" data-testid={`badge-education-ged-${item.id}`}>검정고시</Badge>}
+              </div>
+            </div>
+          ))}
+          <Button 
+            type="button" variant="outline" 
+            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+            onClick={(e) => { e.preventDefault(); resetEducationForm(); setShowEducationDialog(true); }}
+            data-testid="button-add-education"
+          >
+            <Plus className="h-5 w-5 mr-2" /> 학력 추가하기
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="toss-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Languages className="h-5 w-5 text-[#10B981]" /> 어학(외국어) 시험/역량
+          </CardTitle>
+          <CardDescription>보유한 어학 점수 및 역량을 입력하세요</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(profileData.gen_languageTests || []).map((item) => (
+            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-language-${item.id}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#191F28]" data-testid={`text-language-exam-${item.id}`}>{LANGUAGE_EXAM_OPTIONS.find(o => o.value === item.examName)?.label || item.examName}</h4>
+                    {item.isPending && <Badge variant="outline" className="text-xs border-amber-400 text-amber-600" data-testid={`badge-language-pending-${item.id}`}>준비중</Badge>}
+                  </div>
+                  {!item.isPending && (
+                    <p className="text-[#4E5968] font-medium" data-testid={`text-language-score-${item.id}`}>{item.scoreType === 'grade' ? '등급' : '점수'}: {item.scoreValue}</p>
+                  )}
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editLanguageTest(item)} data-testid={`button-edit-language-${item.id}`}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteLanguageTest(item.id)} data-testid={`button-delete-language-${item.id}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
+                {item.acquiredDate && <span data-testid={`text-language-acquired-${item.id}`}>취득일: {item.acquiredDate}</span>}
+                {item.expiryDate && <span data-testid={`text-language-expiry-${item.id}`}>• 만료일: {item.expiryDate}</span>}
+              </div>
+              {item.note && <p className="text-sm text-[#8B95A1]" data-testid={`text-language-note-${item.id}`}>{item.note}</p>}
+            </div>
+          ))}
+          <Button 
+            type="button" variant="outline" 
+            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+            onClick={(e) => { e.preventDefault(); resetLanguageTestForm(); setShowLanguageTestDialog(true); }}
+            data-testid="button-add-language"
+          >
+            <Plus className="h-5 w-5 mr-2" /> 어학 시험 추가하기
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="toss-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <BadgeCheck className="h-5 w-5 text-[#F59E0B]" /> 자격증/면허
+          </CardTitle>
+          <CardDescription>보유한 자격증 및 면허를 입력하세요</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(profileData.gen_licenses || []).map((item) => (
+            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-license-${item.id}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#191F28]" data-testid={`text-license-title-${item.id}`}>{item.title}</h4>
+                    <Badge variant="outline" className={`text-xs ${item.status === 'acquired' ? 'border-green-400 text-green-600' : item.status === 'preparing' ? 'border-amber-400 text-amber-600' : 'border-red-400 text-red-600'}`} data-testid={`badge-license-status-${item.id}`}>
+                      {LICENSE_STATUS_OPTIONS.find(o => o.value === item.status)?.label}
+                    </Badge>
+                  </div>
+                  <p className="text-[#4E5968] text-sm" data-testid={`text-license-issuer-${item.id}`}>{item.issuer}</p>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editLicense(item)} data-testid={`button-edit-license-${item.id}`}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteLicense(item.id)} data-testid={`button-delete-license-${item.id}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
+                <Badge variant="secondary" className="text-xs" data-testid={`badge-license-category-${item.id}`}>{LICENSE_CATEGORY_OPTIONS.find(o => o.value === item.category)?.label}</Badge>
+                {item.licenseType && <span data-testid={`text-license-type-${item.id}`}>• {item.licenseType}</span>}
+                {item.acquiredDate && <span data-testid={`text-license-acquired-${item.id}`}>• 취득일: {item.acquiredDate}</span>}
+              </div>
+              {item.licenseNumber && <p className="text-sm text-[#8B95A1]" data-testid={`text-license-number-${item.id}`}>자격번호: {item.licenseNumber}</p>}
+            </div>
+          ))}
+          <Button 
+            type="button" variant="outline" 
+            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+            onClick={(e) => { e.preventDefault(); resetLicenseForm(); setShowLicenseDialog(true); }}
+            data-testid="button-add-license"
+          >
+            <Plus className="h-5 w-5 mr-2" /> 자격증/면허 추가하기
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="toss-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Award className="h-5 w-5 text-[#EC4899]" /> 수상/공모전
+          </CardTitle>
+          <CardDescription>수상 경력 및 공모전 입상 이력을 입력하세요</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(profileData.gen_awards || []).map((item) => (
+            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-award-${item.id}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#191F28]" data-testid={`text-award-title-${item.id}`}>{item.titleAndHost}</h4>
+                    <Badge variant="outline" className="text-xs border-purple-400 text-purple-600" data-testid={`badge-award-type-${item.id}`}>
+                      {AWARD_TYPE_OPTIONS.find(o => o.value === item.awardType)?.label}
+                    </Badge>
+                  </div>
+                  {item.rank && <p className="text-[#4E5968] text-sm" data-testid={`text-award-rank-${item.id}`}>{AWARD_RANK_OPTIONS.find(o => o.value === item.rank)?.label || item.rank}</p>}
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editAward(item)} data-testid={`button-edit-award-${item.id}`}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteAward(item.id)} data-testid={`button-delete-award-${item.id}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
+                <CalendarIcon className="h-4 w-4" />
+                <span data-testid={`text-award-date-${item.id}`}>{item.awardDate}</span>
+              </div>
+              {item.note && <p className="text-sm text-[#8B95A1]" data-testid={`text-award-note-${item.id}`}>{item.note}</p>}
+            </div>
+          ))}
+          <Button 
+            type="button" variant="outline" 
+            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+            onClick={(e) => { e.preventDefault(); resetAwardForm(); setShowAwardDialog(true); }}
+            data-testid="button-add-award"
+          >
+            <Plus className="h-5 w-5 mr-2" /> 수상/공모전 추가하기
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="toss-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
             <BrainCircuit className="h-5 w-5 text-[#00BFA5]" /> 보유 역량 및 스킬
           </CardTitle>
           <CardDescription>보유한 역량을 선택하거나 직접 입력하세요</CardDescription>
@@ -914,200 +1108,6 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
               className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none"
             />
           </div>
-        </CardContent>
-      </Card>
-
-      <Card className="toss-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <GraduationCap className="h-5 w-5 text-[#6366F1]" /> 학력
-          </CardTitle>
-          <CardDescription>최종 학력 및 학력 사항을 입력하세요</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {(profileData.gen_educations || []).map((item) => (
-            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-education-${item.id}`}>
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-[#191F28]" data-testid={`text-education-school-${item.id}`}>{item.schoolName}</h4>
-                    <Badge variant="outline" className="text-xs border-indigo-400 text-indigo-600" data-testid={`badge-education-level-${item.id}`}>
-                      {EDUCATION_LEVEL_OPTIONS.find(o => o.value === item.educationLevel)?.label}
-                    </Badge>
-                    <Badge variant="outline" className={`text-xs ${item.graduationStatus === 'graduated' ? 'border-green-400 text-green-600' : item.graduationStatus === 'enrolled' ? 'border-blue-400 text-blue-600' : 'border-amber-400 text-amber-600'}`} data-testid={`badge-education-status-${item.id}`}>
-                      {GRADUATION_STATUS_OPTIONS.find(o => o.value === item.graduationStatus)?.label}
-                    </Badge>
-                  </div>
-                  {item.major && <p className="text-[#4E5968] text-sm" data-testid={`text-education-major-${item.id}`}>{item.major}{item.subMajor ? ` / ${item.subMajor}` : ''}</p>}
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editEducation(item)} data-testid={`button-edit-education-${item.id}`}>
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteEducation(item.id)} data-testid={`button-delete-education-${item.id}`}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-sm text-[#8B95A1]">
-                {item.entranceDate && <span data-testid={`text-education-entrance-${item.id}`}>입학: {item.entranceDate}</span>}
-                {item.graduationDate && <span data-testid={`text-education-graduation-${item.id}`}>• 졸업: {item.graduationDate}</span>}
-                {item.gpa && <span data-testid={`text-education-gpa-${item.id}`}>• 학점: {item.gpa}/{item.gpaScale || '4.5'}</span>}
-                {item.isTransfer && <Badge variant="secondary" className="text-xs" data-testid={`badge-education-transfer-${item.id}`}>편입</Badge>}
-                {item.isGed && <Badge variant="secondary" className="text-xs" data-testid={`badge-education-ged-${item.id}`}>검정고시</Badge>}
-              </div>
-            </div>
-          ))}
-          <Button 
-            type="button" variant="outline" 
-            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
-            onClick={(e) => { e.preventDefault(); resetEducationForm(); setShowEducationDialog(true); }}
-            data-testid="button-add-education"
-          >
-            <Plus className="h-5 w-5 mr-2" /> 학력 추가하기
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="toss-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Languages className="h-5 w-5 text-[#10B981]" /> 어학(외국어) 시험/역량
-          </CardTitle>
-          <CardDescription>보유한 어학 점수 및 역량을 입력하세요</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {(profileData.gen_languageTests || []).map((item) => (
-            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-language-${item.id}`}>
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-[#191F28]" data-testid={`text-language-exam-${item.id}`}>{LANGUAGE_EXAM_OPTIONS.find(o => o.value === item.examName)?.label || item.examName}</h4>
-                    {item.isPending && <Badge variant="outline" className="text-xs border-amber-400 text-amber-600" data-testid={`badge-language-pending-${item.id}`}>준비중</Badge>}
-                  </div>
-                  {!item.isPending && (
-                    <p className="text-[#4E5968] font-medium" data-testid={`text-language-score-${item.id}`}>{item.scoreType === 'grade' ? '등급' : '점수'}: {item.scoreValue}</p>
-                  )}
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editLanguageTest(item)} data-testid={`button-edit-language-${item.id}`}>
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteLanguageTest(item.id)} data-testid={`button-delete-language-${item.id}`}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
-                {item.acquiredDate && <span data-testid={`text-language-acquired-${item.id}`}>취득일: {item.acquiredDate}</span>}
-                {item.expiryDate && <span data-testid={`text-language-expiry-${item.id}`}>• 만료일: {item.expiryDate}</span>}
-              </div>
-              {item.note && <p className="text-sm text-[#8B95A1]" data-testid={`text-language-note-${item.id}`}>{item.note}</p>}
-            </div>
-          ))}
-          <Button 
-            type="button" variant="outline" 
-            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
-            onClick={(e) => { e.preventDefault(); resetLanguageTestForm(); setShowLanguageTestDialog(true); }}
-            data-testid="button-add-language"
-          >
-            <Plus className="h-5 w-5 mr-2" /> 어학 시험 추가하기
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="toss-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <BadgeCheck className="h-5 w-5 text-[#F59E0B]" /> 자격증/면허
-          </CardTitle>
-          <CardDescription>보유한 자격증 및 면허를 입력하세요</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {(profileData.gen_licenses || []).map((item) => (
-            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-license-${item.id}`}>
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-[#191F28]" data-testid={`text-license-title-${item.id}`}>{item.title}</h4>
-                    <Badge variant="outline" className={`text-xs ${item.status === 'acquired' ? 'border-green-400 text-green-600' : item.status === 'preparing' ? 'border-amber-400 text-amber-600' : 'border-red-400 text-red-600'}`} data-testid={`badge-license-status-${item.id}`}>
-                      {LICENSE_STATUS_OPTIONS.find(o => o.value === item.status)?.label}
-                    </Badge>
-                  </div>
-                  <p className="text-[#4E5968] text-sm" data-testid={`text-license-issuer-${item.id}`}>{item.issuer}</p>
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editLicense(item)} data-testid={`button-edit-license-${item.id}`}>
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteLicense(item.id)} data-testid={`button-delete-license-${item.id}`}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
-                <Badge variant="secondary" className="text-xs" data-testid={`badge-license-category-${item.id}`}>{LICENSE_CATEGORY_OPTIONS.find(o => o.value === item.category)?.label}</Badge>
-                {item.licenseType && <span data-testid={`text-license-type-${item.id}`}>• {item.licenseType}</span>}
-                {item.acquiredDate && <span data-testid={`text-license-acquired-${item.id}`}>• 취득일: {item.acquiredDate}</span>}
-              </div>
-              {item.licenseNumber && <p className="text-sm text-[#8B95A1]" data-testid={`text-license-number-${item.id}`}>자격번호: {item.licenseNumber}</p>}
-            </div>
-          ))}
-          <Button 
-            type="button" variant="outline" 
-            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
-            onClick={(e) => { e.preventDefault(); resetLicenseForm(); setShowLicenseDialog(true); }}
-            data-testid="button-add-license"
-          >
-            <Plus className="h-5 w-5 mr-2" /> 자격증/면허 추가하기
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="toss-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Award className="h-5 w-5 text-[#EC4899]" /> 수상/공모전
-          </CardTitle>
-          <CardDescription>수상 경력 및 공모전 입상 이력을 입력하세요</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {(profileData.gen_awards || []).map((item) => (
-            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-award-${item.id}`}>
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-[#191F28]" data-testid={`text-award-title-${item.id}`}>{item.titleAndHost}</h4>
-                    <Badge variant="outline" className="text-xs border-purple-400 text-purple-600" data-testid={`badge-award-type-${item.id}`}>
-                      {AWARD_TYPE_OPTIONS.find(o => o.value === item.awardType)?.label}
-                    </Badge>
-                  </div>
-                  {item.rank && <p className="text-[#4E5968] text-sm" data-testid={`text-award-rank-${item.id}`}>{AWARD_RANK_OPTIONS.find(o => o.value === item.rank)?.label || item.rank}</p>}
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editAward(item)} data-testid={`button-edit-award-${item.id}`}>
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteAward(item.id)} data-testid={`button-delete-award-${item.id}`}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
-                <CalendarIcon className="h-4 w-4" />
-                <span data-testid={`text-award-date-${item.id}`}>{item.awardDate}</span>
-              </div>
-              {item.note && <p className="text-sm text-[#8B95A1]" data-testid={`text-award-note-${item.id}`}>{item.note}</p>}
-            </div>
-          ))}
-          <Button 
-            type="button" variant="outline" 
-            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
-            onClick={(e) => { e.preventDefault(); resetAwardForm(); setShowAwardDialog(true); }}
-            data-testid="button-add-award"
-          >
-            <Plus className="h-5 w-5 mr-2" /> 수상/공모전 추가하기
-          </Button>
         </CardContent>
       </Card>
 
