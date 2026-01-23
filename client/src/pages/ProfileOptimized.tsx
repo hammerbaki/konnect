@@ -232,7 +232,7 @@ export default function ProfileOptimized() {
     const params = new URLSearchParams(searchString);
     const typeParam = params.get('type') as ProfileType | null;
     
-    if (typeParam && ['elementary', 'middle', 'high', 'university', 'general'].includes(typeParam)) {
+    if (typeParam && ['elementary', 'middle', 'high', 'university', 'general', 'international'].includes(typeParam)) {
       if (typeParam !== selectedType) {
         setSelectedType(typeParam);
       }
@@ -252,6 +252,7 @@ export default function ProfileOptimized() {
         'gen_': 'general',
         'elem_': 'elementary',
         'mid_': 'middle',
+        'intl_': 'international',
       };
       
       const prefix = Object.keys(fieldTypeMap).find(p => fieldKey.startsWith(p));
@@ -524,8 +525,6 @@ export default function ProfileOptimized() {
             </Button>
           </div>
         </div>
-
-        <ProfileTypeSelector selectedType={selectedType} onTypeChange={handleTypeChange} />
 
         <BasicInfoCard 
           profileData={profileData} 
