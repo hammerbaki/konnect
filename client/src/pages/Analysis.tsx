@@ -437,69 +437,6 @@ export default function Analysis() {
         toast({ title: "Kompass로 이동", description: "목표를 설정해보세요!" });
     };
 
-    const ProfileInfoSidebar = () => {
-        const Icon = activeProfile ? (profileTypeIcons[activeProfile.type] || Briefcase) : User;
-        const colorClass = activeProfile ? (profileTypeColors[activeProfile.type] || 'text-gray-600 bg-gray-50') : 'text-gray-600 bg-gray-50';
-        
-        return (
-            <div className="flex flex-col h-full">
-                <div className="p-6 pb-4">
-                    <h2 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                        <LayoutDashboard className="h-5 w-5 text-[#3182F6]" />
-                        분석 기준 정보
-                    </h2>
-                    <p className="text-xs text-[#8B95A1] mt-1">내 프로필 기반으로 분석합니다</p>
-                </div>
-                
-                <div className="px-4">
-                    {isLoadingProfiles ? (
-                        <div className="p-4 rounded-xl border border-[#E5E8EB] bg-[#F9FAFB]">
-                            <Skeleton className="h-4 w-24 mb-2" />
-                            <Skeleton className="h-5 w-32" />
-                        </div>
-                    ) : activeProfile ? (
-                        <div className="p-4 rounded-xl border border-[#E5E8EB] bg-[#F9FAFB]" data-testid="profile-info-summary">
-                            <p className="text-xs text-[#8B95A1] mb-2 font-medium">현재 분석 기준</p>
-                            <div className="flex items-center gap-3">
-                                <div className={cn("p-2 rounded-lg", colorClass)}>
-                                    <Icon className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-[#191F28]">
-                                        {activeProfile.title || profileTypeLabels[activeProfile.type]}
-                                    </p>
-                                    <p className="text-xs text-[#8B95A1]">
-                                        {profileTypeLabels[activeProfile.type]}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="p-4 rounded-xl border border-[#E5E8EB] bg-[#F9FAFB] text-center">
-                            <p className="text-sm text-[#8B95A1] mb-3">등록된 프로필이 없습니다</p>
-                            <Link href="/profile">
-                                <Button size="sm" className="bg-[#3182F6]">
-                                    <Plus className="h-4 w-4 mr-1" /> 프로필 만들기
-                                </Button>
-                            </Link>
-                        </div>
-                    )}
-                </div>
-                
-                {activeProfile && (
-                    <div className="px-4 mt-4">
-                        <Link href={`/profile?type=${activeProfile.type}`}>
-                            <Button variant="outline" size="sm" className="w-full text-[#8B95A1] hover:text-[#3182F6]">
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                프로필 수정하기
-                            </Button>
-                        </Link>
-                    </div>
-                )}
-            </div>
-        );
-    };
-
     const DashboardContent = () => {
         if (!latestAnalysis) {
             return (
@@ -665,36 +602,40 @@ export default function Analysis() {
     return (
         <Layout>
             <div className="min-h-screen bg-[#F9FAFB]">
-                <div className="flex">
-                    <aside className="hidden lg:block w-72 bg-white border-r border-[#E5E8EB] h-screen sticky top-0">
-                        <ProfileInfoSidebar />
-                    </aside>
-
-                    <main className="flex-1 min-w-0">
-                        <div className="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-[#E5E8EB]">
-                            <div className="flex items-center justify-between px-4 py-3">
-                                <div className="flex items-center gap-3">
-                                    {activeProfile && (
-                                        <div className="flex items-center gap-2">
-                                            <div className={cn("p-1.5 rounded-lg", profileTypeColors[activeProfile.type])}>
-                                                {(() => {
-                                                    const Icon = profileTypeIcons[activeProfile.type] || Briefcase;
-                                                    return <Icon className="h-4 w-4" />;
-                                                })()}
-                                            </div>
-                                            <div>
-                                                <span className="font-bold text-sm text-[#191F28] truncate max-w-[150px] block">
-                                                    {activeProfile.title || profileTypeLabels[activeProfile.type]}
-                                                </span>
-                                                <span className="text-[10px] text-[#8B95A1]">분석 기준 프로필</span>
-                                            </div>
-                                        </div>
-                                    )}
+                <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 lg:py-8">
+                    {/* Mobile profile header */}
+                    <div className="lg:hidden mb-4 p-3 bg-white rounded-xl border border-[#E5E8EB]">
+                        <div className="flex items-center justify-between">
+                            {activeProfile && (
+                                <div className="flex items-center gap-2">
+                                    <div className={cn("p-1.5 rounded-lg", profileTypeColors[activeProfile.type])}>
+                                        {(() => {
+                                            const Icon = profileTypeIcons[activeProfile.type] || Briefcase;
+                                            return <Icon className="h-4 w-4" />;
+                                        })()}
+                                    </div>
+                                    <div>
+                                        <span className="font-bold text-sm text-[#191F28] truncate max-w-[150px] block">
+                                            {activeProfile.title || profileTypeLabels[activeProfile.type]}
+                                        </span>
+                                        <span className="text-[10px] text-[#8B95A1]">분석 기준 프로필</span>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+                            {activeProfile && (
+                                <Link href={`/profile?type=${activeProfile.type}`}>
+                                    <Button variant="outline" size="sm" className="text-xs text-[#8B95A1] hover:text-[#3182F6]">
+                                        <ExternalLink className="h-3 w-3 mr-1" />
+                                        수정
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
+                    </div>
 
-                        <div className="p-4 lg:p-8 max-w-4xl mx-auto">
+                    <div className="flex gap-6">
+                        <main className="flex-1 min-w-0">
+                            <div className="max-w-3xl">
                             {(isCurrentProfileAnalyzing || isSubmitting) ? (
                                 <AnalysisLoadingState 
                                     progress={aiJob.progress}
@@ -761,8 +702,68 @@ export default function Analysis() {
                             ) : (
                                 <DashboardContent />
                             )}
-                        </div>
-                    </main>
+                            </div>
+                        </main>
+
+                        {/* Right sidebar - Analysis criteria info */}
+                        <aside className="hidden lg:block w-72 shrink-0">
+                            <div className="sticky top-8 space-y-4">
+                                <div className="bg-white rounded-xl border border-[#E5E8EB] p-5">
+                                    <h2 className="text-sm font-bold text-[#191F28] flex items-center gap-2 mb-3">
+                                        <LayoutDashboard className="h-4 w-4 text-[#3182F6]" />
+                                        분석 기준
+                                    </h2>
+                                    
+                                    {isLoadingProfiles ? (
+                                        <div className="p-3 rounded-lg border border-[#E5E8EB] bg-[#F9FAFB]">
+                                            <Skeleton className="h-4 w-24 mb-2" />
+                                            <Skeleton className="h-5 w-32" />
+                                        </div>
+                                    ) : activeProfile ? (
+                                        <div className="p-3 rounded-lg border border-[#E5E8EB] bg-[#F9FAFB]" data-testid="profile-info-summary">
+                                            <p className="text-[10px] text-[#8B95A1] mb-2 font-medium">현재 분석 기준</p>
+                                            <div className="flex items-center gap-3">
+                                                <div className={cn("p-2 rounded-lg", profileTypeColors[activeProfile.type])}>
+                                                    {(() => {
+                                                        const Icon = profileTypeIcons[activeProfile.type] || Briefcase;
+                                                        return <Icon className="h-4 w-4" />;
+                                                    })()}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm text-[#191F28]">
+                                                        {activeProfile.title || profileTypeLabels[activeProfile.type]}
+                                                    </p>
+                                                    <p className="text-[10px] text-[#8B95A1]">
+                                                        {profileTypeLabels[activeProfile.type]}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="p-3 rounded-lg border border-[#E5E8EB] bg-[#F9FAFB] text-center">
+                                            <p className="text-xs text-[#8B95A1] mb-2">등록된 프로필이 없습니다</p>
+                                            <Link href="/profile">
+                                                <Button size="sm" className="bg-[#3182F6] text-xs">
+                                                    <Plus className="h-3 w-3 mr-1" /> 프로필 만들기
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    )}
+                                    
+                                    {activeProfile && (
+                                        <div className="mt-3">
+                                            <Link href={`/profile?type=${activeProfile.type}`}>
+                                                <Button variant="outline" size="sm" className="w-full text-xs text-[#8B95A1] hover:text-[#3182F6]">
+                                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                                    프로필 수정하기
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
                 </div>
             </div>
         </Layout>
