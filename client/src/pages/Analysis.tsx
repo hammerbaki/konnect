@@ -1,32 +1,30 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { 
-    Brain, Sparkles, Loader2, ArrowRight, 
-    Briefcase, TrendingUp, School, GraduationCap, 
-    Target, Award, Star, Compass,
-    ChevronRight, Plus, LayoutDashboard, History,
-    CheckCircle2, AlertTriangle, Zap, User, ExternalLink,
-    FolderOpen, Users, Heart, Lightbulb, LayoutGrid,
-    XCircle, Clock, FileText
+    Brain, Sparkles, Loader2, 
+    Briefcase, School, GraduationCap, 
+    Star, Compass,
+    ChevronRight, LayoutDashboard, History,
+    AlertTriangle, User,
+    Clock, Bot, XCircle, Plus, ExternalLink, Target
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { Link, useLocation } from "wouter";
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { cn } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useAIJob } from "@/hooks/useAIJob";
 import { useTokens } from "@/lib/TokenContext";
-import { Bot } from "lucide-react";
 import { generateCareerReportPDF, CareerReportData, ReportMetadata } from "@/lib/pdfReportGenerator";
+import { EnhancedCareerCard } from "@/components/analysis/EnhancedCareerCard";
+import type { CareerRecommendation } from "@/types/career-analysis";
 
 const ANALYSIS_CREDIT_COST = 100;
 
@@ -94,24 +92,6 @@ function validateProfileForAnalysis(profileType: string, profileData: any): {
         missingFields,
         message: missingFields.length > 0 ? requirements.description : "",
     };
-}
-
-interface CareerActions {
-    portfolio: string[];
-    networking: string[];
-    mindset: string[];
-}
-
-interface CareerRecommendation {
-    title: string;
-    description: string;
-    matchScore: number;
-    salary: string;
-    jobOutlook: string;
-    competencies: Array<{ subject: string; A: number; fullMark: number }>;
-    strengths: string[];
-    weaknesses: string[];
-    actions: CareerActions;
 }
 
 const profileTypeIcons: Record<string, any> = {
@@ -520,268 +500,6 @@ export default function Analysis() {
         );
     };
 
-    const CareerCard = ({ career, index }: { career: CareerRecommendation; index: number }) => {
-        const isExpanded = expandedCareer === `career-${index}`;
-        const profileType = activeProfile?.type || 'general';
-        const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-
-        const handleDownloadPDF = async () => {
-            if (!activeProfile || !latestAnalysis) return;
-            
-            setIsGeneratingPDF(true);
-            try {
-                const careerData: CareerReportData = {
-                    title: career.title,
-                    matchScore: career.matchScore,
-                    description: career.description,
-                    salary: career.salary || '',
-                    jobOutlook: career.jobOutlook || '',
-                    strengths: career.strengths || [],
-                    weaknesses: career.weaknesses || [],
-                    competencies: career.competencies,
-                    actions: career.actions,
-                };
-                
-                const metadata: ReportMetadata = {
-                    userName: user?.displayName || user?.firstName || 'User',
-                    profileType: activeProfile.type,
-                    analysisDate: latestAnalysis.createdAt 
-                        ? new Date(latestAnalysis.createdAt).toLocaleDateString('ko-KR')
-                        : new Date().toLocaleDateString('ko-KR'),
-                    profileTitle: activeProfile.title,
-                };
-                
-                await generateCareerReportPDF(careerData, metadata);
-                
-                toast({
-                    title: "리포트 다운로드 완료",
-                    description: "Konnect 인증 리포트가 다운로드되었습니다.",
-                });
-            } catch (error) {
-                console.error('PDF generation error:', error);
-                toast({
-                    title: "오류",
-                    description: "리포트 생성 중 오류가 발생했습니다.",
-                    variant: "destructive",
-                });
-            } finally {
-                setIsGeneratingPDF(false);
-            }
-        };
-        
-        return (
-            <Card className={cn(
-                "border transition-all duration-300",
-                isExpanded ? "border-[#3182F6] shadow-lg" : "border-[#E5E8EB] hover:border-[#3182F6]/50"
-            )}>
-                <Accordion type="single" collapsible value={expandedCareer || ""} onValueChange={setExpandedCareer}>
-                    <AccordionItem value={`career-${index}`} className="border-none">
-                        <AccordionTrigger className="px-5 py-4 hover:no-underline">
-                            <div className="flex items-center justify-between w-full pr-2">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#3182F6] to-[#1565C0] flex items-center justify-center shrink-0">
-                                        <span className="text-lg font-bold text-white">{career.matchScore}%</span>
-                                    </div>
-                                    <div className="text-left">
-                                        <div className="flex items-center gap-2">
-                                            <h4 className="text-base font-bold text-[#191F28]">{career.title}</h4>
-                                            {index === 0 && (
-                                                <Badge className="bg-[#E8F3FF] text-[#3182F6] hover:bg-[#E8F3FF] border-none px-2 py-0.5 text-[10px]">
-                                                    AI Pick
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-[#8B95A1]">{matchScoreLabels[profileType]}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </AccordionTrigger>
-                        
-                        <AccordionContent className="px-5 pb-5">
-                            <div className="space-y-6">
-                                <p className="text-sm text-[#4E5968] leading-relaxed">{career.description}</p>
-                                
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-[#F9FAFB] rounded-xl p-3">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Briefcase className="h-3.5 w-3.5 text-[#3182F6]" />
-                                            <span className="text-[10px] text-[#8B95A1]">정보</span>
-                                        </div>
-                                        <p className="text-sm font-medium text-[#191F28]">{career.salary}</p>
-                                    </div>
-                                    <div className="bg-[#F9FAFB] rounded-xl p-3">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <TrendingUp className="h-3.5 w-3.5 text-[#00BFA5]" />
-                                            <span className="text-[10px] text-[#8B95A1]">전망</span>
-                                        </div>
-                                        <p className="text-sm font-medium text-[#191F28]">{career.jobOutlook}</p>
-                                    </div>
-                                </div>
-
-                                {career.competencies && career.competencies.length > 0 && (
-                                    <div className="bg-[#F9FAFB] rounded-xl p-4">
-                                        <h5 className="text-sm font-bold text-[#191F28] mb-3 flex items-center gap-2">
-                                            <Award className="h-4 w-4 text-[#3182F6]" /> 역량 분석
-                                        </h5>
-                                        <div className="h-[180px]">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={career.competencies}>
-                                                    <PolarGrid stroke="#E5E8EB" />
-                                                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#4E5968', fontSize: 10 }} />
-                                                    <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
-                                                    <Radar name="역량" dataKey="A" stroke="#3182F6" fill="#3182F6" fillOpacity={0.3} />
-                                                </RadarChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <div className="bg-[#F0FDF4] rounded-xl p-4">
-                                        <h5 className="text-sm font-bold text-[#00BFA5] mb-3 flex items-center gap-2">
-                                            <CheckCircle2 className="h-4 w-4" /> 강점
-                                        </h5>
-                                        <ul className="space-y-2">
-                                            {career.strengths?.map((s, i) => (
-                                                <li key={i} className="flex items-start gap-2 text-sm text-[#4E5968]">
-                                                    <CheckCircle2 className="h-4 w-4 text-[#00BFA5] shrink-0 mt-0.5" />
-                                                    {s}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                    <div className="bg-[#FFF7ED] rounded-xl p-4">
-                                        <h5 className="text-sm font-bold text-[#F59E0B] mb-3 flex items-center gap-2">
-                                            <AlertTriangle className="h-4 w-4" /> 보완점
-                                        </h5>
-                                        <ul className="space-y-2">
-                                            {career.weaknesses?.map((w, i) => (
-                                                <li key={i} className="flex items-start gap-2 text-sm text-[#4E5968]">
-                                                    <AlertTriangle className="h-4 w-4 text-[#F59E0B] shrink-0 mt-0.5" />
-                                                    {w}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                </div>
-
-                                {career.actions && (
-                                    <div className="space-y-4">
-                                        <h5 className="text-base font-bold text-[#191F28] flex items-center gap-2">
-                                            <Zap className="h-5 w-5 text-[#3182F6]" /> 추천 액션
-                                        </h5>
-                                        
-                                        <div className="grid gap-4">
-                                            {career.actions.portfolio?.length > 0 && (
-                                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <div className="w-8 h-8 rounded-lg bg-[#3182F6] flex items-center justify-center">
-                                                            <FolderOpen className="h-4 w-4 text-white" />
-                                                        </div>
-                                                        <div>
-                                                            <h6 className="text-sm font-bold text-[#191F28]">포트폴리오</h6>
-                                                            <p className="text-[10px] text-[#8B95A1]">만들고 준비할 것들</p>
-                                                        </div>
-                                                    </div>
-                                                    <ul className="space-y-2">
-                                                        {career.actions.portfolio.map((item, i) => (
-                                                            <li key={i} className="flex items-start gap-2 text-sm text-[#4E5968] bg-white/60 rounded-lg p-2.5">
-                                                                <div className="w-5 h-5 rounded-full bg-[#3182F6]/10 flex items-center justify-center shrink-0 mt-0.5">
-                                                                    <span className="text-[10px] font-bold text-[#3182F6]">{i + 1}</span>
-                                                                </div>
-                                                                {item}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-
-                                            {career.actions.networking?.length > 0 && (
-                                                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
-                                                            <Users className="h-4 w-4 text-white" />
-                                                        </div>
-                                                        <div>
-                                                            <h6 className="text-sm font-bold text-[#191F28]">네트워킹</h6>
-                                                            <p className="text-[10px] text-[#8B95A1]">만나고 연결할 사람들</p>
-                                                        </div>
-                                                    </div>
-                                                    <ul className="space-y-2">
-                                                        {career.actions.networking.map((item, i) => (
-                                                            <li key={i} className="flex items-start gap-2 text-sm text-[#4E5968] bg-white/60 rounded-lg p-2.5">
-                                                                <div className="w-5 h-5 rounded-full bg-purple-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                                                                    <span className="text-[10px] font-bold text-purple-600">{i + 1}</span>
-                                                                </div>
-                                                                {item}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-
-                                            {career.actions.mindset?.length > 0 && (
-                                                <div className="bg-gradient-to-br from-rose-50 to-orange-50 rounded-xl p-4 border border-rose-100">
-                                                    <div className="flex items-center gap-2 mb-3">
-                                                        <div className="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center">
-                                                            <Heart className="h-4 w-4 text-white" />
-                                                        </div>
-                                                        <div>
-                                                            <h6 className="text-sm font-bold text-[#191F28]">마인드셋</h6>
-                                                            <p className="text-[10px] text-[#8B95A1]">갖춰야 할 마음가짐</p>
-                                                        </div>
-                                                    </div>
-                                                    <ul className="space-y-2">
-                                                        {career.actions.mindset.map((item, i) => (
-                                                            <li key={i} className="flex items-start gap-2 text-sm text-[#4E5968] bg-white/60 rounded-lg p-2.5">
-                                                                <div className="w-5 h-5 rounded-full bg-rose-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                                                                    <Heart className="h-3 w-3 text-rose-500" />
-                                                                </div>
-                                                                {item}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="flex gap-3">
-                                    {/* HIDDEN_PDF_BUTTON_START - PDF feature temporarily hidden, uncomment to restore */}
-                                    {/* <Button 
-                                        onClick={handleDownloadPDF}
-                                        disabled={isGeneratingPDF}
-                                        variant="outline"
-                                        className="h-12 rounded-xl border-[#3182F6] text-[#3182F6] font-bold hover:bg-[#E8F3FF] transition-colors"
-                                        data-testid={`button-download-pdf-${index}`}
-                                    >
-                                        {isGeneratingPDF ? (
-                                            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                                        ) : (
-                                            <FileText className="h-5 w-5 mr-2" />
-                                        )}
-                                        {isGeneratingPDF ? '생성중...' : 'PDF 리포트'}
-                                    </Button> */}
-                                    {/* HIDDEN_PDF_BUTTON_END */}
-                                    <Button 
-                                        onClick={() => handleExportToKompass(career)}
-                                        className="flex-1 h-12 rounded-xl bg-gradient-to-r from-[#3182F6] to-[#1565C0] text-white font-bold hover:opacity-90 transition-opacity"
-                                        data-testid={`button-export-kompass-${index}`}
-                                    >
-                                        <Compass className="h-5 w-5 mr-2" />
-                                        Kompass
-                                        <ArrowRight className="h-4 w-4 ml-2" />
-                                    </Button>
-                                </div>
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-            </Card>
-        );
-    };
-
     const DashboardContent = () => {
         if (!latestAnalysis) {
             return (
@@ -927,7 +645,15 @@ export default function Analysis() {
                         </p>
                         <div className="space-y-4">
                             {careerRecommendations.map((career, idx) => (
-                                <CareerCard key={idx} career={career} index={idx} />
+                                <EnhancedCareerCard 
+                                    key={idx} 
+                                    career={career} 
+                                    index={idx}
+                                    isExpanded={expandedCareer === `career-${idx}`}
+                                    onToggle={setExpandedCareer}
+                                    onExportToKompass={handleExportToKompass}
+                                    matchScoreLabel={matchScoreLabels[activeProfile?.type || 'general']}
+                                />
                             ))}
                         </div>
                     </div>
