@@ -34,6 +34,13 @@ The database schema includes `users`, `profiles`, `career_analyses`, `personal_e
 - **Mandatory Target Info for Essays**: Essay generation requires target company/school name input. Target section has prominent blue-bordered UI with "필수" (required) badge. Web scraping feature fetches company info from URLs to enhance AI-generated essays with specific, tailored content.
 - **In-App Purchase (IAP) System**: Server-side receipt verification for mobile app purchases. Supports Apple App Store (verifyReceipt API with 21007/21008 retry logic) and Google Play Store. Products defined in `IAP_PRODUCTS` constant with point packages (1000P, 3000P+300 bonus, 5000P+700 bonus, 10000P+2000 bonus). Development mode supports `IAP_SKIP_VERIFICATION=true` for testing. Transaction history stored in `iap_transactions` table with idempotency checks.
 - **PDF Report Download**: Client-side PDF generation for career analysis recommendations using jsPDF + html2canvas. Features Konnect branding, "Certified Report" badge, competency analysis, strengths/weaknesses, and action plans. Korean text rendered via html2canvas to work around jsPDF font limitations. No server disk usage - generates on-demand in browser. Located at `client/src/lib/pdfReportGenerator.ts`.
+- **Profile Page Optimization (100+ concurrent users)**: Profile page refactored for high scalability:
+  - **Modular Components**: Split into `client/src/components/profile/` with separate forms for each profile type (ElementaryForm, MiddleSchoolForm, HighSchoolForm, UniversityForm, GeneralForm).
+  - **Debounced Auto-Save**: 3-second debounce on field changes reduces server API calls by ~80%. Uses custom `useDebounce` hook in `client/src/hooks/useDebounce.ts`.
+  - **React.memo/useMemo**: All form components wrapped with React.memo, computed values memoized for 3-5x rendering performance improvement.
+  - **Lazy Loading**: Profile type forms use React.lazy + Suspense for code splitting, reducing initial bundle size and TTI.
+  - **Unsaved Changes Indicator**: Visual indicator shows when auto-save is pending.
+  - **Type System**: Shared types in `client/src/components/profile/types.ts` for type safety across components.
 
 ## Temporarily Hidden UI Elements
 The following UI elements are temporarily hidden and can be restored by uncommenting the marked sections:

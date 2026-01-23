@@ -20,7 +20,7 @@ const NotFound = lazy(() => import("./pages/not-found"));
 const Analysis = lazy(() => import("./pages/Analysis"));
 const Goals = lazy(() => import("./pages/Goals"));
 const KompassDetail = lazy(() => import("./pages/KompassDetail"));
-const Profile = lazy(() => import("./pages/Profile"));
+const Profile = lazy(() => import("./pages/ProfileOptimized"));
 const PersonalStatement = lazy(() => import("./pages/PersonalStatement"));
 const Report = lazy(() => import("./pages/Report"));
 const Explorer = lazy(() => import("./pages/Explorer"));
