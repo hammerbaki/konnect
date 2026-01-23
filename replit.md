@@ -41,6 +41,12 @@ The database schema includes `users`, `profiles`, `career_analyses`, `personal_e
   - **Lazy Loading**: Profile type forms use React.lazy + Suspense for code splitting, reducing initial bundle size and TTI.
   - **Unsaved Changes Indicator**: Visual indicator shows when auto-save is pending.
   - **Type System**: Shared types in `client/src/components/profile/types.ts` for type safety across components.
+- **Job Seeker Profile Extended Sections**: GeneralForm.tsx includes 4 CRUD sections for comprehensive job seeker profiles:
+  - **Language Tests (어학 시험)**: Track language certifications (TOPIK, TOEIC, TOEFL, IELTS, JLPT, HSK, etc.) with score type (grade/score), acquisition date, expiry date, and pending status.
+  - **Licenses/Certifications (자격증/면허)**: Manage professional certifications and licenses with category, issuer, status (acquired/preparing/expired), and license numbers.
+  - **Awards (수상/공모전)**: Record awards and competition achievements with type, rank, host organization, and dates.
+  - **References (추천인)**: Store professional references with relation type, contact info (phone/email), and organization.
+  - Each section supports full CRUD operations with modal dialogs, validation, and auto-save integration.
 
 ## Temporarily Hidden UI Elements
 The following UI elements are temporarily hidden and can be restored by uncommenting the marked sections:

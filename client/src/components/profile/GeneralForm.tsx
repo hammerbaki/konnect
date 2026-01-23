@@ -11,9 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer";
 import { 
   Briefcase, BrainCircuit, TrendingUp, Sparkles, PenTool, DollarSign, Smile, Shield, Zap, 
-  Armchair, HardHat, AlertTriangle, Plus, Trash2, X, Check, Search, Calendar as CalendarIcon
+  Armchair, HardHat, AlertTriangle, Plus, Trash2, X, Check, Search, Calendar as CalendarIcon,
+  Languages, Award, BadgeCheck, Users, Edit2
 } from "lucide-react";
-import { ProfileFormProps } from './types';
+import { ProfileFormProps, LanguageTest, LicenseItem, AwardItem, ReferenceItem } from './types';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { format } from 'date-fns';
@@ -71,6 +72,53 @@ const SKILL_CATEGORIES = [
   { category: "언어/커뮤니케이션", skills: ["영어", "일본어", "중국어", "커뮤니케이션", "협상", "발표", "미팅 진행", "갈등 조정"] },
 ];
 
+const LANGUAGE_EXAM_OPTIONS = [
+  { value: "TOPIK", label: "TOPIK (한국어능력시험)" },
+  { value: "TOEIC", label: "TOEIC" },
+  { value: "TOEFL", label: "TOEFL" },
+  { value: "IELTS", label: "IELTS" },
+  { value: "JLPT", label: "JLPT (일본어능력시험)" },
+  { value: "HSK", label: "HSK (중국어)" },
+  { value: "DELF", label: "DELF/DALF (프랑스어)" },
+  { value: "DELE", label: "DELE (스페인어)" },
+  { value: "OTHER", label: "기타" },
+];
+
+const LICENSE_CATEGORY_OPTIONS = [
+  { value: "certificate", label: "자격증" },
+  { value: "license", label: "면허" },
+];
+
+const LICENSE_STATUS_OPTIONS = [
+  { value: "acquired", label: "취득" },
+  { value: "preparing", label: "준비중" },
+  { value: "expired", label: "만료" },
+];
+
+const AWARD_TYPE_OPTIONS = [
+  { value: "award", label: "수상" },
+  { value: "competition", label: "공모전" },
+  { value: "contest", label: "대회" },
+  { value: "other", label: "기타" },
+];
+
+const AWARD_RANK_OPTIONS = [
+  { value: "grand", label: "대상" },
+  { value: "gold", label: "최우수상/금상" },
+  { value: "silver", label: "우수상/은상" },
+  { value: "bronze", label: "장려상/동상" },
+  { value: "participation", label: "참가상" },
+  { value: "other", label: "기타" },
+];
+
+const REFERENCE_RELATION_OPTIONS = [
+  { value: "professor", label: "교수" },
+  { value: "supervisor", label: "직장상사" },
+  { value: "colleague", label: "동료" },
+  { value: "acquaintance", label: "지인" },
+  { value: "other", label: "기타" },
+];
+
 const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateField }) => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -78,6 +126,30 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
   const [workExpForm, setWorkExpForm] = useState({ company: '', role: '', startDate: null as Date | null, endDate: null as Date | null, description: '' });
   const [skillSearchQuery, setSkillSearchQuery] = useState('');
   const [showSalaryPicker, setShowSalaryPicker] = useState(false);
+  
+  const [showLanguageTestDialog, setShowLanguageTestDialog] = useState(false);
+  const [editingLanguageTestId, setEditingLanguageTestId] = useState<number | null>(null);
+  const [languageTestForm, setLanguageTestForm] = useState<Omit<LanguageTest, 'id'>>({
+    examName: '', scoreType: 'score', scoreValue: '', acquiredDate: '', isPending: false, expiryDate: '', note: ''
+  });
+  
+  const [showLicenseDialog, setShowLicenseDialog] = useState(false);
+  const [editingLicenseId, setEditingLicenseId] = useState<number | null>(null);
+  const [licenseForm, setLicenseForm] = useState<Omit<LicenseItem, 'id'>>({
+    category: 'certificate', licenseType: '', title: '', issuer: '', status: 'acquired', acquiredDate: '', licenseNumber: '', expiryDate: ''
+  });
+  
+  const [showAwardDialog, setShowAwardDialog] = useState(false);
+  const [editingAwardId, setEditingAwardId] = useState<number | null>(null);
+  const [awardForm, setAwardForm] = useState<Omit<AwardItem, 'id'>>({
+    awardType: 'award', rank: '', titleAndHost: '', awardDate: '', note: ''
+  });
+  
+  const [showReferenceDialog, setShowReferenceDialog] = useState(false);
+  const [editingReferenceId, setEditingReferenceId] = useState<number | null>(null);
+  const [referenceForm, setReferenceForm] = useState<Omit<ReferenceItem, 'id'>>({
+    relation: 'professor', name: '', organization: '', phone: '', email: '', note: ''
+  });
 
   const addWorkExperience = useCallback(() => {
     if (!workExpForm.company || !workExpForm.role || !workExpForm.startDate) {
@@ -140,6 +212,138 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
       )
     })).filter(cat => cat.skills.length > 0);
   }, [skillSearchQuery]);
+
+  const resetLanguageTestForm = useCallback(() => {
+    setLanguageTestForm({ examName: '', scoreType: 'score', scoreValue: '', acquiredDate: '', isPending: false, expiryDate: '', note: '' });
+    setEditingLanguageTestId(null);
+  }, []);
+
+  const addOrUpdateLanguageTest = useCallback(() => {
+    if (!languageTestForm.examName || (!languageTestForm.isPending && !languageTestForm.scoreValue)) {
+      toast({ title: "필수 항목을 입력해주세요", description: "시험명과 점수/등급은 필수입니다.", variant: "destructive", duration: 3000 });
+      return;
+    }
+    const tests = profileData.gen_languageTests || [];
+    if (editingLanguageTestId !== null) {
+      updateField('gen_languageTests', tests.map(t => t.id === editingLanguageTestId ? { ...languageTestForm, id: editingLanguageTestId } : t));
+      toast({ title: "어학 정보가 수정되었습니다", duration: 2000 });
+    } else {
+      updateField('gen_languageTests', [...tests, { ...languageTestForm, id: Date.now() }]);
+      toast({ title: "어학 정보가 추가되었습니다", duration: 2000 });
+    }
+    resetLanguageTestForm();
+    setShowLanguageTestDialog(false);
+  }, [languageTestForm, editingLanguageTestId, profileData.gen_languageTests, updateField, toast, resetLanguageTestForm]);
+
+  const editLanguageTest = useCallback((item: LanguageTest) => {
+    setLanguageTestForm({ examName: item.examName, scoreType: item.scoreType, scoreValue: item.scoreValue, acquiredDate: item.acquiredDate, isPending: item.isPending, expiryDate: item.expiryDate || '', note: item.note || '' });
+    setEditingLanguageTestId(item.id);
+    setShowLanguageTestDialog(true);
+  }, []);
+
+  const deleteLanguageTest = useCallback((id: number) => {
+    updateField('gen_languageTests', (profileData.gen_languageTests || []).filter(t => t.id !== id));
+    toast({ title: "어학 정보가 삭제되었습니다", duration: 2000 });
+  }, [profileData.gen_languageTests, updateField, toast]);
+
+  const resetLicenseForm = useCallback(() => {
+    setLicenseForm({ category: 'certificate', licenseType: '', title: '', issuer: '', status: 'acquired', acquiredDate: '', licenseNumber: '', expiryDate: '' });
+    setEditingLicenseId(null);
+  }, []);
+
+  const addOrUpdateLicense = useCallback(() => {
+    if (!licenseForm.title || !licenseForm.issuer) {
+      toast({ title: "필수 항목을 입력해주세요", description: "자격/면허명과 발급기관은 필수입니다.", variant: "destructive", duration: 3000 });
+      return;
+    }
+    const licenses = profileData.gen_licenses || [];
+    if (editingLicenseId !== null) {
+      updateField('gen_licenses', licenses.map(l => l.id === editingLicenseId ? { ...licenseForm, id: editingLicenseId } : l));
+      toast({ title: "자격증/면허 정보가 수정되었습니다", duration: 2000 });
+    } else {
+      updateField('gen_licenses', [...licenses, { ...licenseForm, id: Date.now() }]);
+      toast({ title: "자격증/면허가 추가되었습니다", duration: 2000 });
+    }
+    resetLicenseForm();
+    setShowLicenseDialog(false);
+  }, [licenseForm, editingLicenseId, profileData.gen_licenses, updateField, toast, resetLicenseForm]);
+
+  const editLicense = useCallback((item: LicenseItem) => {
+    setLicenseForm({ category: item.category, licenseType: item.licenseType, title: item.title, issuer: item.issuer, status: item.status, acquiredDate: item.acquiredDate || '', licenseNumber: item.licenseNumber || '', expiryDate: item.expiryDate || '' });
+    setEditingLicenseId(item.id);
+    setShowLicenseDialog(true);
+  }, []);
+
+  const deleteLicense = useCallback((id: number) => {
+    updateField('gen_licenses', (profileData.gen_licenses || []).filter(l => l.id !== id));
+    toast({ title: "자격증/면허가 삭제되었습니다", duration: 2000 });
+  }, [profileData.gen_licenses, updateField, toast]);
+
+  const resetAwardForm = useCallback(() => {
+    setAwardForm({ awardType: 'award', rank: '', titleAndHost: '', awardDate: '', note: '' });
+    setEditingAwardId(null);
+  }, []);
+
+  const addOrUpdateAward = useCallback(() => {
+    if (!awardForm.titleAndHost || !awardForm.awardDate) {
+      toast({ title: "필수 항목을 입력해주세요", description: "수상/공모전명과 날짜는 필수입니다.", variant: "destructive", duration: 3000 });
+      return;
+    }
+    const awards = profileData.gen_awards || [];
+    if (editingAwardId !== null) {
+      updateField('gen_awards', awards.map(a => a.id === editingAwardId ? { ...awardForm, id: editingAwardId } : a));
+      toast({ title: "수상/공모전 정보가 수정되었습니다", duration: 2000 });
+    } else {
+      updateField('gen_awards', [...awards, { ...awardForm, id: Date.now() }]);
+      toast({ title: "수상/공모전이 추가되었습니다", duration: 2000 });
+    }
+    resetAwardForm();
+    setShowAwardDialog(false);
+  }, [awardForm, editingAwardId, profileData.gen_awards, updateField, toast, resetAwardForm]);
+
+  const editAward = useCallback((item: AwardItem) => {
+    setAwardForm({ awardType: item.awardType, rank: item.rank, titleAndHost: item.titleAndHost, awardDate: item.awardDate, note: item.note || '' });
+    setEditingAwardId(item.id);
+    setShowAwardDialog(true);
+  }, []);
+
+  const deleteAward = useCallback((id: number) => {
+    updateField('gen_awards', (profileData.gen_awards || []).filter(a => a.id !== id));
+    toast({ title: "수상/공모전이 삭제되었습니다", duration: 2000 });
+  }, [profileData.gen_awards, updateField, toast]);
+
+  const resetReferenceForm = useCallback(() => {
+    setReferenceForm({ relation: 'professor', name: '', organization: '', phone: '', email: '', note: '' });
+    setEditingReferenceId(null);
+  }, []);
+
+  const addOrUpdateReference = useCallback(() => {
+    if (!referenceForm.name || !referenceForm.phone) {
+      toast({ title: "필수 항목을 입력해주세요", description: "추천인 성명과 연락처는 필수입니다.", variant: "destructive", duration: 3000 });
+      return;
+    }
+    const refs = profileData.gen_references || [];
+    if (editingReferenceId !== null) {
+      updateField('gen_references', refs.map(r => r.id === editingReferenceId ? { ...referenceForm, id: editingReferenceId } : r));
+      toast({ title: "추천인 정보가 수정되었습니다", duration: 2000 });
+    } else {
+      updateField('gen_references', [...refs, { ...referenceForm, id: Date.now() }]);
+      toast({ title: "추천인이 추가되었습니다", duration: 2000 });
+    }
+    resetReferenceForm();
+    setShowReferenceDialog(false);
+  }, [referenceForm, editingReferenceId, profileData.gen_references, updateField, toast, resetReferenceForm]);
+
+  const editReference = useCallback((item: ReferenceItem) => {
+    setReferenceForm({ relation: item.relation, name: item.name, organization: item.organization || '', phone: item.phone, email: item.email || '', note: item.note || '' });
+    setEditingReferenceId(item.id);
+    setShowReferenceDialog(true);
+  }, []);
+
+  const deleteReference = useCallback((id: number) => {
+    updateField('gen_references', (profileData.gen_references || []).filter(r => r.id !== id));
+    toast({ title: "추천인이 삭제되었습니다", duration: 2000 });
+  }, [profileData.gen_references, updateField, toast]);
 
   const SalaryPickerContent = () => {
     if (isMobile) {
@@ -629,6 +833,195 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
         </CardContent>
       </Card>
 
+      <Card className="toss-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Languages className="h-5 w-5 text-[#10B981]" /> 어학(외국어) 시험/역량
+          </CardTitle>
+          <CardDescription>보유한 어학 점수 및 역량을 입력하세요</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(profileData.gen_languageTests || []).map((item) => (
+            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-language-${item.id}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#191F28]" data-testid={`text-language-exam-${item.id}`}>{LANGUAGE_EXAM_OPTIONS.find(o => o.value === item.examName)?.label || item.examName}</h4>
+                    {item.isPending && <Badge variant="outline" className="text-xs border-amber-400 text-amber-600" data-testid={`badge-language-pending-${item.id}`}>준비중</Badge>}
+                  </div>
+                  {!item.isPending && (
+                    <p className="text-[#4E5968] font-medium" data-testid={`text-language-score-${item.id}`}>{item.scoreType === 'grade' ? '등급' : '점수'}: {item.scoreValue}</p>
+                  )}
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editLanguageTest(item)} data-testid={`button-edit-language-${item.id}`}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteLanguageTest(item.id)} data-testid={`button-delete-language-${item.id}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
+                {item.acquiredDate && <span data-testid={`text-language-acquired-${item.id}`}>취득일: {item.acquiredDate}</span>}
+                {item.expiryDate && <span data-testid={`text-language-expiry-${item.id}`}>• 만료일: {item.expiryDate}</span>}
+              </div>
+              {item.note && <p className="text-sm text-[#8B95A1]" data-testid={`text-language-note-${item.id}`}>{item.note}</p>}
+            </div>
+          ))}
+          <Button 
+            type="button" variant="outline" 
+            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+            onClick={(e) => { e.preventDefault(); resetLanguageTestForm(); setShowLanguageTestDialog(true); }}
+            data-testid="button-add-language"
+          >
+            <Plus className="h-5 w-5 mr-2" /> 어학 시험 추가하기
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="toss-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <BadgeCheck className="h-5 w-5 text-[#F59E0B]" /> 자격증/면허
+          </CardTitle>
+          <CardDescription>보유한 자격증 및 면허를 입력하세요</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(profileData.gen_licenses || []).map((item) => (
+            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-license-${item.id}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#191F28]" data-testid={`text-license-title-${item.id}`}>{item.title}</h4>
+                    <Badge variant="outline" className={`text-xs ${item.status === 'acquired' ? 'border-green-400 text-green-600' : item.status === 'preparing' ? 'border-amber-400 text-amber-600' : 'border-red-400 text-red-600'}`} data-testid={`badge-license-status-${item.id}`}>
+                      {LICENSE_STATUS_OPTIONS.find(o => o.value === item.status)?.label}
+                    </Badge>
+                  </div>
+                  <p className="text-[#4E5968] text-sm" data-testid={`text-license-issuer-${item.id}`}>{item.issuer}</p>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editLicense(item)} data-testid={`button-edit-license-${item.id}`}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteLicense(item.id)} data-testid={`button-delete-license-${item.id}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
+                <Badge variant="secondary" className="text-xs" data-testid={`badge-license-category-${item.id}`}>{LICENSE_CATEGORY_OPTIONS.find(o => o.value === item.category)?.label}</Badge>
+                {item.licenseType && <span data-testid={`text-license-type-${item.id}`}>• {item.licenseType}</span>}
+                {item.acquiredDate && <span data-testid={`text-license-acquired-${item.id}`}>• 취득일: {item.acquiredDate}</span>}
+              </div>
+              {item.licenseNumber && <p className="text-sm text-[#8B95A1]" data-testid={`text-license-number-${item.id}`}>자격번호: {item.licenseNumber}</p>}
+            </div>
+          ))}
+          <Button 
+            type="button" variant="outline" 
+            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+            onClick={(e) => { e.preventDefault(); resetLicenseForm(); setShowLicenseDialog(true); }}
+            data-testid="button-add-license"
+          >
+            <Plus className="h-5 w-5 mr-2" /> 자격증/면허 추가하기
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="toss-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Award className="h-5 w-5 text-[#EC4899]" /> 수상/공모전
+          </CardTitle>
+          <CardDescription>수상 경력 및 공모전 입상 이력을 입력하세요</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(profileData.gen_awards || []).map((item) => (
+            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-award-${item.id}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#191F28]" data-testid={`text-award-title-${item.id}`}>{item.titleAndHost}</h4>
+                    <Badge variant="outline" className="text-xs border-purple-400 text-purple-600" data-testid={`badge-award-type-${item.id}`}>
+                      {AWARD_TYPE_OPTIONS.find(o => o.value === item.awardType)?.label}
+                    </Badge>
+                  </div>
+                  {item.rank && <p className="text-[#4E5968] text-sm" data-testid={`text-award-rank-${item.id}`}>{AWARD_RANK_OPTIONS.find(o => o.value === item.rank)?.label || item.rank}</p>}
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editAward(item)} data-testid={`button-edit-award-${item.id}`}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteAward(item.id)} data-testid={`button-delete-award-${item.id}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
+                <CalendarIcon className="h-4 w-4" />
+                <span data-testid={`text-award-date-${item.id}`}>{item.awardDate}</span>
+              </div>
+              {item.note && <p className="text-sm text-[#8B95A1]" data-testid={`text-award-note-${item.id}`}>{item.note}</p>}
+            </div>
+          ))}
+          <Button 
+            type="button" variant="outline" 
+            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+            onClick={(e) => { e.preventDefault(); resetAwardForm(); setShowAwardDialog(true); }}
+            data-testid="button-add-award"
+          >
+            <Plus className="h-5 w-5 mr-2" /> 수상/공모전 추가하기
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="toss-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Users className="h-5 w-5 text-[#8B5CF6]" /> 추천인(레퍼런스)
+          </CardTitle>
+          <CardDescription>추천인 정보를 입력하세요</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(profileData.gen_references || []).map((item) => (
+            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2 relative group" data-testid={`card-reference-${item.id}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#191F28]" data-testid={`text-reference-name-${item.id}`}>{item.name}</h4>
+                    <Badge variant="outline" className="text-xs border-indigo-400 text-indigo-600" data-testid={`badge-reference-relation-${item.id}`}>
+                      {REFERENCE_RELATION_OPTIONS.find(o => o.value === item.relation)?.label}
+                    </Badge>
+                  </div>
+                  {item.organization && <p className="text-[#4E5968] text-sm" data-testid={`text-reference-org-${item.id}`}>{item.organization}</p>}
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50" onClick={() => editReference(item)} data-testid={`button-edit-reference-${item.id}`}>
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50" onClick={() => deleteReference(item.id)} data-testid={`button-delete-reference-${item.id}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-[#8B95A1]">
+                <span data-testid={`text-reference-phone-${item.id}`}>📞 {item.phone}</span>
+                {item.email && <span data-testid={`text-reference-email-${item.id}`}>• ✉️ {item.email}</span>}
+              </div>
+              {item.note && <p className="text-sm text-[#8B95A1]" data-testid={`text-reference-note-${item.id}`}>{item.note}</p>}
+            </div>
+          ))}
+          <Button 
+            type="button" variant="outline" 
+            className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] hover:bg-blue-50 font-bold"
+            onClick={(e) => { e.preventDefault(); resetReferenceForm(); setShowReferenceDialog(true); }}
+            data-testid="button-add-reference"
+          >
+            <Plus className="h-5 w-5 mr-2" /> 추천인 추가하기
+          </Button>
+        </CardContent>
+      </Card>
+
       <Dialog open={showWorkExperienceDialog} onOpenChange={setShowWorkExperienceDialog}>
         <DialogContent className="sm:max-w-md rounded-[24px] bg-white">
           <DialogHeader>
@@ -711,6 +1104,222 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
             >
               추가하기
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLanguageTestDialog} onOpenChange={(open) => { if (!open) resetLanguageTestForm(); setShowLanguageTestDialog(open); }}>
+        <DialogContent className="sm:max-w-md rounded-[24px] bg-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#191F28]">{editingLanguageTestId ? '어학 정보 수정' : '어학 시험 추가'}</DialogTitle>
+            <DialogDescription className="text-sm text-[#8B95A1]">어학 시험 점수 또는 역량을 입력하세요.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>시험명 *</Label>
+              <Select value={languageTestForm.examName} onValueChange={(val) => setLanguageTestForm({...languageTestForm, examName: val})}>
+                <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-language-exam"><SelectValue placeholder="시험 선택" /></SelectTrigger>
+                <SelectContent>
+                  {LANGUAGE_EXAM_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox id="lang-pending" checked={languageTestForm.isPending} onCheckedChange={(checked) => setLanguageTestForm({...languageTestForm, isPending: checked as boolean})} data-testid="checkbox-language-pending" />
+              <label htmlFor="lang-pending" className="text-sm font-medium leading-none">준비중/응시예정</label>
+            </div>
+            {!languageTestForm.isPending && (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>점수 유형 *</Label>
+                    <Select value={languageTestForm.scoreType} onValueChange={(val) => setLanguageTestForm({...languageTestForm, scoreType: val as 'grade' | 'score'})}>
+                      <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-language-score-type"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="score">점수</SelectItem>
+                        <SelectItem value="grade">등급</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{languageTestForm.scoreType === 'grade' ? '등급' : '점수'} *</Label>
+                    <Input placeholder={languageTestForm.scoreType === 'grade' ? '예: N1, 6급' : '예: 950'} value={languageTestForm.scoreValue} onChange={(e) => setLanguageTestForm({...languageTestForm, scoreValue: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-language-score" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>취득일</Label>
+                    <Input type="date" value={languageTestForm.acquiredDate} onChange={(e) => setLanguageTestForm({...languageTestForm, acquiredDate: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-language-acquired-date" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>만료일</Label>
+                    <Input type="date" value={languageTestForm.expiryDate || ''} onChange={(e) => setLanguageTestForm({...languageTestForm, expiryDate: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-language-expiry-date" />
+                  </div>
+                </div>
+              </>
+            )}
+            <div className="space-y-2">
+              <Label>비고</Label>
+              <Textarea placeholder="추가 설명이 있다면 입력하세요." value={languageTestForm.note || ''} onChange={(e) => setLanguageTestForm({...languageTestForm, note: e.target.value})} className="min-h-[80px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-language-note" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1 h-12 rounded-xl border-[#E5E8EB]" onClick={() => { resetLanguageTestForm(); setShowLanguageTestDialog(false); }} data-testid="button-cancel-language">취소</Button>
+            <Button className="flex-1 h-12 rounded-xl bg-[#3182F6] font-bold" onClick={addOrUpdateLanguageTest} data-testid="button-submit-language">{editingLanguageTestId ? '수정하기' : '추가하기'}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLicenseDialog} onOpenChange={(open) => { if (!open) resetLicenseForm(); setShowLicenseDialog(open); }}>
+        <DialogContent className="sm:max-w-md rounded-[24px] bg-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#191F28]">{editingLicenseId ? '자격증/면허 수정' : '자격증/면허 추가'}</DialogTitle>
+            <DialogDescription className="text-sm text-[#8B95A1]">자격증 또는 면허 정보를 입력하세요.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>구분 *</Label>
+                <Select value={licenseForm.category} onValueChange={(val) => setLicenseForm({...licenseForm, category: val as 'license' | 'certificate'})}>
+                  <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-license-category"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {LICENSE_CATEGORY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>상태 *</Label>
+                <Select value={licenseForm.status} onValueChange={(val) => setLicenseForm({...licenseForm, status: val as 'acquired' | 'preparing' | 'expired'})}>
+                  <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-license-status"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {LICENSE_STATUS_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>종류</Label>
+              <Input placeholder="예: 국가기술, 민간, 운전면허 등" value={licenseForm.licenseType} onChange={(e) => setLicenseForm({...licenseForm, licenseType: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-license-type" />
+            </div>
+            <div className="space-y-2">
+              <Label>자격/면허명 *</Label>
+              <Input placeholder="예: 정보처리기사, 1종 보통" value={licenseForm.title} onChange={(e) => setLicenseForm({...licenseForm, title: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-license-title" />
+            </div>
+            <div className="space-y-2">
+              <Label>발급기관 *</Label>
+              <Input placeholder="예: 한국산업인력공단" value={licenseForm.issuer} onChange={(e) => setLicenseForm({...licenseForm, issuer: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-license-issuer" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>취득일</Label>
+                <Input type="date" value={licenseForm.acquiredDate || ''} onChange={(e) => setLicenseForm({...licenseForm, acquiredDate: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-license-acquired-date" />
+              </div>
+              <div className="space-y-2">
+                <Label>만료일</Label>
+                <Input type="date" value={licenseForm.expiryDate || ''} onChange={(e) => setLicenseForm({...licenseForm, expiryDate: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-license-expiry-date" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>자격번호</Label>
+              <Input placeholder="자격증 번호 (선택)" value={licenseForm.licenseNumber || ''} onChange={(e) => setLicenseForm({...licenseForm, licenseNumber: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-license-number" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1 h-12 rounded-xl border-[#E5E8EB]" onClick={() => { resetLicenseForm(); setShowLicenseDialog(false); }} data-testid="button-cancel-license">취소</Button>
+            <Button className="flex-1 h-12 rounded-xl bg-[#3182F6] font-bold" onClick={addOrUpdateLicense} data-testid="button-submit-license">{editingLicenseId ? '수정하기' : '추가하기'}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAwardDialog} onOpenChange={(open) => { if (!open) resetAwardForm(); setShowAwardDialog(open); }}>
+        <DialogContent className="sm:max-w-md rounded-[24px] bg-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#191F28]">{editingAwardId ? '수상/공모전 수정' : '수상/공모전 추가'}</DialogTitle>
+            <DialogDescription className="text-sm text-[#8B95A1]">수상 경력 또는 공모전 정보를 입력하세요.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>유형 *</Label>
+                <Select value={awardForm.awardType} onValueChange={(val) => setAwardForm({...awardForm, awardType: val as 'award' | 'competition' | 'contest' | 'other'})}>
+                  <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-award-type"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {AWARD_TYPE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>순위/등급</Label>
+                <Select value={awardForm.rank} onValueChange={(val) => setAwardForm({...awardForm, rank: val})}>
+                  <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-award-rank"><SelectValue placeholder="선택" /></SelectTrigger>
+                  <SelectContent>
+                    {AWARD_RANK_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>상명/공모전명 + 주최기관 *</Label>
+              <Input placeholder="예: 전국 창업경진대회 최우수상 (중소벤처기업부)" value={awardForm.titleAndHost} onChange={(e) => setAwardForm({...awardForm, titleAndHost: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-award-title" />
+            </div>
+            <div className="space-y-2">
+              <Label>수상/입상일 *</Label>
+              <Input type="date" value={awardForm.awardDate} onChange={(e) => setAwardForm({...awardForm, awardDate: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-award-date" />
+            </div>
+            <div className="space-y-2">
+              <Label>비고</Label>
+              <Textarea placeholder="추가 설명이 있다면 입력하세요." value={awardForm.note || ''} onChange={(e) => setAwardForm({...awardForm, note: e.target.value})} className="min-h-[80px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-award-note" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1 h-12 rounded-xl border-[#E5E8EB]" onClick={() => { resetAwardForm(); setShowAwardDialog(false); }} data-testid="button-cancel-award">취소</Button>
+            <Button className="flex-1 h-12 rounded-xl bg-[#3182F6] font-bold" onClick={addOrUpdateAward} data-testid="button-submit-award">{editingAwardId ? '수정하기' : '추가하기'}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showReferenceDialog} onOpenChange={(open) => { if (!open) resetReferenceForm(); setShowReferenceDialog(open); }}>
+        <DialogContent className="sm:max-w-md rounded-[24px] bg-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#191F28]">{editingReferenceId ? '추천인 수정' : '추천인 추가'}</DialogTitle>
+            <DialogDescription className="text-sm text-[#8B95A1]">추천인 정보를 입력하세요.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>관계 *</Label>
+              <Select value={referenceForm.relation} onValueChange={(val) => setReferenceForm({...referenceForm, relation: val as 'professor' | 'supervisor' | 'colleague' | 'acquaintance' | 'other'})}>
+                <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-reference-relation"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {REFERENCE_RELATION_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>추천인 성명 *</Label>
+              <Input placeholder="예: 홍길동" value={referenceForm.name} onChange={(e) => setReferenceForm({...referenceForm, name: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-reference-name" />
+            </div>
+            <div className="space-y-2">
+              <Label>소속/기관</Label>
+              <Input placeholder="예: ㅇㅇ대학교 경영학과" value={referenceForm.organization || ''} onChange={(e) => setReferenceForm({...referenceForm, organization: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-reference-org" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>연락처 *</Label>
+                <Input placeholder="010-0000-0000" value={referenceForm.phone} onChange={(e) => setReferenceForm({...referenceForm, phone: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-reference-phone" />
+              </div>
+              <div className="space-y-2">
+                <Label>이메일</Label>
+                <Input placeholder="email@example.com" value={referenceForm.email || ''} onChange={(e) => setReferenceForm({...referenceForm, email: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-reference-email" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>비고</Label>
+              <Textarea placeholder="추가 설명이 있다면 입력하세요." value={referenceForm.note || ''} onChange={(e) => setReferenceForm({...referenceForm, note: e.target.value})} className="min-h-[80px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-reference-note" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1 h-12 rounded-xl border-[#E5E8EB]" onClick={() => { resetReferenceForm(); setShowReferenceDialog(false); }} data-testid="button-cancel-reference">취소</Button>
+            <Button className="flex-1 h-12 rounded-xl bg-[#3182F6] font-bold" onClick={addOrUpdateReference} data-testid="button-submit-reference">{editingReferenceId ? '수정하기' : '추가하기'}</Button>
           </div>
         </DialogContent>
       </Dialog>
