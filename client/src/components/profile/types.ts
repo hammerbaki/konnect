@@ -89,6 +89,10 @@ export type ProfileDataType = {
   gen_environmentPreferences: string[];
   gen_environmentNoPreference: boolean;
   gen_concerns: string;
+  gen_languageTests: LanguageTest[];
+  gen_licenses: LicenseItem[];
+  gen_awards: AwardItem[];
+  gen_references: ReferenceItem[];
 };
 
 export type WorkExperience = {
@@ -104,6 +108,48 @@ export type LanguageScore = {
   id: number;
   type: string;
   score: string;
+};
+
+export type LanguageTest = {
+  id: number;
+  examName: string;
+  scoreType: "grade" | "score";
+  scoreValue: string;
+  acquiredDate: string;
+  isPending: boolean;
+  expiryDate?: string;
+  note?: string;
+};
+
+export type LicenseItem = {
+  id: number;
+  category: "license" | "certificate";
+  licenseType: string;
+  title: string;
+  issuer: string;
+  status: "acquired" | "preparing" | "expired";
+  acquiredDate?: string;
+  licenseNumber?: string;
+  expiryDate?: string;
+};
+
+export type AwardItem = {
+  id: number;
+  awardType: "award" | "competition" | "contest" | "other";
+  rank: string;
+  titleAndHost: string;
+  awardDate: string;
+  note?: string;
+};
+
+export type ReferenceItem = {
+  id: number;
+  relation: "professor" | "supervisor" | "colleague" | "acquaintance" | "other";
+  name: string;
+  organization?: string;
+  phone: string;
+  email?: string;
+  note?: string;
 };
 
 export const getDefaultProfileData = (type: ProfileType = "general"): ProfileDataType => ({
@@ -195,6 +241,10 @@ export const getDefaultProfileData = (type: ProfileType = "general"): ProfileDat
   gen_environmentPreferences: [],
   gen_environmentNoPreference: false,
   gen_concerns: "",
+  gen_languageTests: [],
+  gen_licenses: [],
+  gen_awards: [],
+  gen_references: [],
 });
 
 export interface ProfileFormProps {
