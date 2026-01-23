@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useToast } from "@/hooks/use-toast";
 import { 
   Globe, Plane, Briefcase, GraduationCap, Languages, 
-  Wrench, FileText, Info, CheckCircle, Plus, Edit2, Trash2, Building2
+  Wrench, FileText, Info, Plus, Edit2, Trash2, Building2
 } from "lucide-react";
 import { ProfileFormProps, IntlEducationItem, IntlWorkExperienceItem } from "./types";
 
@@ -178,16 +178,6 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>연락처 (Phone) *</Label>
-              <Input value={profileData.intl_phone} onChange={(e) => updateField('intl_phone', e.target.value)} placeholder="010-0000-0000" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-phone" />
-            </div>
-            <div className="space-y-2">
-              <Label>주소 (Address)</Label>
-              <Input value={profileData.intl_address} onChange={(e) => updateField('intl_address', e.target.value)} placeholder="현재 거주지 주소" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-address" />
-            </div>
-          </div>
         </CardContent>
       </Card>
 
@@ -215,20 +205,14 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
               <Input type="date" value={profileData.intl_visaExpiryDate} onChange={(e) => updateField('intl_visaExpiryDate', e.target.value)} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-visa-expiry" />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>근무 가능 형태</Label>
-              <Select value={profileData.intl_availableWorkType} onValueChange={(val) => updateField('intl_availableWorkType', val)}>
-                <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-intl-work-type"><SelectValue placeholder="선택" /></SelectTrigger>
-                <SelectContent>
-                  {WORK_TYPE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>파트타임 가능 시간 (주당)</Label>
-              <Input value={profileData.intl_partTimeHoursPerWeek} onChange={(e) => updateField('intl_partTimeHoursPerWeek', e.target.value)} placeholder="예: 20시간 이내" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-parttime-hours" />
-            </div>
+          <div className="space-y-2">
+            <Label>근무 가능 형태</Label>
+            <Select value={profileData.intl_availableWorkType} onValueChange={(val) => updateField('intl_availableWorkType', val)}>
+              <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-intl-work-type"><SelectValue placeholder="선택" /></SelectTrigger>
+              <SelectContent>
+                {WORK_TYPE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -470,33 +454,6 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
           <div className="space-y-2">
             <Label>특이사항</Label>
             <Textarea value={profileData.intl_specialNotes} onChange={(e) => updateField('intl_specialNotes', e.target.value)} placeholder="기타 특이사항이 있다면 작성하세요" className="min-h-[80px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-intl-special-notes" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Certification */}
-      <Card className="toss-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <CheckCircle className="h-5 w-5 text-[#10B981]" /> 사실 확인 (Certification)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-3">
-            <Checkbox id="certify-true" checked={profileData.intl_certifyTrue} onCheckedChange={(checked) => updateField('intl_certifyTrue', checked as boolean)} data-testid="checkbox-intl-certify" />
-            <label htmlFor="certify-true" className="text-sm font-medium leading-none cursor-pointer">
-              위 기재 내용이 사실과 다름없음을 확인합니다.
-            </label>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>작성일</Label>
-              <Input type="date" value={profileData.intl_dateSigned} onChange={(e) => updateField('intl_dateSigned', e.target.value)} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-date-signed" />
-            </div>
-            <div className="space-y-2">
-              <Label>서명 이름</Label>
-              <Input value={profileData.intl_applicantSignatureName} onChange={(e) => updateField('intl_applicantSignatureName', e.target.value)} placeholder="작성자 이름" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-signature-name" />
-            </div>
           </div>
         </CardContent>
       </Card>
