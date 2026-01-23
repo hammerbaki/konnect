@@ -527,23 +527,40 @@ export default function Analysis() {
                             {new Date(latestAnalysis.createdAt).toLocaleDateString('ko-KR')} 분석
                         </p>
                     </div>
-                    <Button 
-                        onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
-                        disabled={isCurrentProfileAnalyzing || isSubmitting || !profileValidation.isValid}
-                        variant="outline"
-                        className="rounded-xl border-[#3182F6] text-[#3182F6] disabled:opacity-50"
-                        data-testid="button-regenerate-analysis"
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 요청 중...
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles className="h-4 w-4 mr-2" /> 다시 분석하기
-                            </>
+                    <div className="flex items-center gap-2">
+                        {activeProfile && (
+                            <Link href={`/profile?type=${activeProfile.type}`}>
+                                <Button 
+                                    variant="outline" 
+                                    className="rounded-xl border-[#E5E8EB] text-[#4E5968] hover:border-[#3182F6] hover:text-[#3182F6]"
+                                    data-testid="button-profile-criteria"
+                                >
+                                    {(() => {
+                                        const Icon = profileTypeIcons[activeProfile.type] || Briefcase;
+                                        return <Icon className="h-4 w-4 mr-2" />;
+                                    })()}
+                                    {activeProfile.title || profileTypeLabels[activeProfile.type]}
+                                </Button>
+                            </Link>
                         )}
-                    </Button>
+                        <Button 
+                            onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
+                            disabled={isCurrentProfileAnalyzing || isSubmitting || !profileValidation.isValid}
+                            variant="outline"
+                            className="rounded-xl border-[#3182F6] text-[#3182F6] disabled:opacity-50"
+                            data-testid="button-regenerate-analysis"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 요청 중...
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="h-4 w-4 mr-2" /> 다시 분석하기
+                                </>
+                            )}
+                        </Button>
+                    </div>
                 </div>
 
                 <Card className="bg-gradient-to-br from-[#F8FAFC] to-white border-[#E5E8EB]">
@@ -704,65 +721,6 @@ export default function Analysis() {
                             )}
                             </div>
                         </main>
-
-                        {/* Right sidebar - Analysis criteria info */}
-                        <aside className="hidden lg:block w-72 shrink-0">
-                            <div className="sticky top-8 space-y-4">
-                                <div className="bg-white rounded-xl border border-[#E5E8EB] p-5">
-                                    <h2 className="text-sm font-bold text-[#191F28] flex items-center gap-2 mb-3">
-                                        <LayoutDashboard className="h-4 w-4 text-[#3182F6]" />
-                                        분석 기준
-                                    </h2>
-                                    
-                                    {isLoadingProfiles ? (
-                                        <div className="p-3 rounded-lg border border-[#E5E8EB] bg-[#F9FAFB]">
-                                            <Skeleton className="h-4 w-24 mb-2" />
-                                            <Skeleton className="h-5 w-32" />
-                                        </div>
-                                    ) : activeProfile ? (
-                                        <div className="p-3 rounded-lg border border-[#E5E8EB] bg-[#F9FAFB]" data-testid="profile-info-summary">
-                                            <p className="text-[10px] text-[#8B95A1] mb-2 font-medium">현재 분석 기준</p>
-                                            <div className="flex items-center gap-3">
-                                                <div className={cn("p-2 rounded-lg", profileTypeColors[activeProfile.type])}>
-                                                    {(() => {
-                                                        const Icon = profileTypeIcons[activeProfile.type] || Briefcase;
-                                                        return <Icon className="h-4 w-4" />;
-                                                    })()}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-sm text-[#191F28]">
-                                                        {activeProfile.title || profileTypeLabels[activeProfile.type]}
-                                                    </p>
-                                                    <p className="text-[10px] text-[#8B95A1]">
-                                                        {profileTypeLabels[activeProfile.type]}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="p-3 rounded-lg border border-[#E5E8EB] bg-[#F9FAFB] text-center">
-                                            <p className="text-xs text-[#8B95A1] mb-2">등록된 프로필이 없습니다</p>
-                                            <Link href="/profile">
-                                                <Button size="sm" className="bg-[#3182F6] text-xs">
-                                                    <Plus className="h-3 w-3 mr-1" /> 프로필 만들기
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    )}
-                                    
-                                    {activeProfile && (
-                                        <div className="mt-3">
-                                            <Link href={`/profile?type=${activeProfile.type}`}>
-                                                <Button variant="outline" size="sm" className="w-full text-xs text-[#8B95A1] hover:text-[#3182F6]">
-                                                    <ExternalLink className="h-3 w-3 mr-1" />
-                                                    프로필 수정하기
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </aside>
                     </div>
                 </div>
             </div>
