@@ -45,7 +45,7 @@ const LANGUAGE_LEVEL_OPTIONS = [
 ];
 
 const TOPIK_LEVEL_OPTIONS = [
-  { value: "", label: "선택 안함" },
+  { value: "none", label: "선택 안함" },
   { value: "1", label: "1급" },
   { value: "2", label: "2급" },
   { value: "3", label: "3급" },
@@ -63,7 +63,7 @@ const DEGREE_OPTIONS = [
 ];
 
 const ENGLISH_TEST_OPTIONS = [
-  { value: "", label: "선택 안함" },
+  { value: "none", label: "선택 안함" },
   { value: "TOEIC", label: "TOEIC" },
   { value: "TOEFL", label: "TOEFL" },
   { value: "IELTS", label: "IELTS" },
