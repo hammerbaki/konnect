@@ -18,6 +18,7 @@ import {
   School,
   BookOpen,
   Backpack,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
@@ -25,6 +26,7 @@ import { usePageAccess } from "@/lib/usePageAccess";
 
 const profileSubItems = [
   { id: "general", label: "구직자", icon: Briefcase },
+  { id: "international", label: "외국인유학생", icon: Globe },
   { id: "university", label: "대학생", icon: GraduationCap },
   { id: "high", label: "고등학생", icon: School },
   { id: "middle", label: "중학생", icon: BookOpen },
