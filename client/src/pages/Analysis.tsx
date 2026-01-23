@@ -20,7 +20,6 @@ import { useMobileAction } from "@/lib/MobileActionContext";
 import { Link, useLocation } from "wouter";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
@@ -117,6 +116,7 @@ interface CareerRecommendation {
 
 const profileTypeIcons: Record<string, any> = {
     general: Briefcase,
+    international: Compass,
     university: GraduationCap,
     high: School,
     middle: School,
@@ -125,6 +125,7 @@ const profileTypeIcons: Record<string, any> = {
 
 const profileTypeColors: Record<string, string> = {
     general: 'text-blue-600 bg-blue-50',
+    international: 'text-teal-600 bg-teal-50',
     university: 'text-purple-600 bg-purple-50',
     high: 'text-pink-600 bg-pink-50',
     middle: 'text-orange-600 bg-orange-50',
@@ -133,19 +134,21 @@ const profileTypeColors: Record<string, string> = {
 
 const profileTypeLabels: Record<string, string> = {
     general: '일반 (직장인)',
+    international: '외국인유학생',
     university: '대학생',
     high: '고등학생',
     middle: '중학생',
     elementary: '초등학생',
 };
 
-// Profile display order: general on top, then university, high, middle, elementary
+// Profile display order: general on top, then international, university, high, middle, elementary
 const profileTypeOrder: Record<string, number> = {
     general: 1,
-    university: 2,
-    high: 3,
-    middle: 4,
-    elementary: 5,
+    international: 2,
+    university: 3,
+    high: 4,
+    middle: 5,
+    elementary: 6,
 };
 
 const recommendationSectionTitles: Record<string, string> = {
@@ -293,7 +296,6 @@ export default function Analysis() {
     const { deductCredit, restoreCredits } = useTokens();
     
     const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [expandedCareer, setExpandedCareer] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [urlProfileHandled, setUrlProfileHandled] = useState(false);
@@ -455,79 +457,68 @@ export default function Analysis() {
         toast({ title: "Kompass로 이동", description: "목표를 설정해보세요!" });
     };
 
-    const ProfileSidebar = () => (
-        <div className="flex flex-col h-full">
-            <div className="p-6 pb-4">
-                <h2 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                    <LayoutDashboard className="h-5 w-5 text-[#3182F6]" />
-                    내 프로필
-                </h2>
-                <p className="text-xs text-[#8B95A1] mt-1">분석할 프로필 선택</p>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto px-3 space-y-2">
-                {isLoadingProfiles ? (
-                    <div className="space-y-2 py-2">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="flex items-start gap-3 p-3 rounded-xl border border-[#E5E8EB]">
-                                <Skeleton className="h-9 w-9 rounded-lg shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <Skeleton className="h-4 w-24 mb-1.5" />
-                                    <Skeleton className="h-3 w-16" />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : profiles && profiles.length > 0 ? (
-                    [...profiles].sort((a: any, b: any) => (profileTypeOrder[a.type] || 99) - (profileTypeOrder[b.type] || 99)).map((profile: any) => {
-                        const Icon = profileTypeIcons[profile.type] || Briefcase;
-                        const isActive = activeProfileId === profile.id;
-                        const colorClass = profileTypeColors[profile.type] || 'text-gray-600 bg-gray-50';
-                        return (
-                            <button
-                                key={profile.id}
-                                onClick={() => {
-                                    setActiveProfileId(profile.id);
-                                    setIsSidebarOpen(false);
-                                }}
-                                className={cn(
-                                    "w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all duration-200 border",
-                                    isActive 
-                                        ? "bg-white border-[#3182F6] shadow-sm ring-1 ring-[#3182F6]" 
-                                        : "bg-transparent border-transparent hover:bg-[#F2F4F6]"
-                                )}
-                                data-testid={`button-select-profile-${profile.id}`}
-                            >
-                                <div className={cn("p-2 rounded-lg shrink-0", colorClass)}>
+    const ProfileInfoSidebar = () => {
+        const Icon = activeProfile ? (profileTypeIcons[activeProfile.type] || Briefcase) : User;
+        const colorClass = activeProfile ? (profileTypeColors[activeProfile.type] || 'text-gray-600 bg-gray-50') : 'text-gray-600 bg-gray-50';
+        
+        return (
+            <div className="flex flex-col h-full">
+                <div className="p-6 pb-4">
+                    <h2 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                        <LayoutDashboard className="h-5 w-5 text-[#3182F6]" />
+                        분석 기준 정보
+                    </h2>
+                    <p className="text-xs text-[#8B95A1] mt-1">내 프로필 기반으로 분석합니다</p>
+                </div>
+                
+                <div className="px-4">
+                    {isLoadingProfiles ? (
+                        <div className="p-4 rounded-xl border border-[#E5E8EB] bg-[#F9FAFB]">
+                            <Skeleton className="h-4 w-24 mb-2" />
+                            <Skeleton className="h-5 w-32" />
+                        </div>
+                    ) : activeProfile ? (
+                        <div className="p-4 rounded-xl border border-[#E5E8EB] bg-[#F9FAFB]" data-testid="profile-info-summary">
+                            <p className="text-xs text-[#8B95A1] mb-2 font-medium">현재 분석 기준</p>
+                            <div className="flex items-center gap-3">
+                                <div className={cn("p-2 rounded-lg", colorClass)}>
                                     <Icon className="h-5 w-5" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-center mb-0.5">
-                                        <span className={cn("font-bold text-sm truncate", isActive ? "text-[#191F28]" : "text-[#4E5968]")}>
-                                            {profile.title || profileTypeLabels[profile.type]}
-                                        </span>
-                                    </div>
-                                    <span className="text-[10px] text-[#8B95A1] block truncate">
-                                        {profileTypeLabels[profile.type]}
-                                    </span>
+                                <div>
+                                    <p className="font-bold text-[#191F28]">
+                                        {activeProfile.title || profileTypeLabels[activeProfile.type]}
+                                    </p>
+                                    <p className="text-xs text-[#8B95A1]">
+                                        {profileTypeLabels[activeProfile.type]}
+                                    </p>
                                 </div>
-                                <ChevronRight className={cn("h-4 w-4 shrink-0 mt-1", isActive ? "text-[#3182F6]" : "text-[#B0B8C1]")} />
-                            </button>
-                        );
-                    })
-                ) : (
-                    <div className="text-center py-8">
-                        <p className="text-sm text-[#8B95A1] mb-3">등록된 프로필이 없습니다</p>
-                        <Link href="/profile">
-                            <Button size="sm" className="bg-[#3182F6]">
-                                <Plus className="h-4 w-4 mr-1" /> 프로필 만들기
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="p-4 rounded-xl border border-[#E5E8EB] bg-[#F9FAFB] text-center">
+                            <p className="text-sm text-[#8B95A1] mb-3">등록된 프로필이 없습니다</p>
+                            <Link href="/profile">
+                                <Button size="sm" className="bg-[#3182F6]">
+                                    <Plus className="h-4 w-4 mr-1" /> 프로필 만들기
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
+                </div>
+                
+                {activeProfile && (
+                    <div className="px-4 mt-4">
+                        <Link href={`/profile?type=${activeProfile.type}`}>
+                            <Button variant="outline" size="sm" className="w-full text-[#8B95A1] hover:text-[#3182F6]">
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                프로필 수정하기
                             </Button>
                         </Link>
                     </div>
                 )}
             </div>
-        </div>
-    );
+        );
+    };
 
     const CareerCard = ({ career, index }: { career: CareerRecommendation; index: number }) => {
         const isExpanded = expandedCareer === `career-${index}`;
@@ -950,24 +941,13 @@ export default function Analysis() {
             <div className="min-h-screen bg-[#F9FAFB]">
                 <div className="flex">
                     <aside className="hidden lg:block w-72 bg-white border-r border-[#E5E8EB] h-screen sticky top-0">
-                        <ProfileSidebar />
+                        <ProfileInfoSidebar />
                     </aside>
 
                     <main className="flex-1 min-w-0">
                         <div className="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-[#E5E8EB]">
                             <div className="flex items-center justify-between px-4 py-3">
                                 <div className="flex items-center gap-3">
-                                    <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-                                        <SheetTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="shrink-0">
-                                                <LayoutGrid className="h-5 w-5" />
-                                            </Button>
-                                        </SheetTrigger>
-                                        <SheetContent side="left" className="w-72 p-0">
-                                            <ProfileSidebar />
-                                        </SheetContent>
-                                    </Sheet>
-                                    
                                     {activeProfile && (
                                         <div className="flex items-center gap-2">
                                             <div className={cn("p-1.5 rounded-lg", profileTypeColors[activeProfile.type])}>
@@ -976,9 +956,12 @@ export default function Analysis() {
                                                     return <Icon className="h-4 w-4" />;
                                                 })()}
                                             </div>
-                                            <span className="font-bold text-sm text-[#191F28] truncate max-w-[150px]">
-                                                {activeProfile.title || profileTypeLabels[activeProfile.type]}
-                                            </span>
+                                            <div>
+                                                <span className="font-bold text-sm text-[#191F28] truncate max-w-[150px] block">
+                                                    {activeProfile.title || profileTypeLabels[activeProfile.type]}
+                                                </span>
+                                                <span className="text-[10px] text-[#8B95A1]">분석 기준 프로필</span>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
