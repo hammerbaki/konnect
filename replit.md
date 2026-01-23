@@ -54,7 +54,10 @@ The following UI elements have been temporarily hidden and can be restored by un
 ### Dashboard.tsx (`client/src/pages/Dashboard.tsx`)
 1. **HIDDEN_POINTS_DASHBOARD_START to END** (lines ~210-220): "보유 포인트" card in welcome section
 
-To restore: Search for "HIDDEN_POINTS" and uncomment the marked code blocks.
+### Analysis.tsx (`client/src/pages/Analysis.tsx`)
+1. **HIDDEN_PDF_BUTTON_START to HIDDEN_PDF_BUTTON_END** (lines ~763-778): PDF report download button - feature incomplete, hidden until ready
+
+To restore: Search for "HIDDEN_POINTS" or "HIDDEN_PDF" and uncomment the marked code blocks.
 
 ## External Dependencies
 

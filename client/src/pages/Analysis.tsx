@@ -756,8 +756,9 @@ export default function Analysis() {
                                     </div>
                                 )}
 
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Button 
+                                <div className="flex gap-3">
+                                    {/* HIDDEN_PDF_BUTTON_START - PDF feature temporarily hidden, uncomment to restore */}
+                                    {/* <Button 
                                         onClick={handleDownloadPDF}
                                         disabled={isGeneratingPDF}
                                         variant="outline"
@@ -770,10 +771,11 @@ export default function Analysis() {
                                             <FileText className="h-5 w-5 mr-2" />
                                         )}
                                         {isGeneratingPDF ? '생성중...' : 'PDF 리포트'}
-                                    </Button>
+                                    </Button> */}
+                                    {/* HIDDEN_PDF_BUTTON_END */}
                                     <Button 
                                         onClick={() => handleExportToKompass(career)}
-                                        className="h-12 rounded-xl bg-gradient-to-r from-[#3182F6] to-[#1565C0] text-white font-bold hover:opacity-90 transition-opacity"
+                                        className="flex-1 h-12 rounded-xl bg-gradient-to-r from-[#3182F6] to-[#1565C0] text-white font-bold hover:opacity-90 transition-opacity"
                                         data-testid={`button-export-kompass-${index}`}
                                     >
                                         <Compass className="h-5 w-5 mr-2" />
