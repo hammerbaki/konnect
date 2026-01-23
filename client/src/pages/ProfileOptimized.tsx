@@ -216,6 +216,7 @@ export default function ProfileOptimized() {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedType, setSelectedType] = useState<ProfileType>("general");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showSavedStatus, setShowSavedStatus] = useState(false);
   
   const isInitialLoad = useRef(true);
   const hasScrolledToField = useRef(false);
@@ -394,6 +395,9 @@ export default function ProfileOptimized() {
       ]);
       
       setHasUnsavedChanges(false);
+      setShowSavedStatus(true);
+      
+      setTimeout(() => setShowSavedStatus(false), 3000);
       
       if (showToast) {
         toast({
@@ -494,21 +498,29 @@ export default function ProfileOptimized() {
           <div>
             <h2 className="text-[28px] font-bold text-[#191F28]">내 프로필</h2>
             <p className="text-[#8B95A1] mt-1 text-lg">AI 분석의 정확도를 높이기 위해 정보를 입력해주세요.</p>
-            {hasUnsavedChanges && (
-              <p className="text-xs text-[#FFB300] mt-1 flex items-center gap-1">
-                <span className="inline-block w-2 h-2 bg-[#FFB300] rounded-full animate-pulse" />
-                자동 저장 대기 중...
-              </p>
-            )}
           </div>
-          <Button 
-            onClick={handleSave} 
-            disabled={isSaving}
-            className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base hidden md:flex disabled:opacity-50"
-          >
-            {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />} 
-            {isSaving ? "저장 중..." : "저장하기"}
-          </Button>
+          <div className="hidden md:flex items-center gap-3">
+            {(hasUnsavedChanges || isSaving) && (
+              <span className="text-xs text-[#FFB300] flex items-center gap-1.5 font-medium">
+                <span className="inline-block w-1.5 h-1.5 bg-[#FFB300] rounded-full animate-pulse" />
+                자동 저장중...
+              </span>
+            )}
+            {showSavedStatus && !hasUnsavedChanges && !isSaving && (
+              <span className="text-xs text-[#00BFA5] flex items-center gap-1.5 font-medium">
+                <span className="inline-block w-1.5 h-1.5 bg-[#00BFA5] rounded-full" />
+                자동 저장 완료
+              </span>
+            )}
+            <Button 
+              onClick={handleSave} 
+              disabled={isSaving}
+              className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base disabled:opacity-50"
+            >
+              {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />} 
+              {isSaving ? "저장 중..." : "저장하기"}
+            </Button>
+          </div>
         </div>
 
         <ProfileTypeSelector selectedType={selectedType} onTypeChange={handleTypeChange} />
