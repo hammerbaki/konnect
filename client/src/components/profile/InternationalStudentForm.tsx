@@ -347,11 +347,13 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
           <CardDescription>언어 능력 및 어학 점수를 입력하세요</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Row 1: 모국어 (full width) */}
+          <div className="space-y-2">
+            <Label>모국어 (Native Language)</Label>
+            <Input value={profileData.intl_nativeLanguage} onChange={(e) => updateField('intl_nativeLanguage', e.target.value)} placeholder="예: Vietnamese, Chinese" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-native-language" />
+          </div>
+          {/* Row 2: 한국어 수준 + TOPIK 급수 (2 columns) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>모국어 (Native Language)</Label>
-              <Input value={profileData.intl_nativeLanguage} onChange={(e) => updateField('intl_nativeLanguage', e.target.value)} placeholder="예: Vietnamese, Chinese" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-native-language" />
-            </div>
             <div className="space-y-2">
               <Label>한국어 수준</Label>
               <Select value={profileData.intl_koreanLevel} onValueChange={(val) => updateField('intl_koreanLevel', val)}>
@@ -361,8 +363,6 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>TOPIK 급수</Label>
               <Select value={profileData.intl_topikLevel} onValueChange={(val) => updateField('intl_topikLevel', val)}>
@@ -372,16 +372,18 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>영어 수준</Label>
-              <Select value={profileData.intl_englishLevel} onValueChange={(val) => updateField('intl_englishLevel', val)}>
-                <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-intl-english-level"><SelectValue placeholder="선택" /></SelectTrigger>
-                <SelectContent>
-                  {LANGUAGE_LEVEL_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
+          {/* Row 3: 영어 수준 (full width) */}
+          <div className="space-y-2">
+            <Label>영어 수준</Label>
+            <Select value={profileData.intl_englishLevel} onValueChange={(val) => updateField('intl_englishLevel', val)}>
+              <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-intl-english-level"><SelectValue placeholder="선택" /></SelectTrigger>
+              <SelectContent>
+                {LANGUAGE_LEVEL_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Row 4: 영어 시험명 + 영어 시험 점수 (2 columns) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>영어 시험명</Label>
@@ -397,6 +399,7 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
               <Input value={profileData.intl_englishTestScore} onChange={(e) => updateField('intl_englishTestScore', e.target.value)} placeholder="예: 850, 7.5" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-english-score" />
             </div>
           </div>
+          {/* Row 5: 기타 언어 (full width) */}
           <div className="space-y-2">
             <Label>기타 언어</Label>
             <Input value={profileData.intl_otherLanguages} onChange={(e) => updateField('intl_otherLanguages', e.target.value)} placeholder="예: Japanese (중), French (하)" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-other-languages" />
