@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Save, Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { Save, Loader2, Calendar as CalendarIcon, Brain, ArrowRight } from "lucide-react";
+import { Link } from "wouter";
 import { useMobileAction } from "@/lib/MobileActionContext";
 import { useAuth } from "@/lib/AuthContext";
 import { useEffect, useState, useCallback, useRef, Suspense, lazy, useMemo, memo } from "react";
@@ -538,6 +539,29 @@ export default function ProfileOptimized() {
             {renderProfileForm}
           </Suspense>
         </div>
+
+        {serverProfile?.id && (
+          <Card className="toss-card mt-8 bg-gradient-to-r from-[#3182F6]/5 to-[#6366F1]/5 border-[#3182F6]/20">
+            <CardContent className="pt-6">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-[#3182F6]/10">
+                    <Brain className="h-6 w-6 text-[#3182F6]" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-[#191F28]">AI 커리어 분석</h3>
+                    <p className="text-sm text-[#8B95A1]">이 프로필을 기준으로 맞춤형 진로 분석을 받아보세요</p>
+                  </div>
+                </div>
+                <Link href={`/analysis?profile=${serverProfile.id}`}>
+                  <Button className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold" data-testid="button-go-to-analysis">
+                    커리어 분석하기 <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </Layout>
   );
