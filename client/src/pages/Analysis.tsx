@@ -947,22 +947,31 @@ export default function Analysis() {
                                         {/* 탭1: 희망직무 기반 추천 */}
                                         {activeTab === 'desired' && (
                                             <div data-testid="section-desired-based">
-                                                {desiredJob && desiredCategory ? (
+                                                {desiredJob ? (
                                                     <>
                                                         <div className="mb-3 p-3 bg-[#F5F3FF] rounded-lg border border-[#8B5CF6]/20">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <Target className="w-4 h-4 text-[#8B5CF6]" />
-                                                                <span className="text-sm font-semibold text-[#191F28]">희망직무: {desiredJob}</span>
-                                                                <Badge className="bg-[#8B5CF6]/10 text-[#8B5CF6] border-0 text-[9px]">
-                                                                    {desiredCategory}
-                                                                </Badge>
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Target className="w-4 h-4 text-[#8B5CF6]" />
+                                                                    <span className="text-sm font-semibold text-[#191F28]">현재 희망직무: {desiredJob}</span>
+                                                                    {desiredCategory && (
+                                                                        <Badge className="bg-[#8B5CF6]/10 text-[#8B5CF6] border-0 text-[9px]">
+                                                                            {desiredCategory}
+                                                                        </Badge>
+                                                                    )}
+                                                                </div>
+                                                                <Link href="/profile" className="text-[10px] text-[#8B5CF6] hover:underline flex items-center gap-0.5" data-testid="link-change-desired-job">
+                                                                    변경하기 <ChevronRight className="w-3 h-3" />
+                                                                </Link>
                                                             </div>
                                                             <p className="text-[10px] text-[#6B7280]">
-                                                                동일 직무군 내에서 진로진단 결과로 우선순위를 정렬했습니다.
+                                                                {desiredCategory 
+                                                                    ? "동일 직무군 내에서 진로진단 결과로 우선순위를 정렬했습니다."
+                                                                    : "입력하신 희망직무를 기준으로 분석합니다."}
                                                             </p>
                                                         </div>
                                                         
-                                                        {desiredBasedJobs.length > 0 ? (
+                                                        {desiredCategory && desiredBasedJobs.length > 0 ? (
                                                             <div className="space-y-3">
                                                                 {desiredBasedJobs.map((job: any, i: number) => (
                                                                     <div key={job.jobId || i} className="p-3 bg-[#FAFAFA] rounded-xl border border-[#8B5CF6]/20" data-testid={`card-desired-job-${i}`}>
@@ -992,7 +1001,7 @@ export default function Analysis() {
                                                                     </div>
                                                                 ))}
                                                             </div>
-                                                        ) : (
+                                                        ) : desiredCategory ? (
                                                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
                                                                 <p className="text-sm text-[#6B7280]">
                                                                     '{desiredCategory}' 직무군에 해당하는 추천 직업이 없습니다.
@@ -1001,16 +1010,30 @@ export default function Analysis() {
                                                                     '진로진단 기반 추천' 탭에서 다른 직업을 확인해보세요.
                                                                 </p>
                                                             </div>
+                                                        ) : (
+                                                            <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
+                                                                <p className="text-sm text-[#6B7280]">
+                                                                    '{desiredJob}'에 대한 직무군 매칭 정보가 없습니다.
+                                                                </p>
+                                                                <p className="text-xs text-[#8B95A1] mt-1">
+                                                                    '진로진단 기반 추천' 탭에서 AI가 분석한 추천 직업을 확인해보세요.
+                                                                </p>
+                                                            </div>
                                                         )}
                                                     </>
                                                 ) : (
                                                     <div className="p-4 bg-[#F5F3FF] rounded-lg border border-[#8B5CF6]/20" data-testid="notice-no-desired-job">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <Compass className="w-5 h-5 text-[#8B5CF6]" />
-                                                            <span className="text-sm font-semibold text-[#191F28]">희망직무를 입력해주세요</span>
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <Compass className="w-5 h-5 text-[#8B5CF6]" />
+                                                                <span className="text-sm font-semibold text-[#191F28]">희망직무 기반 분석 안내</span>
+                                                            </div>
+                                                            <Link href="/profile" className="text-[10px] text-[#8B5CF6] hover:underline flex items-center gap-0.5" data-testid="link-set-desired-job">
+                                                                설정하기 <ChevronRight className="w-3 h-3" />
+                                                            </Link>
                                                         </div>
                                                         <p className="text-xs text-[#6B7280]">
-                                                            프로필에 희망직무를 입력하면 해당 직무군 내에서 맞춤 추천을 받을 수 있습니다.
+                                                            프로필에 희망직무를 설정하면 해당 직무군 내에서 맞춤 추천을 받을 수 있습니다.
                                                         </p>
                                                     </div>
                                                 )}
