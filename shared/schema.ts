@@ -1090,3 +1090,52 @@ export const interviewFeedbackRequestSchema = z.object({
 });
 
 export type InterviewFeedbackRequest = z.infer<typeof interviewFeedbackRequestSchema>;
+
+// ===== VIDEO INTERVIEW RECORDINGS (화상 면접 녹화) =====
+export const videoInterviewRecordings = pgTable("video_interview_recordings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(),
+  questionId: varchar("question_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  questionOrder: integer("question_order").notNull(),
+  // 녹화 정보
+  videoUrl: varchar("video_url", { length: 500 }), // Object Storage URL (선택적)
+  audioUrl: varchar("audio_url", { length: 500 }), // 오디오 전용 URL (선택적)
+  durationSeconds: integer("duration_seconds").default(0),
+  fileSize: integer("file_size").default(0), // 파일 크기 (bytes)
+  mimeType: varchar("mime_type", { length: 50 }), // video/webm, audio/webm 등
+  // STT 결과
+  sttText: text("stt_text"), // 음성 인식된 텍스트
+  sttStatus: varchar("stt_status", { length: 20 }).default('pending'), // 'pending' | 'processing' | 'completed' | 'failed'
+  sttError: text("stt_error"), // STT 오류 메시지
+  // AI 피드백 결과 (기존 interviewAnswers와 동일한 구조)
+  feedbackJson: jsonb("feedback_json"),
+  understandingScore: integer("understanding_score"),
+  fitScore: integer("fit_score"),
+  logicScore: integer("logic_score"),
+  specificityScore: integer("specificity_score"),
+  overallScore: integer("overall_score"),
+  improvementSuggestion: text("improvement_suggestion"),
+  improvedAnswer: text("improved_answer"),
+  // 메모/노트 기능
+  userNote: text("user_note"), // 사용자가 추가한 메모
+  isBookmarked: integer("is_bookmarked").notNull().default(0),
+  // 타임스탬프
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_video_recordings_session").on(table.sessionId),
+  index("IDX_video_recordings_question").on(table.questionId),
+  index("IDX_video_recordings_user").on(table.userId),
+  index("IDX_video_recordings_stt_status").on(table.sttStatus),
+  index("IDX_video_recordings_bookmarked").on(table.isBookmarked),
+]);
+
+export const insertVideoRecordingSchema = createInsertSchema(videoInterviewRecordings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertVideoRecording = z.infer<typeof insertVideoRecordingSchema>;
+export type VideoInterviewRecording = typeof videoInterviewRecordings.$inferSelect;
