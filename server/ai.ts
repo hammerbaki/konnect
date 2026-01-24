@@ -878,14 +878,18 @@ interface KJobsTestResult {
 function getKJobsTestContext(testResult: KJobsTestResult | null): string {
   if (!testResult) return '';
   
-  let context = '\n\n## K-JOBS 진로진단 검사 결과\n';
+  let context = '\n\n## 📊 K-JOBS 진로진단 검사 결과 (과학적 검증 데이터)\n';
+  context += '※ 이 데이터는 표준화된 심리검사 결과로, 분석의 핵심 근거로 활용해야 합니다.\n\n';
   
   if (testResult.careerDna) {
-    context += `- Career DNA: ${testResult.careerDna}\n`;
+    context += `### Career DNA 유형: ${testResult.careerDna}\n`;
+    context += `이 유형은 사용자의 고유한 직업적 성향을 나타냅니다. 추천 진로는 이 DNA 유형과 일치하는 방향이어야 합니다.\n\n`;
   }
   
   if (testResult.keywords && testResult.keywords.length > 0) {
-    context += `- 성격 키워드: ${testResult.keywords.join(', ')}\n`;
+    context += `### 핵심 성격 키워드\n`;
+    context += `${testResult.keywords.join(', ')}\n`;
+    context += `이 키워드들은 사용자의 강점과 업무 스타일을 나타냅니다.\n\n`;
   }
   
   if (testResult.scores) {
@@ -897,22 +901,61 @@ function getKJobsTestContext(testResult: KJobsTestResult | null): string {
       selfIdentity: '자아정체성',
       executionLearning: '실행학습',
       valuesPurpose: '가치관',
+      interest: '흥미',
+      aptitude: '적성',
+      values: '가치관',
+      personality: '성격',
+      workEnvironment: '업무환경',
+      interaction: '상호작용',
+      lifestyle: '라이프스타일',
     };
     
-    context += '\n### 7축 진단 점수 (T-Score 0-100)\n';
+    context += '### 7축 역량 진단 점수 (T-Score 기준)\n';
+    context += '| 영역 | 점수 | 해석 |\n|------|------|------|\n';
+    
+    const strongAreas: string[] = [];
+    const weakAreas: string[] = [];
+    
     for (const [key, value] of Object.entries(testResult.scores)) {
       const label = axisLabels[key] || key;
-      const interpretation = value >= 70 ? '상위 강점' : value >= 55 ? '평균 이상' : value >= 45 ? '평균' : '개발 필요';
-      context += `- ${label}: ${value} (${interpretation})\n`;
+      let interpretation: string;
+      if (value >= 70) {
+        interpretation = '🟢 상위 강점';
+        strongAreas.push(label);
+      } else if (value >= 55) {
+        interpretation = '🔵 평균 이상';
+        strongAreas.push(label);
+      } else if (value >= 45) {
+        interpretation = '⚪ 평균';
+      } else {
+        interpretation = '🟡 개발 필요';
+        weakAreas.push(label);
+      }
+      context += `| ${label} | ${value} | ${interpretation} |\n`;
     }
+    
+    context += '\n';
+    if (strongAreas.length > 0) {
+      context += `**강점 영역**: ${strongAreas.join(', ')}\n`;
+    }
+    if (weakAreas.length > 0) {
+      context += `**개발 필요 영역**: ${weakAreas.join(', ')}\n`;
+    }
+    context += '\n';
   }
   
   if (testResult.recommendedJobs && testResult.recommendedJobs.length > 0) {
-    context += '\n### K-JOBS 추천 직업\n';
+    context += '### K-JOBS 추천 직업 (과학적 매칭 결과)\n';
+    context += '이 추천 직업들은 검사 결과와 직업 데이터베이스를 매칭하여 도출된 결과입니다.\n';
     testResult.recommendedJobs.slice(0, 5).forEach((job, i) => {
-      context += `${i + 1}. ${job.title} (적합도: ${job.matchPercentage}%) - 핵심역량: ${job.keyCompetencies.join(', ')}\n`;
+      const competencies = job.keyCompetencies?.join(', ') || '핵심역량 정보 없음';
+      context += `${i + 1}. **${job.title}** (적합도: ${job.matchPercentage}%)\n   - 필요 역량: ${competencies}\n`;
     });
+    context += '\n';
   }
+  
+  context += '---\n';
+  context += '⚠️ 중요: 위 K-JOBS 검사 결과를 분석의 주요 근거로 반드시 활용하세요. 강점 영역에 맞는 진로를 우선 추천하고, K-JOBS 추천 직업 중 프로필과 일치하는 항목을 적극 반영하세요.\n';
   
   return context;
 }
@@ -931,19 +974,28 @@ export async function generateCareerAnalysis(
         const profileTypePrompt = getProfileTypePrompt(profile.type);
         const kjobsContext = getKJobsTestContext(kjobsTestResult || null);
 
+        const kjobsInstructions = kjobsTestResult ? `
+## K-JOBS 진로진단 결과 활용 지침 (필수)
+1. **Career DNA 기반 추천**: Career DNA 유형에 맞는 진로를 최우선으로 추천하세요.
+2. **강점 영역 활용**: 7축 진단에서 점수가 높은 영역(55점 이상)을 적극 활용하세요.
+3. **K-JOBS 추천 직업 참고**: K-JOBS에서 추천한 직업 중 프로필과 일치하는 것이 있다면 반드시 포함하세요.
+4. **약점 보완 전략**: 점수가 낮은 영역은 actionPlan에서 개선 방안을 제시하세요.
+5. **분석 근거 명시**: summary와 mindset에서 K-JOBS 검사 결과를 인용하여 분석의 신뢰성을 높이세요.
+` : '';
+
         const prompt = `${contextData}${kjobsContext}
 
 ---
 
 위 프로필 정보${kjobsTestResult ? '와 K-JOBS 진로진단 검사 결과' : ''}를 철저히 분석하여 맞춤형 분석 결과를 제공해주세요.
-${kjobsTestResult ? 'K-JOBS 검사 결과의 7축 점수와 추천 직업을 적극 반영하여 더 정확한 분석을 제공하세요.\n' : ''}반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
+${kjobsTestResult ? '⚠️ 중요: K-JOBS 검사는 과학적으로 검증된 심리검사입니다. 이 결과를 분석의 핵심 근거로 활용하세요.\n' : ''}반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
 
 ${profileTypePrompt}
-
+${kjobsInstructions}
 추가 지침:
 - matchScore는 프로필과의 적합도를 0-100 사이 숫자로 표시합니다.
 - 3개의 추천 항목을 제공하세요.
-${kjobsTestResult ? '- K-JOBS 검사 결과의 강점 영역(점수 70 이상)을 살린 진로를 우선 추천하세요.\n- K-JOBS 추천 직업 중 프로필과 잘 맞는 직업이 있다면 포함시키세요.\n' : ''}- 반드시 유효한 JSON만 반환하세요.`;
+${kjobsTestResult ? '- K-JOBS 검사 결과의 강점 영역(점수 55 이상)을 살린 진로를 우선 추천하세요.\n- K-JOBS 추천 직업과 프로필 희망 진로를 교차 분석하여 최적의 진로를 제안하세요.\n- summary에서 "K-JOBS 검사 결과에 따르면..." 형식으로 분석 근거를 명시하세요.\n' : ''}- 반드시 유효한 JSON만 반환하세요.`;
 
         const message = await anthropic.messages.create({
           model: "claude-sonnet-4-5", // Using supported model

@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -10,8 +10,10 @@ import {
     Star, Compass,
     ChevronRight, LayoutDashboard, History,
     AlertTriangle, User,
-    Clock, Bot, XCircle, Plus, ExternalLink, Target
+    Clock, Bot, XCircle, Plus, ExternalLink, Target,
+    Activity, Award
 } from "lucide-react";
+import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useMobileAction } from "@/lib/MobileActionContext";
@@ -146,6 +148,38 @@ const matchScoreLabels: Record<string, string> = {
     university: '취업 적합도',
     general: '적합도',
 };
+
+// K-JOBS 7-axis labels (includes both old and new key formats)
+const KJOBS_AXIS_LABELS: Record<string, string> = {
+    // New key format
+    interest: '흥미',
+    aptitude: '적성',
+    values: '가치관',
+    personality: '성격',
+    workEnvironment: '업무환경',
+    interaction: '상호작용',
+    lifestyle: '라이프스타일',
+    // Legacy key format (for backward compatibility)
+    careerInterests: '흥미영역',
+    workNeeds: '업무환경',
+    interactionStyle: '상호작용',
+    pressureResponse: '스트레스대응',
+    selfIdentity: '자아정체성',
+    executionLearning: '실행학습',
+    valuesPurpose: '가치관',
+};
+
+// K-JOBS result type
+interface KJobsResult {
+    id: string;
+    careerDna: string;
+    scores?: Record<string, number>;
+    facetScores?: Record<string, any>;
+    keywords?: string[];
+    recommendedJobs?: { jobId: string; title: string; matchPercentage: number; keyCompetencies?: string[] }[];
+    growthPlan?: { thirtyDays?: string[]; sixtyDays?: string[]; ninetyDays?: string[] };
+    completedAt: string;
+}
 
 interface AnalysisLoadingStateProps {
     progress: number;
@@ -326,7 +360,7 @@ export default function Analysis() {
         refetchOnWindowFocus: false,
     });
 
-    const { data: kjobsResult } = useQuery<{ id: string; careerDna: string; completedAt: string } | null>({
+    const { data: kjobsResult } = useQuery<KJobsResult | null>({
         queryKey: ['/api/kjobs/latest'],
         enabled: !!user,
     });
@@ -611,6 +645,106 @@ export default function Analysis() {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* K-JOBS 진로진단 결과 섹션 */}
+                {kjobsResult && (
+                    <Card className="border-[#E5E8EB] overflow-hidden" data-testid="card-kjobs-result">
+                        <CardHeader className="bg-gradient-to-r from-[#3182F6] to-[#1E5FD3] text-white pb-3">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Brain className="w-5 h-5" />
+                                    진로진단 결과
+                                </CardTitle>
+                                <Badge className="bg-white/20 text-white border-0 text-xs" data-testid="badge-kjobs">
+                                    K-JOBS MyTest
+                                </Badge>
+                            </div>
+                            <div className="mt-3">
+                                <p className="text-sm opacity-80">나의 Career DNA</p>
+                                <p className="text-xl font-bold mt-1" data-testid="text-career-dna">{kjobsResult.careerDna || '분석 중'}</p>
+                            </div>
+                            {kjobsResult.keywords && kjobsResult.keywords.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-3" data-testid="keywords-list">
+                                    {kjobsResult.keywords.slice(0, 5).map((keyword, i) => (
+                                        <span key={i} className="px-2 py-0.5 bg-white/20 rounded-full text-xs" data-testid={`text-keyword-${i}`}>
+                                            {keyword}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </CardHeader>
+                        <CardContent className="p-5">
+                            {/* 7축 진단 레이더 차트 */}
+                            {kjobsResult.scores && Object.keys(kjobsResult.scores).length > 0 && (
+                                <div className="mb-6" data-testid="section-scores-chart">
+                                    <h4 className="text-sm font-semibold text-[#191F28] mb-4 flex items-center gap-2">
+                                        <Activity className="w-4 h-4 text-[#3182F6]" />
+                                        역량분석
+                                    </h4>
+                                    <div className="h-64" data-testid="chart-radar">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={
+                                                Object.entries(kjobsResult.scores).map(([key, value]) => ({
+                                                    subject: KJOBS_AXIS_LABELS[key] || key,
+                                                    value: value,
+                                                    fullMark: 100,
+                                                }))
+                                            }>
+                                                <PolarGrid stroke="#E5E8EB" />
+                                                <PolarAngleAxis 
+                                                    dataKey="subject" 
+                                                    tick={{ fill: '#4E5968', fontSize: 11 }}
+                                                />
+                                                <Radar
+                                                    name="점수"
+                                                    dataKey="value"
+                                                    stroke="#3182F6"
+                                                    fill="#3182F6"
+                                                    fillOpacity={0.3}
+                                                />
+                                            </RadarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    {/* 점수 상세 */}
+                                    <div className="grid grid-cols-2 gap-2 mt-4">
+                                        {Object.entries(kjobsResult.scores).map(([key, value]) => (
+                                            <div key={key} className="flex items-center justify-between p-2 bg-[#F9FAFB] rounded-lg">
+                                                <span className="text-xs text-[#4E5968]">{KJOBS_AXIS_LABELS[key] || key}</span>
+                                                <span className={cn(
+                                                    "text-sm font-bold",
+                                                    value >= 70 ? "text-[#22C55E]" : value >= 50 ? "text-[#3182F6]" : "text-[#8B95A1]"
+                                                )}>{value}점</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* K-JOBS 추천 직업 */}
+                            {kjobsResult.recommendedJobs && kjobsResult.recommendedJobs.length > 0 && (
+                                <div data-testid="section-recommended-jobs">
+                                    <h4 className="text-sm font-semibold text-[#191F28] mb-3 flex items-center gap-2">
+                                        <Award className="w-4 h-4 text-[#F59E0B]" />
+                                        K-JOBS 추천 직업 TOP 5
+                                    </h4>
+                                    <div className="space-y-2">
+                                        {kjobsResult.recommendedJobs.slice(0, 5).map((job, i) => (
+                                            <div key={job.jobId || i} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl" data-testid={`card-kjobs-job-${i}`}>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-6 h-6 rounded-full bg-[#3182F6] text-white flex items-center justify-center font-bold text-xs">
+                                                        {i + 1}
+                                                    </div>
+                                                    <span className="text-sm font-medium text-[#191F28]" data-testid={`text-job-title-${i}`}>{job.title}</span>
+                                                </div>
+                                                <span className="text-sm font-bold text-[#3182F6]" data-testid={`text-job-match-${i}`}>{job.matchPercentage}%</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
 
                 {careerRecommendations.length > 0 && (
                     <div>
