@@ -1,7 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { InterviewQuestion, InterviewSession } from "@shared/schema";
 
-const anthropic = new Anthropic();
+// Using Replit AI Integrations for Anthropic - no API key needed, charges to credits
+const anthropic = new Anthropic({
+  apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
+});
 
 export interface InterviewGenerationInput {
   desiredJob: string;
