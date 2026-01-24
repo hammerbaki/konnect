@@ -502,10 +502,11 @@ export function EnhancedCareerCard({
                                                 <Badge 
                                                     key={i} 
                                                     variant="outline" 
-                                                    className="text-[9px] px-1.5 py-0 h-4 bg-[#F0FDF4] text-[#16A34A] border-[#16A34A]/30"
+                                                    className="text-[9px] px-1.5 py-0.5 bg-[#F0FDF4] text-[#16A34A] border-[#16A34A]/30 max-w-[100px] truncate"
+                                                    title={strength}
                                                     data-testid={`tag-strength-${index}-${i}`}
                                                 >
-                                                    {strength.length > 12 ? strength.substring(0, 12) + '...' : strength}
+                                                    {strength}
                                                 </Badge>
                                             ))}
                                         </div>

@@ -780,8 +780,12 @@ export default function Analysis() {
                                             </div>
                                             
                                             {kjobsResult.scores && Object.keys(kjobsResult.scores).length > 0 && (() => {
-                                                const scoreEntries = Object.entries(kjobsResult.scores);
-                                                const strongAreas = scoreEntries.filter(([_, v]) => v >= 55).sort((a, b) => b[1] - a[1]).slice(0, 3);
+                                                const scoreEntries = Object.entries(kjobsResult.scores)
+                                                    .filter(([_, v]) => typeof v === 'number' && !isNaN(v));
+                                                const strongAreas = scoreEntries
+                                                    .filter(([_, v]) => v >= 55)
+                                                    .sort((a, b) => b[1] - a[1])
+                                                    .slice(0, 3);
                                                 return strongAreas.length > 0 && (
                                                     <div className="flex items-center gap-2 text-sm text-[#4E5968]">
                                                         <TrendingUp className="h-4 w-4 text-[#22C55E] shrink-0" />
@@ -837,14 +841,31 @@ export default function Analysis() {
                         </div>
                         
                         {/* 진로진단 적합도 표시 */}
-                        {kjobsResult && kjobsResult.recommendedJobs && kjobsResult.recommendedJobs.length > 0 && (
-                            <div className="flex items-center gap-2 mb-3 px-1" data-testid="section-kjobs-match-summary">
-                                <Zap className="h-4 w-4 text-[#F59E0B]" />
+                        {kjobsResult && kjobsResult.recommendedJobs && kjobsResult.recommendedJobs.length > 0 && (() => {
+                            const validJobs = kjobsResult.recommendedJobs
+                                .slice(0, 5)
+                                .filter((job: { matchPercentage?: number }) => typeof job.matchPercentage === 'number' && !isNaN(job.matchPercentage));
+                            const avgMatch = validJobs.length > 0 
+                                ? Math.round(validJobs.reduce((sum: number, job: { matchPercentage: number }) => sum + job.matchPercentage, 0) / validJobs.length)
+                                : null;
+                            return avgMatch !== null && (
+                                <div className="flex items-center gap-2 mb-3 px-1" data-testid="section-kjobs-match-summary">
+                                    <Zap className="h-4 w-4 text-[#F59E0B]" />
+                                    <span className="text-sm text-[#4E5968]">
+                                        K-JOBS 진로진단 적합도: 
+                                        <strong className="text-[#3182F6] ml-1">평균 {avgMatch}%</strong>
+                                    </span>
+                                </div>
+                            );
+                        })()}
+                        
+                        {/* K-JOBS 결과 없을 때 프로필 기반 안내 */}
+                        {!kjobsResult && careerRecommendations.length > 0 && (
+                            <div className="flex items-center gap-2 mb-3 px-1 p-3 bg-[#F9FAFB] rounded-lg border border-[#E5E8EB]" data-testid="section-profile-based-notice">
+                                <Bot className="h-4 w-4 text-[#8B95A1]" />
                                 <span className="text-sm text-[#4E5968]">
-                                    K-JOBS 진로진단 적합도: 
-                                    <strong className="text-[#3182F6] ml-1">
-                                        평균 {Math.round(kjobsResult.recommendedJobs.slice(0, 5).reduce((sum: number, job: { matchPercentage: number }) => sum + job.matchPercentage, 0) / Math.min(kjobsResult.recommendedJobs.length, 5))}%
-                                    </strong>
+                                    프로필 정보를 기반으로 AI가 분석한 결과입니다.
+                                    <span className="text-[#3182F6] ml-1">진로진단을 완료하면 더 정확한 추천을 받을 수 있습니다.</span>
                                 </span>
                             </div>
                         )}
