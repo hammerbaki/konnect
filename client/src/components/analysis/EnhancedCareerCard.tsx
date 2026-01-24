@@ -486,7 +486,7 @@ export function EnhancedCareerCard({
                                     <span className="text-lg font-bold text-white">{career.matchScore}%</span>
                                 </div>
                                 <div className="text-left">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         <h4 className="text-base font-bold text-[#191F28]">{career.title}</h4>
                                         {index === 0 && (
                                             <Badge className="bg-[#E8F3FF] text-[#3182F6] hover:bg-[#E8F3FF] border-none px-2 py-0.5 text-[10px]">
@@ -494,7 +494,22 @@ export function EnhancedCareerCard({
                                             </Badge>
                                         )}
                                     </div>
-                                    <p className="text-xs text-[#8B95A1]">{matchScoreLabel}</p>
+                                    <p className="text-xs text-[#8B95A1] mb-1">{matchScoreLabel} · 진로진단 적합도 {career.matchScore}%</p>
+                                    {/* 진단 기반 추천 근거 태그 */}
+                                    {career.strengths && career.strengths.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-1" data-testid={`tags-recommendation-basis-${index}`}>
+                                            {career.strengths.slice(0, 3).map((strength, i) => (
+                                                <Badge 
+                                                    key={i} 
+                                                    variant="outline" 
+                                                    className="text-[9px] px-1.5 py-0 h-4 bg-[#F0FDF4] text-[#16A34A] border-[#16A34A]/30"
+                                                    data-testid={`tag-strength-${index}-${i}`}
+                                                >
+                                                    {strength.length > 12 ? strength.substring(0, 12) + '...' : strength}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

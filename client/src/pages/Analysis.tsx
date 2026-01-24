@@ -11,7 +11,7 @@ import {
     ChevronRight, LayoutDashboard, History,
     AlertTriangle, User,
     Clock, Bot, XCircle, Plus, ExternalLink, Target,
-    Activity, Award
+    Activity, Award, ArrowDown, Lightbulb, TrendingUp, Zap
 } from "lucide-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -134,11 +134,11 @@ const profileTypeOrder: Record<string, number> = {
 };
 
 const recommendationSectionTitles: Record<string, string> = {
-    elementary: '추천 꿈 직업',
-    middle: '추천 진로 방향',
-    high: '추천 대학 학과',
-    university: '추천 인턴십/직무',
-    general: '추천 커리어',
+    elementary: '진로진단 기반 추천 꿈 직업',
+    middle: '진로진단 기반 추천 진로 방향',
+    high: '진로진단 기반 추천 대학 학과',
+    university: '진로진단 기반 추천 인턴십/직무',
+    general: '진로진단 기반 커리어 분석 결과',
 };
 
 const matchScoreLabels: Record<string, string> = {
@@ -746,14 +746,109 @@ export default function Analysis() {
                     </Card>
                 )}
 
+                {/* AI 분석 요약 브릿지 카드 */}
+                {kjobsResult && careerRecommendations.length > 0 && (
+                    <div className="relative" data-testid="section-ai-bridge">
+                        {/* 연결선 */}
+                        <div className="absolute left-1/2 -top-3 transform -translate-x-1/2">
+                            <div className="flex flex-col items-center">
+                                <ArrowDown className="h-6 w-6 text-[#3182F6] animate-bounce" />
+                            </div>
+                        </div>
+                        
+                        <Card className="border-[#3182F6]/30 bg-gradient-to-br from-[#EFF6FF] to-white overflow-hidden mt-2">
+                            <CardContent className="p-5">
+                                <div className="flex items-start gap-4">
+                                    <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#3182F6] to-[#1E5FD3] flex items-center justify-center shadow-lg">
+                                        <Sparkles className="h-6 w-6 text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <h4 className="text-base font-bold text-[#191F28]">AI 분석 요약</h4>
+                                            <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-xs">
+                                                K-JOBS 기반
+                                            </Badge>
+                                        </div>
+                                        
+                                        {/* 진단 결과 요약 */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2 text-sm text-[#4E5968]">
+                                                <Brain className="h-4 w-4 text-[#3182F6] shrink-0" />
+                                                <span>
+                                                    <strong className="text-[#191F28]">Career DNA:</strong> {kjobsResult.careerDna || '분석 완료'}
+                                                </span>
+                                            </div>
+                                            
+                                            {kjobsResult.scores && Object.keys(kjobsResult.scores).length > 0 && (() => {
+                                                const scoreEntries = Object.entries(kjobsResult.scores);
+                                                const strongAreas = scoreEntries.filter(([_, v]) => v >= 55).sort((a, b) => b[1] - a[1]).slice(0, 3);
+                                                return strongAreas.length > 0 && (
+                                                    <div className="flex items-center gap-2 text-sm text-[#4E5968]">
+                                                        <TrendingUp className="h-4 w-4 text-[#22C55E] shrink-0" />
+                                                        <span>
+                                                            <strong className="text-[#191F28]">강점 영역:</strong>{' '}
+                                                            {strongAreas.map(([key, _]) => KJOBS_AXIS_LABELS[key] || key).join(', ')}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })()}
+                                            
+                                            {kjobsResult.keywords && kjobsResult.keywords.length > 0 && (
+                                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                                    {kjobsResult.keywords.slice(0, 4).map((keyword, i) => (
+                                                        <span key={i} className="px-2 py-0.5 bg-[#3182F6]/10 text-[#3182F6] rounded-full text-xs font-medium">
+                                                            {keyword}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        {/* 분석 설명 */}
+                                        <div className="mt-4 p-3 bg-white/60 rounded-lg border border-[#E5E8EB]">
+                                            <div className="flex items-start gap-2">
+                                                <Lightbulb className="h-4 w-4 text-[#F59E0B] shrink-0 mt-0.5" />
+                                                <p className="text-xs text-[#4E5968] leading-relaxed">
+                                                    K-JOBS 진로진단 결과를 바탕으로 AI가 회원님의 <strong className="text-[#191F28]">역량, 성향, 관심사</strong>를 
+                                                    종합 분석하여 아래 커리어를 도출했습니다. 각 추천은 진단 데이터에 기반한 
+                                                    <strong className="text-[#3182F6]"> 맞춤형 결과</strong>입니다.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        
+                        {/* 하단 연결선 */}
+                        <div className="flex justify-center py-2">
+                            <ArrowDown className="h-5 w-5 text-[#3182F6]/50" />
+                        </div>
+                    </div>
+                )}
+
                 {careerRecommendations.length > 0 && (
                     <div>
-                        <div className="flex items-center gap-2 mb-4 px-1">
+                        <div className="flex items-center gap-2 mb-2 px-1">
                             <Target className="h-5 w-5 text-[#3182F6]" />
                             <h3 className="text-lg font-bold text-[#191F28]">
                                 {recommendationSectionTitles[profileType]}
                             </h3>
                         </div>
+                        
+                        {/* 진로진단 적합도 표시 */}
+                        {kjobsResult && kjobsResult.recommendedJobs && kjobsResult.recommendedJobs.length > 0 && (
+                            <div className="flex items-center gap-2 mb-3 px-1" data-testid="section-kjobs-match-summary">
+                                <Zap className="h-4 w-4 text-[#F59E0B]" />
+                                <span className="text-sm text-[#4E5968]">
+                                    K-JOBS 진로진단 적합도: 
+                                    <strong className="text-[#3182F6] ml-1">
+                                        평균 {Math.round(kjobsResult.recommendedJobs.slice(0, 5).reduce((sum: number, job: { matchPercentage: number }) => sum + job.matchPercentage, 0) / Math.min(kjobsResult.recommendedJobs.length, 5))}%
+                                    </strong>
+                                </span>
+                            </div>
+                        )}
+                        
                         <p className="text-sm text-[#8B95A1] mb-4 px-1">
                             각 항목을 클릭하여 상세 정보와 액션 플랜을 확인하세요
                         </p>
