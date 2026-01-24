@@ -19,6 +19,8 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { generateCareerAnalysis, generatePersonalEssay, generateGoals, type GoalLevel, checkAIRateLimit } from "./ai";
+import { generateInterviewQuestions, generateAnswerFeedback, improveAnswer } from "./interview-ai";
+import { interviewSessions, interviewQuestions, interviewAnswers } from "@shared/schema";
 import { fetchCompanyInfo } from "./webFetcher";
 import { createRateLimitMiddleware, checkRedisConnection, redis } from "./rateLimiter";
 import { startWorker, submitQueuedJob } from "./aiWorker";
@@ -3863,6 +3865,509 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching job demand batch:", error);
       res.status(500).json({ message: "구인수요 일괄 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // ==================== INTERVIEW PREPARATION API (면접 준비) ====================
+  
+  // Get user's interview sessions
+  app.get('/api/interview/sessions', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const sessions = await db
+        .select()
+        .from(interviewSessions)
+        .where(eq(interviewSessions.userId, userId))
+        .orderBy(desc(interviewSessions.createdAt));
+      
+      res.json(sessions);
+    } catch (error: any) {
+      console.error("Error fetching interview sessions:", error);
+      res.status(500).json({ message: "면접 세션 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get a specific interview session with questions
+  app.get('/api/interview/sessions/:sessionId', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      const { sessionId } = req.params;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const [session] = await db
+        .select()
+        .from(interviewSessions)
+        .where(and(
+          eq(interviewSessions.id, sessionId),
+          eq(interviewSessions.userId, userId)
+        ));
+      
+      if (!session) {
+        return res.status(404).json({ message: "세션을 찾을 수 없습니다." });
+      }
+      
+      const questions = await db
+        .select()
+        .from(interviewQuestions)
+        .where(eq(interviewQuestions.sessionId, sessionId))
+        .orderBy(interviewQuestions.questionOrder);
+      
+      const answers = await db
+        .select()
+        .from(interviewAnswers)
+        .where(eq(interviewAnswers.sessionId, sessionId));
+      
+      const answersMap: Record<string, typeof answers[0]> = {};
+      answers.forEach(a => {
+        answersMap[a.questionId] = a;
+      });
+      
+      res.json({
+        session,
+        questions: questions.map(q => ({
+          ...q,
+          answer: answersMap[q.id] || null,
+        })),
+      });
+    } catch (error: any) {
+      console.error("Error fetching interview session:", error);
+      res.status(500).json({ message: "면접 세션 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Create a new interview session and generate questions
+  app.post('/api/interview/sessions', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const { profileId, desiredJob, sessionType = 'practice' } = req.body;
+      
+      if (!profileId || !desiredJob) {
+        return res.status(400).json({ message: "프로필 ID와 희망직무가 필요합니다." });
+      }
+      
+      // Get profile data
+      const profile = await storage.getProfile(profileId);
+      if (!profile || profile.userId !== userId) {
+        return res.status(404).json({ message: "프로필을 찾을 수 없습니다." });
+      }
+      
+      // Get KJOBS result if exists
+      const kjobsResult = await storage.getLatestCompletedKjobsAssessment(userId);
+      
+      // Get latest analysis if exists
+      const analyses = await storage.getAnalysesByProfile(profileId);
+      const latestAnalysis = analyses.length > 0 ? analyses[0] : null;
+      
+      // Prepare profile data for AI
+      const profileData = profile.profileData as any || {};
+      const profileInput = {
+        strengths: profileData.strengths || [],
+        weaknesses: profileData.weaknesses || [],
+        experiences: profileData.experiences || [],
+        skills: profileData.skills || [],
+        education: profileData.education || '',
+        certifications: profileData.certifications || [],
+      };
+      
+      // Extract kjobs keywords safely
+      const kjobsKeywords = kjobsResult?.keywords as any;
+      
+      // Generate interview questions
+      const generatedQuestions = await generateInterviewQuestions({
+        desiredJob,
+        profileType: profile.type,
+        profileData: profileInput,
+        kjobsResult: kjobsResult ? {
+          topStrengths: kjobsKeywords?.strengths || [],
+          topWeaknesses: kjobsKeywords?.weaknesses || [],
+          recommendedJobs: kjobsResult.recommendedJobs || [],
+        } : undefined,
+        analysisResult: latestAnalysis ? {
+          recommendations: latestAnalysis.recommendations,
+          competencies: latestAnalysis.competencies,
+        } : undefined,
+      });
+      
+      // Create session
+      const [newSession] = await db.insert(interviewSessions).values({
+        userId,
+        profileId,
+        desiredJob,
+        sessionType,
+        status: 'active',
+        totalQuestions: generatedQuestions.length,
+        answeredQuestions: 0,
+        profileSnapshot: profile.profileData,
+        kjobsSnapshot: kjobsResult ? {
+          careerDna: kjobsResult.careerDna,
+          keywords: kjobsResult.keywords,
+        } : null,
+        analysisSnapshot: latestAnalysis ? {
+          recommendations: latestAnalysis.recommendations,
+        } : null,
+      }).returning();
+      
+      // Insert questions
+      const questionsToInsert = generatedQuestions.map((q, idx) => ({
+        sessionId: newSession.id,
+        category: q.category,
+        questionOrder: idx + 1,
+        question: q.question,
+        questionReason: q.questionReason,
+        guideText: q.guideText || null,
+        relatedStrength: q.relatedStrength || null,
+        relatedWeakness: q.relatedWeakness || null,
+        difficulty: q.difficulty,
+      }));
+      
+      await db.insert(interviewQuestions).values(questionsToInsert);
+      
+      res.json({
+        session: newSession,
+        questionCount: generatedQuestions.length,
+      });
+    } catch (error: any) {
+      console.error("Error creating interview session:", error);
+      res.status(500).json({ message: "면접 세션 생성 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Submit an answer and get feedback
+  app.post('/api/interview/answers', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const { questionId, answer } = req.body;
+      
+      if (!questionId || !answer) {
+        return res.status(400).json({ message: "질문 ID와 답변이 필요합니다." });
+      }
+      
+      // Get question and session
+      const [question] = await db
+        .select()
+        .from(interviewQuestions)
+        .where(eq(interviewQuestions.id, questionId));
+      
+      if (!question) {
+        return res.status(404).json({ message: "질문을 찾을 수 없습니다." });
+      }
+      
+      const [session] = await db
+        .select()
+        .from(interviewSessions)
+        .where(eq(interviewSessions.id, question.sessionId));
+      
+      if (!session || session.userId !== userId) {
+        return res.status(403).json({ message: "접근 권한이 없습니다." });
+      }
+      
+      // Generate AI feedback
+      const feedback = await generateAnswerFeedback(
+        question.question,
+        question.category,
+        answer,
+        session.desiredJob,
+        {
+          strengths: (session.kjobsSnapshot as any)?.keywords?.strengths || [],
+          weaknesses: (session.kjobsSnapshot as any)?.keywords?.weaknesses || [],
+        }
+      );
+      
+      // Check if answer already exists
+      const [existingAnswer] = await db
+        .select()
+        .from(interviewAnswers)
+        .where(eq(interviewAnswers.questionId, questionId));
+      
+      let savedAnswer;
+      if (existingAnswer) {
+        // Update existing answer
+        [savedAnswer] = await db
+          .update(interviewAnswers)
+          .set({
+            answer,
+            feedbackJson: feedback,
+            understandingScore: feedback.understandingScore,
+            fitScore: feedback.fitScore,
+            logicScore: feedback.logicScore,
+            specificityScore: feedback.specificityScore,
+            overallScore: feedback.overallScore,
+            improvementSuggestion: feedback.improvementSuggestion,
+            improvedAnswer: feedback.improvedAnswer,
+            updatedAt: new Date(),
+          })
+          .where(eq(interviewAnswers.id, existingAnswer.id))
+          .returning();
+      } else {
+        // Insert new answer
+        [savedAnswer] = await db.insert(interviewAnswers).values({
+          questionId,
+          sessionId: question.sessionId,
+          userId,
+          answer,
+          feedbackJson: feedback,
+          understandingScore: feedback.understandingScore,
+          fitScore: feedback.fitScore,
+          logicScore: feedback.logicScore,
+          specificityScore: feedback.specificityScore,
+          overallScore: feedback.overallScore,
+          improvementSuggestion: feedback.improvementSuggestion,
+          improvedAnswer: feedback.improvedAnswer,
+        }).returning();
+        
+        // Update session answered count
+        await db
+          .update(interviewSessions)
+          .set({
+            answeredQuestions: session.answeredQuestions + 1,
+            updatedAt: new Date(),
+          })
+          .where(eq(interviewSessions.id, session.id));
+      }
+      
+      res.json({
+        answer: savedAnswer,
+        feedback,
+      });
+    } catch (error: any) {
+      console.error("Error submitting interview answer:", error);
+      res.status(500).json({ message: "답변 제출 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Save answer without feedback (for notes)
+  app.post('/api/interview/answers/save', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const { questionId, answer } = req.body;
+      
+      if (!questionId || !answer) {
+        return res.status(400).json({ message: "질문 ID와 답변이 필요합니다." });
+      }
+      
+      // Verify question exists and belongs to user
+      const [question] = await db
+        .select()
+        .from(interviewQuestions)
+        .where(eq(interviewQuestions.id, questionId));
+      
+      if (!question) {
+        return res.status(404).json({ message: "질문을 찾을 수 없습니다." });
+      }
+      
+      const [session] = await db
+        .select()
+        .from(interviewSessions)
+        .where(eq(interviewSessions.id, question.sessionId));
+      
+      if (!session || session.userId !== userId) {
+        return res.status(403).json({ message: "접근 권한이 없습니다." });
+      }
+      
+      // Check if answer already exists
+      const [existingAnswer] = await db
+        .select()
+        .from(interviewAnswers)
+        .where(eq(interviewAnswers.questionId, questionId));
+      
+      let savedAnswer;
+      if (existingAnswer) {
+        [savedAnswer] = await db
+          .update(interviewAnswers)
+          .set({
+            answer,
+            updatedAt: new Date(),
+          })
+          .where(eq(interviewAnswers.id, existingAnswer.id))
+          .returning();
+      } else {
+        [savedAnswer] = await db.insert(interviewAnswers).values({
+          questionId,
+          sessionId: question.sessionId,
+          userId,
+          answer,
+        }).returning();
+        
+        // Update session answered count
+        await db
+          .update(interviewSessions)
+          .set({
+            answeredQuestions: session.answeredQuestions + 1,
+            updatedAt: new Date(),
+          })
+          .where(eq(interviewSessions.id, session.id));
+      }
+      
+      res.json({ answer: savedAnswer });
+    } catch (error: any) {
+      console.error("Error saving interview answer:", error);
+      res.status(500).json({ message: "답변 저장 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get AI-improved answer
+  app.post('/api/interview/answers/improve', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const { questionId, answer } = req.body;
+      
+      if (!questionId || !answer) {
+        return res.status(400).json({ message: "질문 ID와 답변이 필요합니다." });
+      }
+      
+      // Get question and session
+      const [question] = await db
+        .select()
+        .from(interviewQuestions)
+        .where(eq(interviewQuestions.id, questionId));
+      
+      if (!question) {
+        return res.status(404).json({ message: "질문을 찾을 수 없습니다." });
+      }
+      
+      const [session] = await db
+        .select()
+        .from(interviewSessions)
+        .where(eq(interviewSessions.id, question.sessionId));
+      
+      if (!session || session.userId !== userId) {
+        return res.status(403).json({ message: "접근 권한이 없습니다." });
+      }
+      
+      const improvedAnswerText = await improveAnswer(
+        question.question,
+        answer,
+        session.desiredJob
+      );
+      
+      res.json({ improvedAnswer: improvedAnswerText });
+    } catch (error: any) {
+      console.error("Error improving answer:", error);
+      res.status(500).json({ message: "답변 첨삭 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Toggle bookmark on answer
+  app.patch('/api/interview/answers/:answerId/bookmark', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      const { answerId } = req.params;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const [answer] = await db
+        .select()
+        .from(interviewAnswers)
+        .where(eq(interviewAnswers.id, answerId));
+      
+      if (!answer || answer.userId !== userId) {
+        return res.status(404).json({ message: "답변을 찾을 수 없습니다." });
+      }
+      
+      const [updated] = await db
+        .update(interviewAnswers)
+        .set({
+          isBookmarked: answer.isBookmarked === 1 ? 0 : 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(interviewAnswers.id, answerId))
+        .returning();
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error toggling bookmark:", error);
+      res.status(500).json({ message: "북마크 토글 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get all bookmarked answers
+  app.get('/api/interview/bookmarks', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const bookmarkedAnswers = await db
+        .select({
+          answer: interviewAnswers,
+          question: interviewQuestions,
+          session: interviewSessions,
+        })
+        .from(interviewAnswers)
+        .innerJoin(interviewQuestions, eq(interviewAnswers.questionId, interviewQuestions.id))
+        .innerJoin(interviewSessions, eq(interviewAnswers.sessionId, interviewSessions.id))
+        .where(and(
+          eq(interviewAnswers.userId, userId),
+          eq(interviewAnswers.isBookmarked, 1)
+        ))
+        .orderBy(desc(interviewAnswers.updatedAt));
+      
+      res.json(bookmarkedAnswers);
+    } catch (error: any) {
+      console.error("Error fetching bookmarks:", error);
+      res.status(500).json({ message: "북마크 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Complete an interview session
+  app.patch('/api/interview/sessions/:sessionId/complete', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      const { sessionId } = req.params;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const [session] = await db
+        .select()
+        .from(interviewSessions)
+        .where(eq(interviewSessions.id, sessionId));
+      
+      if (!session || session.userId !== userId) {
+        return res.status(404).json({ message: "세션을 찾을 수 없습니다." });
+      }
+      
+      const [updated] = await db
+        .update(interviewSessions)
+        .set({
+          status: 'completed',
+          completedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(interviewSessions.id, sessionId))
+        .returning();
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error completing session:", error);
+      res.status(500).json({ message: "세션 완료 처리 중 오류가 발생했습니다." });
     }
   });
 

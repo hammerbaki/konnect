@@ -986,3 +986,106 @@ export const insertJobDemandCacheSchema = createInsertSchema(jobDemandCache).omi
 
 export type InsertJobDemandCache = z.infer<typeof insertJobDemandCacheSchema>;
 export type JobDemandCache = typeof jobDemandCache.$inferSelect;
+
+// ===== INTERVIEW SESSIONS (면접 준비 세션) =====
+export const interviewSessions = pgTable("interview_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  profileId: varchar("profile_id").notNull(),
+  desiredJob: varchar("desired_job", { length: 200 }).notNull(),
+  sessionType: varchar("session_type", { length: 50 }).notNull().default('practice'), // 'practice' | 'mock_interview'
+  status: varchar("status", { length: 20 }).notNull().default('active'), // 'active' | 'completed'
+  totalQuestions: integer("total_questions").notNull().default(0),
+  answeredQuestions: integer("answered_questions").notNull().default(0),
+  profileSnapshot: jsonb("profile_snapshot"), // 세션 생성 시점의 프로필 정보
+  kjobsSnapshot: jsonb("kjobs_snapshot"), // 진로진단 결과 스냅샷
+  analysisSnapshot: jsonb("analysis_snapshot"), // 커리어분석 결과 스냅샷
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => [
+  index("IDX_interview_sessions_user").on(table.userId),
+  index("IDX_interview_sessions_profile").on(table.profileId),
+  index("IDX_interview_sessions_status").on(table.status),
+]);
+
+export const insertInterviewSessionSchema = createInsertSchema(interviewSessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+});
+
+export type InsertInterviewSession = z.infer<typeof insertInterviewSessionSchema>;
+export type InterviewSession = typeof interviewSessions.$inferSelect;
+
+// ===== INTERVIEW QUESTIONS (면접 질문) =====
+export type InterviewQuestionCategory = 'basic' | 'job_specific' | 'self_intro' | 'star';
+
+export const interviewQuestions = pgTable("interview_questions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(),
+  category: varchar("category", { length: 30 }).notNull(), // 'basic' | 'job_specific' | 'self_intro' | 'star'
+  questionOrder: integer("question_order").notNull(),
+  question: text("question").notNull(),
+  questionReason: text("question_reason"), // 왜 이 질문이 나왔는지 설명
+  guideText: text("guide_text"), // 답변 가이드 (자기소개용)
+  relatedStrength: varchar("related_strength", { length: 100 }), // 관련 강점
+  relatedWeakness: varchar("related_weakness", { length: 100 }), // 관련 약점
+  difficulty: varchar("difficulty", { length: 20 }).default('medium'), // 'easy' | 'medium' | 'hard'
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_interview_questions_session").on(table.sessionId),
+  index("IDX_interview_questions_category").on(table.category),
+]);
+
+export const insertInterviewQuestionSchema = createInsertSchema(interviewQuestions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertInterviewQuestion = z.infer<typeof insertInterviewQuestionSchema>;
+export type InterviewQuestion = typeof interviewQuestions.$inferSelect;
+
+// ===== INTERVIEW ANSWERS (면접 답변) =====
+export const interviewAnswers = pgTable("interview_answers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  questionId: varchar("question_id").notNull(),
+  sessionId: varchar("session_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  answer: text("answer").notNull(),
+  // AI 피드백 결과
+  feedbackJson: jsonb("feedback_json"), // 전체 피드백 JSON
+  understandingScore: integer("understanding_score"), // 질문 이해도 (1-5)
+  fitScore: integer("fit_score"), // 직무 적합도 (1-5)
+  logicScore: integer("logic_score"), // 논리 구조 (1-5)
+  specificityScore: integer("specificity_score"), // 구체성 (1-5)
+  overallScore: integer("overall_score"), // 종합 점수 (1-5)
+  improvementSuggestion: text("improvement_suggestion"), // 개선 제안
+  improvedAnswer: text("improved_answer"), // AI 첨삭된 답변
+  isBookmarked: integer("is_bookmarked").notNull().default(0), // 0 = false, 1 = true
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_interview_answers_question").on(table.questionId),
+  index("IDX_interview_answers_session").on(table.sessionId),
+  index("IDX_interview_answers_user").on(table.userId),
+  index("IDX_interview_answers_bookmarked").on(table.isBookmarked),
+]);
+
+export const insertInterviewAnswerSchema = createInsertSchema(interviewAnswers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertInterviewAnswer = z.infer<typeof insertInterviewAnswerSchema>;
+export type InterviewAnswer = typeof interviewAnswers.$inferSelect;
+
+// AI 피드백 요청 스키마
+export const interviewFeedbackRequestSchema = z.object({
+  questionId: z.string(),
+  answer: z.string().min(10, "답변은 최소 10자 이상이어야 합니다."),
+});
+
+export type InterviewFeedbackRequest = z.infer<typeof interviewFeedbackRequestSchema>;

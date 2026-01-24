@@ -20,6 +20,7 @@ import {
   Backpack,
   Globe,
   Brain,
+  Mic,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
@@ -54,6 +55,7 @@ export function Sidebar() {
     { href: "/analysis", slug: "/analysis", icon: PieChart, label: "커리어 분석" },
     { href: "/goals", slug: "/goals", icon: Target, label: "목표 관리" },
     { href: "/personal-statement", slug: "/essays", icon: FileText, label: "자기소개서" },
+    { href: "/interview", slug: "/interview", icon: Mic, label: "면접 준비" },
     { href: "/explorer", slug: "/explorer", icon: Search, label: "직업 탐색" },
   ];
 

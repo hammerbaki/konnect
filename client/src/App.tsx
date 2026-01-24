@@ -30,6 +30,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const MyTest = lazy(() => import("./pages/MyTest"));
+const Interview = lazy(() => import("./pages/Interview"));
 
 function LoadingSpinner() {
   return (
@@ -163,6 +164,13 @@ function Router() {
           {(params) => (
             <RoleProtectedRoute slug="/mytest">
               <MyTest {...params} />
+            </RoleProtectedRoute>
+          )}
+        </Route>
+        <Route path="/interview">
+          {(params) => (
+            <RoleProtectedRoute slug="/interview">
+              <Interview {...params} />
             </RoleProtectedRoute>
           )}
         </Route>
