@@ -720,79 +720,218 @@ export default function Analysis() {
                                 </div>
                             )}
                             
-                            {/* K-JOBS 추천 직업 */}
-                            {kjobsResult.recommendedJobs && kjobsResult.recommendedJobs.length > 0 && (
-                                <div data-testid="section-recommended-jobs">
-                                    <h4 className="text-sm font-semibold text-[#191F28] mb-2 flex items-center gap-2">
-                                        <Award className="w-4 h-4 text-[#F59E0B]" />
-                                        진로진단 기반 추천 직업 TOP 5
-                                    </h4>
+                            {/* === 3섹션 추천 직업 구조 === */}
+                            {kjobsResult.recommendedJobs && kjobsResult.recommendedJobs.length > 0 && (() => {
+                                // 희망직무 정보 추출 (모든 프로필 타입 커버)
+                                const desiredJob = activeProfile?.profileData?.gen_desiredRole || 
+                                                   activeProfile?.profileData?.intl_desiredPosition || 
+                                                   activeProfile?.profileData?.univ_desiredRole ||
+                                                   activeProfile?.profileData?.univ_desiredIndustry ||
+                                                   activeProfile?.profileData?.high_hopedCareer || '';
+                                const desiredIndustry = activeProfile?.profileData?.gen_desiredIndustry || 
+                                                        activeProfile?.profileData?.univ_desiredIndustry || '';
+                                
+                                // 상위 역량 추출 (55점 이상, 최대 3개)
+                                const topCompetencies = kjobsResult.scores 
+                                    ? Object.entries(kjobsResult.scores)
+                                        .filter(([_, v]) => typeof v === 'number' && v >= 55)
+                                        .sort((a, b) => b[1] - a[1])
+                                        .slice(0, 3)
+                                    : [];
+                                const topCompetencyLabels = topCompetencies.map(([key, _]) => KJOBS_AXIS_LABELS[key] || key);
+                                const topCompetencyAvg = topCompetencies.length > 0 
+                                    ? Math.round(topCompetencies.reduce((sum, [_, v]) => sum + v, 0) / topCompetencies.length)
+                                    : 0;
+                                
+                                // 모든 추천 직업
+                                const allJobs = kjobsResult.recommendedJobs;
+                                
+                                // 키워드 매칭 함수 (희망직무/산업과 직업명의 연관성 판단)
+                                const calculateRelevance = (jobTitle: string, desired: string, industry: string): number => {
+                                    if (!desired && !industry) return 0;
+                                    const titleLower = jobTitle.toLowerCase();
+                                    const desiredLower = desired.toLowerCase();
+                                    const industryLower = industry.toLowerCase();
                                     
-                                    {/* 추천 기준 안내 */}
-                                    <div className="mb-3 p-2.5 bg-[#FFF7ED] border border-[#FFEDD5] rounded-lg" data-testid="notice-recommendation-basis">
-                                        <p className="text-xs text-[#9A3412] leading-relaxed">
-                                            <strong>추천 기준:</strong> 본 추천은 희망직무가 아닌, 진로진단 응답을 기반으로 한 
-                                            <span className="font-semibold"> 성향·역량 중심</span> 분석 결과입니다.
-                                        </p>
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                        {kjobsResult.recommendedJobs.slice(0, 5).map((job, i) => (
-                                            <div key={job.jobId || i} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl" data-testid={`card-kjobs-job-${i}`}>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-6 h-6 rounded-full bg-[#3182F6] text-white flex items-center justify-center font-bold text-xs">
-                                                        {i + 1}
+                                    let relevance = 0;
+                                    // 직접 매칭 (희망직무가 직업명에 포함)
+                                    if (desiredLower && titleLower.includes(desiredLower.split(' ')[0])) relevance += 30;
+                                    // 산업 매칭
+                                    if (industryLower && titleLower.includes(industryLower.split('/')[0])) relevance += 20;
+                                    // 공통 키워드 매칭 (개발, 기획, 마케팅, 디자인 등)
+                                    const keywords = ['개발', '기획', '마케팅', '디자인', '분석', '관리', '영업', '연구', 'IT', '서비스'];
+                                    keywords.forEach(kw => {
+                                        if (desiredLower.includes(kw) && titleLower.includes(kw)) relevance += 15;
+                                        if (industryLower.includes(kw) && titleLower.includes(kw)) relevance += 10;
+                                    });
+                                    return Math.min(relevance, 50); // 최대 50점 추가
+                                };
+                                
+                                // 섹션1: 진로진단 기반 추천 (상위 3개 - 성향/역량 최적 매칭)
+                                const diagnosisBasedJobs = allJobs.slice(0, 3);
+                                
+                                // 섹션2: 희망직무 연계 추천 (키워드 매칭 기반)
+                                // 연계 적합도 = (진단 매칭점수 * 0.4) + (상위역량 평균 * 0.3) + (키워드 관련성 * 0.3) = 100%
+                                const linkedJobs = desiredJob 
+                                    ? allJobs.slice(0, 10) // 전체에서 검색
+                                        .map((job: any, idx: number) => {
+                                            const relevanceScore = calculateRelevance(job.title, desiredJob, desiredIndustry);
+                                            const diagnosisWeight = job.matchPercentage * 0.4;
+                                            const competencyWeight = topCompetencyAvg * 0.3;
+                                            const relevanceWeight = relevanceScore * 0.6; // 50점 만점 * 0.6 = 최대 30점
+                                            const linkedScore = Math.round(diagnosisWeight + competencyWeight + relevanceWeight);
+                                            return {
+                                                ...job,
+                                                linkedScore: Math.min(linkedScore, 95),
+                                                relevanceScore,
+                                                linkedBasis: {
+                                                    desiredJob: desiredJob,
+                                                    topCompetency: topCompetencyLabels[idx % Math.max(topCompetencyLabels.length, 1)] || '핵심역량',
+                                                    matchType: relevanceScore >= 20 ? '키워드 매칭' : '진단 우선'
+                                                }
+                                            };
+                                        })
+                                        .filter((job: any) => job.relevanceScore >= 10 || job.matchPercentage >= 60) // 관련성 있는 직업만
+                                        .filter((job: any) => !diagnosisBasedJobs.some((d: any) => d.title === job.title)) // 섹션1 제외
+                                        .sort((a: any, b: any) => b.linkedScore - a.linkedScore)
+                                        .slice(0, 3)
+                                    : [];
+                                
+                                // 섹션3: 확장·전환 가능 직업 (섹션1,2에 포함되지 않은 성장 잠재력 직업)
+                                const usedTitles = [...diagnosisBasedJobs, ...linkedJobs].map((j: any) => j.title);
+                                const expansionJobs = allJobs
+                                    .filter((job: any) => !usedTitles.includes(job.title))
+                                    .filter((job: any) => job.matchPercentage >= 40 && job.matchPercentage <= 80)
+                                    .slice(0, 5);
+                                
+                                return (
+                                    <div className="space-y-6" data-testid="section-job-recommendations">
+                                        {/* 섹션 1: 진로진단 기반 추천 직업 */}
+                                        <div data-testid="section-diagnosis-based">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3182F6] text-white text-[10px] font-bold">1</div>
+                                                <h4 className="text-sm font-semibold text-[#191F28]">진로진단 기반 추천 직업</h4>
+                                                <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-[9px]">성향·역량 중심</Badge>
+                                            </div>
+                                            <div className="mb-2 p-2 bg-[#EFF6FF] rounded-lg">
+                                                <p className="text-[10px] text-[#3182F6]">
+                                                    <strong>추천 기준:</strong> 진로진단 응답 기반 성향·역량 분석 결과
+                                                </p>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {diagnosisBasedJobs.map((job: any, i: number) => (
+                                                    <div key={job.jobId || i} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E8EB]" data-testid={`card-diagnosis-job-${i}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-6 h-6 rounded-full bg-[#3182F6] text-white flex items-center justify-center font-bold text-xs">
+                                                                {i + 1}
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-medium text-[#191F28]">{job.title}</span>
+                                                                <span className="text-[10px] text-[#8B95A1]">성향·역량 적합도</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="text-sm font-bold text-[#3182F6]">{job.matchPercentage}%</span>
+                                                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-[#EFF6FF] text-[#3182F6] border-[#3182F6]/30">
+                                                                진단기반
+                                                            </Badge>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-medium text-[#191F28]" data-testid={`text-job-title-${i}`}>{job.title}</span>
-                                                        <span className="text-[10px] text-[#8B95A1]">성향·역량 적합도</span>
-                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* 섹션 2: 희망직무 연계 추천 직업 */}
+                                        {desiredJob && linkedJobs.length > 0 && (
+                                            <div data-testid="section-linked-jobs">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#8B5CF6] text-white text-[10px] font-bold">2</div>
+                                                    <h4 className="text-sm font-semibold text-[#191F28]">희망직무 연계 추천 직업</h4>
+                                                    <Badge className="bg-[#8B5CF6]/10 text-[#8B5CF6] border-0 text-[9px]">희망+역량 교집합</Badge>
                                                 </div>
-                                                <div className="flex flex-col items-end">
-                                                    <span className="text-sm font-bold text-[#3182F6]" data-testid={`text-job-match-${i}`}>{job.matchPercentage}%</span>
-                                                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-[#EFF6FF] text-[#3182F6] border-[#3182F6]/30">
-                                                        진단기반
-                                                    </Badge>
+                                                <div className="mb-2 p-2 bg-[#F5F3FF] rounded-lg">
+                                                    <p className="text-[10px] text-[#8B5CF6]">
+                                                        <strong>추천 기준:</strong> 희망직무({desiredJob})와 직업명 키워드 매칭 + 진단 역량({topCompetencyLabels.join(', ') || '분석중'})
+                                                    </p>
+                                                    <p className="text-[9px] text-[#8B95A1] mt-1">
+                                                        연계 적합도 = 진단매칭(40%) + 역량평균(30%) + 키워드관련성(30%)
+                                                    </p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {linkedJobs.map((job: any, i: number) => (
+                                                        <div key={job.jobId || i} className="flex items-center justify-between p-3 bg-[#FAFAFA] rounded-xl border border-[#8B5CF6]/20" data-testid={`card-linked-job-${i}`}>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-6 h-6 rounded-full bg-[#8B5CF6] text-white flex items-center justify-center font-bold text-xs">
+                                                                    {i + 1}
+                                                                </div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-sm font-medium text-[#191F28]">{job.title}</span>
+                                                                    <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                                                                        <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 bg-[#F3E8FF] text-[#8B5CF6] border-[#8B5CF6]/20 truncate max-w-[80px]" title={job.linkedBasis?.desiredJob}>
+                                                                            {job.linkedBasis?.desiredJob?.length > 8 ? job.linkedBasis?.desiredJob.slice(0, 8) + '..' : job.linkedBasis?.desiredJob}
+                                                                        </Badge>
+                                                                        <span className="text-[9px] text-[#8B95A1]">+</span>
+                                                                        <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 bg-[#EFF6FF] text-[#3182F6] border-[#3182F6]/20">
+                                                                            {job.linkedBasis?.topCompetency}
+                                                                        </Badge>
+                                                                        <Badge variant="outline" className="text-[7px] px-1 py-0 h-3 bg-[#F0FDF4] text-[#16A34A] border-[#16A34A]/20">
+                                                                            {job.linkedBasis?.matchType}
+                                                                        </Badge>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-col items-end">
+                                                                <span className="text-sm font-bold text-[#8B5CF6]">{job.linkedScore}%</span>
+                                                                <span className="text-[9px] text-[#8B95A1]">연계 적합도</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
-                                        ))}
+                                        )}
+                                        
+                                        {/* 희망직무 없을 때 안내 */}
+                                        {!desiredJob && (
+                                            <div className="p-3 bg-[#F5F3FF] rounded-lg border border-[#8B5CF6]/20" data-testid="notice-no-desired-job">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <Compass className="w-4 h-4 text-[#8B5CF6]" />
+                                                    <span className="text-sm font-medium text-[#191F28]">희망직무 연계 추천</span>
+                                                </div>
+                                                <p className="text-xs text-[#8B95A1]">
+                                                    프로필에 희망직무를 입력하면 진단 결과와 연계된 맞춤 추천을 받을 수 있습니다.
+                                                </p>
+                                            </div>
+                                        )}
+                                        
+                                        {/* 섹션 3: 확장·전환 가능 직업 */}
+                                        {expansionJobs.length > 0 && (
+                                            <div data-testid="section-expansion-jobs">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#00BFA5] text-white text-[10px] font-bold">3</div>
+                                                    <h4 className="text-sm font-semibold text-[#191F28]">확장·전환 가능 직업</h4>
+                                                    <Badge className="bg-[#00BFA5]/10 text-[#00BFA5] border-0 text-[9px]">성장 가능성</Badge>
+                                                </div>
+                                                <div className="mb-2 p-2 bg-[#F0FDF4] rounded-lg">
+                                                    <p className="text-[10px] text-[#00BFA5]">
+                                                        <strong>추천 기준:</strong> 진단 적합도 40-80% 범위의 성장 잠재력 직업군
+                                                    </p>
+                                                    <p className="text-[9px] text-[#8B95A1] mt-1">
+                                                        현재 역량 기반 + 추가 역량 개발 시 진입 가능
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {expansionJobs.map((job: any, i: number) => (
+                                                        <div key={job.jobId || i} className="inline-flex items-center gap-2 px-3 py-2 bg-[#F9FAFB] rounded-lg border border-[#00BFA5]/20 hover:border-[#00BFA5]/50 transition-colors" data-testid={`card-expansion-job-${i}`}>
+                                                            <span className="text-sm text-[#191F28]">{job.title}</span>
+                                                            <span className="text-xs text-[#00BFA5] font-medium">{job.matchPercentage}%</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            )}
-                            
-                            {/* 희망직무 정보 표시 (있는 경우) */}
-                            {activeProfile?.profileData && (
-                                activeProfile.profileData.gen_desiredRole || 
-                                activeProfile.profileData.gen_desiredIndustry ||
-                                activeProfile.profileData.univ_desiredIndustry ||
-                                activeProfile.profileData.intl_desiredPosition
-                            ) && (
-                                <div className="mt-4 pt-4 border-t border-[#E5E8EB]" data-testid="section-desired-job-info">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Compass className="w-4 h-4 text-[#8B5CF6]" />
-                                        <h4 className="text-sm font-semibold text-[#191F28]">나의 희망직무</h4>
-                                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-[#F3E8FF] text-[#8B5CF6] border-[#8B5CF6]/30">
-                                            프로필 기반
-                                        </Badge>
-                                    </div>
-                                    <div className="p-3 bg-[#F5F3FF] rounded-lg">
-                                        <p className="text-sm text-[#4E5968]">
-                                            <strong className="text-[#191F28]">
-                                                {activeProfile.profileData.gen_desiredRole || 
-                                                 activeProfile.profileData.intl_desiredPosition || 
-                                                 activeProfile.profileData.univ_desiredIndustry || 
-                                                 '미지정'}
-                                            </strong>
-                                            {activeProfile.profileData.gen_desiredIndustry && (
-                                                <span className="ml-1">({activeProfile.profileData.gen_desiredIndustry})</span>
-                                            )}
-                                        </p>
-                                        <p className="text-xs text-[#8B95A1] mt-1">
-                                            위 진단기반 추천과 희망직무가 다를 수 있습니다. 진단 결과는 성향·역량 분석에 기반합니다.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+                                );
+                            })()}
                         </CardContent>
                     </Card>
                 )}
