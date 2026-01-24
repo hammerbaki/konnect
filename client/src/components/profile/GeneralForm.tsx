@@ -158,6 +158,7 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [showWorkExperienceDialog, setShowWorkExperienceDialog] = useState(false);
+  const [editingWorkExpId, setEditingWorkExpId] = useState<number | null>(null);
   const [workExpForm, setWorkExpForm] = useState({ company: '', role: '', startDate: null as Date | null, endDate: null as Date | null, description: '', isCurrent: false });
   const [skillSearchQuery, setSkillSearchQuery] = useState('');
   const [showSalaryPicker, setShowSalaryPicker] = useState(false);
@@ -193,23 +194,55 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
     isGed: false, isTransfer: false, universityType: '4year', major: '', subMajor: '', gpa: '', gpaScale: '4.5', dayNight: 'day', region: '', majorCategory: ''
   });
 
-  const addWorkExperience = useCallback(() => {
+  const saveWorkExperience = useCallback(() => {
     if (!workExpForm.company || !workExpForm.role || !workExpForm.startDate) {
       toast({ title: "필수 항목을 입력해주세요", description: "회사명, 직무, 시작일은 필수입니다.", variant: "destructive", duration: 3000 });
       return;
     }
-    const newExp = {
-      id: Date.now(),
-      company: workExpForm.company,
-      role: workExpForm.role,
-      startDate: workExpForm.startDate,
-      endDate: workExpForm.endDate,
-      description: workExpForm.description,
-    };
-    updateField('gen_workExperience', [...profileData.gen_workExperience, newExp]);
+    
+    if (editingWorkExpId) {
+      // Edit existing
+      const updatedList = profileData.gen_workExperience.map(exp => 
+        exp.id === editingWorkExpId ? {
+          ...exp,
+          company: workExpForm.company,
+          role: workExpForm.role,
+          startDate: workExpForm.startDate,
+          endDate: workExpForm.isCurrent ? null : workExpForm.endDate,
+          description: workExpForm.description,
+        } : exp
+      );
+      updateField('gen_workExperience', updatedList);
+    } else {
+      // Add new
+      const newExp = {
+        id: Date.now(),
+        company: workExpForm.company,
+        role: workExpForm.role,
+        startDate: workExpForm.startDate,
+        endDate: workExpForm.isCurrent ? null : workExpForm.endDate,
+        description: workExpForm.description,
+      };
+      updateField('gen_workExperience', [...profileData.gen_workExperience, newExp]);
+    }
+    
     setWorkExpForm({ company: '', role: '', startDate: null, endDate: null, description: '', isCurrent: false });
+    setEditingWorkExpId(null);
     setShowWorkExperienceDialog(false);
-  }, [workExpForm, profileData.gen_workExperience, updateField, toast]);
+  }, [workExpForm, editingWorkExpId, profileData.gen_workExperience, updateField, toast]);
+
+  const openEditWorkExp = useCallback((exp: { id: number; company: string; role: string; startDate: Date | null; endDate: Date | null; description: string }) => {
+    setEditingWorkExpId(exp.id);
+    setWorkExpForm({
+      company: exp.company,
+      role: exp.role,
+      startDate: exp.startDate,
+      endDate: exp.endDate,
+      description: exp.description,
+      isCurrent: !exp.endDate,
+    });
+    setShowWorkExperienceDialog(true);
+  }, []);
 
   const deleteWorkExperience = useCallback((id: number) => {
     updateField('gen_workExperience', profileData.gen_workExperience.filter(exp => exp.id !== id));
@@ -540,15 +573,26 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
                   <h4 className="font-bold text-[#191F28] text-lg">{exp.role}</h4>
                   <p className="text-[#4E5968] font-medium">{exp.company}</p>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50"
-                  onClick={() => deleteWorkExperience(exp.id)}
-                  data-testid={`button-delete-work-exp-${exp.id}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-[#B0B8C1] hover:text-[#3182F6] hover:bg-blue-50"
+                    onClick={() => openEditWorkExp(exp)}
+                    data-testid={`button-edit-work-exp-${exp.id}`}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-[#B0B8C1] hover:text-[#E44E48] hover:bg-red-50"
+                    onClick={() => deleteWorkExperience(exp.id)}
+                    data-testid={`button-delete-work-exp-${exp.id}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               
               <div className="flex items-center gap-2 text-sm text-[#8B95A1]">
@@ -1158,12 +1202,18 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
         </CardContent>
       </Card>
 
-      <Dialog open={showWorkExperienceDialog} onOpenChange={setShowWorkExperienceDialog}>
+      <Dialog open={showWorkExperienceDialog} onOpenChange={(open) => { 
+        if (!open) { 
+          setWorkExpForm({ company: '', role: '', startDate: null, endDate: null, description: '', isCurrent: false }); 
+          setEditingWorkExpId(null); 
+        } 
+        setShowWorkExperienceDialog(open); 
+      }}>
         <DialogContent className="sm:max-w-md rounded-[24px] bg-white">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-[#191F28]">경력 추가</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-[#191F28]">{editingWorkExpId ? '경력 수정' : '경력 추가'}</DialogTitle>
             <DialogDescription className="text-sm text-[#8B95A1]">
-              이전 직장 경력을 입력해주세요.
+              {editingWorkExpId ? '경력 정보를 수정하세요.' : '이전 직장 경력을 입력해주세요.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1239,6 +1289,7 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
               className="flex-1 h-12 rounded-xl border-[#E5E8EB]"
               onClick={() => {
                 setWorkExpForm({ company: '', role: '', startDate: null, endDate: null, description: '', isCurrent: false });
+                setEditingWorkExpId(null);
                 setShowWorkExperienceDialog(false);
               }}
               data-testid="button-cancel-add-work"
@@ -1247,10 +1298,10 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
             </Button>
             <Button 
               className="flex-1 h-12 rounded-xl bg-[#3182F6] font-bold"
-              onClick={addWorkExperience}
+              onClick={saveWorkExperience}
               data-testid="button-confirm-add-work"
             >
-              추가하기
+              {editingWorkExpId ? '수정하기' : '추가하기'}
             </Button>
           </div>
         </DialogContent>

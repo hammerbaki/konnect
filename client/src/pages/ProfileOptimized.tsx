@@ -562,6 +562,19 @@ export default function ProfileOptimized() {
             </CardContent>
           </Card>
         )}
+
+        {/* Fixed bottom save button */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E5E8EB] md:hidden z-50">
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className="w-full gap-2 h-14 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base disabled:opacity-50"
+            data-testid="button-save-profile-mobile"
+          >
+            {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />} 
+            {isSaving ? "저장 중..." : "저장하기"}
+          </Button>
+        </div>
       </div>
     </Layout>
   );
