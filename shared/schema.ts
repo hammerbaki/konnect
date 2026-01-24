@@ -439,6 +439,7 @@ export type UpdatePageSettings = z.infer<typeof updatePageSettingsSchema>;
 export const DEFAULT_PAGE_CONFIGS: Record<string, { title: string; defaultRoles: UserRole[]; isLocked?: boolean }> = {
   '/dashboard': { title: '대시보드', defaultRoles: ['user', 'staff', 'admin'] },
   '/profile': { title: '프로필', defaultRoles: ['user', 'staff', 'admin'] },
+  '/mytest': { title: '진로진단', defaultRoles: ['user', 'staff', 'admin'] },
   '/analysis': { title: 'AI 분석', defaultRoles: ['user', 'staff', 'admin'] },
   '/goals': { title: '목표 관리', defaultRoles: ['user', 'staff', 'admin'] },
   '/kompass': { title: 'Kompass', defaultRoles: ['user', 'staff', 'admin'] },
