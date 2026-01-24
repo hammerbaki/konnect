@@ -26,11 +26,8 @@ interface KJobsQuestion {
   questionNumber: number;
   questionText: string;
   questionType: "likert" | "forced_choice";
-  axis: string;
-  facet: string;
   optionA: string | null;
   optionB: string | null;
-  reverseScored: boolean;
 }
 
 interface AssessmentSession {
@@ -368,9 +365,6 @@ export default function MyTest() {
         {currentQuestion && (
           <Card className="mb-6">
             <CardContent className="p-6">
-              <div className="mb-2 text-xs text-[#8B95A1] uppercase tracking-wide">
-                {AXIS_LABELS[currentQuestion.axis] || currentQuestion.axis}
-              </div>
               <h2 className="text-lg font-medium text-[#191F28] mb-6">
                 {currentQuestion.questionText}
               </h2>

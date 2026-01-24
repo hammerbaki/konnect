@@ -15,17 +15,21 @@ interface KJobsSession {
   currentQuestion: number;
 }
 
+interface KJobsQuestionRaw {
+  id: string;
+  type: 'likert' | 'forced_choice';
+  question: string;
+  optionA: string | null;
+  optionB: string | null;
+}
+
 interface KJobsQuestion {
   id: string;
   questionNumber: number;
   questionText: string;
   questionType: 'likert' | 'forced_choice';
-  axis: string;
-  facet: string;
-  options: null;
   optionA: string | null;
   optionB: string | null;
-  reverseScored: boolean;
 }
 
 interface KJobsRecommendedJob {
@@ -101,7 +105,15 @@ export async function initSession(externalUserId?: string): Promise<KJobsSession
 }
 
 export async function getQuestions(): Promise<KJobsQuestion[]> {
-  return makeRequest<KJobsQuestion[]>('/api/embed/questions');
+  const rawQuestions = await makeRequest<KJobsQuestionRaw[]>('/api/embed/questions');
+  return rawQuestions.map((q, index) => ({
+    id: q.id,
+    questionNumber: index + 1,
+    questionText: q.question,
+    questionType: q.type,
+    optionA: q.optionA,
+    optionB: q.optionB,
+  }));
 }
 
 export async function updateSessionProgress(
