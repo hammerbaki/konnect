@@ -147,7 +147,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const supabase = await getSupabase();
         setSupabaseClient(supabase);
 
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          if (sessionError.message?.includes('refresh_token_not_found') || 
+              (sessionError as any).code === 'refresh_token_not_found') {
+            console.log("[Auth] Refresh token not found, clearing session");
+            await supabase.auth.signOut();
+            setSession(null);
+            setSupabaseUser(null);
+            setUser(null);
+            setIsLoading(false);
+            return;
+          }
+        }
+        
         setSession(session);
         setSupabaseUser(session?.user ?? null);
         
@@ -157,10 +172,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
+            if (event === 'TOKEN_REFRESHED' && !session) {
+              console.log("[Auth] Token refresh failed, signing out");
+              setSession(null);
+              setSupabaseUser(null);
+              setUser(null);
+              return;
+            }
+            
             setSession(session);
             setSupabaseUser(session?.user ?? null);
             if (session?.access_token) {
-              // Check if this is a new login/signup event
               const isNewSession = event === 'SIGNED_IN' || event === 'USER_UPDATED';
               await fetchUserData(session.access_token, isNewSession);
             } else {
@@ -169,8 +191,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         );
         subscription = sub;
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to initialize auth:", error);
+        if (error?.code === 'refresh_token_not_found' || 
+            error?.message?.includes('refresh_token_not_found')) {
+          setSession(null);
+          setSupabaseUser(null);
+          setUser(null);
+        }
       } finally {
         setIsLoading(false);
       }

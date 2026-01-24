@@ -134,7 +134,9 @@ export default function MyTest() {
 
   const submitMutation = useMutation({
     mutationFn: async (finalAnswers: Record<string, number | string>) => {
-      if (!assessmentId) throw new Error("No assessment session");
+      if (!assessmentId) {
+        throw new Error("검사 세션이 만료되었습니다. 페이지를 새로고침한 후 다시 시도해주세요.");
+      }
       const res = await apiRequest("POST", `/api/kjobs/${assessmentId}/submit`, {
         answers: finalAnswers,
       });
@@ -149,11 +151,15 @@ export default function MyTest() {
       });
     },
     onError: (error: any) => {
+      const errorMessage = error.message || "검사 제출에 실패했습니다.";
       toast({
         title: "제출 오류",
-        description: error.message || "검사 제출에 실패했습니다.",
+        description: errorMessage,
         variant: "destructive",
       });
+      if (errorMessage.includes("세션") || errorMessage.includes("session")) {
+        window.location.reload();
+      }
     },
   });
 
