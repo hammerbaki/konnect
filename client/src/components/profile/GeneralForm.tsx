@@ -158,7 +158,7 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [showWorkExperienceDialog, setShowWorkExperienceDialog] = useState(false);
-  const [workExpForm, setWorkExpForm] = useState({ company: '', role: '', startDate: null as Date | null, endDate: null as Date | null, description: '' });
+  const [workExpForm, setWorkExpForm] = useState({ company: '', role: '', startDate: null as Date | null, endDate: null as Date | null, description: '', isCurrent: false });
   const [skillSearchQuery, setSkillSearchQuery] = useState('');
   const [showSalaryPicker, setShowSalaryPicker] = useState(false);
   
@@ -207,7 +207,7 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
       description: workExpForm.description,
     };
     updateField('gen_workExperience', [...profileData.gen_workExperience, newExp]);
-    setWorkExpForm({ company: '', role: '', startDate: null, endDate: null, description: '' });
+    setWorkExpForm({ company: '', role: '', startDate: null, endDate: null, description: '', isCurrent: false });
     setShowWorkExperienceDialog(false);
   }, [workExpForm, profileData.gen_workExperience, updateField, toast]);
 
@@ -1203,12 +1203,24 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
                 <Input 
                   type="month"
                   placeholder="현재 재직 중"
-                  value={workExpForm.endDate ? format(workExpForm.endDate, 'yyyy-MM') : ''}
+                  value={workExpForm.isCurrent ? '' : (workExpForm.endDate ? format(workExpForm.endDate, 'yyyy-MM') : '')}
                   onChange={(e) => setWorkExpForm({...workExpForm, endDate: e.target.value ? new Date(e.target.value + '-01') : null})}
-                  className="h-12 rounded-xl bg-[#F2F4F6] border-none"
+                  className="h-12 rounded-xl bg-[#F2F4F6] border-none disabled:bg-[#E5E8EB] disabled:text-[#8B95A1]"
+                  disabled={workExpForm.isCurrent}
                   data-testid="input-work-end-date"
                 />
               </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="work-is-current"
+                checked={workExpForm.isCurrent}
+                onCheckedChange={(checked) => setWorkExpForm({...workExpForm, isCurrent: !!checked, endDate: checked ? null : workExpForm.endDate})}
+                data-testid="checkbox-work-is-current"
+              />
+              <Label htmlFor="work-is-current" className="text-sm text-[#4E5968] cursor-pointer">
+                재직중
+              </Label>
             </div>
             <div className="space-y-2">
               <Label>업무 설명</Label>
@@ -1226,7 +1238,7 @@ const GeneralFormComponent: React.FC<ProfileFormProps> = ({ profileData, updateF
               variant="outline" 
               className="flex-1 h-12 rounded-xl border-[#E5E8EB]"
               onClick={() => {
-                setWorkExpForm({ company: '', role: '', startDate: null, endDate: null, description: '' });
+                setWorkExpForm({ company: '', role: '', startDate: null, endDate: null, description: '', isCurrent: false });
                 setShowWorkExperienceDialog(false);
               }}
               data-testid="button-cancel-add-work"
