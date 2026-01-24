@@ -480,6 +480,19 @@ export default function Analysis() {
         // 탭 상태 관리 (희망직무 기반이 기본) - 컴포넌트 최상위에 선언
         const [jobRecommendationTab, setJobRecommendationTab] = useState<'desired' | 'diagnosis'>('desired');
         
+        // 구인수요 데이터 조회
+        const jobTitles = kjobsResult?.recommendedJobs?.map((job: any) => job.title) || [];
+        const { data: jobDemandData, isLoading: isLoadingJobDemand } = useQuery({
+            queryKey: ['job-demand', jobTitles.join(',')],
+            queryFn: async () => {
+                if (jobTitles.length === 0) return {};
+                const res = await apiRequest('POST', '/api/job-demand/batch', { jobTitles });
+                return res.json();
+            },
+            enabled: jobTitles.length > 0,
+            staleTime: 1000 * 60 * 60, // 1시간 캐시
+        });
+        
         if (!latestAnalysis) {
             return (
                 <div className="flex flex-col items-center justify-center py-16 px-4">
@@ -733,6 +746,8 @@ export default function Analysis() {
                                 const desiredIndustry = activeProfile?.profileData?.gen_desiredIndustry || 
                                                         activeProfile?.profileData?.univ_desiredIndustry || '';
                                 
+                                // 구인수요 데이터 상태 (컴포넌트 외부에서 관리하므로 여기서는 표시만)
+                                
                                 // 상위 역량 추출 (55점 이상, 최대 3개)
                                 const topCompetencies = kjobsResult.scores 
                                     ? Object.entries(kjobsResult.scores)
@@ -973,7 +988,9 @@ export default function Analysis() {
                                                         
                                                         {desiredCategory && desiredBasedJobs.length > 0 ? (
                                                             <div className="space-y-3">
-                                                                {desiredBasedJobs.map((job: any, i: number) => (
+                                                                {desiredBasedJobs.map((job: any, i: number) => {
+                                                                    const demandInfo = jobDemandData?.[job.title];
+                                                                    return (
                                                                     <div key={job.jobId || i} className="p-3 bg-[#FAFAFA] rounded-xl border border-[#8B5CF6]/20" data-testid={`card-desired-job-${i}`}>
                                                                         <div className="flex items-center justify-between">
                                                                             <div className="flex items-center gap-3">
@@ -982,9 +999,16 @@ export default function Analysis() {
                                                                                 </div>
                                                                                 <div className="flex flex-col">
                                                                                     <span className="text-sm font-medium text-[#191F28]">{job.title}</span>
-                                                                                    <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 mt-0.5 w-fit bg-[#F3E8FF] text-[#8B5CF6] border-[#8B5CF6]/30">
-                                                                                        {job.jobCategory}
-                                                                                    </Badge>
+                                                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                                                        <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 w-fit bg-[#F3E8FF] text-[#8B5CF6] border-[#8B5CF6]/30">
+                                                                                            {job.jobCategory}
+                                                                                        </Badge>
+                                                                                        {demandInfo && demandInfo.demandCount > 0 && (
+                                                                                            <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 w-fit bg-[#ECFDF5] text-[#059669] border-[#059669]/30">
+                                                                                                구인 {demandInfo.demandCount.toLocaleString()}건
+                                                                                            </Badge>
+                                                                                        )}
+                                                                                    </div>
                                                                                 </div>
                                                                             </div>
                                                                             <div className="flex gap-3">
@@ -999,7 +1023,8 @@ export default function Analysis() {
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                ))}
+                                                                    );
+                                                                })}
                                                             </div>
                                                         ) : desiredCategory ? (
                                                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
@@ -1055,7 +1080,9 @@ export default function Analysis() {
                                                 </div>
                                                 
                                                 <div className="space-y-3">
-                                                    {diagnosisBasedJobs.map((job: any, i: number) => (
+                                                    {diagnosisBasedJobs.map((job: any, i: number) => {
+                                                        const demandInfo = jobDemandData?.[job.title];
+                                                        return (
                                                         <div key={job.jobId || i} className="p-3 bg-[#FAFAFA] rounded-xl border border-[#3182F6]/20" data-testid={`card-diagnosis-job-${i}`}>
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
@@ -1064,11 +1091,18 @@ export default function Analysis() {
                                                                     </div>
                                                                     <div className="flex flex-col">
                                                                         <span className="text-sm font-medium text-[#191F28]">{job.title}</span>
-                                                                        {job.jobCategory && (
-                                                                            <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 mt-0.5 w-fit bg-white text-[#8B95A1] border-[#E5E8EB]">
-                                                                                {job.jobCategory}
-                                                                            </Badge>
-                                                                        )}
+                                                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                                                            {job.jobCategory && (
+                                                                                <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 w-fit bg-white text-[#8B95A1] border-[#E5E8EB]">
+                                                                                    {job.jobCategory}
+                                                                                </Badge>
+                                                                            )}
+                                                                            {demandInfo && demandInfo.demandCount > 0 && (
+                                                                                <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 w-fit bg-[#ECFDF5] text-[#059669] border-[#059669]/30">
+                                                                                    구인 {demandInfo.demandCount.toLocaleString()}건
+                                                                                </Badge>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex gap-3">
@@ -1085,7 +1119,8 @@ export default function Analysis() {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         )}
@@ -1102,16 +1137,25 @@ export default function Analysis() {
                                                     희망직무({desiredCategory})와 다른 직무군이지만, 진단 결과 적합도가 높은 직업입니다.
                                                 </p>
                                                 <div className="space-y-2">
-                                                    {transferJobs.map((job: any, i: number) => (
+                                                    {transferJobs.map((job: any, i: number) => {
+                                                        const demandInfo = jobDemandData?.[job.title];
+                                                        return (
                                                         <div key={job.jobId || i} className="p-3 bg-[#F9FAFB] rounded-lg border border-[#00BFA5]/20" data-testid={`card-transfer-job-${i}`}>
                                                             <div className="flex items-center justify-between">
-                                                                <div className="flex items-center gap-2">
+                                                                <div className="flex flex-col gap-1">
                                                                     <span className="text-sm font-medium text-[#191F28]">{job.title}</span>
-                                                                    {job.jobCategory && (
-                                                                        <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 bg-white text-[#8B95A1] border-[#E5E8EB]">
-                                                                            {job.jobCategory}
-                                                                        </Badge>
-                                                                    )}
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        {job.jobCategory && (
+                                                                            <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 bg-white text-[#8B95A1] border-[#E5E8EB]">
+                                                                                {job.jobCategory}
+                                                                            </Badge>
+                                                                        )}
+                                                                        {demandInfo && demandInfo.demandCount > 0 && (
+                                                                            <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 w-fit bg-[#ECFDF5] text-[#059669] border-[#059669]/30">
+                                                                                구인 {demandInfo.demandCount.toLocaleString()}건
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                                 <div className="flex gap-3">
                                                                     <div className="flex flex-col items-center">
@@ -1130,8 +1174,26 @@ export default function Analysis() {
                                                                 </p>
                                                             )}
                                                         </div>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
+                                            </div>
+                                        )}
+                                        
+                                        {/* 구인수요 데이터 출처 안내 */}
+                                        {jobDemandData && Object.keys(jobDemandData).length > 0 && (
+                                            <div className="mt-4 pt-3 border-t border-[#E5E8EB]">
+                                                <p className="text-[10px] text-[#8B95A1] text-center">
+                                                    구인수요: 워크넷 기준 | 최근 30일 | 
+                                                    {(() => {
+                                                        const firstEntry = Object.values(jobDemandData)[0] as any;
+                                                        if (firstEntry?.fetchedAt) {
+                                                            const date = new Date(firstEntry.fetchedAt);
+                                                            return ` 업데이트 ${date.toLocaleDateString('ko-KR')}`;
+                                                        }
+                                                        return ' 업데이트됨';
+                                                    })()}
+                                                </p>
                                             </div>
                                         )}
                                     </div>

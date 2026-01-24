@@ -3820,6 +3820,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== JOB DEMAND API (워크넷 구인수요지표) ====================
+  
+  // Get job demand for a single job title
+  app.get('/api/job-demand/:jobTitle', async (req, res) => {
+    try {
+      const { jobTitle } = req.params;
+      if (!jobTitle) {
+        return res.status(400).json({ message: "직무명이 필요합니다." });
+      }
+      
+      const { getJobDemand } = await import('./worknet');
+      const result = await getJobDemand(decodeURIComponent(jobTitle));
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error fetching job demand:", error);
+      res.status(500).json({ message: "구인수요 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get job demand for multiple job titles
+  app.post('/api/job-demand/batch', async (req, res) => {
+    try {
+      const { jobTitles } = req.body;
+      if (!Array.isArray(jobTitles) || jobTitles.length === 0) {
+        return res.status(400).json({ message: "직무 목록이 필요합니다." });
+      }
+      
+      // Limit to 10 jobs per request
+      const limitedTitles = jobTitles.slice(0, 10);
+      
+      const { getJobDemandBatch } = await import('./worknet');
+      const resultsMap = await getJobDemandBatch(limitedTitles);
+      
+      // Convert Map to object for JSON response
+      const results: Record<string, any> = {};
+      resultsMap.forEach((value, key) => {
+        results[key] = value;
+      });
+      
+      res.json(results);
+    } catch (error: any) {
+      console.error("Error fetching job demand batch:", error);
+      res.status(500).json({ message: "구인수요 일괄 조회 중 오류가 발생했습니다." });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

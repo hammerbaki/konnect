@@ -959,3 +959,30 @@ export const IAP_PRODUCTS: Record<string, { points: number; bonusPoints: number;
   'com.konnect.points.5000': { points: 5000, bonusPoints: 700, displayName: '5,000 + 700 포인트' },
   'com.konnect.points.10000': { points: 10000, bonusPoints: 2000, displayName: '10,000 + 2,000 포인트' },
 };
+
+// ===== JOB DEMAND CACHE (워크넷 구인수요지표) =====
+export const jobDemandCache = pgTable("job_demand_cache", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobKeyword: varchar("job_keyword", { length: 200 }).notNull(),
+  worknetOccupationCode: varchar("worknet_occupation_code", { length: 20 }),
+  demandCount: integer("demand_count").notNull().default(0),
+  periodDays: integer("period_days").notNull().default(30),
+  dataSource: varchar("data_source", { length: 50 }).notNull().default('worknet'),
+  fetchedAt: timestamp("fetched_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+  rawResponse: jsonb("raw_response"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("IDX_job_demand_cache_keyword").on(table.jobKeyword),
+  index("IDX_job_demand_cache_expires").on(table.expiresAt),
+]);
+
+export const insertJobDemandCacheSchema = createInsertSchema(jobDemandCache).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertJobDemandCache = z.infer<typeof insertJobDemandCacheSchema>;
+export type JobDemandCache = typeof jobDemandCache.$inferSelect;

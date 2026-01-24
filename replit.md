@@ -76,3 +76,22 @@ To restore: Search for "HIDDEN_PDF" and uncomment the marked code blocks.
 - **Profile Management**: CRUD operations for various profile types.
 - **Essay Generation**: AI-driven personal statement generation.
 - **Goal Management (Kompass)**: Hierarchical goal tracking and management.
+- **Job Demand (구인수요지표)**: Worknet (워크넷) API integration for job posting count data.
+
+## Job Demand Feature (구인수요지표)
+워크넷 채용정보 API를 활용하여 직업별 구인수요(채용공고 건수)를 표시합니다.
+
+### Architecture
+- **Server Module**: `server/worknet.ts` - 워크넷 API 연동 및 캐시 관리
+- **Database Table**: `job_demand_cache` - 12시간 캐시 저장
+- **API Routes**: `/api/job-demand/:jobTitle`, `/api/job-demand/batch`
+
+### Features
+- 최근 30일 기준 채용공고 건수 조회
+- 12시간 캐시로 API 호출 최소화
+- KONNECT 직무 → 워크넷 키워드 매핑 (JOB_KEYWORD_MAPPING)
+- 화면에 "워크넷 기준 | 최근 30일 | 업데이트 날짜" 표시
+
+### Required Secret
+- **WORKNET_API_KEY**: 공공데이터포털에서 발급받은 워크넷 채용정보 API 인증키
+  - 발급처: https://www.data.go.kr/dataset/3038225/openapi.do
