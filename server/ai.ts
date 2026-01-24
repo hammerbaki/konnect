@@ -861,10 +861,67 @@ function getProfileTypePrompt(profileType: string): string {
 - 3개의 추천 항목을 반드시 제공하세요.`;
 }
 
+// K-JOBS test result type for career analysis integration
+interface KJobsTestResult {
+  careerDna?: string;
+  scores?: Record<string, number>;
+  facetScores?: Record<string, number>;
+  keywords?: string[];
+  recommendedJobs?: Array<{
+    title: string;
+    matchPercentage: number;
+    keyCompetencies: string[];
+  }>;
+}
+
+// Build K-JOBS test context for AI prompt
+function getKJobsTestContext(testResult: KJobsTestResult | null): string {
+  if (!testResult) return '';
+  
+  let context = '\n\n## K-JOBS 진로진단 검사 결과\n';
+  
+  if (testResult.careerDna) {
+    context += `- Career DNA: ${testResult.careerDna}\n`;
+  }
+  
+  if (testResult.keywords && testResult.keywords.length > 0) {
+    context += `- 성격 키워드: ${testResult.keywords.join(', ')}\n`;
+  }
+  
+  if (testResult.scores) {
+    const axisLabels: Record<string, string> = {
+      careerInterests: '흥미영역',
+      workNeeds: '업무환경',
+      interactionStyle: '상호작용',
+      pressureResponse: '스트레스대응',
+      selfIdentity: '자아정체성',
+      executionLearning: '실행학습',
+      valuesPurpose: '가치관',
+    };
+    
+    context += '\n### 7축 진단 점수 (T-Score 0-100)\n';
+    for (const [key, value] of Object.entries(testResult.scores)) {
+      const label = axisLabels[key] || key;
+      const interpretation = value >= 70 ? '상위 강점' : value >= 55 ? '평균 이상' : value >= 45 ? '평균' : '개발 필요';
+      context += `- ${label}: ${value} (${interpretation})\n`;
+    }
+  }
+  
+  if (testResult.recommendedJobs && testResult.recommendedJobs.length > 0) {
+    context += '\n### K-JOBS 추천 직업\n';
+    testResult.recommendedJobs.slice(0, 5).forEach((job, i) => {
+      context += `${i + 1}. ${job.title} (적합도: ${job.matchPercentage}%) - 핵심역량: ${job.keyCompetencies.join(', ')}\n`;
+    });
+  }
+  
+  return context;
+}
+
 // Generate career analysis using Claude
 export async function generateCareerAnalysis(
   profile: Profile, 
-  userIdentity?: { displayName?: string; gender?: string; birthDate?: string | Date }
+  userIdentity?: { displayName?: string; gender?: string; birthDate?: string | Date },
+  kjobsTestResult?: KJobsTestResult | null
 ): Promise<CareerAnalysisResult> {
   return throttleClaudeCall(() =>
     retryWithBackoff(
@@ -872,20 +929,21 @@ export async function generateCareerAnalysis(
         const systemPrompt = getAnalysisSystemPrompt(profile.type);
         const contextData = getProfileContextData(profile, userIdentity);
         const profileTypePrompt = getProfileTypePrompt(profile.type);
+        const kjobsContext = getKJobsTestContext(kjobsTestResult || null);
 
-        const prompt = `${contextData}
+        const prompt = `${contextData}${kjobsContext}
 
 ---
 
-위 프로필 정보를 철저히 분석하여 맞춤형 분석 결과를 제공해주세요.
-반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
+위 프로필 정보${kjobsTestResult ? '와 K-JOBS 진로진단 검사 결과' : ''}를 철저히 분석하여 맞춤형 분석 결과를 제공해주세요.
+${kjobsTestResult ? 'K-JOBS 검사 결과의 7축 점수와 추천 직업을 적극 반영하여 더 정확한 분석을 제공하세요.\n' : ''}반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
 
 ${profileTypePrompt}
 
 추가 지침:
 - matchScore는 프로필과의 적합도를 0-100 사이 숫자로 표시합니다.
 - 3개의 추천 항목을 제공하세요.
-- 반드시 유효한 JSON만 반환하세요.`;
+${kjobsTestResult ? '- K-JOBS 검사 결과의 강점 영역(점수 70 이상)을 살린 진로를 우선 추천하세요.\n- K-JOBS 추천 직업 중 프로필과 잘 맞는 직업이 있다면 포함시키세요.\n' : ''}- 반드시 유효한 JSON만 반환하세요.`;
 
         const message = await anthropic.messages.create({
           model: "claude-sonnet-4-5", // Using supported model

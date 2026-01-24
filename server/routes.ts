@@ -963,12 +963,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get user identity for comprehensive profile data
       const userIdentity = {
-        displayName: user.displayName || undefined,
-        gender: user.gender || undefined,
-        birthDate: user.birthDate || undefined,
+        displayName: user?.displayName || undefined,
+        gender: user?.gender || undefined,
+        birthDate: user?.birthDate || undefined,
       };
 
-      const result = await generateCareerAnalysis(profile, userIdentity);
+      // Get K-JOBS test result if available
+      const kjobsAssessment = await storage.getLatestCompletedKjobsAssessment(userId);
+      const kjobsTestResult = kjobsAssessment ? {
+        careerDna: kjobsAssessment.careerDna || undefined,
+        scores: kjobsAssessment.scores as Record<string, number> | undefined,
+        facetScores: kjobsAssessment.facetScores as Record<string, number> | undefined,
+        keywords: kjobsAssessment.keywords as string[] | undefined,
+        recommendedJobs: kjobsAssessment.recommendedJobs as Array<{ title: string; matchPercentage: number; keyCompetencies: string[] }> | undefined,
+      } : null;
+
+      const result = await generateCareerAnalysis(profile, userIdentity, kjobsTestResult);
 
       // Store careerRecommendations in the recommendations field
       const analysis = await storage.createAnalysis({
@@ -3574,6 +3584,241 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Initial flush after 1 minute
   setTimeout(flushRedisMetricsToDB, 60 * 1000);
+
+  // ===== K-JOBS ASSESSMENT ROUTES =====
+
+  const kjobsInitSchema = z.object({
+    profileId: z.string().uuid().optional(),
+  });
+
+  const kjobsProgressSchema = z.object({
+    currentQuestion: z.number().int().min(1).max(80),
+    answers: z.record(z.string(), z.union([z.number(), z.string()])),
+  });
+
+  const kjobsSubmitSchema = z.object({
+    answers: z.record(z.string(), z.union([z.number(), z.string()])),
+  });
+  
+  // Initialize K-JOBS assessment session
+  app.post('/api/kjobs/init', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const parseResult = kjobsInitSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: 'Invalid request body', details: parseResult.error.issues });
+      }
+      const { profileId } = parseResult.data;
+      
+      // Check for existing incomplete assessment
+      const existing = await storage.getIncompleteKjobsAssessment(userId);
+      if (existing) {
+        return res.json({
+          assessmentId: existing.id,
+          sessionId: existing.sessionId,
+          currentQuestion: existing.currentQuestion,
+          answers: existing.answers || {},
+          resumed: true
+        });
+      }
+      
+      // Initialize K-JOBS session
+      const kjobsApi = await import('./kjobs');
+      const session = await kjobsApi.initSession(userId);
+      
+      // Create assessment record
+      const assessment = await storage.createKjobsAssessment({
+        userId,
+        profileId: profileId || null,
+        sessionId: session.sessionId,
+        status: 'pending',
+        currentQuestion: 1,
+        answers: {},
+      });
+      
+      res.json({
+        assessmentId: assessment.id,
+        sessionId: session.sessionId,
+        totalQuestions: session.totalQuestions,
+        currentQuestion: 1,
+        resumed: false
+      });
+    } catch (error: any) {
+      console.error('K-JOBS init error:', error);
+      res.status(500).json({ error: error.message || 'Failed to initialize assessment' });
+    }
+  });
+  
+  // Get K-JOBS questions
+  app.get('/api/kjobs/questions', isAuthenticated, async (_req, res) => {
+    try {
+      const kjobsApi = await import('./kjobs');
+      const questions = await kjobsApi.getQuestions();
+      res.json(questions);
+    } catch (error: any) {
+      console.error('K-JOBS questions error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch questions' });
+    }
+  });
+  
+  // Save K-JOBS progress
+  app.patch('/api/kjobs/:assessmentId/progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const { assessmentId } = req.params;
+      
+      const parseResult = kjobsProgressSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: 'Invalid request body', details: parseResult.error.issues });
+      }
+      const { currentQuestion, answers } = parseResult.data;
+      
+      const assessment = await storage.getKjobsAssessment(assessmentId);
+      if (!assessment || assessment.userId !== userId) {
+        return res.status(404).json({ error: 'Assessment not found' });
+      }
+      
+      // Update local record
+      await storage.updateKjobsAssessment(assessmentId, {
+        currentQuestion,
+        answers,
+        status: 'in_progress',
+      });
+      
+      // Update K-JOBS session (optional, for resume across devices)
+      if (assessment.sessionId) {
+        try {
+          const kjobsApi = await import('./kjobs');
+          await kjobsApi.updateSessionProgress(assessment.sessionId, currentQuestion, answers);
+        } catch (e) {
+          console.warn('K-JOBS session sync failed:', e);
+        }
+      }
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('K-JOBS progress error:', error);
+      res.status(500).json({ error: error.message || 'Failed to save progress' });
+    }
+  });
+  
+  // Submit K-JOBS assessment
+  app.post('/api/kjobs/:assessmentId/submit', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const { assessmentId } = req.params;
+      
+      const parseResult = kjobsSubmitSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: 'Invalid request body', details: parseResult.error.issues });
+      }
+      const { answers } = parseResult.data;
+      
+      const assessment = await storage.getKjobsAssessment(assessmentId);
+      if (!assessment || assessment.userId !== userId) {
+        return res.status(404).json({ error: 'Assessment not found' });
+      }
+      
+      if (!assessment.sessionId) {
+        return res.status(400).json({ error: 'Invalid assessment session' });
+      }
+      
+      // Submit to K-JOBS API
+      const kjobsApi = await import('./kjobs');
+      const result = await kjobsApi.submitAssessment(assessment.sessionId, answers);
+      
+      // Save results
+      await storage.updateKjobsAssessment(assessmentId, {
+        status: 'completed',
+        answers,
+        resultId: result.resultId,
+        careerDna: result.careerDna,
+        scores: result.scores,
+        facetScores: result.facetScores,
+        keywords: result.keywords,
+        recommendedJobs: result.recommendedJobs,
+        growthPlan: result.growthPlan,
+        completedAt: new Date(),
+      });
+      
+      res.json({
+        success: true,
+        resultId: result.resultId,
+        careerDna: result.careerDna,
+        scores: result.scores,
+        keywords: result.keywords,
+        recommendedJobs: result.recommendedJobs,
+        growthPlan: result.growthPlan,
+      });
+    } catch (error: any) {
+      console.error('K-JOBS submit error:', error);
+      res.status(500).json({ error: error.message || 'Failed to submit assessment' });
+    }
+  });
+  
+  // Get K-JOBS assessment result
+  app.get('/api/kjobs/result/:assessmentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const { assessmentId } = req.params;
+      
+      const assessment = await storage.getKjobsAssessment(assessmentId);
+      if (!assessment || assessment.userId !== userId) {
+        return res.status(404).json({ error: 'Assessment not found' });
+      }
+      
+      if (assessment.status !== 'completed') {
+        return res.status(400).json({ error: 'Assessment not completed' });
+      }
+      
+      res.json({
+        id: assessment.id,
+        careerDna: assessment.careerDna,
+        scores: assessment.scores,
+        facetScores: assessment.facetScores,
+        keywords: assessment.keywords,
+        recommendedJobs: assessment.recommendedJobs,
+        growthPlan: assessment.growthPlan,
+        completedAt: assessment.completedAt,
+      });
+    } catch (error: any) {
+      console.error('K-JOBS result error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch result' });
+    }
+  });
+  
+  // Get user's latest completed K-JOBS assessment
+  app.get('/api/kjobs/latest', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const assessment = await storage.getLatestCompletedKjobsAssessment(userId);
+      if (!assessment) {
+        return res.json(null);
+      }
+      
+      res.json({
+        id: assessment.id,
+        careerDna: assessment.careerDna,
+        scores: assessment.scores,
+        facetScores: assessment.facetScores,
+        keywords: assessment.keywords,
+        recommendedJobs: assessment.recommendedJobs,
+        growthPlan: assessment.growthPlan,
+        completedAt: assessment.completedAt,
+      });
+    } catch (error: any) {
+      console.error('K-JOBS latest error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch assessment' });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

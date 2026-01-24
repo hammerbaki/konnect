@@ -29,6 +29,7 @@ const TokenRecharge = lazy(() => import("./pages/TokenRecharge"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
+const MyTest = lazy(() => import("./pages/MyTest"));
 
 function LoadingSpinner() {
   return (
@@ -155,6 +156,13 @@ function Router() {
           {(params) => (
             <RoleProtectedRoute slug="/admin">
               <Admin {...params} />
+            </RoleProtectedRoute>
+          )}
+        </Route>
+        <Route path="/mytest">
+          {(params) => (
+            <RoleProtectedRoute slug="/mytest">
+              <MyTest {...params} />
             </RoleProtectedRoute>
           )}
         </Route>

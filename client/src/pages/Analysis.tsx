@@ -326,6 +326,11 @@ export default function Analysis() {
         refetchOnWindowFocus: false,
     });
 
+    const { data: kjobsResult } = useQuery<{ id: string; careerDna: string; completedAt: string } | null>({
+        queryKey: ['/api/kjobs/latest'],
+        enabled: !!user,
+    });
+
     const latestAnalysis = analyses && analyses.length > 0 ? analyses[0] : null;
     const activeProfile = profiles?.find((p: any) => p.id === activeProfileId);
 
@@ -448,6 +453,27 @@ export default function Analysis() {
                     <p className="text-sm text-[#8B95A1] text-center mb-6 max-w-md">
                         프로필 정보를 바탕으로 맞춤형 진로 분석을 제공합니다
                     </p>
+
+                    {!kjobsResult && (
+                        <Card className="mb-6 max-w-md border-[#3182F6]/30 bg-gradient-to-r from-[#E8F3FF] to-white">
+                            <CardContent className="p-4">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-[#3182F6]/10 flex items-center justify-center shrink-0">
+                                        <Brain className="w-5 h-5 text-[#3182F6]" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-[#191F28] text-sm mb-1">진로진단 검사로 더 정확한 분석을!</h4>
+                                        <p className="text-xs text-[#8B95A1] mb-2">
+                                            K-JOBS 진로진단 검사 결과가 AI 분석에 반영됩니다.
+                                        </p>
+                                        <Link href="/mytest" className="inline-flex items-center text-xs font-medium text-[#3182F6] hover:underline" data-testid="link-take-kjobs-test">
+                                            진로진단 시작하기 <ChevronRight className="w-3 h-3 ml-0.5" />
+                                        </Link>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                     
                     {!profileValidation.isValid && activeProfile && (
                         <Alert variant="destructive" className="mb-6 max-w-md">

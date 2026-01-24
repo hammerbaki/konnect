@@ -300,6 +300,54 @@ export type AiJob = typeof aiJobs.$inferSelect;
 export type AiJobType = 'analysis' | 'essay' | 'essay_revision' | 'goal';
 export type AiJobStatus = 'queued' | 'processing' | 'completed' | 'failed';
 
+// ===== K-JOBS ASSESSMENTS TABLE =====
+export const kjobsAssessments = pgTable("kjobs_assessments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  profileId: varchar("profile_id")
+    .references(() => profiles.id, { onDelete: "set null" }),
+  sessionId: varchar("session_id", { length: 100 }), // K-JOBS session ID
+  resultId: varchar("result_id", { length: 100 }), // K-JOBS result ID
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // 'pending' | 'in_progress' | 'completed'
+  currentQuestion: integer("current_question").notNull().default(1),
+  answers: jsonb("answers"), // Saved answers for resume
+  careerDna: varchar("career_dna", { length: 100 }), // Result: career DNA type
+  scores: jsonb("scores"), // Result: 7-axis scores
+  facetScores: jsonb("facet_scores"), // Result: facet scores
+  keywords: jsonb("keywords"), // Result: personality keywords
+  recommendedJobs: jsonb("recommended_jobs"), // Result: top 5 job matches
+  growthPlan: jsonb("growth_plan"), // Result: 30/60/90 day plan
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => [
+  index("IDX_kjobs_assessments_user").on(table.userId),
+  index("IDX_kjobs_assessments_profile").on(table.profileId),
+  index("IDX_kjobs_assessments_status").on(table.status),
+]);
+
+export const kjobsAssessmentsRelations = relations(kjobsAssessments, ({ one }) => ({
+  user: one(users, {
+    fields: [kjobsAssessments.userId],
+    references: [users.id],
+  }),
+  profile: one(profiles, {
+    fields: [kjobsAssessments.profileId],
+    references: [profiles.id],
+  }),
+}));
+
+export const insertKjobsAssessmentSchema = createInsertSchema(kjobsAssessments).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export type InsertKjobsAssessment = z.infer<typeof insertKjobsAssessmentSchema>;
+export type KjobsAssessment = typeof kjobsAssessments.$inferSelect;
+export type KjobsAssessmentStatus = 'pending' | 'in_progress' | 'completed';
+
 // ===== VISITOR METRICS TABLE (Hourly aggregated analytics) =====
 export const visitorMetrics = pgTable("visitor_metrics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

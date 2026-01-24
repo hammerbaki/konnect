@@ -19,6 +19,7 @@ import {
   BookOpen,
   Backpack,
   Globe,
+  Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
@@ -49,6 +50,7 @@ export function Sidebar() {
   const allNavItems = [
     { href: "/dashboard", slug: "/dashboard", icon: LayoutDashboard, label: "대시보드" },
     { href: "/profile", slug: "/profile", icon: User, label: "내 프로필", hasSubmenu: true },
+    { href: "/mytest", slug: "/mytest", icon: Brain, label: "진로진단" },
     { href: "/analysis", slug: "/analysis", icon: PieChart, label: "커리어 분석" },
     { href: "/goals", slug: "/goals", icon: Target, label: "목표 관리" },
     { href: "/personal-statement", slug: "/essays", icon: FileText, label: "자기소개서" },

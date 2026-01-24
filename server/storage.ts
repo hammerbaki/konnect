@@ -68,10 +68,13 @@ import {
   type IapTransaction,
   type InsertIapTransaction,
   type IapStatus,
+  type KjobsAssessment,
+  type InsertKjobsAssessment,
   IAP_PRODUCTS,
   systemSettings,
   redemptionCodes,
   redemptionHistory,
+  kjobsAssessments,
   DEFAULT_PAGE_CONFIGS,
   NEW_PAGE_DEFAULT_ROLES,
   DEFAULT_SERVICE_PRICING,
@@ -279,6 +282,14 @@ export interface IStorage {
     totalReferred: number;
     totalGpEarned: number;
   }>;
+
+  // K-JOBS Assessments
+  createKjobsAssessment(data: InsertKjobsAssessment): Promise<KjobsAssessment>;
+  getKjobsAssessment(id: string): Promise<KjobsAssessment | undefined>;
+  updateKjobsAssessment(id: string, data: Partial<KjobsAssessment>): Promise<KjobsAssessment>;
+  getIncompleteKjobsAssessment(userId: string): Promise<KjobsAssessment | undefined>;
+  getLatestCompletedKjobsAssessment(userId: string): Promise<KjobsAssessment | undefined>;
+  getKjobsAssessmentsByUser(userId: string): Promise<KjobsAssessment[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2182,6 +2193,66 @@ export class DatabaseStorage implements IStorage {
 
   getAllIapProducts(): Record<string, { points: number; bonusPoints: number; displayName: string }> {
     return IAP_PRODUCTS;
+  }
+
+  // K-JOBS Assessments
+  async createKjobsAssessment(data: InsertKjobsAssessment): Promise<KjobsAssessment> {
+    const [assessment] = await db
+      .insert(kjobsAssessments)
+      .values(data)
+      .returning();
+    return assessment;
+  }
+
+  async getKjobsAssessment(id: string): Promise<KjobsAssessment | undefined> {
+    const [assessment] = await db
+      .select()
+      .from(kjobsAssessments)
+      .where(eq(kjobsAssessments.id, id));
+    return assessment;
+  }
+
+  async updateKjobsAssessment(id: string, data: Partial<KjobsAssessment>): Promise<KjobsAssessment> {
+    const [assessment] = await db
+      .update(kjobsAssessments)
+      .set(data)
+      .where(eq(kjobsAssessments.id, id))
+      .returning();
+    return assessment;
+  }
+
+  async getIncompleteKjobsAssessment(userId: string): Promise<KjobsAssessment | undefined> {
+    const [assessment] = await db
+      .select()
+      .from(kjobsAssessments)
+      .where(and(
+        eq(kjobsAssessments.userId, userId),
+        inArray(kjobsAssessments.status, ['pending', 'in_progress'])
+      ))
+      .orderBy(desc(kjobsAssessments.createdAt))
+      .limit(1);
+    return assessment;
+  }
+
+  async getLatestCompletedKjobsAssessment(userId: string): Promise<KjobsAssessment | undefined> {
+    const [assessment] = await db
+      .select()
+      .from(kjobsAssessments)
+      .where(and(
+        eq(kjobsAssessments.userId, userId),
+        eq(kjobsAssessments.status, 'completed')
+      ))
+      .orderBy(desc(kjobsAssessments.completedAt))
+      .limit(1);
+    return assessment;
+  }
+
+  async getKjobsAssessmentsByUser(userId: string): Promise<KjobsAssessment[]> {
+    return db
+      .select()
+      .from(kjobsAssessments)
+      .where(eq(kjobsAssessments.userId, userId))
+      .orderBy(desc(kjobsAssessments.createdAt));
   }
 }
 
