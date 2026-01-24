@@ -137,8 +137,21 @@ JSON 형식으로 응답:
       throw new Error("Failed to parse JSON response");
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
-    return parsed.questions || [];
+    // Sanitize JSON - remove trailing commas before ] or }
+    let jsonStr = jsonMatch[0];
+    jsonStr = jsonStr.replace(/,\s*([\]\}])/g, '$1');
+    
+    try {
+      const parsed = JSON.parse(jsonStr);
+      return parsed.questions || [];
+    } catch (parseError) {
+      console.error("[Interview AI] JSON parse error, attempting cleanup:", parseError);
+      // More aggressive cleanup
+      jsonStr = jsonStr.replace(/,(\s*[\]\}])/g, '$1');
+      jsonStr = jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ');
+      const parsed = JSON.parse(jsonStr);
+      return parsed.questions || [];
+    }
   } catch (error) {
     console.error("[Interview AI] Question generation error:", error);
     throw error;
