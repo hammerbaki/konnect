@@ -200,7 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get GP balance
-      const gpBalance = await storage.getGiftPointBalance(userId);
+      const gpBalance = await storage.getUserGiftPointBalance(userId);
       
       // Return comprehensive user data for mobile apps
       res.json({
@@ -1688,10 +1688,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Delete from Supabase Auth first
       try {
-        const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
-        if (authError) {
-          console.error("Error deleting user from Supabase Auth:", authError);
-          // Continue anyway - user might already be deleted from auth
+        if (supabaseAdmin) {
+          const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
+          if (authError) {
+            console.error("Error deleting user from Supabase Auth:", authError);
+            // Continue anyway - user might already be deleted from auth
+          }
         }
       } catch (authError) {
         console.error("Error deleting user from Supabase Auth:", authError);
@@ -3558,6 +3560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const uniqueVisitorKey = `visitors:${date}`;
         
         try {
+          if (!redis) continue;
           const pageViews = await redis.get(pageViewKey);
           const uniqueVisitors = await redis.scard(uniqueVisitorKey);
           
@@ -3991,11 +3994,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         kjobsResult: kjobsResult ? {
           topStrengths: kjobsKeywords?.strengths || [],
           topWeaknesses: kjobsKeywords?.weaknesses || [],
-          recommendedJobs: kjobsResult.recommendedJobs || [],
+          recommendedJobs: (kjobsResult.recommendedJobs as any[]) || [],
         } : undefined,
         analysisResult: latestAnalysis ? {
           recommendations: latestAnalysis.recommendations,
-          competencies: latestAnalysis.competencies,
+          competencies: (latestAnalysis as any).competencies,
         } : undefined,
       });
       
