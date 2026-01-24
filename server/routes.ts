@@ -3889,8 +3889,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(sessions);
     } catch (error: any) {
-      console.error("Error fetching interview sessions:", error);
-      res.status(500).json({ message: "면접 세션 조회 중 오류가 발생했습니다." });
+      console.error("Error fetching interview sessions:", error?.message);
+      console.error("Error stack:", error?.stack);
+      res.status(500).json({ message: "면접 세션 조회 중 오류가 발생했습니다.", details: error?.message });
     }
   });
   
