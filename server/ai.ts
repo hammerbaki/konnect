@@ -873,7 +873,7 @@ ${profileTypePrompt}
 
         const message = await anthropic.messages.create({
           model: "claude-sonnet-4-5", // Using supported model
-          max_tokens: 4096,
+          max_tokens: 8192,
           system: systemPrompt,
           messages: [
             {
