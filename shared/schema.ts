@@ -444,6 +444,7 @@ export const DEFAULT_PAGE_CONFIGS: Record<string, { title: string; defaultRoles:
   '/goals': { title: '목표 관리', defaultRoles: ['user', 'staff', 'admin'] },
   '/kompass': { title: 'Kompass', defaultRoles: ['user', 'staff', 'admin'] },
   '/essays': { title: '자기소개서', defaultRoles: ['user', 'staff', 'admin'] },
+  '/interview': { title: '면접 준비', defaultRoles: ['user', 'staff', 'admin'] },
   '/explorer': { title: '직업 탐색', defaultRoles: ['user', 'staff', 'admin'] },
   '/settings': { title: '설정', defaultRoles: ['user', 'staff', 'admin'] },
   '/recharge': { title: '포인트 충전', defaultRoles: ['user', 'staff', 'admin'] },
