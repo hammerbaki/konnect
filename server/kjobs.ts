@@ -131,9 +131,15 @@ export async function submitAssessment(
   sessionId: string,
   answers: KJobsAnswers
 ): Promise<KJobsResult> {
+  // K-JOBS API expects all answer values to be strings
+  const stringAnswers: Record<string, string> = {};
+  for (const [key, value] of Object.entries(answers)) {
+    stringAnswers[key] = String(value);
+  }
+  
   return makeRequest<KJobsResult>('/api/embed/submit', {
     method: 'POST',
-    body: { sessionId, answers },
+    body: { sessionId, answers: stringAnswers },
   });
 }
 
