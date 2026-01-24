@@ -3593,11 +3593,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const kjobsProgressSchema = z.object({
     currentQuestion: z.number().int().min(1).max(80),
-    answers: z.record(z.string(), z.union([z.number(), z.string()])),
+    answers: z.record(z.union([z.number(), z.string()])),
   });
 
   const kjobsSubmitSchema = z.object({
-    answers: z.record(z.string(), z.union([z.number(), z.string()])),
+    answers: z.record(z.union([z.number(), z.string()])),
   });
   
   // Initialize K-JOBS assessment session
