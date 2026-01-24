@@ -313,7 +313,7 @@ export const kjobsAssessments = pgTable("kjobs_assessments", {
   status: varchar("status", { length: 20 }).notNull().default("pending"), // 'pending' | 'in_progress' | 'completed'
   currentQuestion: integer("current_question").notNull().default(1),
   answers: jsonb("answers"), // Saved answers for resume
-  careerDna: varchar("career_dna", { length: 100 }), // Result: career DNA type
+  careerDna: text("career_dna"), // Result: career DNA type
   scores: jsonb("scores"), // Result: 7-axis scores
   facetScores: jsonb("facet_scores"), // Result: facet scores
   keywords: jsonb("keywords"), // Result: personality keywords
