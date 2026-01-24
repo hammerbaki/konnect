@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +40,72 @@ const getSectionTestId = (title: string): string => {
     return SECTION_ID_MAP[title] || title.replace(/\s+/g, '-').toLowerCase();
 };
 
-const ExpandableSection = ({ 
+const TextExpandableSection = ({ 
+    title, 
+    icon: Icon, 
+    text,
+    iconColor = "text-[#3182F6]",
+    bgColor = "bg-[#F9FAFB]"
+}: { 
+    title: string; 
+    icon: any; 
+    text?: string;
+    iconColor?: string;
+    bgColor?: string;
+}) => {
+    const [expanded, setExpanded] = useState(false);
+    const textRef = useRef<HTMLParagraphElement>(null);
+    const [needsExpansion, setNeedsExpansion] = useState(false);
+
+    useEffect(() => {
+        if (textRef.current) {
+            const lineHeight = parseInt(getComputedStyle(textRef.current).lineHeight) || 20;
+            const maxHeight = lineHeight * 3;
+            setNeedsExpansion(textRef.current.scrollHeight > maxHeight + 4);
+        }
+    }, [text]);
+
+    if (!text) {
+        return (
+            <div className={cn("rounded-xl p-4 border border-[#E5E8EB]", bgColor)}>
+                <div className="flex items-center gap-2 mb-3">
+                    <Icon className={cn("h-4 w-4", iconColor)} />
+                    <h6 className="text-sm font-bold text-[#191F28]">{title}</h6>
+                </div>
+                <p className="text-sm text-[#B0B8C1]">정보 준비중</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className={cn("rounded-xl p-4 border border-[#E5E8EB]", bgColor)}>
+            <div className="flex items-center gap-2 mb-3">
+                <Icon className={cn("h-4 w-4", iconColor)} />
+                <h6 className="text-sm font-bold text-[#191F28]">{title}</h6>
+            </div>
+            <p 
+                ref={textRef}
+                className={cn(
+                    "text-sm text-[#4E5968] leading-relaxed whitespace-pre-line",
+                    !expanded && needsExpansion && "line-clamp-3"
+                )}
+            >
+                {text}
+            </p>
+            {needsExpansion && (
+                <button 
+                    onClick={() => setExpanded(!expanded)}
+                    className="mt-3 text-xs text-[#3182F6] font-medium flex items-center gap-1 hover:underline"
+                    data-testid={`button-expand-${getSectionTestId(title)}`}
+                >
+                    {expanded ? <><ChevronUp className="h-3 w-3" /> 접기</> : <><ChevronDown className="h-3 w-3" /> 더보기</>}
+                </button>
+            )}
+        </div>
+    );
+};
+
+const ListExpandableSection = ({ 
     title, 
     icon: Icon, 
     items, 
@@ -74,14 +139,14 @@ const ExpandableSection = ({
                         {displayItems.map((item, i) => (
                             <li key={i} className="text-sm text-[#4E5968] flex items-start gap-2">
                                 <span className="text-[#B0B8C1] shrink-0">•</span>
-                                <span className="line-clamp-2">{item}</span>
+                                <span>{item}</span>
                             </li>
                         ))}
                     </ul>
                     {hasMore && (
                         <button 
                             onClick={() => setExpanded(!expanded)}
-                            className="mt-2 text-xs text-[#3182F6] font-medium flex items-center gap-1 hover:underline"
+                            className="mt-3 text-xs text-[#3182F6] font-medium flex items-center gap-1 hover:underline"
                             data-testid={`button-expand-${getSectionTestId(title)}`}
                         >
                             {expanded ? <><ChevronUp className="h-3 w-3" /> 접기</> : <><ChevronDown className="h-3 w-3" /> 더보기 ({safeItems.length - maxLines}개)</>}
@@ -438,26 +503,25 @@ export function EnhancedCareerCard({
                     <AccordionContent className="px-5 pb-5">
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <ExpandableSection
+                                <TextExpandableSection
                                     title="직무 요약"
                                     icon={Briefcase}
-                                    items={career.jobSummary ? [career.jobSummary] : career.description ? [career.description] : undefined}
-                                    maxLines={3}
+                                    text={career.jobSummary || career.description}
                                 />
-                                <ExpandableSection
+                                <ListExpandableSection
                                     title="핵심 업무"
                                     icon={Target}
                                     items={career.coreTasks}
                                     maxLines={3}
                                 />
-                                <ExpandableSection
+                                <ListExpandableSection
                                     title="필요 역량"
                                     icon={Award}
                                     items={career.requiredSkills}
                                     maxLines={3}
                                     iconColor="text-[#6366F1]"
                                 />
-                                <ExpandableSection
+                                <ListExpandableSection
                                     title="진입 경로"
                                     icon={BookOpen}
                                     items={career.entryPath}
