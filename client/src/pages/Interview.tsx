@@ -100,17 +100,37 @@ const categoryInfo: Record<string, { label: string; icon: any; color: string; de
 };
 
 function InterviewContent() {
-  const { user, activeProfile } = useAuth();
+  const { user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const [view, setView] = useState<'list' | 'session' | 'practice'>('list');
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answerText, setAnswerText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  
+  // Fetch profiles
+  const { data: profiles = [], isLoading: loadingProfiles } = useQuery<any[]>({
+    queryKey: ['/api/profiles'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/profiles');
+      return res.json();
+    },
+    enabled: !!user,
+  });
+  
+  // Set active profile when profiles load
+  useEffect(() => {
+    if (profiles.length > 0 && !activeProfileId) {
+      setActiveProfileId(profiles[0].id);
+    }
+  }, [profiles, activeProfileId]);
+  
+  const activeProfile = profiles.find((p: any) => p.id === activeProfileId);
   
   // Fetch sessions
   const { data: sessions = [], isLoading: loadingSessions } = useQuery<InterviewSession[]>({
@@ -138,12 +158,18 @@ function InterviewContent() {
     const data = activeProfile.profileData as any;
     
     switch (activeProfile.type) {
+      case 'elementary':
+        return data.elem_dreamJob || null;
+      case 'middle':
+        return data.mid_dreamJob || null;
       case 'high':
         return data.high_careerHope || null;
       case 'university':
-        return data.uni_hopedCareer || null;
+        return data.univ_desiredIndustry || null;
       case 'general':
-        return data.gen_desiredJob || null;
+        return data.gen_desiredRole || null;
+      case 'international':
+        return data.intl_desiredPosition || null;
       default:
         return null;
     }
