@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,9 @@ import { apiRequest } from '@/lib/queryClient';
 import { Layout } from '@/components/layout/Layout';
 import { 
   Mic, 
+  MicOff,
+  Video,
+  Square,
   MessageSquare, 
   BookOpen, 
   ChevronRight, 
@@ -32,6 +35,8 @@ import {
   Users,
   Briefcase,
   Plus,
+  PenLine,
+  Volume2,
 } from 'lucide-react';
 
 interface InterviewSession {
@@ -70,6 +75,104 @@ interface InterviewAnswer {
   improvedAnswer?: string;
   isBookmarked: number;
   feedbackJson?: any;
+}
+
+interface VideoRecording {
+  id: string;
+  sessionId: string;
+  questionId: string;
+  questionOrder: number;
+  sttText?: string;
+  sttStatus: 'pending' | 'processing' | 'completed' | 'failed';
+  sttError?: string;
+  understandingScore?: number;
+  fitScore?: number;
+  logicScore?: number;
+  specificityScore?: number;
+  overallScore?: number;
+  improvementSuggestion?: string;
+  improvedAnswer?: string;
+  isBookmarked: number;
+  durationSeconds?: number;
+  userNote?: string;
+}
+
+// Voice Recorder Hook
+type RecordingState = 'idle' | 'recording' | 'stopped';
+
+const MAX_RECORDING_DURATION = 180; // 3 minutes max
+
+function useVoiceRecorder(onMaxDurationReached?: () => void) {
+  const [state, setState] = useState<RecordingState>('idle');
+  const [duration, setDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const startRecording = useCallback(async (): Promise<void> => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+      });
+
+      mediaRecorderRef.current = recorder;
+      chunksRef.current = [];
+      setDuration(0);
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.start(100);
+      setState('recording');
+      
+      timerRef.current = setInterval(() => {
+        setDuration(prev => {
+          const newDuration = prev + 1;
+          if (newDuration >= MAX_RECORDING_DURATION && onMaxDurationReached) {
+            onMaxDurationReached();
+          }
+          return newDuration;
+        });
+      }, 1000);
+    } catch (err) {
+      console.error('Error starting recording:', err);
+      throw err;
+    }
+  }, [onMaxDurationReached]);
+
+  const stopRecording = useCallback((): Promise<Blob> => {
+    return new Promise((resolve) => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      
+      const recorder = mediaRecorderRef.current;
+      if (!recorder || recorder.state !== 'recording') {
+        resolve(new Blob());
+        return;
+      }
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        recorder.stream.getTracks().forEach((t) => t.stop());
+        setState('stopped');
+        resolve(blob);
+      };
+
+      recorder.stop();
+    });
+  }, []);
+
+  const reset = useCallback(() => {
+    setState('idle');
+    setDuration(0);
+    chunksRef.current = [];
+  }, []);
+
+  return { state, duration, startRecording, stopRecording, reset };
 }
 
 const categoryInfo: Record<string, { label: string; icon: any; color: string; description: string }> = {
@@ -112,6 +215,20 @@ function InterviewContent() {
   const [answerText, setAnswerText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  
+  // Voice mode state
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [voiceRecordingId, setVoiceRecordingId] = useState<string | null>(null);
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  
+  // Auto-stop callback for max duration
+  const handleMaxDurationReached = useCallback(() => {
+    toast({ 
+      title: '최대 녹음 시간 도달',
+      description: '3분 최대 녹음 시간에 도달했습니다.',
+    });
+  }, [toast]);
+  const voiceRecorder = useVoiceRecorder(handleMaxDurationReached);
   
   // Fetch profiles
   const { data: profiles = [], isLoading: loadingProfiles } = useQuery<any[]>({
@@ -240,6 +357,132 @@ function InterviewContent() {
     },
   });
   
+  // Fetch video recordings for current session
+  const { data: videoRecordings = [] } = useQuery<VideoRecording[]>({
+    queryKey: ['video-recordings', selectedSessionId],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/interview/video-recordings/${selectedSessionId}`);
+      return res.json();
+    },
+    enabled: !!selectedSessionId && isVoiceMode,
+  });
+  
+  // Get current question's video recording
+  const currentQuestionRecording = videoRecordings.find(
+    r => r.questionId === sessionData?.questions?.[currentQuestionIndex]?.id
+  );
+  
+  // Submit voice recording mutation
+  const submitVoiceRecordingMutation = useMutation({
+    mutationFn: async (params: { sessionId: string; questionId: string; questionOrder: number; audioBase64: string; durationSeconds: number }) => {
+      const res = await apiRequest('POST', '/api/interview/video-recordings', params);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['video-recordings', selectedSessionId] });
+      setVoiceRecordingId(data.id);
+      if (data.sttStatus === 'completed') {
+        toast({ title: '음성이 변환되었습니다.' });
+      } else if (data.sttStatus === 'failed') {
+        toast({ title: '음성 인식에 실패했습니다.', variant: 'destructive' });
+      }
+    },
+    onError: () => {
+      toast({ title: '녹음 저장 실패', variant: 'destructive' });
+    },
+  });
+  
+  // Get AI feedback on voice recording
+  const getVoiceFeedbackMutation = useMutation({
+    mutationFn: async (recordingId: string) => {
+      const res = await apiRequest('POST', `/api/interview/video-recordings/${recordingId}/feedback`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['video-recordings', selectedSessionId] });
+      setShowFeedback(true);
+      toast({ title: 'AI 피드백이 생성되었습니다.' });
+    },
+    onError: () => {
+      toast({ title: 'AI 피드백 생성 실패', variant: 'destructive' });
+    },
+  });
+  
+  // Voice recording handlers
+  const handleStartVoiceRecording = async () => {
+    try {
+      await voiceRecorder.startRecording();
+    } catch (err) {
+      toast({ 
+        title: '마이크 접근 권한이 필요합니다.',
+        description: '브라우저 설정에서 마이크 권한을 허용해주세요.',
+        variant: 'destructive' 
+      });
+    }
+  };
+  
+  const handleStopVoiceRecording = async () => {
+    const question = sessionData?.questions?.[currentQuestionIndex];
+    if (!question) return;
+    
+    setIsProcessingVoice(true);
+    try {
+      const audioBlob = await voiceRecorder.stopRecording();
+      
+      // Check file size limit (10MB max)
+      const MAX_SIZE = 10 * 1024 * 1024;
+      if (audioBlob.size > MAX_SIZE) {
+        toast({ 
+          title: '녹음 파일이 너무 큽니다.',
+          description: '10MB 이하로 녹음해주세요.',
+          variant: 'destructive' 
+        });
+        setIsProcessingVoice(false);
+        voiceRecorder.reset();
+        return;
+      }
+      
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onerror = () => {
+        toast({ title: '녹음 처리 중 오류가 발생했습니다.', variant: 'destructive' });
+        setIsProcessingVoice(false);
+      };
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        
+        submitVoiceRecordingMutation.mutate({
+          sessionId: selectedSessionId!,
+          questionId: question.id,
+          questionOrder: currentQuestionIndex,
+          audioBase64: base64,
+          durationSeconds: voiceRecorder.duration,
+        }, {
+          onSettled: () => {
+            setIsProcessingVoice(false);
+          }
+        });
+      };
+      reader.readAsDataURL(audioBlob);
+    } catch (err) {
+      toast({ title: '녹음 처리 중 오류가 발생했습니다.', variant: 'destructive' });
+      setIsProcessingVoice(false);
+    }
+  };
+  
+  const handleGetVoiceFeedback = () => {
+    if (currentQuestionRecording?.id) {
+      getVoiceFeedbackMutation.mutate(currentQuestionRecording.id);
+    }
+  };
+  
+  // Format duration
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+  
   const handleStartSession = () => {
     if (!activeProfile || !desiredJob) {
       toast({ 
@@ -282,6 +525,7 @@ function InterviewContent() {
       setCurrentQuestionIndex(prev => prev + 1);
       setAnswerText('');
       setShowFeedback(false);
+      voiceRecorder.reset();
     }
   };
   
@@ -290,6 +534,7 @@ function InterviewContent() {
       setCurrentQuestionIndex(prev => prev - 1);
       setAnswerText('');
       setShowFeedback(false);
+      voiceRecorder.reset();
     }
   };
   
@@ -465,6 +710,32 @@ function InterviewContent() {
           </p>
         </div>
         
+        {/* Mode Toggle */}
+        <div className="flex justify-center">
+          <div className="flex bg-[#F2F4F6] rounded-lg p-1 gap-1">
+            <Button
+              variant={!isVoiceMode ? 'default' : 'ghost'}
+              size="sm"
+              className={!isVoiceMode ? 'bg-white shadow-sm' : ''}
+              onClick={() => setIsVoiceMode(false)}
+              data-testid="btn-text-mode"
+            >
+              <PenLine className="w-4 h-4 mr-1" />
+              텍스트
+            </Button>
+            <Button
+              variant={isVoiceMode ? 'default' : 'ghost'}
+              size="sm"
+              className={isVoiceMode ? 'bg-white shadow-sm' : ''}
+              onClick={() => setIsVoiceMode(true)}
+              data-testid="btn-voice-mode"
+            >
+              <Mic className="w-4 h-4 mr-1" />
+              음성 면접
+            </Button>
+          </div>
+        </div>
+        
         {/* Question Card */}
         {currentQuestion && (
           <Card className="border-t-4" style={{ borderTopColor: categoryInfo[currentQuestion.category]?.color.includes('blue') ? '#3182F6' : categoryInfo[currentQuestion.category]?.color.includes('purple') ? '#7C3AED' : categoryInfo[currentQuestion.category]?.color.includes('green') ? '#059669' : '#D97706' }}>
@@ -510,53 +781,211 @@ function InterviewContent() {
                 </div>
               )}
               
-              {/* Answer Input */}
-              <div>
-                <Textarea
-                  value={answerText}
-                  onChange={(e) => setAnswerText(e.target.value)}
-                  placeholder="답변을 입력하세요..."
-                  className="min-h-[150px] resize-none"
-                  data-testid="textarea-answer"
-                />
-                <p className="text-xs text-[#8B95A1] mt-1 text-right">
-                  {answerText.length}자
-                </p>
-              </div>
+              {/* Answer Input - Text Mode */}
+              {!isVoiceMode && (
+                <>
+                  <div>
+                    <Textarea
+                      value={answerText}
+                      onChange={(e) => setAnswerText(e.target.value)}
+                      placeholder="답변을 입력하세요..."
+                      className="min-h-[150px] resize-none"
+                      data-testid="textarea-answer"
+                    />
+                    <p className="text-xs text-[#8B95A1] mt-1 text-right">
+                      {answerText.length}자
+                    </p>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={handleSaveAnswer}
+                      disabled={!answerText.trim() || saveAnswerMutation.isPending}
+                      data-testid="btn-save-answer"
+                    >
+                      {saveAnswerMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <FileText className="w-4 h-4 mr-1" />
+                      )}
+                      저장만
+                    </Button>
+                    <Button
+                      className="flex-1 bg-[#3182F6]"
+                      onClick={handleSubmitAnswer}
+                      disabled={!answerText.trim() || submitAnswerMutation.isPending}
+                      data-testid="btn-submit-answer"
+                    >
+                      {submitAnswerMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-4 h-4 mr-1" />
+                      )}
+                      AI 피드백 받기
+                    </Button>
+                  </div>
+                </>
+              )}
               
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={handleSaveAnswer}
-                  disabled={!answerText.trim() || saveAnswerMutation.isPending}
-                  data-testid="btn-save-answer"
-                >
-                  {saveAnswerMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <FileText className="w-4 h-4 mr-1" />
+              {/* Voice Recording Mode */}
+              {isVoiceMode && (
+                <div className="space-y-4">
+                  {/* Recording Control */}
+                  <div className="flex flex-col items-center p-6 bg-gradient-to-br from-[#F8F9FA] to-[#E8F3FF] rounded-xl">
+                    {voiceRecorder.state === 'idle' && !currentQuestionRecording?.sttText && (
+                      <>
+                        <button
+                          onClick={handleStartVoiceRecording}
+                          className="w-20 h-20 rounded-full bg-[#3182F6] hover:bg-[#2563EB] flex items-center justify-center shadow-lg transition-all hover:scale-105"
+                          data-testid="btn-start-voice-recording"
+                        >
+                          <Mic className="w-8 h-8 text-white" />
+                        </button>
+                        <p className="mt-4 text-sm text-[#8B95A1]">버튼을 눌러 녹음을 시작하세요</p>
+                      </>
+                    )}
+                    
+                    {voiceRecorder.state === 'recording' && (
+                      <>
+                        <div className="relative">
+                          <button
+                            onClick={handleStopVoiceRecording}
+                            className="w-20 h-20 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-lg transition-all animate-pulse"
+                            data-testid="btn-stop-voice-recording"
+                          >
+                            <Square className="w-6 h-6 text-white fill-white" />
+                          </button>
+                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-ping" />
+                        </div>
+                        <p className="mt-4 text-lg font-bold text-red-500">{formatDuration(voiceRecorder.duration)}</p>
+                        <p className="text-sm text-[#8B95A1]">녹음 중... 버튼을 눌러 종료</p>
+                      </>
+                    )}
+                    
+                    {(isProcessingVoice || submitVoiceRecordingMutation.isPending) && (
+                      <>
+                        <div className="w-20 h-20 rounded-full bg-[#3182F6]/20 flex items-center justify-center">
+                          <Loader2 className="w-8 h-8 text-[#3182F6] animate-spin" />
+                        </div>
+                        <p className="mt-4 text-sm text-[#8B95A1]">음성을 텍스트로 변환 중...</p>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Transcription Result */}
+                  {currentQuestionRecording?.sttText && (
+                    <div className="space-y-3">
+                      <div className="p-4 bg-white border rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Volume2 className="w-4 h-4 text-[#3182F6]" />
+                          <span className="text-sm font-medium text-[#191F28]">음성 인식 결과</span>
+                          {currentQuestionRecording.durationSeconds && (
+                            <Badge variant="outline" className="text-xs">
+                              {formatDuration(currentQuestionRecording.durationSeconds)}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-[#4B5563] whitespace-pre-wrap">
+                          {currentQuestionRecording.sttText}
+                        </p>
+                      </div>
+                      
+                      {/* Voice Action Buttons */}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => {
+                            voiceRecorder.reset();
+                            queryClient.invalidateQueries({ queryKey: ['video-recordings', selectedSessionId] });
+                          }}
+                          data-testid="btn-rerecord"
+                        >
+                          <Mic className="w-4 h-4 mr-1" />
+                          다시 녹음
+                        </Button>
+                        <Button
+                          className="flex-1 bg-[#3182F6]"
+                          onClick={handleGetVoiceFeedback}
+                          disabled={!currentQuestionRecording?.sttText || getVoiceFeedbackMutation.isPending}
+                          data-testid="btn-voice-feedback"
+                        >
+                          {getVoiceFeedbackMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="w-4 h-4 mr-1" />
+                          )}
+                          AI 피드백 받기
+                        </Button>
+                      </div>
+                    </div>
                   )}
-                  저장만
-                </Button>
-                <Button
-                  className="flex-1 bg-[#3182F6]"
-                  onClick={handleSubmitAnswer}
-                  disabled={!answerText.trim() || submitAnswerMutation.isPending}
-                  data-testid="btn-submit-answer"
-                >
-                  {submitAnswerMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4 mr-1" />
+                  
+                  {/* Voice Feedback Display */}
+                  {isVoiceMode && currentQuestionRecording?.overallScore && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-bold text-[#191F28] flex items-center gap-2">
+                          <Brain className="w-5 h-5 text-[#3182F6]" />
+                          AI 피드백 (음성)
+                        </h4>
+                      </div>
+                      
+                      {/* Scores */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { label: '질문 이해도', score: currentQuestionRecording.understandingScore },
+                          { label: '직무 적합도', score: currentQuestionRecording.fitScore },
+                          { label: '논리 구조', score: currentQuestionRecording.logicScore },
+                          { label: '구체성', score: currentQuestionRecording.specificityScore },
+                        ].map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-[#F8F9FA] rounded">
+                            <span className="text-xs text-[#8B95A1]">{item.label}</span>
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map(n => (
+                                <div
+                                  key={n}
+                                  className={`w-2 h-2 rounded-full ${n <= (item.score || 0) ? 'bg-[#3182F6]' : 'bg-[#E5E8EB]'}`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Overall Score */}
+                      <div className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-[#3182F6]/10 to-[#7C3AED]/10 rounded-lg">
+                        <span className="text-sm text-[#8B95A1]">종합 점수</span>
+                        <span className="text-2xl font-bold text-[#3182F6]">
+                          {currentQuestionRecording.overallScore}/5
+                        </span>
+                      </div>
+                      
+                      {/* Improvement Suggestion */}
+                      {currentQuestionRecording.improvementSuggestion && (
+                        <div className="p-3 bg-[#FFF8E1] rounded-lg">
+                          <p className="text-xs font-medium text-amber-800 mb-1">개선 제안</p>
+                          <p className="text-sm text-amber-700">{currentQuestionRecording.improvementSuggestion}</p>
+                        </div>
+                      )}
+                      
+                      {/* Improved Answer */}
+                      {currentQuestionRecording.improvedAnswer && (
+                        <div className="p-3 bg-[#E8F3FF] rounded-lg">
+                          <p className="text-xs font-medium text-[#3182F6] mb-1">AI 첨삭 답변</p>
+                          <p className="text-sm text-[#4B5563] whitespace-pre-wrap">{currentQuestionRecording.improvedAnswer}</p>
+                        </div>
+                      )}
+                    </div>
                   )}
-                  AI 피드백 받기
-                </Button>
-              </div>
+                </div>
+              )}
               
-              {/* Feedback Display */}
-              {showFeedback && currentQuestion.answer?.overallScore && (
+              {/* Feedback Display (Text mode only) */}
+              {!isVoiceMode && showFeedback && currentQuestion.answer?.overallScore && (
                 <div className="space-y-4 pt-4 border-t">
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-[#191F28] flex items-center gap-2">

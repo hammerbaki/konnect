@@ -78,6 +78,33 @@ To restore: Search for "HIDDEN_PDF" and uncomment the marked code blocks.
 - **Goal Management (Kompass)**: Hierarchical goal tracking and management.
 - **Job Demand (구인수요지표)**: Worknet (워크넷) API integration for job posting count data.
 
+## Interview Preparation Feature (면접 준비)
+AI-powered interview preparation system with both text and voice modes.
+
+### Architecture
+- **Frontend**: `client/src/pages/Interview.tsx` - Interview preparation page with session management
+- **Backend AI**: `server/interview-ai.ts` - Claude AI for question generation and feedback
+- **Database Tables**: `interview_sessions`, `interview_questions`, `interview_answers`, `video_interview_recordings`
+- **STT Integration**: OpenAI gpt-4o-mini-transcribe via Replit AI Integrations (`server/replit_integrations/audio/`)
+
+### Features
+- **Session-Based Practice**: Creates interview sessions with 9 AI-generated questions based on user's profile and desired job
+- **Question Categories**: 4 types - 기본 면접 질문 (basic), 직무 질문 (job_specific), 자기소개 (self_intro), STAR 질문 (star)
+- **Text Mode**: Type answers and receive AI feedback with 5-dimension scoring
+- **Voice Mode**: Record audio answers using MediaRecorder API, automatic STT transcription, then AI feedback
+- **AI Feedback**: 5 dimensions - 질문 이해도, 직무 적합도, 논리 구조, 구체성, 종합 점수 (1-5 scale)
+- **Improvement Suggestions**: AI provides specific improvement suggestions and improved answer examples
+- **Bookmarking**: Save important Q&A pairs for later review
+
+### API Routes
+- `GET /api/interview/sessions` - List user's interview sessions
+- `GET /api/interview/sessions/:sessionId` - Get session details with questions
+- `POST /api/interview/sessions` - Create new interview session (generates AI questions)
+- `POST /api/interview/answers` - Submit answer and get AI feedback
+- `POST /api/interview/answers/save` - Save answer without feedback
+- `POST /api/interview/video-recordings` - Upload voice recording (performs STT)
+- `POST /api/interview/video-recordings/:id/feedback` - Get AI feedback on voice recording
+
 ## Job Demand Feature (구인수요지표)
 워크넷 채용정보 API를 활용하여 직업별 구인수요(채용공고 건수)를 표시합니다.
 

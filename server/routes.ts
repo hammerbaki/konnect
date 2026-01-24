@@ -4371,6 +4371,300 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== VIDEO INTERVIEW ROUTES (화상 면접) =====
+  
+  // Import audio processing functions (for STT)
+  const { speechToText, ensureCompatibleFormat } = await import('./replit_integrations/audio/client');
+  const { videoInterviewRecordings } = await import('@shared/schema');
+  
+  // Get all video recordings for a session
+  app.get('/api/interview/video-recordings/:sessionId', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      const { sessionId } = req.params;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const recordings = await db
+        .select()
+        .from(videoInterviewRecordings)
+        .where(and(
+          eq(videoInterviewRecordings.sessionId, sessionId),
+          eq(videoInterviewRecordings.userId, userId)
+        ))
+        .orderBy(videoInterviewRecordings.questionOrder);
+      
+      res.json(recordings);
+    } catch (error: any) {
+      console.error("Error fetching video recordings:", error);
+      res.status(500).json({ message: "녹화 기록을 불러오는 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get single video recording
+  app.get('/api/interview/video-recordings/:sessionId/:questionId', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      const { sessionId, questionId } = req.params;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const [recording] = await db
+        .select()
+        .from(videoInterviewRecordings)
+        .where(and(
+          eq(videoInterviewRecordings.sessionId, sessionId),
+          eq(videoInterviewRecordings.questionId, questionId),
+          eq(videoInterviewRecordings.userId, userId)
+        ));
+      
+      res.json(recording || null);
+    } catch (error: any) {
+      console.error("Error fetching video recording:", error);
+      res.status(500).json({ message: "녹화 기록을 불러오는 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Create/update video recording with audio transcription
+  app.post('/api/interview/video-recordings', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      const { sessionId, questionId, questionOrder, audioBase64, durationSeconds } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      if (!sessionId || !questionId || !audioBase64) {
+        return res.status(400).json({ message: "필수 정보가 누락되었습니다." });
+      }
+      
+      // Validate audio size (max 15MB base64 = ~11MB actual)
+      const MAX_BASE64_SIZE = 15 * 1024 * 1024;
+      if (audioBase64.length > MAX_BASE64_SIZE) {
+        return res.status(413).json({ message: "녹음 파일이 너무 큽니다. 10MB 이하로 녹음해주세요." });
+      }
+      
+      // Check if recording already exists
+      const [existing] = await db
+        .select()
+        .from(videoInterviewRecordings)
+        .where(and(
+          eq(videoInterviewRecordings.sessionId, sessionId),
+          eq(videoInterviewRecordings.questionId, questionId),
+          eq(videoInterviewRecordings.userId, userId)
+        ));
+      
+      // Perform STT transcription
+      let sttText = '';
+      let sttStatus = 'pending';
+      let sttError = null;
+      
+      try {
+        const audioBuffer = Buffer.from(audioBase64, 'base64');
+        const { buffer: convertedBuffer, format } = await ensureCompatibleFormat(audioBuffer);
+        sttText = await speechToText(convertedBuffer, format);
+        sttStatus = 'completed';
+      } catch (sttErr: any) {
+        console.error('STT Error:', sttErr);
+        sttStatus = 'failed';
+        sttError = sttErr.message || 'STT 변환에 실패했습니다.';
+      }
+      
+      if (existing) {
+        // Update existing recording
+        const [updated] = await db
+          .update(videoInterviewRecordings)
+          .set({
+            sttText,
+            sttStatus,
+            sttError,
+            durationSeconds: durationSeconds || 0,
+            updatedAt: new Date(),
+          })
+          .where(eq(videoInterviewRecordings.id, existing.id))
+          .returning();
+        
+        res.json(updated);
+      } else {
+        // Create new recording
+        const [created] = await db
+          .insert(videoInterviewRecordings)
+          .values({
+            sessionId,
+            questionId,
+            userId,
+            questionOrder: questionOrder || 0,
+            sttText,
+            sttStatus,
+            sttError,
+            durationSeconds: durationSeconds || 0,
+          })
+          .returning();
+        
+        res.json(created);
+      }
+    } catch (error: any) {
+      console.error("Error creating video recording:", error);
+      res.status(500).json({ message: "녹화 저장 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get AI feedback on video recording (transcribed text)
+  app.post('/api/interview/video-recordings/:recordingId/feedback', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      const { recordingId } = req.params;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      // Get the recording
+      const [recording] = await db
+        .select()
+        .from(videoInterviewRecordings)
+        .where(and(
+          eq(videoInterviewRecordings.id, recordingId),
+          eq(videoInterviewRecordings.userId, userId)
+        ));
+      
+      if (!recording) {
+        return res.status(404).json({ message: "녹화 기록을 찾을 수 없습니다." });
+      }
+      
+      if (!recording.sttText || recording.sttStatus !== 'completed') {
+        return res.status(400).json({ message: "음성 인식이 완료되지 않았습니다." });
+      }
+      
+      // Get the session and question
+      const [session] = await db
+        .select()
+        .from(interviewSessions)
+        .where(eq(interviewSessions.id, recording.sessionId));
+      
+      const [question] = await db
+        .select()
+        .from(interviewQuestions)
+        .where(eq(interviewQuestions.id, recording.questionId));
+      
+      if (!session || !question) {
+        return res.status(404).json({ message: "세션 또는 질문을 찾을 수 없습니다." });
+      }
+      
+      // Generate AI feedback
+      const feedback = await generateAnswerFeedback(
+        question.question,
+        question.category || 'basic',
+        recording.sttText,
+        session.desiredJob
+      );
+      
+      // Update the recording with feedback
+      const [updated] = await db
+        .update(videoInterviewRecordings)
+        .set({
+          feedbackJson: feedback,
+          understandingScore: feedback.understandingScore,
+          fitScore: feedback.fitScore,
+          logicScore: feedback.logicScore,
+          specificityScore: feedback.specificityScore,
+          overallScore: feedback.overallScore,
+          improvementSuggestion: feedback.improvementSuggestion,
+          improvedAnswer: feedback.improvedAnswer,
+          updatedAt: new Date(),
+        })
+        .where(eq(videoInterviewRecordings.id, recordingId))
+        .returning();
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error generating video feedback:", error);
+      res.status(500).json({ message: "AI 피드백 생성 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Toggle bookmark on video recording
+  app.patch('/api/interview/video-recordings/:recordingId/bookmark', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      const { recordingId } = req.params;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const [recording] = await db
+        .select()
+        .from(videoInterviewRecordings)
+        .where(and(
+          eq(videoInterviewRecordings.id, recordingId),
+          eq(videoInterviewRecordings.userId, userId)
+        ));
+      
+      if (!recording) {
+        return res.status(404).json({ message: "녹화 기록을 찾을 수 없습니다." });
+      }
+      
+      const [updated] = await db
+        .update(videoInterviewRecordings)
+        .set({
+          isBookmarked: recording.isBookmarked === 1 ? 0 : 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(videoInterviewRecordings.id, recordingId))
+        .returning();
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error toggling bookmark:", error);
+      res.status(500).json({ message: "북마크 토글 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Update user note on video recording
+  app.patch('/api/interview/video-recordings/:recordingId/note', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      const { recordingId } = req.params;
+      const { note } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "인증이 필요합니다." });
+      }
+      
+      const [recording] = await db
+        .select()
+        .from(videoInterviewRecordings)
+        .where(and(
+          eq(videoInterviewRecordings.id, recordingId),
+          eq(videoInterviewRecordings.userId, userId)
+        ));
+      
+      if (!recording) {
+        return res.status(404).json({ message: "녹화 기록을 찾을 수 없습니다." });
+      }
+      
+      const [updated] = await db
+        .update(videoInterviewRecordings)
+        .set({
+          userNote: note,
+          updatedAt: new Date(),
+        })
+        .where(eq(videoInterviewRecordings.id, recordingId))
+        .returning();
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error updating note:", error);
+      res.status(500).json({ message: "메모 저장 중 오류가 발생했습니다." });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
