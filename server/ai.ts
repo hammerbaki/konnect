@@ -800,6 +800,22 @@ function getProfileTypePrompt(profileType: string): string {
     {
       "title": "${context.careerExampleTitle}",
       "description": "이 진로가 적합한 이유 (2-3문장)",
+      "jobSummary": "이 직무에서 하는 일에 대한 상세 요약 (3-5문장으로 구체적으로)",
+      "coreTasks": [
+        "핵심 업무 1 (구체적인 업무 내용)",
+        "핵심 업무 2",
+        "핵심 업무 3"
+      ],
+      "requiredSkills": [
+        "필수 역량/스킬 1",
+        "필수 역량/스킬 2",
+        "필수 역량/스킬 3"
+      ],
+      "entryPath": [
+        "진입 경로 1 (예: 관련 전공, 자격증, 경험 등)",
+        "진입 경로 2",
+        "진입 경로 3"
+      ],
       "matchScore": 92,
       "salary": "특징/연봉 정보",
       "jobOutlook": "전망 설명",
@@ -904,6 +920,10 @@ ${profileTypePrompt}
         const careerRecommendations: CareerRecommendation[] = (parsed.careerRecommendations || []).map((rec: any) => ({
           title: rec.title || "추천 진로",
           description: rec.description || "",
+          jobSummary: rec.jobSummary || "",
+          coreTasks: rec.coreTasks || [],
+          requiredSkills: rec.requiredSkills || [],
+          entryPath: rec.entryPath || [],
           matchScore: rec.matchScore || 0,
           salary: rec.salary || "",
           jobOutlook: rec.jobOutlook || "",
