@@ -226,13 +226,15 @@ export default function MyTest() {
                   <p className="text-sm opacity-80">나의 Career DNA</p>
                   <h2 className="text-2xl font-bold mt-1">{latestResult.careerDna}</h2>
                 </div>
-                <div className="flex flex-wrap justify-center gap-2 mt-4">
-                  {latestResult.keywords.map((keyword, i) => (
-                    <span key={i} className="px-3 py-1 bg-white/20 rounded-full text-sm">
-                      {keyword}
-                    </span>
-                  ))}
-                </div>
+                {latestResult.keywords && latestResult.keywords.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2 mt-4">
+                    {latestResult.keywords.map((keyword, i) => (
+                      <span key={i} className="px-3 py-1 bg-white/20 rounded-full text-sm">
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -245,13 +247,13 @@ export default function MyTest() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {Object.entries(latestResult.scores).map(([key, value]) => (
+              {latestResult.scores && Object.entries(latestResult.scores).map(([key, value]) => (
                 <div key={key} className="space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-[#4E5968]">{AXIS_LABELS[key] || key}</span>
-                    <span className="font-medium text-[#191F28]">{value}</span>
+                    <span className="font-medium text-[#191F28]">{value as number}</span>
                   </div>
-                  <Progress value={value} className="h-2" />
+                  <Progress value={value as number} className="h-2" />
                 </div>
               ))}
             </CardContent>
@@ -265,8 +267,8 @@ export default function MyTest() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {latestResult.recommendedJobs.map((job, i) => (
-                <div key={job.jobId} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl">
+              {latestResult.recommendedJobs && latestResult.recommendedJobs.map((job, i) => (
+                <div key={job.jobId || i} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-[#3182F6] text-white flex items-center justify-center font-bold text-sm">
                       {i + 1}
@@ -274,7 +276,7 @@ export default function MyTest() {
                     <div>
                       <p className="font-medium text-[#191F28]">{job.title}</p>
                       <p className="text-xs text-[#8B95A1]">
-                        {job.keyCompetencies.slice(0, 3).join(", ")}
+                        {job.keyCompetencies?.slice(0, 3).join(", ") || ""}
                       </p>
                     </div>
                   </div>
@@ -292,10 +294,10 @@ export default function MyTest() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {[
-                { label: "30일 목표", items: latestResult.growthPlan.thirtyDays },
-                { label: "60일 목표", items: latestResult.growthPlan.sixtyDays },
-                { label: "90일 목표", items: latestResult.growthPlan.ninetyDays },
+              {latestResult.growthPlan && [
+                { label: "30일 목표", items: latestResult.growthPlan.thirtyDays || [] },
+                { label: "60일 목표", items: latestResult.growthPlan.sixtyDays || [] },
+                { label: "90일 목표", items: latestResult.growthPlan.ninetyDays || [] },
               ].map((plan, idx) => (
                 <div key={idx} className="space-y-2">
                   <h4 className="font-medium text-[#191F28]">{plan.label}</h4>
