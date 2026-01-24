@@ -729,8 +729,7 @@ export default function Analysis() {
                                 const desiredJob = activeProfile?.profileData?.gen_desiredRole || 
                                                    activeProfile?.profileData?.intl_desiredPosition || 
                                                    activeProfile?.profileData?.univ_desiredRole ||
-                                                   activeProfile?.profileData?.univ_desiredIndustry ||
-                                                   activeProfile?.profileData?.high_hopedCareer || '';
+                                                   activeProfile?.profileData?.high_careerHope || '';
                                 const desiredIndustry = activeProfile?.profileData?.gen_desiredIndustry || 
                                                         activeProfile?.profileData?.univ_desiredIndustry || '';
                                 
