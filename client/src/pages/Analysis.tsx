@@ -723,10 +723,19 @@ export default function Analysis() {
                             {/* K-JOBS 추천 직업 */}
                             {kjobsResult.recommendedJobs && kjobsResult.recommendedJobs.length > 0 && (
                                 <div data-testid="section-recommended-jobs">
-                                    <h4 className="text-sm font-semibold text-[#191F28] mb-3 flex items-center gap-2">
+                                    <h4 className="text-sm font-semibold text-[#191F28] mb-2 flex items-center gap-2">
                                         <Award className="w-4 h-4 text-[#F59E0B]" />
-                                        K-JOBS 추천 직업 TOP 5
+                                        진로진단 기반 추천 직업 TOP 5
                                     </h4>
+                                    
+                                    {/* 추천 기준 안내 */}
+                                    <div className="mb-3 p-2.5 bg-[#FFF7ED] border border-[#FFEDD5] rounded-lg" data-testid="notice-recommendation-basis">
+                                        <p className="text-xs text-[#9A3412] leading-relaxed">
+                                            <strong>추천 기준:</strong> 본 추천은 희망직무가 아닌, 진로진단 응답을 기반으로 한 
+                                            <span className="font-semibold"> 성향·역량 중심</span> 분석 결과입니다.
+                                        </p>
+                                    </div>
+                                    
                                     <div className="space-y-2">
                                         {kjobsResult.recommendedJobs.slice(0, 5).map((job, i) => (
                                             <div key={job.jobId || i} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl" data-testid={`card-kjobs-job-${i}`}>
@@ -734,11 +743,53 @@ export default function Analysis() {
                                                     <div className="w-6 h-6 rounded-full bg-[#3182F6] text-white flex items-center justify-center font-bold text-xs">
                                                         {i + 1}
                                                     </div>
-                                                    <span className="text-sm font-medium text-[#191F28]" data-testid={`text-job-title-${i}`}>{job.title}</span>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-[#191F28]" data-testid={`text-job-title-${i}`}>{job.title}</span>
+                                                        <span className="text-[10px] text-[#8B95A1]">성향·역량 적합도</span>
+                                                    </div>
                                                 </div>
-                                                <span className="text-sm font-bold text-[#3182F6]" data-testid={`text-job-match-${i}`}>{job.matchPercentage}%</span>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-sm font-bold text-[#3182F6]" data-testid={`text-job-match-${i}`}>{job.matchPercentage}%</span>
+                                                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-[#EFF6FF] text-[#3182F6] border-[#3182F6]/30">
+                                                        진단기반
+                                                    </Badge>
+                                                </div>
                                             </div>
                                         ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* 희망직무 정보 표시 (있는 경우) */}
+                            {activeProfile?.profileData && (
+                                activeProfile.profileData.gen_desiredRole || 
+                                activeProfile.profileData.gen_desiredIndustry ||
+                                activeProfile.profileData.univ_desiredIndustry ||
+                                activeProfile.profileData.intl_desiredPosition
+                            ) && (
+                                <div className="mt-4 pt-4 border-t border-[#E5E8EB]" data-testid="section-desired-job-info">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Compass className="w-4 h-4 text-[#8B5CF6]" />
+                                        <h4 className="text-sm font-semibold text-[#191F28]">나의 희망직무</h4>
+                                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-[#F3E8FF] text-[#8B5CF6] border-[#8B5CF6]/30">
+                                            프로필 기반
+                                        </Badge>
+                                    </div>
+                                    <div className="p-3 bg-[#F5F3FF] rounded-lg">
+                                        <p className="text-sm text-[#4E5968]">
+                                            <strong className="text-[#191F28]">
+                                                {activeProfile.profileData.gen_desiredRole || 
+                                                 activeProfile.profileData.intl_desiredPosition || 
+                                                 activeProfile.profileData.univ_desiredIndustry || 
+                                                 '미지정'}
+                                            </strong>
+                                            {activeProfile.profileData.gen_desiredIndustry && (
+                                                <span className="ml-1">({activeProfile.profileData.gen_desiredIndustry})</span>
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-[#8B95A1] mt-1">
+                                            위 진단기반 추천과 희망직무가 다를 수 있습니다. 진단 결과는 성향·역량 분석에 기반합니다.
+                                        </p>
                                     </div>
                                 </div>
                             )}
