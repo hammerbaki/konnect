@@ -11,7 +11,7 @@ import {
     ChevronRight, LayoutDashboard, History,
     AlertTriangle, User,
     Clock, Bot, XCircle, Plus, ExternalLink, Target,
-    Activity, Award, ArrowDown, Lightbulb, TrendingUp, Zap
+    Activity, Award, ArrowDown, Lightbulb, TrendingUp, Zap, Shuffle
 } from "lucide-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -477,6 +477,9 @@ export default function Analysis() {
     };
 
     const DashboardContent = () => {
+        // 탭 상태 관리 (희망직무 기반이 기본) - 컴포넌트 최상위에 선언
+        const [jobRecommendationTab, setJobRecommendationTab] = useState<'desired' | 'diagnosis'>('desired');
+        
         if (!latestAnalysis) {
             return (
                 <div className="flex flex-col items-center justify-center py-16 px-4">
@@ -833,57 +836,68 @@ export default function Analysis() {
                                 // 희망직무의 직무군 판별
                                 const desiredCategory = getJobCategory(desiredJob);
                                 
-                                // 섹션1: 진로진단 기반 추천 (상위 3개 - 성향/역량 최적 매칭)
-                                const diagnosisBasedJobs = allJobs.slice(0, 3);
+                                // 탭 상태 (DashboardContent 상위에서 관리)
+                                const activeTab = jobRecommendationTab;
+                                const setActiveTab = setJobRecommendationTab;
                                 
-                                // 섹션2: 희망직무 연계 추천 (동일 직무군 OR 스킬 70%+ 중첩만 허용)
-                                const linkedJobs = desiredJob 
-                                    ? allJobs.slice(0, 15)
+                                // 연관도 계산 함수 (희망직무와의 유사도)
+                                const calculateRelevance = (jobCategory: string | null, desiredCat: string | null, skillOverlap: number): number => {
+                                    if (!desiredCat) return 0;
+                                    if (jobCategory === desiredCat) return 100; // 동일 직무군
+                                    return skillOverlap; // 스킬 중첩도를 연관도로 사용
+                                };
+                                
+                                // [탭1] 희망직무 기반 추천: 동일 직무군 내에서만 추천, 진로진단 결과로 정렬
+                                const desiredBasedJobs = desiredJob && desiredCategory
+                                    ? allJobs
                                         .map((job: any) => {
                                             const jobCategory = getJobCategory(job.title);
                                             const skillOverlap = calculateSkillOverlap(desiredCategory, jobCategory);
                                             const isSameCategory = desiredCategory && jobCategory && desiredCategory === jobCategory;
-                                            const hasHighSkillOverlap = skillOverlap >= 70;
-                                            const isLinkedQualified = isSameCategory || hasHighSkillOverlap;
-                                            const linkReason = generateLinkReason(desiredCategory, jobCategory, skillOverlap, desiredJob, job.title);
+                                            const relevance = calculateRelevance(jobCategory, desiredCategory, skillOverlap);
                                             
                                             return {
                                                 ...job,
                                                 jobCategory,
                                                 skillOverlap,
                                                 isSameCategory,
-                                                hasHighSkillOverlap,
-                                                isLinkedQualified,
-                                                linkReason,
-                                                linkedScore: isSameCategory ? 95 : (hasHighSkillOverlap ? 85 + Math.round(skillOverlap * 0.1) : 0)
+                                                relevance, // 연관도
+                                                fitScore: job.matchPercentage // 적합도 (진단 기반)
                                             };
                                         })
-                                        .filter((job: any) => job.isLinkedQualified)
-                                        .filter((job: any) => !diagnosisBasedJobs.some((d: any) => d.title === job.title))
-                                        .sort((a: any, b: any) => b.linkedScore - a.linkedScore)
-                                        .slice(0, 3)
+                                        .filter((job: any) => job.isSameCategory) // 동일 직무군만
+                                        .sort((a: any, b: any) => b.fitScore - a.fitScore) // 진단 적합도로 정렬
+                                        .slice(0, 5)
                                     : [];
                                 
-                                // 섹션3: 전환 가능 직무 (연계 자격 미달 - 다른 직무군이고 스킬 중첩 70% 미만)
-                                const usedTitles = [...diagnosisBasedJobs, ...linkedJobs].map((j: any) => j.title);
-                                const transferJobs = desiredJob
-                                    ? allJobs.slice(0, 15)
-                                        .filter((job: any) => !usedTitles.includes(job.title)) // 먼저 사용된 직업 제외
+                                // [탭2] 진로진단 기반 추천: 원래 K-JOBS 결과 (참고용)
+                                const diagnosisBasedJobs = allJobs.slice(0, 5).map((job: any) => {
+                                    const jobCategory = getJobCategory(job.title);
+                                    const skillOverlap = calculateSkillOverlap(desiredCategory, jobCategory);
+                                    const relevance = calculateRelevance(jobCategory, desiredCategory, skillOverlap);
+                                    return {
+                                        ...job,
+                                        jobCategory,
+                                        relevance,
+                                        fitScore: job.matchPercentage
+                                    };
+                                });
+                                
+                                // 전환 가능 직무: 동일 직무군 밖의 직업 (희망직무 기반에서 사용된 것만 제외)
+                                const usedTitles = desiredBasedJobs.map((j: any) => j.title);
+                                const transferJobs = desiredJob && desiredCategory
+                                    ? allJobs
+                                        .filter((job: any) => !usedTitles.includes(job.title))
                                         .map((job: any) => {
                                             const jobCategory = getJobCategory(job.title);
                                             const skillOverlap = calculateSkillOverlap(desiredCategory, jobCategory);
                                             const isSameCategory = desiredCategory && jobCategory && desiredCategory === jobCategory;
-                                            const hasHighSkillOverlap = skillOverlap >= 70;
-                                            const isLinkedQualified = isSameCategory || hasHighSkillOverlap;
                                             
-                                            // 전환 이유 생성 (사용자 요구사항에 맞춰 정확한 문구 사용)
                                             let transferReason = '';
                                             const sharedSkills = jobCategories[desiredCategory || '']?.skills.slice(0, 2).join(', ') || '역량';
                                             if (skillOverlap > 0) {
-                                                // 스킬 공유가 있는 경우
                                                 transferReason = `${sharedSkills} 스킬 ${skillOverlap}% 공유. ${jobCategory || '새로운'} 분야로 전환할 수 있습니다.`;
                                             } else {
-                                                // 스킬 공유가 없는 경우
                                                 transferReason = `진단 결과 높은 적합도를 보이며, 새로운 분야로 도전이 가능합니다.`;
                                             }
                                             
@@ -891,109 +905,162 @@ export default function Analysis() {
                                                 ...job,
                                                 jobCategory,
                                                 skillOverlap,
-                                                isTransferCandidate: !isLinkedQualified, // 연계 자격 미달이면 전환 후보
-                                                transferReason
+                                                isSameCategory,
+                                                transferReason,
+                                                fitScore: job.matchPercentage
                                             };
                                         })
-                                        .filter((job: any) => job.isTransferCandidate) // 연계 자격 미달인 직업만
-                                        .sort((a: any, b: any) => b.matchPercentage - a.matchPercentage) // 진단 매칭도 순으로 정렬
+                                        .filter((job: any) => !job.isSameCategory) // 다른 직무군만
+                                        .sort((a: any, b: any) => b.fitScore - a.fitScore)
                                         .slice(0, 5)
                                     : allJobs
                                         .filter((job: any) => !usedTitles.includes(job.title))
-                                        .filter((job: any) => job.matchPercentage >= 40 && job.matchPercentage <= 80)
-                                        .slice(0, 5);
+                                        .slice(3, 8);
                                 
                                 return (
-                                    <div className="space-y-6" data-testid="section-job-recommendations">
-                                        {/* 섹션 1: 진로진단 기반 추천 직업 */}
-                                        <div data-testid="section-diagnosis-based">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3182F6] text-white text-[10px] font-bold">1</div>
-                                                <h4 className="text-sm font-semibold text-[#191F28]">진로진단 기반 추천 직업</h4>
-                                                <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-[9px]">성향·역량 중심</Badge>
-                                            </div>
-                                            <div className="mb-2 p-2 bg-[#EFF6FF] rounded-lg">
-                                                <p className="text-[10px] text-[#3182F6]">
-                                                    <strong>추천 기준:</strong> 진로진단 응답 기반 성향·역량 분석 결과
-                                                </p>
-                                            </div>
-                                            <div className="space-y-2">
-                                                {diagnosisBasedJobs.map((job: any, i: number) => (
-                                                    <div key={job.jobId || i} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E8EB]" data-testid={`card-diagnosis-job-${i}`}>
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-6 h-6 rounded-full bg-[#3182F6] text-white flex items-center justify-center font-bold text-xs">
-                                                                {i + 1}
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-sm font-medium text-[#191F28]">{job.title}</span>
-                                                                <span className="text-[10px] text-[#8B95A1]">성향·역량 적합도</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex flex-col items-end">
-                                                            <span className="text-sm font-bold text-[#3182F6]">{job.matchPercentage}%</span>
-                                                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-[#EFF6FF] text-[#3182F6] border-[#3182F6]/30">
-                                                                진단기반
-                                                            </Badge>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                    <div className="space-y-4" data-testid="section-job-recommendations">
+                                        {/* 탭 UI */}
+                                        <div className="flex gap-2 border-b border-[#E5E8EB] pb-2" data-testid="job-recommendation-tabs">
+                                            <button
+                                                onClick={() => setActiveTab('desired')}
+                                                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                                                    activeTab === 'desired' 
+                                                        ? 'bg-[#8B5CF6] text-white' 
+                                                        : 'bg-[#F9FAFB] text-[#6B7280] hover:bg-[#F3F4F6]'
+                                                }`}
+                                                data-testid="tab-desired-based"
+                                            >
+                                                희망직무 기반 추천
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveTab('diagnosis')}
+                                                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                                                    activeTab === 'diagnosis' 
+                                                        ? 'bg-[#3182F6] text-white' 
+                                                        : 'bg-[#F9FAFB] text-[#6B7280] hover:bg-[#F3F4F6]'
+                                                }`}
+                                                data-testid="tab-diagnosis-based"
+                                            >
+                                                진로진단 기반 추천 <span className="text-[10px] opacity-80">(참고)</span>
+                                            </button>
                                         </div>
                                         
-                                        {/* 섹션 2: 희망직무 연계 추천 직업 */}
-                                        {desiredJob && linkedJobs.length > 0 && (
-                                            <div data-testid="section-linked-jobs">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#8B5CF6] text-white text-[10px] font-bold">2</div>
-                                                    <h4 className="text-sm font-semibold text-[#191F28]">희망직무 연계 추천 직업</h4>
-                                                    <Badge className="bg-[#8B5CF6]/10 text-[#8B5CF6] border-0 text-[9px]">동일직무군/스킬중첩</Badge>
-                                                </div>
-                                                <div className="mb-2 p-2 bg-[#F5F3FF] rounded-lg">
-                                                    <p className="text-[10px] text-[#8B5CF6]">
-                                                        <strong>추천 기준:</strong> 희망직무({desiredJob})와 동일 직무군 또는 핵심 스킬 70% 이상 중첩
+                                        {/* 탭1: 희망직무 기반 추천 */}
+                                        {activeTab === 'desired' && (
+                                            <div data-testid="section-desired-based">
+                                                {desiredJob && desiredCategory ? (
+                                                    <>
+                                                        <div className="mb-3 p-3 bg-[#F5F3FF] rounded-lg border border-[#8B5CF6]/20">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <Target className="w-4 h-4 text-[#8B5CF6]" />
+                                                                <span className="text-sm font-semibold text-[#191F28]">희망직무: {desiredJob}</span>
+                                                                <Badge className="bg-[#8B5CF6]/10 text-[#8B5CF6] border-0 text-[9px]">
+                                                                    {desiredCategory}
+                                                                </Badge>
+                                                            </div>
+                                                            <p className="text-[10px] text-[#6B7280]">
+                                                                동일 직무군 내에서 진로진단 결과로 우선순위를 정렬했습니다.
+                                                            </p>
+                                                        </div>
+                                                        
+                                                        {desiredBasedJobs.length > 0 ? (
+                                                            <div className="space-y-3">
+                                                                {desiredBasedJobs.map((job: any, i: number) => (
+                                                                    <div key={job.jobId || i} className="p-3 bg-[#FAFAFA] rounded-xl border border-[#8B5CF6]/20" data-testid={`card-desired-job-${i}`}>
+                                                                        <div className="flex items-center justify-between">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div className="w-6 h-6 rounded-full bg-[#8B5CF6] text-white flex items-center justify-center font-bold text-xs">
+                                                                                    {i + 1}
+                                                                                </div>
+                                                                                <div className="flex flex-col">
+                                                                                    <span className="text-sm font-medium text-[#191F28]">{job.title}</span>
+                                                                                    <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 mt-0.5 w-fit bg-[#F3E8FF] text-[#8B5CF6] border-[#8B5CF6]/30">
+                                                                                        {job.jobCategory}
+                                                                                    </Badge>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="flex gap-3">
+                                                                                <div className="flex flex-col items-center">
+                                                                                    <span className="text-sm font-bold text-[#8B5CF6]">{job.relevance}%</span>
+                                                                                    <span className="text-[9px] text-[#8B95A1]">연관도</span>
+                                                                                </div>
+                                                                                <div className="flex flex-col items-center">
+                                                                                    <span className="text-sm font-bold text-[#3182F6]">{job.fitScore}%</span>
+                                                                                    <span className="text-[9px] text-[#8B95A1]">적합도</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
+                                                                <p className="text-sm text-[#6B7280]">
+                                                                    '{desiredCategory}' 직무군에 해당하는 추천 직업이 없습니다.
+                                                                </p>
+                                                                <p className="text-xs text-[#8B95A1] mt-1">
+                                                                    '진로진단 기반 추천' 탭에서 다른 직업을 확인해보세요.
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <div className="p-4 bg-[#F5F3FF] rounded-lg border border-[#8B5CF6]/20" data-testid="notice-no-desired-job">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <Compass className="w-5 h-5 text-[#8B5CF6]" />
+                                                            <span className="text-sm font-semibold text-[#191F28]">희망직무를 입력해주세요</span>
+                                                        </div>
+                                                        <p className="text-xs text-[#6B7280]">
+                                                            프로필에 희망직무를 입력하면 해당 직무군 내에서 맞춤 추천을 받을 수 있습니다.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        
+                                        {/* 탭2: 진로진단 기반 추천 (참고) */}
+                                        {activeTab === 'diagnosis' && (
+                                            <div data-testid="section-diagnosis-based">
+                                                <div className="mb-3 p-3 bg-[#EFF6FF] rounded-lg border border-[#3182F6]/20">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <Brain className="w-4 h-4 text-[#3182F6]" />
+                                                        <span className="text-sm font-semibold text-[#191F28]">진로진단 기반 추천</span>
+                                                        <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-[9px]">참고용</Badge>
+                                                    </div>
+                                                    <p className="text-[10px] text-[#6B7280]">
+                                                        K-JOBS 진로진단 결과 기반으로 적합도가 높은 직업입니다. 희망직무와 다를 수 있습니다.
                                                     </p>
-                                                    <p className="text-[9px] text-[#8B95A1] mt-1">
-                                                        {desiredCategory ? `희망직무 직무군: ${desiredCategory}` : '직무군 분석 중'}
-                                                    </p>
                                                 </div>
+                                                
                                                 <div className="space-y-3">
-                                                    {linkedJobs.map((job: any, i: number) => (
-                                                        <div key={job.jobId || i} className="p-3 bg-[#FAFAFA] rounded-xl border border-[#8B5CF6]/20" data-testid={`card-linked-job-${i}`}>
-                                                            <div className="flex items-center justify-between mb-2">
+                                                    {diagnosisBasedJobs.map((job: any, i: number) => (
+                                                        <div key={job.jobId || i} className="p-3 bg-[#FAFAFA] rounded-xl border border-[#3182F6]/20" data-testid={`card-diagnosis-job-${i}`}>
+                                                            <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className="w-6 h-6 rounded-full bg-[#8B5CF6] text-white flex items-center justify-center font-bold text-xs">
+                                                                    <div className="w-6 h-6 rounded-full bg-[#3182F6] text-white flex items-center justify-center font-bold text-xs">
                                                                         {i + 1}
                                                                     </div>
                                                                     <div className="flex flex-col">
                                                                         <span className="text-sm font-medium text-[#191F28]">{job.title}</span>
-                                                                        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                                                                            {job.isSameCategory && (
-                                                                                <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 bg-[#F3E8FF] text-[#8B5CF6] border-[#8B5CF6]/30">
-                                                                                    동일 직무군
-                                                                                </Badge>
-                                                                            )}
-                                                                            {job.hasHighSkillOverlap && !job.isSameCategory && (
-                                                                                <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 bg-[#EFF6FF] text-[#3182F6] border-[#3182F6]/30">
-                                                                                    스킬 {job.skillOverlap}% 중첩
-                                                                                </Badge>
-                                                                            )}
-                                                                            {job.jobCategory && (
-                                                                                <Badge variant="outline" className="text-[7px] px-1 py-0 h-3.5 bg-white text-[#8B95A1] border-[#E5E8EB]">
-                                                                                    {job.jobCategory}
-                                                                                </Badge>
-                                                                            )}
-                                                                        </div>
+                                                                        {job.jobCategory && (
+                                                                            <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 mt-0.5 w-fit bg-white text-[#8B95A1] border-[#E5E8EB]">
+                                                                                {job.jobCategory}
+                                                                            </Badge>
+                                                                        )}
                                                                     </div>
                                                                 </div>
-                                                                <div className="flex flex-col items-end">
-                                                                    <span className="text-sm font-bold text-[#8B5CF6]">{job.linkedScore}%</span>
-                                                                    <span className="text-[9px] text-[#8B95A1]">연계 적합도</span>
+                                                                <div className="flex gap-3">
+                                                                    {desiredJob && (
+                                                                        <div className="flex flex-col items-center">
+                                                                            <span className="text-sm font-bold text-[#8B5CF6]">{job.relevance}%</span>
+                                                                            <span className="text-[9px] text-[#8B95A1]">연관도</span>
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="flex flex-col items-center">
+                                                                        <span className="text-sm font-bold text-[#3182F6]">{job.fitScore}%</span>
+                                                                        <span className="text-[9px] text-[#8B95A1]">적합도</span>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="p-2 bg-[#F5F3FF] rounded-lg">
-                                                                <p className="text-[10px] text-[#6B7280] leading-relaxed">
-                                                                    <span className="text-[#8B5CF6] font-medium">연계 이유:</span> {job.linkReason}
-                                                                </p>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -1001,39 +1068,21 @@ export default function Analysis() {
                                             </div>
                                         )}
                                         
-                                        {/* 희망직무 없을 때 안내 */}
-                                        {!desiredJob && (
-                                            <div className="p-3 bg-[#F5F3FF] rounded-lg border border-[#8B5CF6]/20" data-testid="notice-no-desired-job">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <Compass className="w-4 h-4 text-[#8B5CF6]" />
-                                                    <span className="text-sm font-medium text-[#191F28]">희망직무 연계 추천</span>
-                                                </div>
-                                                <p className="text-xs text-[#8B95A1]">
-                                                    프로필에 희망직무를 입력하면 진단 결과와 연계된 맞춤 추천을 받을 수 있습니다.
-                                                </p>
-                                            </div>
-                                        )}
-                                        
-                                        {/* 섹션 3: 전환 가능 직무 (직무군이 다른 경우) */}
-                                        {transferJobs.length > 0 && (
-                                            <div data-testid="section-transfer-jobs">
+                                        {/* 전환 가능 직무 (직무군 밖) */}
+                                        {desiredJob && transferJobs.length > 0 && (
+                                            <div data-testid="section-transfer-jobs" className="mt-4 pt-4 border-t border-[#E5E8EB]">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#00BFA5] text-white text-[10px] font-bold">3</div>
+                                                    <Shuffle className="w-4 h-4 text-[#00BFA5]" />
                                                     <h4 className="text-sm font-semibold text-[#191F28]">전환 가능 직무</h4>
-                                                    <Badge className="bg-[#00BFA5]/10 text-[#00BFA5] border-0 text-[9px]">커리어 확장</Badge>
+                                                    <Badge className="bg-[#00BFA5]/10 text-[#00BFA5] border-0 text-[9px]">다른 직무군</Badge>
                                                 </div>
-                                                <div className="mb-2 p-2 bg-[#F0FDF4] rounded-lg">
-                                                    <p className="text-[10px] text-[#00BFA5]">
-                                                        <strong>추천 기준:</strong> 희망직무와 다른 직무군이지만, 기존 역량을 활용해 전환 가능한 직무
-                                                    </p>
-                                                    <p className="text-[9px] text-[#8B95A1] mt-1">
-                                                        새로운 분야로의 커리어 확장 가능성을 보여드립니다
-                                                    </p>
-                                                </div>
+                                                <p className="text-[10px] text-[#6B7280] mb-3">
+                                                    희망직무({desiredCategory})와 다른 직무군이지만, 진단 결과 적합도가 높은 직업입니다.
+                                                </p>
                                                 <div className="space-y-2">
                                                     {transferJobs.map((job: any, i: number) => (
                                                         <div key={job.jobId || i} className="p-3 bg-[#F9FAFB] rounded-lg border border-[#00BFA5]/20" data-testid={`card-transfer-job-${i}`}>
-                                                            <div className="flex items-center justify-between mb-2">
+                                                            <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="text-sm font-medium text-[#191F28]">{job.title}</span>
                                                                     {job.jobCategory && (
@@ -1041,16 +1090,20 @@ export default function Analysis() {
                                                                             {job.jobCategory}
                                                                         </Badge>
                                                                     )}
-                                                                    {job.skillOverlap > 0 && (
-                                                                        <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 bg-[#FEF3C7] text-[#D97706] border-[#D97706]/30">
-                                                                            스킬 {job.skillOverlap}% 공유
-                                                                        </Badge>
-                                                                    )}
                                                                 </div>
-                                                                <span className="text-sm font-bold text-[#00BFA5]">{job.matchPercentage}%</span>
+                                                                <div className="flex gap-3">
+                                                                    <div className="flex flex-col items-center">
+                                                                        <span className="text-sm font-bold text-[#00BFA5]">{job.skillOverlap}%</span>
+                                                                        <span className="text-[9px] text-[#8B95A1]">연관도</span>
+                                                                    </div>
+                                                                    <div className="flex flex-col items-center">
+                                                                        <span className="text-sm font-bold text-[#3182F6]">{job.fitScore}%</span>
+                                                                        <span className="text-[9px] text-[#8B95A1]">적합도</span>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                             {job.transferReason && (
-                                                                <p className="text-[10px] text-[#6B7280] leading-relaxed">
+                                                                <p className="text-[10px] text-[#6B7280] mt-2 leading-relaxed">
                                                                     <span className="text-[#00BFA5] font-medium">전환 이유:</span> {job.transferReason}
                                                                 </p>
                                                             )}
