@@ -95,27 +95,17 @@ ${kjobsResult?.topStrengths?.length ? `진로진단 상위 역량: ${kjobsResult
 ${kjobsResult?.topWeaknesses?.length ? `진로진단 취약 역량: ${kjobsResult.topWeaknesses.join(', ')}` : ''}
 
 생성 규칙:
-1. basic 카테고리: 5개 질문 (지원동기 1개, 강점/약점 관련 2개, 경험 관련 2개)
-2. job_specific 카테고리: 5개 질문 (${desiredJob} 직무에 특화된 실무 질문)
-3. self_intro 카테고리: 2개 질문 (1분 자기소개, 직무 연결 자기소개)
-4. star 카테고리: 3개 질문 (상황-행동-결과 구조 질문)
+1. basic 카테고리: 3개 질문
+2. job_specific 카테고리: 3개 질문 (${desiredJob} 직무 특화)
+3. self_intro 카테고리: 1개 질문
+4. star 카테고리: 2개 질문
 
-총 15개 질문을 생성해주세요.
+총 9개 질문을 생성해주세요.
 
-JSON 형식으로 응답:
-{
-  "questions": [
-    {
-      "category": "basic",
-      "question": "질문 내용",
-      "questionReason": "이 질문이 나온 이유",
-      "guideText": "답변 가이드 (선택)",
-      "relatedStrength": "관련 강점",
-      "relatedWeakness": "관련 약점",
-      "difficulty": "medium"
-    }
-  ]
-}`;
+중요: 모든 텍스트 필드에서 따옴표(")를 사용하지 마세요. 작은따옴표(')나 다른 표현을 사용하세요.
+
+JSON 형식으로만 응답하세요:
+{"questions":[{"category":"basic","question":"질문","questionReason":"이유","guideText":"가이드","relatedStrength":"강점","relatedWeakness":"약점","difficulty":"medium"}]}`;
 
   try {
     const response = await anthropic.messages.create({
@@ -132,25 +122,53 @@ JSON 형식으로 응답:
       throw new Error("Unexpected response type");
     }
 
+    // Log raw response for debugging
+    console.log("[Interview AI] Raw response length:", content.text.length);
+    
+    // Extract JSON from response
     const jsonMatch = content.text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      console.error("[Interview AI] No JSON found in response:", content.text.substring(0, 500));
       throw new Error("Failed to parse JSON response");
     }
 
-    // Sanitize JSON - remove trailing commas before ] or }
+    // Sanitize JSON - multiple cleanup passes
     let jsonStr = jsonMatch[0];
-    jsonStr = jsonStr.replace(/,\s*([\]\}])/g, '$1');
+    
+    // 1. Remove trailing commas before ] or }
+    jsonStr = jsonStr.replace(/,(\s*[\]\}])/g, '$1');
+    
+    // 2. Replace unescaped newlines in strings
+    jsonStr = jsonStr.replace(/([^\\])([\n\r\t])/g, '$1 ');
+    
+    // 3. Remove control characters
+    jsonStr = jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ');
+    
+    // 4. Fix common quote issues - replace curly quotes with straight quotes
+    jsonStr = jsonStr.replace(/[\u201C\u201D\u201E\u201F]/g, '"');
+    jsonStr = jsonStr.replace(/[\u2018\u2019\u201A\u201B]/g, "'");
     
     try {
       const parsed = JSON.parse(jsonStr);
+      console.log("[Interview AI] Successfully parsed", parsed.questions?.length || 0, "questions");
       return parsed.questions || [];
-    } catch (parseError) {
-      console.error("[Interview AI] JSON parse error, attempting cleanup:", parseError);
-      // More aggressive cleanup
-      jsonStr = jsonStr.replace(/,(\s*[\]\}])/g, '$1');
-      jsonStr = jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ');
-      const parsed = JSON.parse(jsonStr);
-      return parsed.questions || [];
+    } catch (parseError: any) {
+      console.error("[Interview AI] JSON parse error:", parseError.message);
+      console.error("[Interview AI] JSON snippet around error:", jsonStr.substring(Math.max(0, parseError.position - 100), parseError.position + 100));
+      
+      // Try extracting questions array directly
+      const questionsMatch = jsonStr.match(/"questions"\s*:\s*\[([\s\S]*)\]/);
+      if (questionsMatch) {
+        try {
+          const questionsArray = JSON.parse('[' + questionsMatch[1] + ']');
+          console.log("[Interview AI] Recovered", questionsArray.length, "questions from partial parse");
+          return questionsArray;
+        } catch {
+          // Last resort: return empty
+          console.error("[Interview AI] Could not recover questions");
+        }
+      }
+      throw parseError;
     }
   } catch (error) {
     console.error("[Interview AI] Question generation error:", error);
