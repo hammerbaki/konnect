@@ -98,7 +98,7 @@ async function fetchWorknetDemand(keyword: string): Promise<number> {
 
     const params = new URLSearchParams({
       authKey: apiKey,
-      callTP: 'L',
+      callTp: 'L',
       returnType: 'XML',
       startPage: '1',
       display: '1',
