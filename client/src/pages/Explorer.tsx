@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Filter, ArrowRight, Building2, Briefcase, X, DollarSign, GraduationCap, TrendingUp, Smile, Activity, Star, Users, Award, BookOpen, Link2 } from "lucide-react";
+import { Search, Filter, ArrowRight, Building2, Briefcase, X, GraduationCap, TrendingUp, Smile, Activity, Star, Users, Award, BookOpen, Link2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
@@ -154,7 +154,7 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                         <div className="grid grid-cols-2 gap-3">
                             <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F2F4F6]">
                                 <div className="flex items-center gap-2 text-[#8B95A1] mb-1.5">
-                                    <DollarSign className="h-4 w-4" />
+                                    <span className="font-bold text-sm">₩</span>
                                     <span className="text-xs font-bold">평균 연봉</span>
                                 </div>
                                 <p className="text-lg font-bold text-[#191F28]">{career.salary || "정보 없음"}</p>
@@ -649,7 +649,7 @@ export default function Explorer() {
                             <Card className="border-[#E5E8EB] shadow-sm">
                                 <CardContent className="p-4 text-center">
                                     <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-purple-50 mb-2">
-                                        <DollarSign className="h-5 w-5 text-purple-600" />
+                                        <span className="text-purple-600 font-bold text-lg">₩</span>
                                     </div>
                                     <div className="text-2xl font-bold text-[#191F28]">
                                         {stats.topSalary[0]?.salary >= 10000 
@@ -747,7 +747,7 @@ export default function Explorer() {
                             <Card className="border-[#E5E8EB] shadow-sm">
                                 <CardContent className="p-4 text-center">
                                     <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-purple-50 mb-2">
-                                        <DollarSign className="h-5 w-5 text-purple-600" />
+                                        <span className="text-purple-600 font-bold text-lg">₩</span>
                                     </div>
                                     <div className="text-2xl font-bold text-[#191F28]">
                                         {stats.topSalary[0]?.salary >= 10000 
@@ -774,7 +774,7 @@ export default function Explorer() {
                             <Card className="border-[#E5E8EB] shadow-sm">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-base font-semibold flex items-center gap-2">
-                                        <DollarSign className="h-4 w-4 text-[#3182F6]" />
+                                        <span className="text-[#3182F6] font-bold text-sm">₩</span>
                                         연봉 TOP 5
                                     </CardTitle>
                                 </CardHeader>
