@@ -341,6 +341,10 @@ export interface IStorage {
     }>;
     profileTypeStats: Array<{ type: string; label: string; count: number; withAnalysis: number }>;
   }>;
+  getGroupProfileFieldStats(groupId: string, profileType: string): Promise<{
+    totalProfiles: number;
+    fieldStats: Record<string, Array<{ value: string; count: number; percentage: number }>>;
+  }>;
   getGroupMemberProgress(groupId: string): Promise<Array<{
     userId: string;
     email: string;
@@ -2953,6 +2957,123 @@ export class DatabaseStorage implements IStorage {
       }));
     
     return { recentAnalyses, profileTypeStats };
+  }
+
+  async getGroupProfileFieldStats(groupId: string, profileType: string): Promise<{
+    totalProfiles: number;
+    fieldStats: Record<string, Array<{ value: string; count: number; percentage: number }>>;
+  }> {
+    // Get all group member user IDs
+    const memberRows = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, groupId));
+    
+    const memberUserIds = memberRows.map(m => m.userId);
+    if (memberUserIds.length === 0) {
+      return { totalProfiles: 0, fieldStats: {} };
+    }
+    
+    // Get profiles of specified type for these users
+    const userProfiles = await db
+      .select()
+      .from(profiles)
+      .where(and(
+        inArray(profiles.userId, memberUserIds),
+        eq(profiles.type, profileType)
+      ));
+    
+    const totalProfiles = userProfiles.length;
+    if (totalProfiles === 0) {
+      return { totalProfiles: 0, fieldStats: {} };
+    }
+    
+    // Define fields to analyze based on profile type
+    const fieldsToAnalyze: Record<string, { label: string; key: string }[]> = {
+      international: [
+        { label: '국적', key: 'intl_nationality' },
+        { label: '비자 유형', key: 'intl_currentVisaType' },
+        { label: 'TOPIK 급수', key: 'intl_topikLevel' },
+        { label: '한국어 수준', key: 'intl_koreanLevel' },
+        { label: '희망 직무', key: 'intl_desiredPosition' },
+        { label: '희망 근무지', key: 'intl_preferredLocation' },
+        { label: '근무 유형', key: 'intl_availableWorkType' },
+        { label: '영어 수준', key: 'intl_englishLevel' },
+      ],
+      general: [
+        { label: '재직 상태', key: 'gen_currentStatus' },
+        { label: '희망 직무', key: 'gen_desiredRole' },
+        { label: '희망 업종', key: 'gen_desiredIndustry' },
+      ],
+      university: [
+        { label: '전공 분야', key: 'univ_majorCategory' },
+        { label: '학년', key: 'univ_grade' },
+        { label: '희망 업종', key: 'univ_desiredIndustry' },
+      ],
+    };
+    
+    const fields = fieldsToAnalyze[profileType] || [];
+    const fieldStats: Record<string, Array<{ value: string; count: number; percentage: number }>> = {};
+    
+    // Country code to name mapping for nationality
+    const countryNames: Record<string, string> = {
+      'VN': '베트남', 'CN': '중국', 'US': '미국', 'JP': '일본', 
+      'PH': '필리핀', 'ID': '인도네시아', 'TH': '태국', 'MY': '말레이시아',
+      'UZ': '우즈베키스탄', 'MN': '몽골', 'KZ': '카자흐스탄', 'NP': '네팔',
+      'IN': '인도', 'MM': '미얀마', 'KH': '캄보디아', 'BD': '방글라데시',
+    };
+    
+    // Korean level labels
+    const koreanLevelLabels: Record<string, string> = {
+      'beginner': '초급', 'elementary': '초중급', 'intermediate': '중급',
+      'upper_intermediate': '중상급', 'advanced': '고급', 'native': '원어민 수준',
+    };
+    
+    // Work type labels
+    const workTypeLabels: Record<string, string> = {
+      'intern': '인턴', 'part_time': '아르바이트', 'full_time': '정규직',
+      'contract': '계약직', 'freelance': '프리랜서',
+    };
+    
+    for (const field of fields) {
+      const valueCounts: Record<string, number> = {};
+      
+      for (const profile of userProfiles) {
+        const profileData = profile.profileData as any;
+        let value = profileData?.[field.key];
+        
+        // Skip empty values
+        if (!value || value === '') continue;
+        
+        // Transform values for display
+        if (field.key === 'intl_nationality' && countryNames[value]) {
+          value = countryNames[value];
+        } else if (field.key === 'intl_koreanLevel' && koreanLevelLabels[value]) {
+          value = koreanLevelLabels[value];
+        } else if (field.key === 'intl_availableWorkType' && workTypeLabels[value]) {
+          value = workTypeLabels[value];
+        } else if (field.key === 'intl_topikLevel') {
+          value = `${value}급`;
+        }
+        
+        valueCounts[value] = (valueCounts[value] || 0) + 1;
+      }
+      
+      // Convert to array and calculate percentages
+      const stats = Object.entries(valueCounts)
+        .map(([value, count]) => ({
+          value,
+          count,
+          percentage: Math.round((count / totalProfiles) * 100),
+        }))
+        .sort((a, b) => b.count - a.count);
+      
+      if (stats.length > 0) {
+        fieldStats[field.label] = stats;
+      }
+    }
+    
+    return { totalProfiles, fieldStats };
   }
 
   async getGroupMemberProgress(groupId: string): Promise<Array<{

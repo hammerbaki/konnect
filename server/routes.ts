@@ -5437,6 +5437,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get profile field statistics for a specific profile type (for group managers)
+  app.get('/api/groups/:groupId/stats/fields/:profileType', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      if (!isStaffOrAdmin) {
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (!memberRole || memberRole === 'member') {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+      
+      const fieldStats = await storage.getGroupProfileFieldStats(req.params.groupId, req.params.profileType);
+      res.json(fieldStats);
+    } catch (error: any) {
+      console.error("Error fetching profile field stats:", error);
+      res.status(500).json({ message: "프로필 필드 통계 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
   // Get group member progress (for group managers)
   app.get('/api/groups/:groupId/members/progress', isAuthenticated, async (req, res) => {
     try {

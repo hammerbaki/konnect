@@ -105,11 +105,17 @@ const profileTypeIcons: Record<string, typeof Briefcase> = {
 
 const COLORS = ["#3182F6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
+interface ProfileFieldStats {
+  totalProfiles: number;
+  fieldStats: Record<string, Array<{ value: string; count: number; percentage: number }>>;
+}
+
 export default function GroupDashboard() {
   const params = useParams<{ groupId: string }>();
   const groupId = params.groupId;
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
+  const [selectedProfileType, setSelectedProfileType] = useState("international");
 
   const { data: group, isLoading: groupLoading } = useQuery<GroupInfo>({
     queryKey: ["group", groupId],
@@ -161,6 +167,20 @@ export default function GroupDashboard() {
       if (!res.ok) throw new Error("Failed to fetch members");
       return res.json();
     },
+  });
+
+  const { data: fieldStats } = useQuery<ProfileFieldStats>({
+    queryKey: ["group-field-stats", groupId, selectedProfileType],
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/groups/${groupId}/stats/fields/${selectedProfileType}`, {
+        headers,
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch field stats");
+      return res.json();
+    },
+    enabled: activeTab === "overview" && !!selectedProfileType,
   });
 
   const filteredMembers = members?.filter((member) => {
@@ -356,6 +376,75 @@ export default function GroupDashboard() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Profile Field Statistics */}
+            <Card className="mt-6" data-testid="card-field-stats">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    프로필 필드별 통계
+                  </div>
+                  <select
+                    value={selectedProfileType}
+                    onChange={(e) => setSelectedProfileType(e.target.value)}
+                    className="text-sm font-normal px-3 py-1.5 border rounded-md bg-white"
+                    data-testid="select-profile-type"
+                  >
+                    <option value="international">외국인유학생</option>
+                    <option value="general">일반구직자</option>
+                    <option value="university">대학생</option>
+                  </select>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {fieldStats && Object.keys(fieldStats.fieldStats).length > 0 ? (
+                  <div className="space-y-6">
+                    <p className="text-sm text-gray-600">
+                      전체 {fieldStats.totalProfiles}개 프로필 분석
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {Object.entries(fieldStats.fieldStats).map(([fieldLabel, values]) => (
+                        <div key={fieldLabel} className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="font-medium text-gray-900 mb-3">{fieldLabel}</h4>
+                          <div className="space-y-2">
+                            {values.slice(0, 5).map((item) => (
+                              <div key={item.value} className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <span className="text-sm text-gray-700 truncate">{item.value}</span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <div className="w-24 bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-blue-500 h-2 rounded-full"
+                                      style={{ width: `${item.percentage}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-gray-500 w-14 text-right">
+                                    {item.count}명 ({item.percentage}%)
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                            {values.length > 5 && (
+                              <p className="text-xs text-gray-400 pt-1">
+                                +{values.length - 5}개 더 보기
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                    <p>선택한 프로필 유형의 데이터가 없습니다.</p>
+                    <p className="text-sm mt-1">그룹에 해당 유형의 프로필이 등록되면 통계가 표시됩니다.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="analysis" className="mt-6 space-y-6">
