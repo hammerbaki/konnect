@@ -549,15 +549,22 @@ export default function ProfileOptimized() {
                     <Brain className="h-6 w-6 text-[#3182F6]" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[#191F28]">AI 커리어 분석</h3>
+                    <h3 className="font-bold text-[#191F28]">AI My Test</h3>
                     <p className="text-sm text-[#8B95A1]">이 프로필을 기준으로 맞춤형 진로 분석을 받아보세요</p>
                   </div>
                 </div>
-                <Link href={`/analysis?profile=${serverProfile.id}`}>
-                  <Button className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold" data-testid="button-go-to-analysis">
-                    커리어 분석하기 <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </Link>
+                <Button 
+                  className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold" 
+                  data-testid="button-go-to-analysis"
+                  disabled={isSaving}
+                  onClick={async () => {
+                    await handleSave();
+                    window.location.href = `/analysis?profile=${serverProfile.id}`;
+                  }}
+                >
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  저장하고 진로진단 바로가기 <ArrowRight className="h-5 w-5" />
+                </Button>
               </div>
             </CardContent>
           </Card>
