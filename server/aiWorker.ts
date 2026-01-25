@@ -12,7 +12,8 @@ import {
   CONCURRENCY_LIMITS,
 } from "./jobQueue";
 import { 
-  generateCareerAnalysis, 
+  generateCareerAnalysis,
+  generateForeignStudentAnalysis,
   generatePersonalEssay, 
   revisePersonalEssay,
   generateGoals,
@@ -212,7 +213,7 @@ export async function processJob(job: AiJob): Promise<any> {
     
     switch (type) {
       case "analysis": {
-        console.log(`[AI Worker] Processing analysis for job ${job.id}...`);
+        console.log(`[AI Worker] Processing analysis for job ${job.id}, profileType: ${payload.profileType}`);
         await storage.updateAiJobStatus(job.id, "processing", 30);
         // Construct a profile-like object for the AI function
         const profileForAnalysis = {
@@ -220,25 +221,57 @@ export async function processJob(job: AiJob): Promise<any> {
           title: payload.profileTitle || "프로필",
           profileData: payload.profileData || {},
         };
-        result = await withProcessingTimeout(
-          generateCareerAnalysis(profileForAnalysis as any, payload.userIdentity),
-          job.id
-        );
         
-        // Save analysis to analyses table so frontend query can fetch it
-        if (job.profileId) {
-          await storage.createAnalysis({
-            profileId: job.profileId,
-            summary: result.summary,
-            stats: result.stats,
-            chartData: null,
-            recommendations: {
-              careers: result.careerRecommendations,
-            },
-            aiRawResponse: result.rawResponse,
-          });
+        // Use specialized analysis for international students
+        if (payload.profileType === 'international') {
+          console.log(`[AI Worker] Using international student analysis for job ${job.id}`);
+          result = await withProcessingTimeout(
+            generateForeignStudentAnalysis(profileForAnalysis as any, payload.userIdentity),
+            job.id
+          );
           
-          // Update profile lastAnalyzed timestamp
+          // Save foreign student analysis with specialized format
+          if (job.profileId) {
+            await storage.createAnalysis({
+              profileId: job.profileId,
+              summary: result.summary || "",
+              stats: null,
+              chartData: null,
+              recommendations: {
+                profileType: 'international',
+                foreignStudentData: result.foreignStudentData,
+              },
+              aiRawResponse: result.rawResponse,
+            });
+          }
+        } else {
+          result = await withProcessingTimeout(
+            generateCareerAnalysis(profileForAnalysis as any, payload.userIdentity),
+            job.id
+          );
+          
+          // Save analysis to analyses table so frontend query can fetch it
+          if (job.profileId) {
+            await storage.createAnalysis({
+              profileId: job.profileId,
+              summary: result.summary,
+              stats: result.stats,
+              chartData: null,
+              recommendations: {
+                careers: result.careerRecommendations,
+              },
+              aiRawResponse: result.rawResponse,
+            });
+          
+            // Update profile lastAnalyzed timestamp
+            await storage.updateProfile(job.profileId, {
+              lastAnalyzed: new Date(),
+            });
+          }
+        }
+        
+        // Update profile lastAnalyzed for all analysis types
+        if (job.profileId) {
           await storage.updateProfile(job.profileId, {
             lastAnalyzed: new Date(),
           });
