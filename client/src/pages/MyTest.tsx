@@ -177,7 +177,14 @@ export default function MyTest() {
       }
       return updated;
     });
-  }, [assessmentId, currentQuestionIndex, saveMutation]);
+    
+    // Auto-advance to next question after a short delay for visual feedback
+    if (questions && currentQuestionIndex < questions.length - 1) {
+      setTimeout(() => {
+        setCurrentQuestionIndex(prev => prev + 1);
+      }, 300);
+    }
+  }, [assessmentId, currentQuestionIndex, saveMutation, questions]);
 
   const handleNext = useCallback(() => {
     if (!questions) return;
