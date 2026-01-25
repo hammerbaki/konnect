@@ -96,7 +96,6 @@ export type ProfileDataType = {
   gen_educations: EducationItem[];
   // International Student Profile Fields
   intl_nationality: string;
-  intl_gender: "male" | "female" | "" | undefined;
   intl_phone: string;
   intl_address: string;
   // Visa Information
@@ -123,16 +122,14 @@ export type ProfileDataType = {
   intl_englishTestScore: string;
   intl_otherLanguages: string;
   // Skills & Competencies
-  intl_jobRelatedSkills: string;
+  intl_skills: string[];
   intl_computerItSkills: string;
-  intl_certificates: string;
+  intl_certificates: IntlCertificateItem[];
   // Self Introduction
+  intl_reasonForComingToKorea: string;
   intl_reasonForKoreaEmployment: string;
   intl_strengthsAndPersonality: string;
-  intl_contributionToCompany: string;
-  // Additional Information
-  intl_availableDaysHours: string;
-  intl_specialNotes: string;
+  intl_bestThingInKorea: string;
   // Certification
   intl_certifyTrue: boolean;
   intl_dateSigned: string;
@@ -236,6 +233,14 @@ export type IntlWorkExperienceItem = {
   mainTasksAndAchievements: string;
 };
 
+export type IntlCertificateItem = {
+  id: number;
+  name: string;
+  issuer: string;
+  acquiredDate: string;
+  expiryDate?: string;
+};
+
 export const getDefaultProfileData = (type: ProfileType = "general"): ProfileDataType => ({
   type,
   basic_name: "",
@@ -332,7 +337,6 @@ export const getDefaultProfileData = (type: ProfileType = "general"): ProfileDat
   gen_educations: [],
   // International Student Profile Defaults
   intl_nationality: "",
-  intl_gender: undefined,
   intl_phone: "",
   intl_address: "",
   intl_currentVisaType: "",
@@ -353,14 +357,13 @@ export const getDefaultProfileData = (type: ProfileType = "general"): ProfileDat
   intl_englishTestName: "",
   intl_englishTestScore: "",
   intl_otherLanguages: "",
-  intl_jobRelatedSkills: "",
+  intl_skills: [],
   intl_computerItSkills: "",
-  intl_certificates: "",
+  intl_certificates: [],
+  intl_reasonForComingToKorea: "",
   intl_reasonForKoreaEmployment: "",
   intl_strengthsAndPersonality: "",
-  intl_contributionToCompany: "",
-  intl_availableDaysHours: "",
-  intl_specialNotes: "",
+  intl_bestThingInKorea: "",
   intl_certifyTrue: false,
   intl_dateSigned: "",
   intl_applicantSignatureName: "",

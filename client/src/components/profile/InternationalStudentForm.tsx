@@ -1,4 +1,4 @@
-import { memo, useState, useCallback } from "react";
+import { memo, useState, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,74 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useToast } from "@/hooks/use-toast";
 import { 
   Globe, Plane, Briefcase, GraduationCap, Languages, 
-  Wrench, FileText, Info, Plus, Edit2, Trash2, Building2
+  Wrench, FileText, Plus, Edit2, Trash2, Building2, Award, Check, Search, X
 } from "lucide-react";
-import { ProfileFormProps, IntlEducationItem, IntlWorkExperienceItem } from "./types";
+import { ProfileFormProps, IntlEducationItem, IntlWorkExperienceItem, IntlCertificateItem } from "./types";
+
+const NATIONALITY_OPTIONS = [
+  { value: "VN", label: "베트남 (Vietnam)" },
+  { value: "CN", label: "중국 (China)" },
+  { value: "UZ", label: "우즈베키스탄 (Uzbekistan)" },
+  { value: "MN", label: "몽골 (Mongolia)" },
+  { value: "NP", label: "네팔 (Nepal)" },
+  { value: "ID", label: "인도네시아 (Indonesia)" },
+  { value: "PH", label: "필리핀 (Philippines)" },
+  { value: "TH", label: "태국 (Thailand)" },
+  { value: "MY", label: "말레이시아 (Malaysia)" },
+  { value: "JP", label: "일본 (Japan)" },
+  { value: "TW", label: "대만 (Taiwan)" },
+  { value: "IN", label: "인도 (India)" },
+  { value: "BD", label: "방글라데시 (Bangladesh)" },
+  { value: "PK", label: "파키스탄 (Pakistan)" },
+  { value: "KZ", label: "카자흐스탄 (Kazakhstan)" },
+  { value: "RU", label: "러시아 (Russia)" },
+  { value: "US", label: "미국 (USA)" },
+  { value: "DE", label: "독일 (Germany)" },
+  { value: "FR", label: "프랑스 (France)" },
+  { value: "OTHER", label: "기타 (Other)" },
+];
+
+const SALARY_OPTIONS = [
+  { value: "3000", label: "3,000만원" },
+  { value: "3500", label: "3,500만원" },
+  { value: "4000", label: "4,000만원" },
+  { value: "4500", label: "4,500만원" },
+  { value: "5000", label: "5,000만원" },
+  { value: "5500", label: "5,500만원" },
+  { value: "6000", label: "6,000만원" },
+  { value: "6500", label: "6,500만원" },
+  { value: "7000", label: "7,000만원" },
+  { value: "7500", label: "7,500만원" },
+  { value: "8000", label: "8,000만원" },
+  { value: "8500", label: "8,500만원" },
+  { value: "9000", label: "9,000만원" },
+  { value: "9500", label: "9,500만원" },
+  { value: "10000", label: "1억원" },
+  { value: "negotiable", label: "협의 가능" },
+];
+
+const NATIVE_LANGUAGE_OPTIONS = [
+  { value: "vi", label: "베트남어 (Vietnamese)" },
+  { value: "zh", label: "중국어 (Chinese)" },
+  { value: "uz", label: "우즈베크어 (Uzbek)" },
+  { value: "mn", label: "몽골어 (Mongolian)" },
+  { value: "ne", label: "네팔어 (Nepali)" },
+  { value: "id", label: "인도네시아어 (Indonesian)" },
+  { value: "tl", label: "따갈로그어 (Tagalog)" },
+  { value: "th", label: "태국어 (Thai)" },
+  { value: "ms", label: "말레이어 (Malay)" },
+  { value: "ja", label: "일본어 (Japanese)" },
+  { value: "hi", label: "힌디어 (Hindi)" },
+  { value: "bn", label: "벵골어 (Bengali)" },
+  { value: "ur", label: "우르두어 (Urdu)" },
+  { value: "kk", label: "카자흐어 (Kazakh)" },
+  { value: "ru", label: "러시아어 (Russian)" },
+  { value: "en", label: "영어 (English)" },
+  { value: "de", label: "독일어 (German)" },
+  { value: "fr", label: "프랑스어 (French)" },
+  { value: "es", label: "스페인어 (Spanish)" },
+  { value: "OTHER", label: "기타 (Other)" },
+];
 
 const VISA_TYPE_OPTIONS = [
   { value: "D-2", label: "D-2 (유학)" },
@@ -70,8 +135,20 @@ const ENGLISH_TEST_OPTIONS = [
   { value: "other", label: "기타" },
 ];
 
+const SKILL_CATEGORIES = [
+  { category: "기획/PM", skills: ["프로젝트 관리", "서비스 기획", "제품 기획", "UX 기획", "전략 기획", "요구사항 분석", "일정 관리", "리스크 관리"] },
+  { category: "데이터/분석", skills: ["데이터 분석", "SQL", "Python", "통계 분석", "BI 도구", "A/B 테스트", "데이터 시각화", "머신러닝"] },
+  { category: "개발", skills: ["프론트엔드", "백엔드", "모바일 앱", "DevOps", "클라우드", "API 설계", "데이터베이스", "보안"] },
+  { category: "디자인", skills: ["UI 디자인", "UX 디자인", "그래픽 디자인", "브랜딩", "Figma", "Adobe Suite", "모션 그래픽", "프로토타이핑"] },
+  { category: "마케팅/세일즈", skills: ["디지털 마케팅", "콘텐츠 마케팅", "퍼포먼스 마케팅", "영업", "고객 관리", "브랜드 마케팅", "SNS 마케팅", "광고 운영"] },
+  { category: "운영/CS", skills: ["서비스 운영", "고객 응대", "CS 관리", "품질 관리", "프로세스 개선", "VoC 분석", "클레임 처리", "운영 자동화"] },
+  { category: "문서/리서치", skills: ["문서 작성", "보고서 작성", "프레젠테이션", "시장 조사", "경쟁사 분석", "사용자 리서치", "인터뷰", "설문 설계"] },
+  { category: "언어/커뮤니케이션", skills: ["영어", "일본어", "중국어", "커뮤니케이션", "협상", "발표", "미팅 진행", "갈등 조정"] },
+];
+
 const InternationalStudentFormComponent = ({ profileData, updateField }: ProfileFormProps) => {
   const { toast } = useToast();
+  const [skillSearchQuery, setSkillSearchQuery] = useState('');
 
   const [showEducationDialog, setShowEducationDialog] = useState(false);
   const [editingEducationId, setEditingEducationId] = useState<number | null>(null);
@@ -83,6 +160,12 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
   const [editingWorkId, setEditingWorkId] = useState<number | null>(null);
   const [workForm, setWorkForm] = useState<Omit<IntlWorkExperienceItem, 'id'>>({
     companyName: '', companyCountry: '', positionAndRole: '', periodStart: '', periodEnd: '', mainTasksAndAchievements: ''
+  });
+
+  const [showCertDialog, setShowCertDialog] = useState(false);
+  const [editingCertId, setEditingCertId] = useState<number | null>(null);
+  const [certForm, setCertForm] = useState<Omit<IntlCertificateItem, 'id'>>({
+    name: '', issuer: '', acquiredDate: '', expiryDate: ''
   });
 
   const resetEducationForm = useCallback(() => {
@@ -151,6 +234,58 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
     toast({ title: "경력이 삭제되었습니다", duration: 2000 });
   }, [profileData.intl_workExperiences, updateField, toast]);
 
+  const resetCertForm = useCallback(() => {
+    setCertForm({ name: '', issuer: '', acquiredDate: '', expiryDate: '' });
+    setEditingCertId(null);
+  }, []);
+
+  const addOrUpdateCert = useCallback(() => {
+    if (!certForm.name) {
+      toast({ title: "자격증명을 입력해주세요", variant: "destructive", duration: 3000 });
+      return;
+    }
+    const certs = profileData.intl_certificates || [];
+    if (editingCertId !== null) {
+      updateField('intl_certificates', certs.map(c => c.id === editingCertId ? { ...certForm, id: editingCertId } : c));
+      toast({ title: "자격증이 수정되었습니다", duration: 2000 });
+    } else {
+      updateField('intl_certificates', [...certs, { ...certForm, id: Date.now() }]);
+      toast({ title: "자격증이 추가되었습니다", duration: 2000 });
+    }
+    resetCertForm();
+    setShowCertDialog(false);
+  }, [certForm, editingCertId, profileData.intl_certificates, updateField, toast, resetCertForm]);
+
+  const editCert = useCallback((item: IntlCertificateItem) => {
+    setCertForm({ name: item.name, issuer: item.issuer, acquiredDate: item.acquiredDate, expiryDate: item.expiryDate || '' });
+    setEditingCertId(item.id);
+    setShowCertDialog(true);
+  }, []);
+
+  const deleteCert = useCallback((id: number) => {
+    updateField('intl_certificates', (profileData.intl_certificates || []).filter(c => c.id !== id));
+    toast({ title: "자격증이 삭제되었습니다", duration: 2000 });
+  }, [profileData.intl_certificates, updateField, toast]);
+
+  const toggleSkill = useCallback((skill: string) => {
+    const skills = profileData.intl_skills || [];
+    const exists = skills.includes(skill);
+    if (exists) {
+      updateField('intl_skills', skills.filter(s => s !== skill));
+    } else {
+      updateField('intl_skills', [...skills, skill]);
+    }
+  }, [profileData.intl_skills, updateField]);
+
+  const filteredCategories = useMemo(() => {
+    const query = skillSearchQuery.toLowerCase().trim();
+    if (!query) return SKILL_CATEGORIES;
+    return SKILL_CATEGORIES.map(cat => ({
+      ...cat,
+      skills: cat.skills.filter(skill => skill.toLowerCase().includes(query))
+    })).filter(cat => cat.skills.length > 0);
+  }, [skillSearchQuery]);
+
   return (
     <div className="space-y-6">
       {/* Basic Information */}
@@ -162,21 +297,14 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
           <CardDescription>외국인 유학생 기본 인적사항을 입력하세요</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>국적 (Nationality) *</Label>
-              <Input value={profileData.intl_nationality} onChange={(e) => updateField('intl_nationality', e.target.value)} placeholder="예: Vietnam, China, USA" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-nationality" />
-            </div>
-            <div className="space-y-2">
-              <Label>성별 (Gender)</Label>
-              <Select value={profileData.intl_gender || ''} onValueChange={(val) => updateField('intl_gender', val as "male" | "female" | "")}>
-                <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-intl-gender"><SelectValue placeholder="선택" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">남성 (Male)</SelectItem>
-                  <SelectItem value="female">여성 (Female)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>국적 (Nationality) *</Label>
+            <Select value={profileData.intl_nationality} onValueChange={(val) => updateField('intl_nationality', val)}>
+              <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-intl-nationality"><SelectValue placeholder="국적을 선택하세요" /></SelectTrigger>
+              <SelectContent>
+                {NATIONALITY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -238,8 +366,13 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>희망 급여</Label>
-              <Input value={profileData.intl_expectedSalary} onChange={(e) => updateField('intl_expectedSalary', e.target.value)} placeholder="예: 3,000만원, 협의 가능" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-expected-salary" />
+              <Label>희망 급여 *</Label>
+              <Select value={profileData.intl_expectedSalary} onValueChange={(val) => updateField('intl_expectedSalary', val)}>
+                <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-intl-expected-salary"><SelectValue placeholder="희망 급여 선택" /></SelectTrigger>
+                <SelectContent>
+                  {SALARY_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>근무 가능 시작일</Label>
@@ -331,12 +464,15 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
           <CardDescription>언어 능력 및 어학 점수를 입력하세요</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Row 1: 모국어 (full width) */}
           <div className="space-y-2">
-            <Label>모국어 (Native Language)</Label>
-            <Input value={profileData.intl_nativeLanguage} onChange={(e) => updateField('intl_nativeLanguage', e.target.value)} placeholder="예: Vietnamese, Chinese" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-native-language" />
+            <Label>모국어 (Native Language) *</Label>
+            <Select value={profileData.intl_nativeLanguage} onValueChange={(val) => updateField('intl_nativeLanguage', val)}>
+              <SelectTrigger className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="select-intl-native-language"><SelectValue placeholder="모국어를 선택하세요" /></SelectTrigger>
+              <SelectContent>
+                {NATIVE_LANGUAGE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
-          {/* Row 2: 한국어 수준 + TOPIK 급수 (2 columns) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>한국어 수준</Label>
@@ -357,7 +493,6 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
               </Select>
             </div>
           </div>
-          {/* Row 3: 영어 수준 (full width) */}
           <div className="space-y-2">
             <Label>영어 수준</Label>
             <Select value={profileData.intl_englishLevel} onValueChange={(val) => updateField('intl_englishLevel', val)}>
@@ -367,7 +502,6 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
               </SelectContent>
             </Select>
           </div>
-          {/* Row 4: 영어 시험명 + 영어 시험 점수 (2 columns) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>영어 시험명</Label>
@@ -383,7 +517,6 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
               <Input value={profileData.intl_englishTestScore} onChange={(e) => updateField('intl_englishTestScore', e.target.value)} placeholder="예: 850, 7.5" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-english-score" />
             </div>
           </div>
-          {/* Row 5: 기타 언어 (full width) */}
           <div className="space-y-2">
             <Label>기타 언어</Label>
             <Input value={profileData.intl_otherLanguages} onChange={(e) => updateField('intl_otherLanguages', e.target.value)} placeholder="예: Japanese (중), French (하)" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-other-languages" />
@@ -397,21 +530,144 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
           <CardTitle className="flex items-center gap-2 text-lg">
             <Wrench className="h-5 w-5 text-[#F59E0B]" /> 보유 역량 및 기술 (Skills & Competencies)
           </CardTitle>
-          <CardDescription>직무 관련 기술 및 자격증을 입력하세요</CardDescription>
+          <CardDescription>직무 관련 기술을 선택하세요</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>직무 관련 기술</Label>
-            <Textarea value={profileData.intl_jobRelatedSkills} onChange={(e) => updateField('intl_jobRelatedSkills', e.target.value)} placeholder="예: Python, React, 데이터 분석, 마케팅 기획" className="min-h-[80px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-intl-job-skills" />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
+            <Input
+              placeholder="스킬 검색..."
+              value={skillSearchQuery}
+              onChange={(e) => setSkillSearchQuery(e.target.value)}
+              className="pl-9 h-11 rounded-xl bg-[#F2F4F6] border-none"
+              data-testid="input-intl-skill-search"
+            />
           </div>
+
+          {(profileData.intl_skills || []).length > 0 && (
+            <div className="flex flex-wrap gap-2 p-3 bg-[#F9FAFB] rounded-xl">
+              {(profileData.intl_skills || []).map((skill) => (
+                <Badge 
+                  key={skill} 
+                  variant="secondary" 
+                  className="bg-[#3182F6] text-white hover:bg-[#2563EB] cursor-pointer px-3 py-1 text-sm"
+                  onClick={() => toggleSkill(skill)}
+                  data-testid={`badge-intl-skill-${skill}`}
+                >
+                  {skill}
+                  <X className="h-3 w-3 ml-1.5" />
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {filteredCategories.length === 0 ? (
+            <div className="text-center py-6 text-[#8B95A1]">
+              <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">'{skillSearchQuery}' 에 해당하는 스킬이 없습니다.</p>
+              <p className="text-xs mt-1">아래에서 직접 입력해 추가할 수 있어요.</p>
+            </div>
+          ) : (
+            filteredCategories.map((categoryGroup) => (
+              <div key={categoryGroup.category} className="space-y-2">
+                <Label className="text-sm font-bold text-[#4E5968]">{categoryGroup.category}</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {categoryGroup.skills.map((skill) => {
+                    const isSelected = (profileData.intl_skills || []).includes(skill);
+                    return (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => toggleSkill(skill)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          isSelected 
+                            ? "bg-[#3182F6] text-white shadow-sm" 
+                            : "bg-[#F2F4F6] text-[#6B7684] hover:bg-[#E5E8EB]"
+                        }`}
+                        data-testid={`button-intl-skill-${skill}`}
+                      >
+                        {isSelected && <Check className="h-3 w-3 inline mr-1" />}
+                        {skill}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
+
           <div className="space-y-2">
+            <Label className="text-sm text-[#6B7684]">직접 입력</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="스킬 직접 입력 후 Enter"
+                className="flex-1 h-11 rounded-xl bg-[#F2F4F6] border-none"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const input = e.currentTarget;
+                    const value = input.value.trim();
+                    if (value && !(profileData.intl_skills || []).includes(value)) {
+                      updateField('intl_skills', [...(profileData.intl_skills || []), value]);
+                      input.value = '';
+                    }
+                  }
+                }}
+                data-testid="input-intl-custom-skill"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 px-4 rounded-xl border-[#3182F6] text-[#3182F6] hover:bg-[#3182F6] hover:text-white"
+                onClick={(e) => {
+                  const input = (e.currentTarget.previousSibling as HTMLInputElement);
+                  const value = input.value.trim();
+                  if (value && !(profileData.intl_skills || []).includes(value)) {
+                    updateField('intl_skills', [...(profileData.intl_skills || []), value]);
+                    input.value = '';
+                  }
+                }}
+                data-testid="button-add-intl-custom-skill"
+              >
+                추가
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-4 border-t border-[#E5E8EB]">
             <Label>컴퓨터/IT 활용 능력</Label>
             <Textarea value={profileData.intl_computerItSkills} onChange={(e) => updateField('intl_computerItSkills', e.target.value)} placeholder="예: MS Office, Photoshop, SAP, Excel 고급" className="min-h-[80px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-intl-it-skills" />
           </div>
-          <div className="space-y-2">
-            <Label>자격증</Label>
-            <Textarea value={profileData.intl_certificates} onChange={(e) => updateField('intl_certificates', e.target.value)} placeholder="예: 정보처리기사, SQLD, AWS Certified" className="min-h-[80px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-intl-certificates" />
-          </div>
+        </CardContent>
+      </Card>
+
+      {/* Certificates Section */}
+      <Card className="toss-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Award className="h-5 w-5 text-[#8B5CF6]" /> 자격증 (Certificates)
+          </CardTitle>
+          <CardDescription>보유한 자격증을 등록하세요</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(profileData.intl_certificates || []).map((item) => (
+            <div key={item.id} className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E8EB] space-y-2" data-testid={`card-intl-cert-${item.id}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-bold text-[#191F28]">{item.name}</h4>
+                  <p className="text-[#4E5968] text-sm">{item.issuer}</p>
+                  <p className="text-[#8B95A1] text-xs">취득일: {item.acquiredDate}{item.expiryDate ? ` | 만료일: ${item.expiryDate}` : ''}</p>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#3182F6]" onClick={() => editCert(item)} data-testid={`button-edit-intl-cert-${item.id}`}><Edit2 className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="text-[#B0B8C1] hover:text-[#E44E48]" onClick={() => deleteCert(item.id)} data-testid={`button-delete-intl-cert-${item.id}`}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            </div>
+          ))}
+          <Button type="button" variant="outline" className="w-full h-12 rounded-xl border-dashed border-[#B0B8C1] text-[#8B95A1] hover:text-[#3182F6] hover:border-[#3182F6] font-bold" onClick={() => { resetCertForm(); setShowCertDialog(true); }} data-testid="button-add-intl-cert">
+            <Plus className="h-5 w-5 mr-2" /> 자격증 추가하기
+          </Button>
         </CardContent>
       </Card>
 
@@ -425,6 +681,10 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
+            <Label>한국에 오게 된 이유 / 경로</Label>
+            <Textarea value={profileData.intl_reasonForComingToKorea} onChange={(e) => updateField('intl_reasonForComingToKorea', e.target.value)} placeholder="한국에 오게 된 계기나 경로를 작성하세요" className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-intl-reason-coming" />
+          </div>
+          <div className="space-y-2">
             <Label>한국 취업을 희망하는 이유</Label>
             <Textarea value={profileData.intl_reasonForKoreaEmployment} onChange={(e) => updateField('intl_reasonForKoreaEmployment', e.target.value)} placeholder="한국에서 취업하고 싶은 이유를 작성하세요" className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-intl-reason-korea" />
           </div>
@@ -433,27 +693,8 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
             <Textarea value={profileData.intl_strengthsAndPersonality} onChange={(e) => updateField('intl_strengthsAndPersonality', e.target.value)} placeholder="본인의 강점과 성격을 설명하세요" className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-intl-strengths" />
           </div>
           <div className="space-y-2">
-            <Label>회사에 기여할 수 있는 부분</Label>
-            <Textarea value={profileData.intl_contributionToCompany} onChange={(e) => updateField('intl_contributionToCompany', e.target.value)} placeholder="회사에 어떻게 기여할 수 있는지 작성하세요" className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-intl-contribution" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Additional Information */}
-      <Card className="toss-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Info className="h-5 w-5 text-[#6B7684]" /> 기타 사항 (Additional Information)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>근무 가능 요일/시간</Label>
-            <Input value={profileData.intl_availableDaysHours} onChange={(e) => updateField('intl_availableDaysHours', e.target.value)} placeholder="예: 월~금 09:00-18:00, 주말 가능" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-intl-available-days" />
-          </div>
-          <div className="space-y-2">
-            <Label>특이사항</Label>
-            <Textarea value={profileData.intl_specialNotes} onChange={(e) => updateField('intl_specialNotes', e.target.value)} placeholder="기타 특이사항이 있다면 작성하세요" className="min-h-[80px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-intl-special-notes" />
+            <Label>한국에서 가장 좋았던 것과 그 이유</Label>
+            <Textarea value={profileData.intl_bestThingInKorea} onChange={(e) => updateField('intl_bestThingInKorea', e.target.value)} placeholder="한국에서 가장 좋았던 경험이나 것, 그리고 그 이유를 작성하세요" className="min-h-[100px] rounded-xl bg-[#F2F4F6] border-none resize-none" data-testid="textarea-intl-best-korea" />
           </div>
         </CardContent>
       </Card>
@@ -549,6 +790,40 @@ const InternationalStudentFormComponent = ({ profileData, updateField }: Profile
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1 h-12 rounded-xl border-[#E5E8EB]" onClick={() => { resetWorkForm(); setShowWorkDialog(false); }} data-testid="button-cancel-intl-work">취소</Button>
             <Button className="flex-1 h-12 rounded-xl bg-[#3182F6] font-bold" onClick={addOrUpdateWork} data-testid="button-submit-intl-work">{editingWorkId ? '수정하기' : '추가하기'}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Certificate Dialog */}
+      <Dialog open={showCertDialog} onOpenChange={(open) => { if (!open) resetCertForm(); setShowCertDialog(open); }}>
+        <DialogContent className="sm:max-w-md rounded-[24px] bg-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#191F28]">{editingCertId ? '자격증 수정' : '자격증 추가'}</DialogTitle>
+            <DialogDescription className="text-sm text-[#8B95A1]">자격증 정보를 입력하세요.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>자격증명 *</Label>
+              <Input value={certForm.name} onChange={(e) => setCertForm({...certForm, name: e.target.value})} placeholder="예: 정보처리기사, SQLD" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-dialog-intl-cert-name" />
+            </div>
+            <div className="space-y-2">
+              <Label>발급 기관</Label>
+              <Input value={certForm.issuer} onChange={(e) => setCertForm({...certForm, issuer: e.target.value})} placeholder="예: 한국산업인력공단" className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-dialog-intl-cert-issuer" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>취득일</Label>
+                <Input type="date" value={certForm.acquiredDate} onChange={(e) => setCertForm({...certForm, acquiredDate: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-dialog-intl-cert-acquired" />
+              </div>
+              <div className="space-y-2">
+                <Label>만료일 (선택)</Label>
+                <Input type="date" value={certForm.expiryDate} onChange={(e) => setCertForm({...certForm, expiryDate: e.target.value})} className="h-12 rounded-xl bg-[#F2F4F6] border-none" data-testid="input-dialog-intl-cert-expiry" />
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1 h-12 rounded-xl border-[#E5E8EB]" onClick={() => { resetCertForm(); setShowCertDialog(false); }} data-testid="button-cancel-intl-cert">취소</Button>
+            <Button className="flex-1 h-12 rounded-xl bg-[#3182F6] font-bold" onClick={addOrUpdateCert} data-testid="button-submit-intl-cert">{editingCertId ? '수정하기' : '추가하기'}</Button>
           </div>
         </DialogContent>
       </Dialog>
