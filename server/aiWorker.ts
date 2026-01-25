@@ -231,15 +231,25 @@ export async function processJob(job: AiJob): Promise<any> {
           );
           
           // Save foreign student analysis with specialized format
+          // The result contains: profileType, summary, fit, recommendations, actionPlan, visaWarning, dataGaps, rawResponse
           if (job.profileId) {
+            const foreignStudentData = {
+              summary: result.summary,
+              fit: result.fit,
+              recommendations: result.recommendations,
+              actionPlan: result.actionPlan,
+              visaWarning: result.visaWarning,
+              dataGaps: result.dataGaps,
+            };
+            
             await storage.createAnalysis({
               profileId: job.profileId,
-              summary: result.summary || "",
+              summary: result.summary?.oneLine || "",
               stats: null,
               chartData: null,
               recommendations: {
                 profileType: 'international',
-                foreignStudentData: result.foreignStudentData,
+                foreignStudentData: foreignStudentData,
               },
               aiRawResponse: result.rawResponse,
             });
