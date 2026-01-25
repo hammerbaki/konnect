@@ -41,6 +41,17 @@ export default function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
   const featuresRef = useRef<HTMLDivElement>(null);
 
+  // Handle SSO token in URL - redirect to SSO endpoint
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    if (token) {
+      // Redirect to SSO API endpoint to process the token
+      window.location.href = `/api/sso/kjobs?token=${encodeURIComponent(token)}`;
+      return;
+    }
+  }, []);
+
   useEffect(() => {
     if (isAuthenticated) {
       setLocation("/dashboard");
