@@ -314,15 +314,22 @@ export default function Analysis() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [urlProfileHandled, setUrlProfileHandled] = useState(false);
 
-    const { data: profiles, isLoading: isLoadingProfiles } = useQuery({
+    const { data: profiles, isLoading: isLoadingProfiles, refetch: refetchProfiles } = useQuery({
         queryKey: ['/api/profiles'],
         queryFn: async () => {
             const response = await apiRequest('GET', '/api/profiles');
             return response.json();
         },
         enabled: !!user,
-        staleTime: 5 * 60 * 1000, // 5 minutes - reduce API load
+        staleTime: 30 * 1000, // 30 seconds - ensure fresh data for validation
     });
+
+    // Refetch profiles on mount to ensure fresh data
+    useEffect(() => {
+        if (user) {
+            refetchProfiles();
+        }
+    }, [user, refetchProfiles]);
 
     // Handle profile query parameter from URL (e.g., /analysis?profile=xxx)
     useEffect(() => {
