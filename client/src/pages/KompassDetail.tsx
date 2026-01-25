@@ -461,8 +461,26 @@ export default function KompassDetail() {
   };
 
   // AI Generate Button Component
-  const AIGenerateButton = ({ level, isStrategic = false }: { level: GoalLevel; isStrategic?: boolean }) => {
+  const AIGenerateButton = ({ level, isStrategic = false, hasGenerated = false }: { level: GoalLevel; isStrategic?: boolean; hasGenerated?: boolean }) => {
     const isGenerating = generatingLevel === level;
+    
+    // If already generated, show "View Action Plan" button
+    if (hasGenerated && !isGenerating) {
+      return (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Scroll to the content section or expand details
+          }}
+          className="h-8 text-xs gap-1.5 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+        >
+          <Eye className="h-3 w-3" />
+          목표 달성을 위한 액션 플랜 보기
+        </Button>
+      );
+    }
     
     return (
       <div className="flex items-center gap-2">
@@ -492,7 +510,7 @@ export default function KompassDetail() {
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        {isStrategic && (
+        {isStrategic && !hasGenerated && (
           <span className="text-[10px] text-[#8B95A1] hidden sm:inline">
             AI가 세부 내용을 자동으로 생성합니다
           </span>
@@ -891,7 +909,7 @@ export default function KompassDetail() {
              <div className="text-center space-y-2">
                 <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">연간 목표</Badge>
                 <p className="text-sm text-[#8B95A1]">각 연도의 핵심 목표를 설정하세요.</p>
-                <AIGenerateButton level="year" isStrategic={true} />
+                <AIGenerateButton level="year" isStrategic={true} hasGenerated={(vision?.children?.length || 0) > 0} />
              </div>
              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {vision.children.map((year) => (
@@ -960,7 +978,7 @@ export default function KompassDetail() {
                 <div className="text-center space-y-2">
                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">반기별 목표</Badge>
                     <p className="text-sm text-[#8B95A1]">연간 목표를 상반기와 하반기로 나누어 계획하세요.</p>
-                    <AIGenerateButton level="half" isStrategic={true} />
+                    <AIGenerateButton level="half" isStrategic={true} hasGenerated={(selectedYear?.children?.length || 0) > 0} />
                 </div>
                 <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
                     {selectedYear.children.map((half) => (
@@ -1030,7 +1048,7 @@ export default function KompassDetail() {
                 <div className="text-center space-y-2">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">월간 목표</Badge>
                      <p className="text-sm text-[#8B95A1]">매월 달성해야 할 핵심 목표를 계획하세요.</p>
-                     <AIGenerateButton level="month" />
+                     <AIGenerateButton level="month" hasGenerated={(selectedHalfYear?.children?.length || 0) > 0} />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                     {selectedHalfYear.children.map((month) => (
@@ -1093,7 +1111,7 @@ export default function KompassDetail() {
                 <div className="text-center space-y-2">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">주간 목표</Badge>
                      <p className="text-sm text-[#8B95A1]">이번 주에 집중해야 할 과제를 확인하세요.</p>
-                     <AIGenerateButton level="week" />
+                     <AIGenerateButton level="week" hasGenerated={(selectedMonth?.children?.length || 0) > 0} />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto">
                     {selectedMonth.children.map((week) => (
@@ -1156,7 +1174,7 @@ export default function KompassDetail() {
                 <div className="text-center space-y-2">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">일일 과제</Badge>
                      <p className="text-sm text-[#8B95A1]">향후 24시간 내에 해야 할 상위 3가지 과제</p>
-                     <AIGenerateButton level="day" />
+                     <AIGenerateButton level="day" hasGenerated={(selectedWeek?.children?.length || 0) > 0} />
                 </div>
                 
                 {/* Compact Grid for 7 Days - Expanded for direct editing */}
