@@ -108,6 +108,10 @@ const COLORS = ["#3182F6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"
 interface ProfileFieldStats {
   totalProfiles: number;
   fieldStats: Record<string, Array<{ value: string; count: number; percentage: number }>>;
+  selfIntroResponses?: Array<{
+    question: string;
+    responses: Array<{ userName: string; response: string }>;
+  }>;
 }
 
 export default function GroupDashboard() {
@@ -116,6 +120,16 @@ export default function GroupDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedProfileType, setSelectedProfileType] = useState("international");
+  const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({});
+  const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>({});
+
+  const toggleFieldExpanded = (fieldLabel: string) => {
+    setExpandedFields(prev => ({ ...prev, [fieldLabel]: !prev[fieldLabel] }));
+  };
+
+  const toggleQuestionExpanded = (question: string) => {
+    setExpandedQuestions(prev => ({ ...prev, [question]: !prev[question] }));
+  };
 
   const { data: group, isLoading: groupLoading } = useQuery<GroupInfo>({
     queryKey: ["group", groupId],
@@ -359,40 +373,98 @@ export default function GroupDashboard() {
                 {fieldStats && Object.keys(fieldStats.fieldStats).length > 0 ? (
                   <div className="space-y-6">
                     <p className="text-sm text-gray-600">
-                      전체 {fieldStats.totalProfiles}개 프로필 분석
+                      학생 {fieldStats.totalProfiles}명 프로필 분석
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {Object.entries(fieldStats.fieldStats).map(([fieldLabel, values]) => (
-                        <div key={fieldLabel} className="bg-gray-50 rounded-lg p-4">
-                          <h4 className="font-medium text-gray-900 mb-3">{fieldLabel}</h4>
-                          <div className="space-y-2">
-                            {values.slice(0, 5).map((item) => (
-                              <div key={item.value} className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                  <span className="text-sm text-gray-700 truncate">{item.value}</span>
-                                </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <div className="w-24 bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className="bg-blue-500 h-2 rounded-full"
-                                      style={{ width: `${item.percentage}%` }}
-                                    />
+                    
+                    {/* Field Statistics by Category */}
+                    <div className="space-y-6">
+                      {Object.entries(fieldStats.fieldStats).map(([fieldLabel, values]) => {
+                        const isExpanded = expandedFields[fieldLabel];
+                        const displayValues = isExpanded ? values : values.slice(0, 5);
+                        const hasMore = values.length > 5;
+                        
+                        return (
+                          <div key={fieldLabel} className="border rounded-lg overflow-hidden">
+                            <div className="bg-gray-100 px-4 py-3 border-b">
+                              <h4 className="font-medium text-gray-900">{fieldLabel}</h4>
+                            </div>
+                            <div className="p-4 space-y-2">
+                              {displayValues.map((item) => (
+                                <div key={item.value} className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <span className="text-sm text-gray-700 truncate">{item.value}</span>
                                   </div>
-                                  <span className="text-xs text-gray-500 w-14 text-right">
-                                    {item.count}명 ({item.percentage}%)
-                                  </span>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <div className="w-32 bg-gray-200 rounded-full h-2.5">
+                                      <div
+                                        className="bg-blue-500 h-2.5 rounded-full transition-all"
+                                        style={{ width: `${item.percentage}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-xs text-gray-600 w-16 text-right">
+                                      {item.count}명 ({item.percentage}%)
+                                    </span>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                            {values.length > 5 && (
-                              <p className="text-xs text-gray-400 pt-1">
-                                +{values.length - 5}개 더 보기
-                              </p>
-                            )}
+                              ))}
+                              {hasMore && (
+                                <button
+                                  onClick={() => toggleFieldExpanded(fieldLabel)}
+                                  className="text-sm text-blue-600 hover:text-blue-800 font-medium pt-2 flex items-center gap-1"
+                                  data-testid={`btn-expand-${fieldLabel}`}
+                                >
+                                  {isExpanded ? (
+                                    <>접기</>
+                                  ) : (
+                                    <>+{values.length - 5}개 더 보기</>
+                                  )}
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
+                    
+                    {/* Self-Introduction Responses */}
+                    {fieldStats.selfIntroResponses && fieldStats.selfIntroResponses.length > 0 && (
+                      <div className="mt-8">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                          <FileText className="h-5 w-5" />
+                          자기소개 상세 응답
+                        </h3>
+                        <div className="space-y-4">
+                          {fieldStats.selfIntroResponses.map((item) => {
+                            const isExpanded = expandedQuestions[item.question];
+                            
+                            return (
+                              <div key={item.question} className="border rounded-lg overflow-hidden">
+                                <button
+                                  onClick={() => toggleQuestionExpanded(item.question)}
+                                  className="w-full bg-blue-50 px-4 py-3 border-b flex items-center justify-between hover:bg-blue-100 transition-colors"
+                                  data-testid={`btn-toggle-${item.question}`}
+                                >
+                                  <h4 className="font-medium text-gray-900">{item.question}</h4>
+                                  <span className="text-sm text-blue-600 font-medium">
+                                    {item.responses.length}명 응답 {isExpanded ? '▲' : '▼'}
+                                  </span>
+                                </button>
+                                {isExpanded && (
+                                  <div className="divide-y max-h-80 overflow-y-auto">
+                                    {item.responses.map((resp, idx) => (
+                                      <div key={idx} className="p-4">
+                                        <p className="text-xs text-gray-500 mb-1">{resp.userName}</p>
+                                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{resp.response}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">

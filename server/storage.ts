@@ -2962,12 +2962,19 @@ export class DatabaseStorage implements IStorage {
   async getGroupProfileFieldStats(groupId: string, profileType: string): Promise<{
     totalProfiles: number;
     fieldStats: Record<string, Array<{ value: string; count: number; percentage: number }>>;
+    selfIntroResponses?: Array<{
+      question: string;
+      responses: Array<{ userName: string; response: string }>;
+    }>;
   }> {
-    // Get all group member user IDs
+    // Get only student members (role='member'), exclude admins/consultants/teachers
     const memberRows = await db
       .select({ userId: groupMembers.userId })
       .from(groupMembers)
-      .where(eq(groupMembers.groupId, groupId));
+      .where(and(
+        eq(groupMembers.groupId, groupId),
+        eq(groupMembers.role, 'member')
+      ));
     
     const memberUserIds = memberRows.map(m => m.userId);
     if (memberUserIds.length === 0) {
@@ -2976,12 +2983,30 @@ export class DatabaseStorage implements IStorage {
     
     // Get profiles of specified type for these users
     const userProfiles = await db
-      .select()
+      .select({
+        id: profiles.id,
+        userId: profiles.userId,
+        type: profiles.type,
+        profileData: profiles.profileData,
+      })
       .from(profiles)
       .where(and(
         inArray(profiles.userId, memberUserIds),
         eq(profiles.type, profileType)
       ));
+    
+    // Get user names for self-intro responses
+    const userNames: Record<string, string> = {};
+    if (userProfiles.length > 0) {
+      const userIds = userProfiles.map(p => p.userId);
+      const usersData = await db
+        .select({ id: users.id, displayName: users.displayName, email: users.email })
+        .from(users)
+        .where(inArray(users.id, userIds));
+      for (const u of usersData) {
+        userNames[u.id] = u.displayName || (u.email ? u.email.split('@')[0] : '알 수 없음');
+      }
+    }
     
     const totalProfiles = userProfiles.length;
     if (totalProfiles === 0) {
@@ -2989,29 +3014,40 @@ export class DatabaseStorage implements IStorage {
     }
     
     // Define fields to analyze based on profile type
-    const fieldsToAnalyze: Record<string, { label: string; key: string; isArray?: boolean; isTextCheck?: boolean }[]> = {
+    const fieldsToAnalyze: Record<string, { label: string; key: string; isArray?: boolean; isTextCheck?: boolean; category?: string }[]> = {
       international: [
-        { label: '국적', key: 'intl_nationality' },
-        { label: '비자 유형', key: 'intl_currentVisaType' },
-        { label: 'TOPIK 급수', key: 'intl_topikLevel' },
-        { label: '한국어 수준', key: 'intl_koreanLevel' },
-        { label: '희망 직무', key: 'intl_desiredPosition' },
-        { label: '희망 근무지', key: 'intl_preferredLocation' },
-        { label: '근무 유형', key: 'intl_availableWorkType' },
-        { label: '영어 수준', key: 'intl_englishLevel' },
-        { label: '보유역량스킬', key: 'intl_skills', isArray: true },
-        { label: '컴퓨터/IT 활용능력', key: 'intl_computerItSkills' },
-        { label: '자기소개 작성', key: 'intl_strengthsAndPersonality', isTextCheck: true },
+        { label: '국적', key: 'intl_nationality', category: '기본 정보' },
+        { label: '비자 유형', key: 'intl_currentVisaType', category: '비자 정보' },
+        { label: 'TOPIK 급수', key: 'intl_topikLevel', category: '언어 능력' },
+        { label: '한국어 수준', key: 'intl_koreanLevel', category: '언어 능력' },
+        { label: '영어 수준', key: 'intl_englishLevel', category: '언어 능력' },
+        { label: '희망 직무', key: 'intl_desiredPosition', category: '희망 취업' },
+        { label: '희망 근무지', key: 'intl_preferredLocation', category: '희망 취업' },
+        { label: '근무 유형', key: 'intl_availableWorkType', category: '희망 취업' },
+        { label: '보유역량스킬', key: 'intl_skills', isArray: true, category: '역량' },
+        { label: '컴퓨터/IT 활용능력', key: 'intl_computerItSkills', category: '역량' },
       ],
       general: [
-        { label: '재직 상태', key: 'gen_currentStatus' },
-        { label: '희망 직무', key: 'gen_desiredRole' },
-        { label: '희망 업종', key: 'gen_desiredIndustry' },
+        { label: '재직 상태', key: 'gen_currentStatus', category: '경력' },
+        { label: '희망 직무', key: 'gen_desiredRole', category: '희망 취업' },
+        { label: '희망 업종', key: 'gen_desiredIndustry', category: '희망 취업' },
+        { label: '보유 스킬', key: 'gen_skills', isArray: true, category: '역량' },
       ],
       university: [
-        { label: '전공 분야', key: 'univ_majorCategory' },
-        { label: '학년', key: 'univ_grade' },
-        { label: '희망 업종', key: 'univ_desiredIndustry' },
+        { label: '전공 분야', key: 'univ_majorCategory', category: '학력' },
+        { label: '학년', key: 'univ_grade', category: '학력' },
+        { label: '희망 업종', key: 'univ_desiredIndustry', category: '희망 취업' },
+        { label: '개발할 스킬', key: 'univ_skillsToDevelop', isArray: true, category: '역량' },
+      ],
+    };
+    
+    // Self-intro questions for international students
+    const selfIntroQuestions: Record<string, { label: string; key: string }[]> = {
+      international: [
+        { label: '한국에 온 이유', key: 'intl_reasonForComingToKorea' },
+        { label: '한국 취업을 원하는 이유', key: 'intl_reasonForKoreaEmployment' },
+        { label: '강점 및 성격', key: 'intl_strengthsAndPersonality' },
+        { label: '한국에서 가장 좋았던 경험', key: 'intl_bestThingInKorea' },
       ],
     };
     
@@ -3096,7 +3132,41 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    return { totalProfiles, fieldStats };
+    // Collect self-intro responses if applicable
+    const selfIntroFields = selfIntroQuestions[profileType] || [];
+    const selfIntroResponses: Array<{
+      question: string;
+      responses: Array<{ userName: string; response: string }>;
+    }> = [];
+    
+    for (const question of selfIntroFields) {
+      const responses: Array<{ userName: string; response: string }> = [];
+      
+      for (const profile of userProfiles) {
+        const profileData = profile.profileData as any;
+        const response = profileData?.[question.key];
+        
+        if (response && typeof response === 'string' && response.trim().length > 0) {
+          responses.push({
+            userName: userNames[profile.userId] || '알 수 없음',
+            response: response.trim(),
+          });
+        }
+      }
+      
+      if (responses.length > 0) {
+        selfIntroResponses.push({
+          question: question.label,
+          responses,
+        });
+      }
+    }
+    
+    return { 
+      totalProfiles, 
+      fieldStats,
+      selfIntroResponses: selfIntroResponses.length > 0 ? selfIntroResponses : undefined,
+    };
   }
 
   async getGroupMemberProgress(groupId: string): Promise<Array<{
