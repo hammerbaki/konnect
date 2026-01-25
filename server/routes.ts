@@ -2071,6 +2071,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         visibilityMap[setting.slug] = effectiveRoles.includes(user.role);
       }
 
+      // Debug log for admin visibility issues
+      console.log(`[PageVisibility] User ${user.email} (role: ${user.role}) - /admin access: ${visibilityMap['/admin']}`);
+
       res.json({
         userRole: user.role,
         pages: visibilityMap,
