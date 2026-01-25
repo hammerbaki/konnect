@@ -228,7 +228,7 @@ export default function Goals() {
     }
 
     if (!selectedProfileId) {
-      toast({ title: "프로필 선택 필요", description: "Kompass를 연결할 프로필을 선택해주세요.", variant: "destructive" });
+      toast({ title: "프로필 없음", description: "프로필을 먼저 생성해주세요.", variant: "destructive" });
       return;
     }
 
@@ -426,21 +426,7 @@ export default function Goals() {
                         </div>
                     )}
 
-                    <div className="space-y-2">
-                        <Label htmlFor="profile" className="text-sm font-bold text-[#333D4B]">연결할 프로필</Label>
-                        <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
-                          <SelectTrigger className="h-12 rounded-xl border-[#E5E8EB]" data-testid="select-profile">
-                            <SelectValue placeholder="프로필을 선택하세요" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[...profiles].sort((a, b) => (profileTypeOrder[a.type] || 99) - (profileTypeOrder[b.type] || 99)).map((profile) => (
-                              <SelectItem key={profile.id} value={profile.id}>
-                                {profile.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                    </div>
+{/* 프로필은 자동으로 첫 번째 프로필이 선택됨 - UI에서 제거 */}
                     
                     <div className="space-y-2">
                         <Label htmlFor="title" className="text-sm font-bold text-[#333D4B]">목표 제목 (Kompass)</Label>
