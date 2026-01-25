@@ -2897,9 +2897,23 @@ export class DatabaseStorage implements IStorage {
     const recentAnalyses = analysesList.map(a => {
       const profileData = userProfiles.find(p => p.profile.id === a.profileId);
       let summary: string | null = null;
-      if (a.stats && typeof a.stats === 'object') {
-        summary = a.stats.overview?.summary || a.stats.summary || null;
+      
+      // Try to get summary from various sources
+      if (a.recommendations && typeof a.recommendations === 'object') {
+        const rec = a.recommendations as any;
+        summary = rec.foreignStudentData?.summary?.oneLine || 
+                  rec.summary?.oneLine || 
+                  rec.summary || 
+                  null;
       }
+      if (!summary && a.stats && typeof a.stats === 'object') {
+        const stats = a.stats as any;
+        summary = stats.overview?.summary || stats.summary || null;
+      }
+      if (!summary && a.summary) {
+        summary = a.summary;
+      }
+      
       return {
         userId: profileData?.user.id || '',
         userName: profileData?.user.displayName || profileData?.user.email?.split('@')[0] || null,
@@ -3089,11 +3103,33 @@ export class DatabaseStorage implements IStorage {
         .limit(1);
       
       if (latestAnalysis) {
+        // Build comprehensive analysis result from all available fields
+        let analysisResult: any = null;
+        
+        // Check recommendations first (contains detailed foreignStudentData, fit, etc.)
+        if (latestAnalysis.recommendations && typeof latestAnalysis.recommendations === 'object') {
+          analysisResult = latestAnalysis.recommendations;
+        }
+        // Fall back to stats if no recommendations
+        else if (latestAnalysis.stats && typeof latestAnalysis.stats === 'object') {
+          analysisResult = latestAnalysis.stats;
+        }
+        
+        // If we have a summary but no structured result, wrap it
+        if (!analysisResult && latestAnalysis.summary) {
+          analysisResult = { summary: latestAnalysis.summary };
+        }
+        
+        // Merge summary into result if available
+        if (analysisResult && latestAnalysis.summary && !analysisResult.summary) {
+          analysisResult.summary = latestAnalysis.summary;
+        }
+        
         analysis = {
           id: latestAnalysis.id.toString(),
-          status: 'completed', // Analysis exists means it's completed
+          status: 'completed',
           createdAt: latestAnalysis.createdAt?.toISOString() || '',
-          analysisResult: latestAnalysis.stats || latestAnalysis.summary || null,
+          analysisResult,
         };
       }
     }

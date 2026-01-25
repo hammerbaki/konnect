@@ -138,12 +138,37 @@ export default function GroupMemberDetail() {
   const analysisResult = member.analysis?.analysisResult;
   const hasDetailedAnalysis = analysisResult && typeof analysisResult === "object";
 
-  // Extract common analysis fields
+  // Handle foreignStudentData structure (international profile type)
+  const foreignStudentData = analysisResult?.foreignStudentData;
+  const isForeignStudentAnalysis = !!foreignStudentData;
+
+  // Extract common analysis fields - handle both regular and foreignStudent structures
   const overview = analysisResult?.overview || {};
   const strengths = analysisResult?.strengths || analysisResult?.강점 || [];
   const weaknesses = analysisResult?.weaknesses || analysisResult?.약점 || analysisResult?.개선점 || [];
-  const recommendations = analysisResult?.recommendations || analysisResult?.추천 || analysisResult?.career_recommendations || [];
-  const summary = overview?.summary || analysisResult?.summary || analysisResult?.요약 || null;
+  
+  // For foreignStudent, recommendations are nested differently
+  const recommendations = foreignStudentData?.recommendations || 
+                          analysisResult?.recommendations || 
+                          analysisResult?.추천 || 
+                          analysisResult?.career_recommendations || [];
+  
+  // Summary extraction
+  const summary = foreignStudentData?.summary?.oneLine || 
+                  overview?.summary || 
+                  analysisResult?.summary || 
+                  analysisResult?.요약 || 
+                  null;
+  
+  // Foreign student specific data
+  const fitScore = foreignStudentData?.fit?.score;
+  const fitReasons = foreignStudentData?.fit?.reasons || [];
+  const visaWarning = foreignStudentData?.visaWarning;
+  const dataGaps = foreignStudentData?.dataGaps || [];
+  const actionPlan = foreignStudentData?.actionPlan;
+  const readyNowJobs = foreignStudentData?.recommendations?.readyNow || [];
+  const afterPrepJobs = foreignStudentData?.recommendations?.afterPrep || [];
+  
   const careerSuggestions = analysisResult?.careerSuggestions || analysisResult?.career_suggestions || [];
   const skillAnalysis = analysisResult?.skillAnalysis || analysisResult?.skill_analysis || null;
   const personalityTraits = analysisResult?.personalityTraits || analysisResult?.personality || [];
@@ -381,10 +406,223 @@ export default function GroupMemberDetail() {
                       <CardTitle className="flex items-center gap-2">
                         <TrendingUp className="h-5 w-5 text-blue-500" />
                         분석 요약
+                        {fitScore !== undefined && (
+                          <Badge variant="secondary" className="ml-2">
+                            적합도 {fitScore}점
+                          </Badge>
+                        )}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-gray-700 leading-relaxed">{summary}</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {visaWarning && (
+                  <Card data-testid="card-visa-warning" className="border-orange-200 bg-orange-50">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-orange-700">
+                        <AlertTriangle className="h-5 w-5" />
+                        비자 관련 안내
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-orange-800">{visaWarning}</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {fitReasons.length > 0 && (
+                  <Card data-testid="card-fit-analysis">
+                    <CardHeader className="cursor-pointer" onClick={() => toggleSection("fitReasons")}>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-5 w-5 text-blue-500" />
+                          적합도 분석
+                          <Badge variant="secondary">{fitReasons.length}개 항목</Badge>
+                        </div>
+                        {expandedSections.fitReasons ? (
+                          <ChevronUp className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-gray-400" />
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    {expandedSections.fitReasons !== false && (
+                      <CardContent>
+                        <ul className="space-y-3">
+                          {fitReasons.map((reason: any, index: number) => (
+                            <li 
+                              key={index} 
+                              className={`flex gap-3 p-3 rounded-lg ${
+                                reason.impact === 'positive' ? 'bg-green-50' :
+                                reason.impact === 'negative' ? 'bg-red-50' : 'bg-gray-50'
+                              }`}
+                            >
+                              {reason.impact === 'positive' ? (
+                                <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                              ) : reason.impact === 'negative' ? (
+                                <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                              ) : (
+                                <AlertTriangle className="h-5 w-5 text-gray-500 shrink-0 mt-0.5" />
+                              )}
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-medium text-gray-900">{reason.field}</span>
+                                  <Badge variant="outline" className="text-xs">{reason.value}</Badge>
+                                </div>
+                                <p className="text-sm text-gray-600">{reason.note}</p>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    )}
+                  </Card>
+                )}
+
+                {readyNowJobs.length > 0 && (
+                  <Card data-testid="card-ready-now-jobs">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                        지금 바로 지원 가능한 직무
+                        <Badge variant="default" className="bg-green-500">{readyNowJobs.length}개</Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {readyNowJobs.map((job: any, index: number) => (
+                          <div key={index} className="p-4 bg-green-50 rounded-lg">
+                            <p className="font-semibold text-green-800 mb-2">{job.role}</p>
+                            <div className="space-y-2">
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">추천 이유:</p>
+                                <ul className="list-disc list-inside text-sm text-gray-700">
+                                  {job.reasons?.map((r: string, i: number) => (
+                                    <li key={i}>{r}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              {job.requiredNext && job.requiredNext.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-green-200">
+                                  <p className="text-xs text-gray-500 mb-1">준비 사항:</p>
+                                  <ul className="list-disc list-inside text-sm text-gray-600">
+                                    {job.requiredNext.map((r: string, i: number) => (
+                                      <li key={i}>{r}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {afterPrepJobs.length > 0 && (
+                  <Card data-testid="card-after-prep-jobs">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Target className="h-5 w-5 text-blue-500" />
+                        준비 후 도전 가능한 직무
+                        <Badge variant="secondary">{afterPrepJobs.length}개</Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {afterPrepJobs.map((job: any, index: number) => (
+                          <div key={index} className="p-4 bg-blue-50 rounded-lg">
+                            <p className="font-semibold text-blue-800 mb-2">{job.role}</p>
+                            {job.missingConditions && job.missingConditions.length > 0 && (
+                              <div className="mb-2">
+                                <p className="text-xs text-gray-500 mb-1">필요 조건:</p>
+                                <ul className="list-disc list-inside text-sm text-red-600">
+                                  {job.missingConditions.map((c: string, i: number) => (
+                                    <li key={i}>{c}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {job.howToFill && job.howToFill.length > 0 && (
+                              <div className="pt-2 border-t border-blue-200">
+                                <p className="text-xs text-gray-500 mb-1">준비 방법:</p>
+                                <ul className="list-disc list-inside text-sm text-gray-700">
+                                  {job.howToFill.map((h: string, i: number) => (
+                                    <li key={i}>{h}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {actionPlan && (
+                  <Card data-testid="card-action-plan">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Target className="h-5 w-5 text-purple-500" />
+                        실행 계획
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-4 md:grid-cols-3">
+                        {actionPlan.shortTerm && actionPlan.shortTerm.length > 0 && (
+                          <div className="p-4 bg-green-50 rounded-lg">
+                            <p className="font-semibold text-green-800 mb-2">단기 (1-3개월)</p>
+                            <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                              {actionPlan.shortTerm.slice(0, 5).map((item: string, i: number) => (
+                                <li key={i}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {actionPlan.midTerm && actionPlan.midTerm.length > 0 && (
+                          <div className="p-4 bg-yellow-50 rounded-lg">
+                            <p className="font-semibold text-yellow-800 mb-2">중기 (3-6개월)</p>
+                            <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                              {actionPlan.midTerm.slice(0, 5).map((item: string, i: number) => (
+                                <li key={i}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {actionPlan.longTerm && actionPlan.longTerm.length > 0 && (
+                          <div className="p-4 bg-blue-50 rounded-lg">
+                            <p className="font-semibold text-blue-800 mb-2">장기 (6개월 이상)</p>
+                            <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                              {actionPlan.longTerm.slice(0, 5).map((item: string, i: number) => (
+                                <li key={i}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {dataGaps.length > 0 && (
+                  <Card data-testid="card-data-gaps">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                        추가 정보 필요
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        {dataGaps.map((gap: string, i: number) => (
+                          <li key={i}>{gap}</li>
+                        ))}
+                      </ul>
                     </CardContent>
                   </Card>
                 )}
