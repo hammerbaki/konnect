@@ -1139,3 +1139,69 @@ export const insertVideoRecordingSchema = createInsertSchema(videoInterviewRecor
 
 export type InsertVideoRecording = z.infer<typeof insertVideoRecordingSchema>;
 export type VideoInterviewRecording = typeof videoInterviewRecordings.$inferSelect;
+
+// ===== GROUPS TABLE (그룹 관리) =====
+export type GroupMemberRole = 'owner' | 'admin' | 'member';
+
+export const groups = pgTable("groups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  iconEmoji: varchar("icon_emoji", { length: 10 }).default('👥'),
+  color: varchar("color", { length: 20 }).default('#3B82F6'),
+  ownerId: varchar("owner_id").notNull().references(() => users.id),
+  settings: jsonb("settings").default({}),
+  isActive: integer("is_active").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_groups_owner").on(table.ownerId),
+  index("IDX_groups_active").on(table.isActive),
+]);
+
+export const insertGroupSchema = createInsertSchema(groups).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertGroup = z.infer<typeof insertGroupSchema>;
+export type Group = typeof groups.$inferSelect;
+
+// ===== GROUP MEMBERS TABLE (그룹 멤버십) =====
+export const groupMembers = pgTable("group_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  groupId: varchar("group_id").notNull().references(() => groups.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: varchar("role", { length: 20 }).notNull().default('member'),
+  permissions: jsonb("permissions").default({}),
+  joinedAt: timestamp("joined_at").defaultNow(),
+  invitedBy: varchar("invited_by").references(() => users.id),
+}, (table) => [
+  index("IDX_group_members_group").on(table.groupId),
+  index("IDX_group_members_user").on(table.userId),
+  index("IDX_group_members_role").on(table.role),
+  uniqueIndex("IDX_group_members_unique").on(table.groupId, table.userId),
+]);
+
+export const insertGroupMemberSchema = createInsertSchema(groupMembers).omit({
+  id: true,
+  joinedAt: true,
+});
+
+export type InsertGroupMember = z.infer<typeof insertGroupMemberSchema>;
+export type GroupMember = typeof groupMembers.$inferSelect;
+
+// Group with member count type
+export interface GroupWithStats extends Group {
+  memberCount: number;
+  analysisCount: number;
+  lastActivityAt: Date | null;
+}
+
+// Group member with user info type
+export interface GroupMemberWithUser extends GroupMember {
+  user: Pick<User, 'id' | 'email' | 'displayName' | 'profileImageUrl'>;
+  analysisCount?: number;
+  lastAnalyzedAt?: Date | null;
+}
