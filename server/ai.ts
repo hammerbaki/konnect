@@ -18,6 +18,13 @@ function repairJSON(jsonString: string): string {
     repaired = repaired.substring(0, lastBrace + 1);
   }
   
+  // Fix common truncation issues: incomplete array elements
+  // Remove trailing incomplete objects in arrays (e.g., "..., {" or "..., { \"title\":")
+  repaired = repaired.replace(/,\s*\{[^}]*$/g, '');
+  
+  // Remove trailing incomplete strings (e.g., "..., \"something)
+  repaired = repaired.replace(/,\s*"[^"]*$/g, '');
+  
   // Count open/close brackets and braces
   let openBraces = 0;
   let openBrackets = 0;
@@ -58,7 +65,10 @@ function repairJSON(jsonString: string): string {
   // Remove trailing comma before closing brackets/braces
   repaired = repaired.replace(/,(\s*[\]\}])/g, '$1');
   
-  // Add missing closing brackets and braces
+  // Remove trailing commas at the end
+  repaired = repaired.replace(/,\s*$/g, '');
+  
+  // Add missing closing brackets and braces (in correct order: ] before })
   while (openBrackets > 0) {
     repaired += ']';
     openBrackets--;
@@ -1619,7 +1629,7 @@ ${description ? `- 추가 설명: ${description}` : ''}
         const client = anthropic;
         const message = await client.messages.create({
           model: "claude-sonnet-4-5",
-          max_tokens: 4000,
+          max_tokens: 8000,
           messages: [
             { role: "user", content: userPrompt }
           ],
