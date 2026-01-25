@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar, Sparkles, Loader2, Eye, X, CheckSquare } from "lucide-react";
+import { CheckCircle2, Circle, Plus, Flag, Bell, Calendar, Sparkles, Loader2, Eye, X, CheckSquare, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { VisionGoal, DailyGoal, YearlyGoal, HalfYearlyGoal, MonthlyGoal, WeeklyGoal } from "@/lib/mockData";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useMobileAction } from "@/lib/MobileActionContext";
@@ -464,23 +465,39 @@ export default function KompassDetail() {
     const isGenerating = generatingLevel === level;
     
     return (
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleGenerateWithAI(level);
-        }}
-        disabled={isGenerating || aiSuggestMutation.isPending}
-        className="h-7 text-xs gap-1.5 bg-gradient-to-r from-[#3182F6]/5 to-purple-500/5 border-[#3182F6]/30 text-[#3182F6] hover:bg-[#3182F6]/10"
-      >
-        {isGenerating ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
-        ) : (
-          <Sparkles className="h-3 w-3" />
+      <div className="flex items-center gap-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleGenerateWithAI(level);
+                }}
+                disabled={isGenerating || aiSuggestMutation.isPending}
+                className="h-8 text-xs gap-1.5 bg-gradient-to-r from-[#3182F6]/5 to-purple-500/5 border-[#3182F6]/30 text-[#3182F6] hover:bg-[#3182F6]/10"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3" />
+                )}
+                {isGenerating ? '생성 중...' : (isStrategic ? 'AI로 세부 내용 자동 생성 (100 포인트)' : 'AI 생성')}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs">
+              <p className="text-sm">클릭하면 AI가 목표 세부 내용을 자동으로 작성해드립니다</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        {isStrategic && (
+          <span className="text-[10px] text-[#8B95A1] hidden sm:inline">
+            AI가 세부 내용을 자동으로 생성합니다
+          </span>
         )}
-        {isGenerating ? '생성 중...' : (isStrategic ? 'AI 생성 (100 포인트)' : 'AI 생성')}
-      </Button>
+      </div>
     );
   };
 
