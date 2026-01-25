@@ -122,3 +122,32 @@ AI-powered interview preparation system with both text and voice modes.
 ### Required Secret
 - **WORKNET_API_KEY**: 공공데이터포털에서 발급받은 워크넷 채용정보 API 인증키
   - 발급처: https://www.data.go.kr/dataset/3038225/openapi.do
+
+## K-JOBS SSO Integration (kjobs.co.kr 연동)
+kjobs.co.kr에서 SSO(Single Sign-On)를 통해 Konnect로 자동 로그인할 수 있습니다.
+
+### Architecture
+- **Server Module**: `server/kjobs-sso.ts` - JWT 토큰 검증 및 사용자 생성/로그인
+- **API Routes**: 
+  - `GET /api/sso/kjobs?token=<jwt>` - SSO 로그인 엔드포인트
+  - `GET /api/sso/kjobs/test-token` - 개발용 테스트 토큰 생성 (development 모드에서만)
+
+### Authentication Flow
+1. kjobs.co.kr에서 JWT 토큰 생성 (HS256, 공유 시크릿으로 서명)
+2. 사용자를 `https://konnect.replit.app/api/sso/kjobs?token=<jwt>` 로 리다이렉트
+3. Konnect가 토큰 검증 후 사용자 생성/조회 및 자동 로그인
+4. 대시보드로 리다이렉트 (`?redirect=<path>` 파라미터로 다른 페이지 지정 가능)
+
+### JWT Token Format
+```json
+{
+  "userId": "kjobs-user-id",
+  "email": "user@example.com",
+  "name": "홍길동",
+  "iat": 1706184000,
+  "exp": 1706187600
+}
+```
+
+### Required Secret
+- **KJOBS_SSO_SECRET**: K-JOBS에서 제공하는 SSO 공유 시크릿 키 (HS256 서명 검증용)

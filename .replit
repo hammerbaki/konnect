@@ -51,3 +51,4 @@ integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.
 [userenv]
 
 [userenv.shared]
+KJOBS_SSO_SECRET = "70ee2e06ad9be842d59d9b418352da23a17b0c6d1e4ea98c97a693af45a874b0"

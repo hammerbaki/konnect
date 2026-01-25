@@ -26,6 +26,7 @@ import { createRateLimitMiddleware, checkRedisConnection, redis } from "./rateLi
 import { startWorker, submitQueuedJob } from "./aiWorker";
 import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
+import { handleKJobsSSO, generateTestToken } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt } from "drizzle-orm";
 import { giftPointLedger, users, referrals } from "@shared/schema";
 
@@ -196,6 +197,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
     });
   });
+
+  app.get('/api/sso/kjobs', handleKJobsSSO);
+
+  if (process.env.NODE_ENV === 'development') {
+    app.get('/api/sso/kjobs/test-token', (req, res) => {
+      try {
+        const userId = req.query.userId as string || 'test-user-123';
+        const email = req.query.email as string;
+        const name = req.query.name as string;
+        const token = generateTestToken(userId, email, name);
+        res.json({ token, testUrl: `/api/sso/kjobs?token=${token}` });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+  }
 
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
