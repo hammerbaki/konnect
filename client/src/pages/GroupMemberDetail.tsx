@@ -819,18 +819,6 @@ export default function GroupMemberDetail() {
                   </Card>
                 )}
 
-                <Card data-testid="card-raw-analysis">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-sm text-gray-500">
-                      전체 분석 데이터 (Raw)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <pre className="text-xs bg-gray-50 p-4 rounded-lg overflow-x-auto max-h-96 overflow-y-auto">
-                      {JSON.stringify(analysisResult, null, 2)}
-                    </pre>
-                  </CardContent>
-                </Card>
               </>
             ) : member.analysis ? (
               <Card>
