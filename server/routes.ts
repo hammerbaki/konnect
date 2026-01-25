@@ -4992,6 +4992,305 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== Groups API Routes =====
+  
+  // Get all groups (admin only)
+  app.get('/api/admin/groups', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      if (!user || (user.role !== 'admin' && user.role !== 'staff')) {
+        return res.status(403).json({ message: "관리자 권한이 필요합니다." });
+      }
+      
+      const groups = await storage.getAllGroups();
+      res.json(groups);
+    } catch (error: any) {
+      console.error("Error fetching groups:", error);
+      res.status(500).json({ message: "그룹 목록 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Create a new group (admin only)
+  app.post('/api/admin/groups', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      if (!user || (user.role !== 'admin' && user.role !== 'staff')) {
+        return res.status(403).json({ message: "관리자 권한이 필요합니다." });
+      }
+      
+      const { name, description, iconEmoji, color } = req.body;
+      if (!name) {
+        return res.status(400).json({ message: "그룹 이름은 필수입니다." });
+      }
+      
+      const group = await storage.createGroup({
+        name,
+        description: description || null,
+        iconEmoji: iconEmoji || '👥',
+        color: color || '#3B82F6',
+        ownerId: userId,
+      });
+      
+      res.json(group);
+    } catch (error: any) {
+      console.error("Error creating group:", error);
+      res.status(500).json({ message: "그룹 생성 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get single group with stats
+  app.get('/api/admin/groups/:groupId', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      if (!user || (user.role !== 'admin' && user.role !== 'staff')) {
+        // Check if user is a member of this group
+        const isMember = await storage.isGroupMember(req.params.groupId, userId);
+        if (!isMember) {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+      
+      const group = await storage.getGroupWithStats(req.params.groupId);
+      if (!group) {
+        return res.status(404).json({ message: "그룹을 찾을 수 없습니다." });
+      }
+      
+      res.json(group);
+    } catch (error: any) {
+      console.error("Error fetching group:", error);
+      res.status(500).json({ message: "그룹 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Update group
+  app.patch('/api/admin/groups/:groupId', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const group = await storage.getGroup(req.params.groupId);
+      
+      if (!group) {
+        return res.status(404).json({ message: "그룹을 찾을 수 없습니다." });
+      }
+      
+      // Check admin or group owner/admin
+      const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+      const isAdmin = user?.role === 'admin' || user?.role === 'staff';
+      const isGroupAdmin = memberRole === 'owner' || memberRole === 'admin';
+      
+      if (!isAdmin && !isGroupAdmin) {
+        return res.status(403).json({ message: "권한이 없습니다." });
+      }
+      
+      const { name, description, iconEmoji, color, isActive } = req.body;
+      const updatedGroup = await storage.updateGroup(req.params.groupId, {
+        name: name || group.name,
+        description: description !== undefined ? description : group.description,
+        iconEmoji: iconEmoji || group.iconEmoji,
+        color: color || group.color,
+        isActive: isActive !== undefined ? isActive : group.isActive,
+      });
+      
+      res.json(updatedGroup);
+    } catch (error: any) {
+      console.error("Error updating group:", error);
+      res.status(500).json({ message: "그룹 수정 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Delete group (admin only)
+  app.delete('/api/admin/groups/:groupId', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "관리자 권한이 필요합니다." });
+      }
+      
+      await storage.deleteGroup(req.params.groupId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting group:", error);
+      res.status(500).json({ message: "그룹 삭제 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get group members
+  app.get('/api/admin/groups/:groupId/members', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      if (!isAdmin) {
+        // Check if user is a member of this group with admin/owner role
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (!memberRole || memberRole === 'member') {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+      
+      const members = await storage.getGroupMembers(req.params.groupId);
+      res.json(members);
+    } catch (error: any) {
+      console.error("Error fetching group members:", error);
+      res.status(500).json({ message: "그룹 멤버 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Add member to group
+  app.post('/api/admin/groups/:groupId/members', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      if (!isAdmin) {
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (!memberRole || memberRole === 'member') {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+      
+      const { userEmail, role } = req.body;
+      if (!userEmail) {
+        return res.status(400).json({ message: "사용자 이메일은 필수입니다." });
+      }
+      
+      // Find user by email
+      const targetUser = await storage.getUserByEmail(userEmail);
+      if (!targetUser) {
+        return res.status(404).json({ message: "해당 이메일의 사용자를 찾을 수 없습니다." });
+      }
+      
+      // Check if already a member
+      const isAlreadyMember = await storage.isGroupMember(req.params.groupId, targetUser.id);
+      if (isAlreadyMember) {
+        return res.status(400).json({ message: "이미 그룹 멤버입니다." });
+      }
+      
+      const member = await storage.addGroupMember({
+        groupId: req.params.groupId,
+        userId: targetUser.id,
+        role: role || 'member',
+        invitedBy: userId,
+      });
+      
+      res.json(member);
+    } catch (error: any) {
+      console.error("Error adding group member:", error);
+      res.status(500).json({ message: "멤버 추가 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Remove member from group
+  app.delete('/api/admin/groups/:groupId/members/:memberId', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      if (!isAdmin) {
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (!memberRole || memberRole === 'member') {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+      
+      await storage.removeGroupMember(req.params.groupId, req.params.memberId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error removing group member:", error);
+      res.status(500).json({ message: "멤버 제거 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Update member role
+  app.patch('/api/admin/groups/:groupId/members/:memberId/role', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      if (!isAdmin) {
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (memberRole !== 'owner') {
+          return res.status(403).json({ message: "그룹 소유자만 역할을 변경할 수 있습니다." });
+        }
+      }
+      
+      const { role } = req.body;
+      if (!role || !['owner', 'admin', 'member'].includes(role)) {
+        return res.status(400).json({ message: "유효하지 않은 역할입니다." });
+      }
+      
+      const member = await storage.updateGroupMemberRole(req.params.groupId, req.params.memberId, role);
+      res.json(member);
+    } catch (error: any) {
+      console.error("Error updating member role:", error);
+      res.status(500).json({ message: "역할 변경 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get group member analyses (for group admins/owners)
+  app.get('/api/admin/groups/:groupId/analyses', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      if (!isAdmin) {
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (!memberRole || memberRole === 'member') {
+          return res.status(403).json({ message: "그룹 관리자만 분석 결과를 볼 수 있습니다." });
+        }
+      }
+      
+      const analyses = await storage.getGroupMemberAnalyses(req.params.groupId);
+      res.json(analyses);
+    } catch (error: any) {
+      console.error("Error fetching group analyses:", error);
+      res.status(500).json({ message: "분석 결과 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get user's groups
+  app.get('/api/my-groups', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const groups = await storage.getUserGroups(userId);
+      res.json(groups);
+    } catch (error: any) {
+      console.error("Error fetching user groups:", error);
+      res.status(500).json({ message: "그룹 목록 조회 중 오류가 발생했습니다." });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
