@@ -19,6 +19,8 @@ import {
   giftPointTransactions,
   referrals,
   iapTransactions,
+  groups,
+  groupMembers,
   type User,
   type UpsertUser,
   type Profile,
@@ -70,6 +72,13 @@ import {
   type IapStatus,
   type KjobsAssessment,
   type InsertKjobsAssessment,
+  type Group,
+  type InsertGroup,
+  type GroupMember,
+  type InsertGroupMember,
+  type GroupWithStats,
+  type GroupMemberWithUser,
+  type GroupMemberRole,
   IAP_PRODUCTS,
   systemSettings,
   redemptionCodes,
@@ -290,6 +299,25 @@ export interface IStorage {
   getIncompleteKjobsAssessment(userId: string): Promise<KjobsAssessment | undefined>;
   getLatestCompletedKjobsAssessment(userId: string): Promise<KjobsAssessment | undefined>;
   getKjobsAssessmentsByUser(userId: string): Promise<KjobsAssessment[]>;
+
+  // Groups
+  createGroup(data: InsertGroup): Promise<Group>;
+  getGroup(id: string): Promise<Group | undefined>;
+  updateGroup(id: string, data: Partial<InsertGroup>): Promise<Group>;
+  deleteGroup(id: string): Promise<void>;
+  getGroupsByOwner(ownerId: string): Promise<Group[]>;
+  getAllGroups(): Promise<GroupWithStats[]>;
+  getGroupWithStats(id: string): Promise<GroupWithStats | undefined>;
+
+  // Group Members
+  addGroupMember(data: InsertGroupMember): Promise<GroupMember>;
+  removeGroupMember(groupId: string, userId: string): Promise<void>;
+  updateGroupMemberRole(groupId: string, userId: string, role: GroupMemberRole): Promise<GroupMember>;
+  getGroupMembers(groupId: string): Promise<GroupMemberWithUser[]>;
+  getUserGroups(userId: string): Promise<Array<Group & { role: GroupMemberRole }>>;
+  isGroupMember(groupId: string, userId: string): Promise<boolean>;
+  getGroupMemberRole(groupId: string, userId: string): Promise<GroupMemberRole | undefined>;
+  getGroupMemberAnalyses(groupId: string): Promise<Array<CareerAnalysis & { user: Pick<User, 'id' | 'email' | 'displayName'> }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2253,6 +2281,307 @@ export class DatabaseStorage implements IStorage {
       .from(kjobsAssessments)
       .where(eq(kjobsAssessments.userId, userId))
       .orderBy(desc(kjobsAssessments.createdAt));
+  }
+
+  // ===== Groups =====
+  async createGroup(data: InsertGroup): Promise<Group> {
+    const [group] = await db.insert(groups).values(data).returning();
+    // Add owner as a member with 'owner' role
+    await db.insert(groupMembers).values({
+      groupId: group.id,
+      userId: data.ownerId,
+      role: 'owner',
+    });
+    return group;
+  }
+
+  async getGroup(id: string): Promise<Group | undefined> {
+    const [group] = await db.select().from(groups).where(eq(groups.id, id));
+    return group;
+  }
+
+  async updateGroup(id: string, data: Partial<InsertGroup>): Promise<Group> {
+    const [group] = await db
+      .update(groups)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(groups.id, id))
+      .returning();
+    return group;
+  }
+
+  async deleteGroup(id: string): Promise<void> {
+    await db.delete(groups).where(eq(groups.id, id));
+  }
+
+  async getGroupsByOwner(ownerId: string): Promise<Group[]> {
+    return db.select().from(groups).where(eq(groups.ownerId, ownerId));
+  }
+
+  async getAllGroups(): Promise<GroupWithStats[]> {
+    const allGroups = await db.select().from(groups).orderBy(desc(groups.createdAt));
+    
+    const groupsWithStats: GroupWithStats[] = await Promise.all(
+      allGroups.map(async (group) => {
+        const [memberCount] = await db
+          .select({ count: count() })
+          .from(groupMembers)
+          .where(eq(groupMembers.groupId, group.id));
+        
+        const memberUserIds = await db
+          .select({ userId: groupMembers.userId })
+          .from(groupMembers)
+          .where(eq(groupMembers.groupId, group.id));
+        
+        let analysisCount = 0;
+        let lastActivityAt: Date | null = null;
+        
+        if (memberUserIds.length > 0) {
+          const userIds = memberUserIds.map(m => m.userId);
+          const profilesResult = await db
+            .select({ id: profiles.id })
+            .from(profiles)
+            .where(inArray(profiles.userId, userIds));
+          
+          if (profilesResult.length > 0) {
+            const profileIds = profilesResult.map(p => p.id);
+            const [analysisResult] = await db
+              .select({ count: count() })
+              .from(careerAnalyses)
+              .where(inArray(careerAnalyses.profileId, profileIds));
+            analysisCount = analysisResult?.count ?? 0;
+            
+            const [lastAnalysis] = await db
+              .select({ createdAt: careerAnalyses.createdAt })
+              .from(careerAnalyses)
+              .where(inArray(careerAnalyses.profileId, profileIds))
+              .orderBy(desc(careerAnalyses.createdAt))
+              .limit(1);
+            lastActivityAt = lastAnalysis?.createdAt ?? null;
+          }
+        }
+        
+        return {
+          ...group,
+          memberCount: memberCount?.count ?? 0,
+          analysisCount,
+          lastActivityAt,
+        };
+      })
+    );
+    
+    return groupsWithStats;
+  }
+
+  async getGroupWithStats(id: string): Promise<GroupWithStats | undefined> {
+    const [group] = await db.select().from(groups).where(eq(groups.id, id));
+    if (!group) return undefined;
+    
+    const [memberCount] = await db
+      .select({ count: count() })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, id));
+    
+    const memberUserIds = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, id));
+    
+    let analysisCount = 0;
+    let lastActivityAt: Date | null = null;
+    
+    if (memberUserIds.length > 0) {
+      const userIds = memberUserIds.map(m => m.userId);
+      const profilesResult = await db
+        .select({ id: profiles.id })
+        .from(profiles)
+        .where(inArray(profiles.userId, userIds));
+      
+      if (profilesResult.length > 0) {
+        const profileIds = profilesResult.map(p => p.id);
+        const [analysisResult] = await db
+          .select({ count: count() })
+          .from(careerAnalyses)
+          .where(inArray(careerAnalyses.profileId, profileIds));
+        analysisCount = analysisResult?.count ?? 0;
+        
+        const [lastAnalysis] = await db
+          .select({ createdAt: careerAnalyses.createdAt })
+          .from(careerAnalyses)
+          .where(inArray(careerAnalyses.profileId, profileIds))
+          .orderBy(desc(careerAnalyses.createdAt))
+          .limit(1);
+        lastActivityAt = lastAnalysis?.createdAt ?? null;
+      }
+    }
+    
+    return {
+      ...group,
+      memberCount: memberCount?.count ?? 0,
+      analysisCount,
+      lastActivityAt,
+    };
+  }
+
+  // ===== Group Members =====
+  async addGroupMember(data: InsertGroupMember): Promise<GroupMember> {
+    const [member] = await db.insert(groupMembers).values(data).returning();
+    return member;
+  }
+
+  async removeGroupMember(groupId: string, userId: string): Promise<void> {
+    await db.delete(groupMembers).where(
+      and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId))
+    );
+  }
+
+  async updateGroupMemberRole(groupId: string, userId: string, role: GroupMemberRole): Promise<GroupMember> {
+    const [member] = await db
+      .update(groupMembers)
+      .set({ role })
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)))
+      .returning();
+    return member;
+  }
+
+  async getGroupMembers(groupId: string): Promise<GroupMemberWithUser[]> {
+    const members = await db
+      .select()
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, groupId));
+    
+    const membersWithUsers: GroupMemberWithUser[] = await Promise.all(
+      members.map(async (member) => {
+        const [user] = await db
+          .select({
+            id: users.id,
+            email: users.email,
+            displayName: users.displayName,
+            profileImageUrl: users.profileImageUrl,
+          })
+          .from(users)
+          .where(eq(users.id, member.userId));
+        
+        // Get analysis count for this user
+        const userProfiles = await db
+          .select({ id: profiles.id })
+          .from(profiles)
+          .where(eq(profiles.userId, member.userId));
+        
+        let analysisCount = 0;
+        let lastAnalyzedAt: Date | null = null;
+        
+        if (userProfiles.length > 0) {
+          const profileIds = userProfiles.map(p => p.id);
+          const [countResult] = await db
+            .select({ count: count() })
+            .from(careerAnalyses)
+            .where(inArray(careerAnalyses.profileId, profileIds));
+          analysisCount = countResult?.count ?? 0;
+          
+          const [lastAnalysis] = await db
+            .select({ createdAt: careerAnalyses.createdAt })
+            .from(careerAnalyses)
+            .where(inArray(careerAnalyses.profileId, profileIds))
+            .orderBy(desc(careerAnalyses.createdAt))
+            .limit(1);
+          lastAnalyzedAt = lastAnalysis?.createdAt ?? null;
+        }
+        
+        return {
+          ...member,
+          user: user || { id: member.userId, email: null, displayName: null, profileImageUrl: null },
+          analysisCount,
+          lastAnalyzedAt,
+        };
+      })
+    );
+    
+    return membersWithUsers;
+  }
+
+  async getUserGroups(userId: string): Promise<Array<Group & { role: GroupMemberRole }>> {
+    const memberships = await db
+      .select()
+      .from(groupMembers)
+      .where(eq(groupMembers.userId, userId));
+    
+    const groupsWithRole = await Promise.all(
+      memberships.map(async (membership) => {
+        const [group] = await db.select().from(groups).where(eq(groups.id, membership.groupId));
+        return group ? { ...group, role: membership.role as GroupMemberRole } : null;
+      })
+    );
+    
+    return groupsWithRole.filter((g): g is Group & { role: GroupMemberRole } => g !== null);
+  }
+
+  async isGroupMember(groupId: string, userId: string): Promise<boolean> {
+    const [member] = await db
+      .select()
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)));
+    return !!member;
+  }
+
+  async getGroupMemberRole(groupId: string, userId: string): Promise<GroupMemberRole | undefined> {
+    const [member] = await db
+      .select({ role: groupMembers.role })
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)));
+    return member?.role as GroupMemberRole | undefined;
+  }
+
+  async getGroupMemberAnalyses(groupId: string): Promise<Array<CareerAnalysis & { user: Pick<User, 'id' | 'email' | 'displayName'> }>> {
+    const memberUserIds = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, groupId));
+    
+    if (memberUserIds.length === 0) return [];
+    
+    const userIds = memberUserIds.map(m => m.userId);
+    
+    // Get all profiles for these users
+    const userProfiles = await db
+      .select()
+      .from(profiles)
+      .where(inArray(profiles.userId, userIds));
+    
+    if (userProfiles.length === 0) return [];
+    
+    const profileIds = userProfiles.map(p => p.id);
+    const profileUserMap = new Map(userProfiles.map(p => [p.id, p.userId]));
+    
+    // Get all analyses for these profiles
+    const analyses = await db
+      .select()
+      .from(careerAnalyses)
+      .where(inArray(careerAnalyses.profileId, profileIds))
+      .orderBy(desc(careerAnalyses.createdAt));
+    
+    // Get user info for each analysis
+    const analysesWithUsers = await Promise.all(
+      analyses.map(async (analysis) => {
+        const userId = profileUserMap.get(analysis.profileId);
+        if (!userId) return null;
+        
+        const [user] = await db
+          .select({
+            id: users.id,
+            email: users.email,
+            displayName: users.displayName,
+          })
+          .from(users)
+          .where(eq(users.id, userId));
+        
+        return {
+          ...analysis,
+          user: user || { id: userId, email: null, displayName: null },
+        };
+      })
+    );
+    
+    return analysesWithUsers.filter((a): a is CareerAnalysis & { user: Pick<User, 'id' | 'email' | 'displayName'> } => a !== null);
   }
 }
 
