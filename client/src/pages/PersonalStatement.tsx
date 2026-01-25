@@ -477,7 +477,6 @@ export default function PersonalStatement() {
         setTargetPosition("");
         setCompanyInfo(null);
         setCompanyFetchError(null);
-        setIsTargetInfoOpen(false);
         aiJob.reset();
         revisionJob.reset();
     };
@@ -1077,13 +1076,13 @@ export default function PersonalStatement() {
                                                 </div>
                                             </div>
                                             
-                                            <div className="space-y-2">
-                                                <Label htmlFor="targetUrl" className="text-sm font-medium text-[#4E5968]">
-                                                    회사/학교 웹사이트 URL (선택)
+                                            <div className="space-y-2 opacity-80">
+                                                <Label htmlFor="targetUrl" className="text-sm font-medium text-[#8B95A1]">
+                                                    회사/학교 웹사이트 URL <span className="text-[#B0B8C1]">(선택사항 - 입력 안해도 됨)</span>
                                                 </Label>
                                                 <div className="flex gap-2">
                                                     <div className="relative flex-1">
-                                                        <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
+                                                        <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#B0B8C1]" />
                                                         <Input
                                                             id="targetUrl"
                                                             placeholder="https://company.com/about"
@@ -1092,7 +1091,7 @@ export default function PersonalStatement() {
                                                                 setTargetUrl(e.target.value);
                                                                 setCompanyFetchError(null);
                                                             }}
-                                                            className="pl-9 border-[#E5E8EB] focus:border-[#3182F6]"
+                                                            className="pl-9 border-[#E5E8EB] focus:border-[#3182F6] bg-gray-50/50"
                                                             data-testid="input-target-url"
                                                         />
                                                     </div>
@@ -1100,7 +1099,8 @@ export default function PersonalStatement() {
                                                         type="button"
                                                         onClick={handleFetchCompanyInfo}
                                                         disabled={isFetchingCompanyInfo || !targetUrl.trim()}
-                                                        className="bg-[#3182F6] hover:bg-[#1565C0] shrink-0"
+                                                        variant="outline"
+                                                        className="shrink-0 border-[#E5E8EB]"
                                                         data-testid="button-fetch-company-info"
                                                     >
                                                         {isFetchingCompanyInfo ? (
@@ -1111,8 +1111,8 @@ export default function PersonalStatement() {
                                                         <span className="ml-2 hidden md:inline">분석</span>
                                                     </Button>
                                                 </div>
-                                                <p className="text-xs text-[#8B95A1]">
-                                                    URL을 입력하면 AI가 웹페이지에서 기관 정보를 자동으로 분석합니다
+                                                <p className="text-xs text-[#B0B8C1]">
+                                                    URL을 입력하면 AI가 기관 정보를 추가 분석합니다 (선택사항)
                                                 </p>
                                             </div>
 
