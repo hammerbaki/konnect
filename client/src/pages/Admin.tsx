@@ -11,7 +11,7 @@ import {
   Users, Settings, Coins, Activity, 
   RefreshCw, Search, Shield, User, Crown,
   BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
-  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download
+  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download, Users2
 } from "lucide-react";
 import {
   AlertDialog,
@@ -196,6 +196,544 @@ const DEFAULT_SERVICE_PRICING: Record<string, { name: string; description: strin
 };
 
 const COLORS = ['#3182F6', '#7C3AED', '#059669', '#D97706', '#EC4899', '#6B7280'];
+
+// Group types
+interface GroupWithStats {
+  id: string;
+  name: string;
+  description: string | null;
+  iconEmoji: string | null;
+  color: string | null;
+  ownerId: string;
+  isActive: number;
+  memberCount: number;
+  analysisCount: number;
+  lastActivityAt: string | null;
+  createdAt: string | null;
+}
+
+interface GroupMemberWithUser {
+  id: string;
+  groupId: string;
+  userId: string;
+  role: string;
+  joinedAt: string | null;
+  user: {
+    id: string;
+    email: string | null;
+    displayName: string | null;
+    profileImageUrl: string | null;
+  };
+  analysisCount?: number;
+  lastAnalyzedAt?: string | null;
+}
+
+interface GroupAnalysis {
+  id: string;
+  profileId: string;
+  title: string | null;
+  desiredJob: string | null;
+  createdAt: string | null;
+  aiResult: any;
+  user: {
+    id: string;
+    email: string | null;
+    displayName: string | null;
+  };
+}
+
+// Group Management Tab Component
+function GroupManagementTab() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedGroup, setSelectedGroup] = useState<GroupWithStats | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showMemberModal, setShowMemberModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupDescription, setNewGroupDescription] = useState("");
+  const [newGroupEmoji, setNewGroupEmoji] = useState("👥");
+  const [newGroupColor, setNewGroupColor] = useState("#3B82F6");
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberRole, setNewMemberRole] = useState<string>("member");
+  const [viewMode, setViewMode] = useState<'groups' | 'members' | 'analyses'>('groups');
+
+  // Fetch all groups
+  const { data: groups = [], isLoading: isLoadingGroups, refetch: refetchGroups } = useQuery<GroupWithStats[]>({
+    queryKey: ['/api/admin/groups'],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/groups', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch groups');
+      return res.json();
+    },
+  });
+
+  // Fetch group members when a group is selected
+  const { data: groupMembers = [], isLoading: isLoadingMembers, refetch: refetchMembers } = useQuery<GroupMemberWithUser[]>({
+    queryKey: ['/api/admin/groups', selectedGroup?.id, 'members'],
+    queryFn: async () => {
+      if (!selectedGroup) return [];
+      const res = await fetch(`/api/admin/groups/${selectedGroup.id}/members`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch members');
+      return res.json();
+    },
+    enabled: !!selectedGroup,
+  });
+
+  // Fetch group analyses when viewing analyses
+  const { data: groupAnalyses = [], isLoading: isLoadingAnalyses, refetch: refetchAnalyses } = useQuery<GroupAnalysis[]>({
+    queryKey: ['/api/admin/groups', selectedGroup?.id, 'analyses'],
+    queryFn: async () => {
+      if (!selectedGroup) return [];
+      const res = await fetch(`/api/admin/groups/${selectedGroup.id}/analyses`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch analyses');
+      return res.json();
+    },
+    enabled: !!selectedGroup && viewMode === 'analyses',
+  });
+
+  // Create group
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim()) {
+      toast({ title: "오류", description: "그룹 이름을 입력하세요.", variant: "destructive" });
+      return;
+    }
+    try {
+      await apiRequest('POST', '/api/admin/groups', {
+        name: newGroupName,
+        description: newGroupDescription || null,
+        iconEmoji: newGroupEmoji,
+        color: newGroupColor,
+      });
+      toast({ title: "성공", description: "그룹이 생성되었습니다." });
+      setShowCreateModal(false);
+      setNewGroupName("");
+      setNewGroupDescription("");
+      setNewGroupEmoji("👥");
+      setNewGroupColor("#3B82F6");
+      refetchGroups();
+    } catch (error: any) {
+      toast({ title: "오류", description: error.message || "그룹 생성에 실패했습니다.", variant: "destructive" });
+    }
+  };
+
+  // Add member to group
+  const handleAddMember = async () => {
+    if (!newMemberEmail.trim() || !selectedGroup) {
+      toast({ title: "오류", description: "이메일을 입력하세요.", variant: "destructive" });
+      return;
+    }
+    try {
+      await apiRequest('POST', `/api/admin/groups/${selectedGroup.id}/members`, {
+        userEmail: newMemberEmail,
+        role: newMemberRole,
+      });
+      toast({ title: "성공", description: "멤버가 추가되었습니다." });
+      setShowMemberModal(false);
+      setNewMemberEmail("");
+      setNewMemberRole("member");
+      refetchMembers();
+      refetchGroups();
+    } catch (error: any) {
+      toast({ title: "오류", description: error.message || "멤버 추가에 실패했습니다.", variant: "destructive" });
+    }
+  };
+
+  // Remove member from group
+  const handleRemoveMember = async (memberId: string) => {
+    if (!selectedGroup) return;
+    try {
+      await apiRequest('DELETE', `/api/admin/groups/${selectedGroup.id}/members/${memberId}`);
+      toast({ title: "성공", description: "멤버가 제거되었습니다." });
+      refetchMembers();
+      refetchGroups();
+    } catch (error: any) {
+      toast({ title: "오류", description: error.message || "멤버 제거에 실패했습니다.", variant: "destructive" });
+    }
+  };
+
+  // Update member role
+  const handleUpdateMemberRole = async (memberId: string, role: string) => {
+    if (!selectedGroup) return;
+    try {
+      await apiRequest('PATCH', `/api/admin/groups/${selectedGroup.id}/members/${memberId}/role`, { role });
+      toast({ title: "성공", description: "역할이 변경되었습니다." });
+      refetchMembers();
+    } catch (error: any) {
+      toast({ title: "오류", description: error.message || "역할 변경에 실패했습니다.", variant: "destructive" });
+    }
+  };
+
+  // Delete group
+  const handleDeleteGroup = async (groupId: string) => {
+    if (!confirm("정말 이 그룹을 삭제하시겠습니까?")) return;
+    try {
+      await apiRequest('DELETE', `/api/admin/groups/${groupId}`);
+      toast({ title: "성공", description: "그룹이 삭제되었습니다." });
+      if (selectedGroup?.id === groupId) {
+        setSelectedGroup(null);
+        setViewMode('groups');
+      }
+      refetchGroups();
+    } catch (error: any) {
+      toast({ title: "오류", description: error.message || "그룹 삭제에 실패했습니다.", variant: "destructive" });
+    }
+  };
+
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'owner':
+        return <Badge className="bg-amber-500 text-white"><Crown className="h-3 w-3 mr-1" />소유자</Badge>;
+      case 'admin':
+        return <Badge className="bg-purple-500 text-white"><Shield className="h-3 w-3 mr-1" />관리자</Badge>;
+      default:
+        return <Badge className="bg-gray-500 text-white"><User className="h-3 w-3 mr-1" />멤버</Badge>;
+    }
+  };
+
+  // Group list view
+  if (viewMode === 'groups' || !selectedGroup) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">그룹 목록</h3>
+          <Button onClick={() => setShowCreateModal(true)} className="bg-[#3182F6]" data-testid="button-create-group">
+            <Plus className="h-4 w-4 mr-2" />
+            새 그룹 만들기
+          </Button>
+        </div>
+
+        {isLoadingGroups ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+          </div>
+        ) : groups.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center text-[#8B95A1]">
+              <Users2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>아직 생성된 그룹이 없습니다.</p>
+              <p className="text-sm mt-2">새 그룹을 만들어 회원들을 관리해 보세요.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {groups.map(group => (
+              <Card 
+                key={group.id} 
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => { setSelectedGroup(group); setViewMode('members'); }}
+                data-testid={`card-group-${group.id}`}
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{group.iconEmoji || '👥'}</span>
+                      <CardTitle className="text-lg">{group.name}</CardTitle>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group.id); }}
+                      data-testid={`button-delete-group-${group.id}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {group.description && (
+                    <p className="text-sm text-[#8B95A1] mb-3 line-clamp-2">{group.description}</p>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4 text-[#8B95A1]" />
+                      <span>{group.memberCount}명</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <BarChart3 className="h-4 w-4 text-[#8B95A1]" />
+                      <span>분석 {group.analysisCount}건</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Create Group Modal */}
+        <AlertDialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>새 그룹 만들기</AlertDialogTitle>
+              <AlertDialogDescription>
+                그룹을 만들어 회원들을 관리하고 분석 결과를 확인하세요.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <label className="text-sm font-medium">그룹 이름 *</label>
+                <Input 
+                  value={newGroupName} 
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="예: 2025년 신입사원반"
+                  className="mt-1"
+                  data-testid="input-group-name"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">설명</label>
+                <Input 
+                  value={newGroupDescription} 
+                  onChange={(e) => setNewGroupDescription(e.target.value)}
+                  placeholder="그룹 설명을 입력하세요"
+                  className="mt-1"
+                  data-testid="input-group-description"
+                />
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="text-sm font-medium">아이콘</label>
+                  <Input 
+                    value={newGroupEmoji} 
+                    onChange={(e) => setNewGroupEmoji(e.target.value)}
+                    placeholder="👥"
+                    className="mt-1 text-center text-2xl"
+                    maxLength={2}
+                    data-testid="input-group-emoji"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm font-medium">색상</label>
+                  <Input 
+                    type="color"
+                    value={newGroupColor} 
+                    onChange={(e) => setNewGroupColor(e.target.value)}
+                    className="mt-1 h-10 p-1"
+                    data-testid="input-group-color"
+                  />
+                </div>
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>취소</AlertDialogCancel>
+              <AlertDialogAction onClick={handleCreateGroup} className="bg-[#3182F6]">
+                그룹 만들기
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    );
+  }
+
+  // Group detail view (members or analyses)
+  return (
+    <div className="space-y-4">
+      {/* Header with back button */}
+      <div className="flex items-center gap-4">
+        <Button 
+          variant="ghost" 
+          onClick={() => { setSelectedGroup(null); setViewMode('groups'); }}
+          data-testid="button-back-to-groups"
+        >
+          ← 그룹 목록
+        </Button>
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">{selectedGroup.iconEmoji || '👥'}</span>
+          <h3 className="text-lg font-semibold">{selectedGroup.name}</h3>
+        </div>
+      </div>
+
+      {/* Sub-tabs for members and analyses */}
+      <div className="flex gap-2 border-b pb-2">
+        <Button 
+          variant={viewMode === 'members' ? 'default' : 'ghost'}
+          onClick={() => setViewMode('members')}
+          className={viewMode === 'members' ? 'bg-[#3182F6]' : ''}
+          data-testid="button-view-members"
+        >
+          <Users className="h-4 w-4 mr-2" />
+          멤버 ({selectedGroup.memberCount})
+        </Button>
+        <Button 
+          variant={viewMode === 'analyses' ? 'default' : 'ghost'}
+          onClick={() => setViewMode('analyses')}
+          className={viewMode === 'analyses' ? 'bg-[#3182F6]' : ''}
+          data-testid="button-view-analyses"
+        >
+          <BarChart3 className="h-4 w-4 mr-2" />
+          분석 결과 ({selectedGroup.analysisCount})
+        </Button>
+      </div>
+
+      {/* Members view */}
+      {viewMode === 'members' && (
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={() => setShowMemberModal(true)} className="bg-[#3182F6]" data-testid="button-add-member">
+              <UserPlus className="h-4 w-4 mr-2" />
+              멤버 추가
+            </Button>
+          </div>
+
+          {isLoadingMembers ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
+            </div>
+          ) : groupMembers.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-[#8B95A1]">
+                <UserPlus className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>아직 멤버가 없습니다.</p>
+                <p className="text-sm mt-2">이메일로 멤버를 초대하세요.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {groupMembers.map(member => (
+                <Card key={member.id} data-testid={`card-member-${member.id}`}>
+                  <CardContent className="py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-[#F2F4F6] flex items-center justify-center">
+                          {member.user.profileImageUrl ? (
+                            <img src={member.user.profileImageUrl} alt="" className="w-10 h-10 rounded-full" />
+                          ) : (
+                            <User className="h-5 w-5 text-[#8B95A1]" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium">{member.user.displayName || member.user.email || '이름 없음'}</div>
+                          <div className="text-sm text-[#8B95A1]">{member.user.email}</div>
+                        </div>
+                        {getRoleBadge(member.role)}
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-sm text-[#8B95A1]">
+                          분석 {member.analysisCount || 0}건
+                        </div>
+                        {member.role !== 'owner' && (
+                          <div className="flex items-center gap-2">
+                            <Select 
+                              value={member.role} 
+                              onValueChange={(role) => handleUpdateMemberRole(member.userId, role)}
+                            >
+                              <SelectTrigger className="w-24 h-8" data-testid={`select-role-${member.id}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="member">멤버</SelectItem>
+                                <SelectItem value="admin">관리자</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-500 hover:text-red-700"
+                              onClick={() => handleRemoveMember(member.userId)}
+                              data-testid={`button-remove-member-${member.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Add Member Modal */}
+          <AlertDialog open={showMemberModal} onOpenChange={setShowMemberModal}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>멤버 추가</AlertDialogTitle>
+                <AlertDialogDescription>
+                  이메일 주소로 기존 회원을 그룹에 추가합니다.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <label className="text-sm font-medium">이메일 주소 *</label>
+                  <Input 
+                    value={newMemberEmail} 
+                    onChange={(e) => setNewMemberEmail(e.target.value)}
+                    placeholder="member@example.com"
+                    className="mt-1"
+                    data-testid="input-member-email"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">역할</label>
+                  <Select value={newMemberRole} onValueChange={setNewMemberRole}>
+                    <SelectTrigger className="mt-1" data-testid="select-member-role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="member">멤버</SelectItem>
+                      <SelectItem value="admin">관리자</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction onClick={handleAddMember} className="bg-[#3182F6]">
+                  멤버 추가
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
+
+      {/* Analyses view */}
+      {viewMode === 'analyses' && (
+        <div className="space-y-4">
+          {isLoadingAnalyses ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
+            </div>
+          ) : groupAnalyses.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-[#8B95A1]">
+                <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>아직 분석 결과가 없습니다.</p>
+                <p className="text-sm mt-2">멤버들이 진로 분석을 진행하면 여기에 표시됩니다.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {groupAnalyses.map(analysis => (
+                <Card key={analysis.id} data-testid={`card-analysis-${analysis.id}`}>
+                  <CardContent className="py-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">{analysis.user.displayName || analysis.user.email || '이름 없음'}</div>
+                        <div className="text-sm text-[#8B95A1]">{analysis.user.email}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium text-[#3182F6]">{analysis.desiredJob || analysis.title || '직업 미정'}</div>
+                        <div className="text-sm text-[#8B95A1]">
+                          {analysis.createdAt ? new Date(analysis.createdAt).toLocaleDateString('ko-KR') : '날짜 없음'}
+                        </div>
+                      </div>
+                    </div>
+                    {analysis.aiResult?.summary && (
+                      <p className="mt-3 text-sm text-[#4E5968] line-clamp-2">{analysis.aiResult.summary}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Admin() {
   const { toast } = useToast();
@@ -889,6 +1427,10 @@ export default function Admin() {
             <TabsTrigger value="giftpoints" className="rounded-lg px-4" data-testid="tab-giftpoints">
               <Gift className="h-4 w-4 mr-2" />
               기프트 포인트
+            </TabsTrigger>
+            <TabsTrigger value="groups" className="rounded-lg px-4" data-testid="tab-groups">
+              <Users2 className="h-4 w-4 mr-2" />
+              그룹 관리
             </TabsTrigger>
           </TabsList>
 
@@ -2840,6 +3382,11 @@ export default function Admin() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Groups Management Tab */}
+          <TabsContent value="groups" className="space-y-6">
+            <GroupManagementTab />
           </TabsContent>
         </Tabs>
       </div>
