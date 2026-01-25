@@ -1,0 +1,117 @@
+[REPLIT용 명령 프롬프트] KONNECT 진로진단 “기존 결과 100% 유지” + 추가 결과(RIASEC/업무성향4축/직무기질4) 병행 출력
+
+최우선 원칙(절대 변경 금지)
+1) 현재 운영 중인 진로진단의 결과 산출 로직/점수/추천직업/문구/DB 저장 형태는 절대 수정하지 않는다.
+2) 기존 결과 UI(구성/순서/텍스트)도 그대로 유지한다.
+3) 이번 작업은 “추가 결과(확장 패널)”를 붙이는 형태로만 구현한다.
+4) 기존 결과와 추가 결과는 서로 영향을 주지 않으며, 기존 결과의 점수/추천이 달라지면 안 된다.
+
+목표
+- 사용자가 현재 진로진단을 완료하면,
+  A) 기존 결과(현재 화면) 그대로 표시
+  B) 그 아래(또는 별도 탭)에 “추가 분석 결과” 섹션을 새로 표시
+- 추가 분석 결과는 다음 3종으로 구성한다.
+  1) 직무성향: RIASEC(홀랜드) 점수 + 상위 3개 코드(I-A-S 등)
+  2) 업무성향 4축(유사 MBTI): 대인/개인, 사실/아이디어, 논리/공감, 구조/유연
+  3) 직무기질 프로파일(TCI Lite): 변화선호, 안정선호, 지속력, 대인민감도
+- 주의: 화면/문구 어디에도 “MBTI”, “TCI” 정식 검사명 표기 금지.
+  대신 “업무성향 4축”, “직무기질 프로파일” 명칭 사용.
+
+구현 방식(아키텍처 지시)
+1) 기존 결과 함수는 그대로 둔다.
+- 예: getLegacyResult(answers) 또는 calculateCareerResult(answers)
+- 이 함수의 입력/출력/호출 위치를 변경하지 않는다.
+
+2) 추가 결과는 완전히 별도 모듈/함수로 만든다.
+- 새 함수명 예:
+  getExtendedResult(questions, answers) -> extendedResult
+- 기존 결과와 동일한 answers를 읽어 오되,
+  기존 결과에 사용되는 내부 변수/점수에 접근하거나 수정하지 않는다.
+- extendedResult는 별도 키로만 저장/전달:
+  result = { legacy: legacyResult, extended: extendedResult }
+
+3) UI도 기존 결과 컴포넌트는 그대로 두고,
+  아래에 새 컴포넌트를 추가로 렌더링한다.
+- 예:
+  <LegacyResultView data={legacyResult} />
+  <ExtendedResultView data={extendedResult} />
+- 기존 컴포넌트 props, 레이아웃, 스타일을 바꾸지 않는다.
+
+추가 결과(extended) 데이터 스펙
+extendedResult = {
+  riasec: { R:0-100, I:0-100, A:0-100, S:0-100, E:0-100, C:0-100, top3:["I","A","S"], code:"I-A-S", narrative:"..." },
+  workStyle4: {
+    axis1: { leftLabel:"대인 중심", rightLabel:"개인 몰입", left:0-100, right:0-100, verdict:"대인 중심/개인 몰입/균형형" },
+    axis2: { leftLabel:"사실/경험", rightLabel:"아이디어/가능성", left:0-100, right:0-100, verdict:"..." },
+    axis3: { leftLabel:"논리 기반", rightLabel:"공감/가치", left:0-100, right:0-100, verdict:"..." },
+    axis4: { leftLabel:"구조/계획", rightLabel:"유연/즉흥", left:0-100, right:0-100, verdict:"..." },
+    narrative:"..."
+  },
+  temperament4: { novelty:0-100, stability:0-100, persistence:0-100, sensitivity:0-100, narrative:"..." },
+  evidence: { highlights:[...], caution:"본 결과는 진로상담 참고자료이며 임상/심리진단이 아닙니다." },
+  quality: { warnings:[...], coverage:{riasec:0-1, work:0-1, temp:0-1} }
+}
+
+추가 결과 산출 로직(독립 구현)
+1) “문항 → 척도 매핑표(MAP)”를 별도 파일로 둔다.
+- 예: constants/extendedDiagnosisMap.ts
+- 형태:
+  MAP = {
+    "Q1": { riasec:{R:1}, work:{axis1_left:1}, temp:{}, reverse:false },
+    "Q2": { riasec:{I:1}, work:{axis3_left:1}, temp:{persistence:0.5}, reverse:false },
+    ...
+  }
+- reverse=true 문항은 norm = 1 - norm
+- likert5: norm=(v-1)/4, binary: norm=v
+
+2) 척도별 점수는 0~100으로 정규화
+- sum(score * weight) / sum(maxPossible * weight) * 100
+- maxPossible은 norm 기준 1로 계산
+
+3) 업무성향 4축 판정 규칙(과장 금지)
+- 축의 양쪽 점수 차이가 12점 이상이면 높은 쪽을 “선호”
+- 미만이면 “균형형”
+
+4) 품질 경고(quality.warnings)
+- 해당 축에 연결된 문항이 2개 미만이면:
+  “해당 축은 문항 수가 적어 추정 정확도가 낮을 수 있습니다.”
+- 경고는 ExtendedResultView 하단에 노출
+
+근거(evidence) 생성(투명성)
+- 각 척도에 기여도가 큰 문항 TOP 6 추출
+  항목: { questionId, questionText, answer, affected:["I","axis3_left","persistence"], note:"이 응답이 ~ 성향 점수에 기여" }
+- note는 1문장, 단정 금지
+
+저장/로그 정책(레거시 영향 금지)
+- 기존 DB 저장 스키마는 절대 변경하지 않는다.
+- 추가 결과는 다음 중 택1:
+  옵션 A) DB 저장하지 않고 화면에서만 생성/표시
+  옵션 B) 별도 컬렉션/테이블/필드(extended_result_json)로 신규 저장
+- 어떤 옵션이든 기존 컬럼 변경 금지.
+- 저장 시 사용자 동의 플로우 유지.
+
+UI 배치 지시(기존 화면 유지)
+- 기존 결과 영역 아래에 “추가 분석 결과” 섹션을 Collapsible(접기/펼치기)로 추가
+- 기본값은 “접힘” 또는 “요약만 표시”
+- 요약 카드 3개:
+  - RIASEC 코드
+  - 업무성향 요약 1~2문장
+  - 직무기질 요약 1~2문장
+- “자세히 보기” 클릭 시 탭 3개 노출:
+  1) 직무성향(RIASEC)
+  2) 업무성향 4축
+  3) 직무기질 프로파일
+- 그래프는 막대그래프(권장) 또는 레이더(선택)
+
+검증(필수 테스트)
+- 동일 answers 입력 시:
+  legacyResult(기존 결과)가 변경되지 않는지 스냅샷 테스트 추가
+- extendedResult는 answers에만 의존하고 legacyResult를 참조/수정하지 않는지 확인
+- A/B 비교: 배포 전, 기존 결과 텍스트/점수/추천직업 완전 동일해야 함
+
+제약
+- 사실 기반 출력만. 사용자 인격/정신건강 단정 금지.
+- “MBTI/TCI” 명칭 사용 금지.
+- 기존 결과 화면/로직 변경 금지(추가만 허용).
+
+위 지시대로 구현해라. 기존 진로진단 결과는 그대로 유지하면서, 추가 분석 결과 섹션을 병행 출력하라.
