@@ -1709,3 +1709,181 @@ function getProfileContextForKompass(profile: Profile, userAge: number | null): 
   
   return context;
 }
+
+// ============================================================================
+// AI Kompass Full Action Plan Generation - Generate all levels at once
+// ============================================================================
+
+export interface FullActionPlanResult {
+  years: Array<{
+    id: string;
+    title: string;
+    description: string;
+    halves: Array<{
+      id: string;
+      title: string;
+      description: string;
+      months: Array<{
+        id: string;
+        title: string;
+        tasks: string[];
+        weeks: Array<{
+          id: string;
+          title: string;
+          tasks: string[];
+          days: Array<{
+            id: string;
+            todos: string[];
+          }>;
+        }>;
+      }>;
+    }>;
+  }>;
+  rawResponse: string;
+  tokenUsage: TokenUsage;
+}
+
+export async function generateFullActionPlan(
+  visionTitle: string,
+  visionDescription: string,
+  targetYear: number,
+  visionStructure: {
+    years: Array<{
+      id: string;
+      dateDisplay: string;
+      halves: Array<{
+        id: string;
+        dateDisplay: string;
+        months: Array<{
+          id: string;
+          dateDisplay: string;
+          weeks: Array<{
+            id: string;
+            dateDisplay: string;
+            days: Array<{
+              id: string;
+              dateDisplay: string;
+            }>;
+          }>;
+        }>;
+      }>;
+    }>;
+  }
+): Promise<FullActionPlanResult> {
+  return throttleClaudeCall(() =>
+    retryWithBackoff(
+      async () => {
+        const startYear = new Date().getFullYear();
+        const yearsCount = visionStructure.years.length;
+        
+        const systemPrompt = `당신은 목표 설정 및 실행 계획 전문가입니다. 최종 목표를 달성하기 위한 체계적인 단계별 실행 계획을 생성합니다.
+
+규칙:
+1. 모든 응답은 한국어로 작성
+2. 각 기간의 목표는 상위 목표 달성에 직접적으로 기여해야 함
+3. 구체적이고 측정 가능한 목표 설정
+4. 현실적이고 실현 가능한 계획 수립
+5. JSON 형식으로만 응답
+6. 각 레벨별 핵심 과제를 명확히 제시`;
+
+        const userPrompt = `## 최종 목표
+- 목표: ${visionTitle}
+- 목표 달성 연도: ${targetYear}년
+${visionDescription ? `- 설명: ${visionDescription}` : ''}
+
+## 계획 기간
+- 시작 연도: ${startYear}년
+- 총 ${yearsCount}년 계획 (${visionStructure.years.map(y => y.dateDisplay + '년').join(', ')})
+
+## 요청
+위 목표를 달성하기 위한 완전한 실행 계획을 생성해주세요. 연간 → 반기별 → 월간 → 주간 → 일간 목표를 모두 포함해야 합니다.
+
+**단, 주간/일간 목표는 현재 연도의 첫 번째 월에 대해서만 상세히 작성하세요. 나머지 월은 주간/일간 목표를 생략합니다.**
+
+응답 형식:
+{
+  "years": [
+    {
+      "id": "${visionStructure.years[0]?.id || 'year1'}",
+      "title": "올해의 핵심 목표 (10자 이내)",
+      "description": "올해 집중해야 할 3가지 핵심 과제를 bullet으로",
+      "halves": [
+        {
+          "id": "half_id",
+          "title": "상반기 핵심 목표",
+          "description": "이 반기의 핵심 과제 3가지",
+          "months": [
+            {
+              "id": "month_id",
+              "title": "월간 목표",
+              "tasks": ["핵심 과제 1", "핵심 과제 2", "핵심 과제 3"],
+              "weeks": [
+                {
+                  "id": "week_id",
+                  "title": "주간 목표",
+                  "tasks": ["주간 과제 1", "주간 과제 2"],
+                  "days": [
+                    { "id": "day_id", "todos": ["할 일 1", "할 일 2", "할 일 3"] }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+중요:
+- 각 title은 핵심 키워드만 간결하게 (10자 이내)
+- description과 tasks는 bullet 형식의 구체적인 실행 과제
+- 첫 번째 월의 모든 주(4-5주)와 각 주의 모든 일(7일)에 대해 todos 생성
+- 두 번째 월 이후로는 weeks 배열을 빈 배열 []로 반환
+
+**반드시 유효한 JSON만 반환하세요. 추가 설명 없이 JSON만 출력하세요.**`;
+
+        const message = await anthropic.messages.create({
+          model: "claude-sonnet-4-5",
+          max_tokens: 12000,
+          system: systemPrompt,
+          messages: [
+            {
+              role: "user",
+              content: userPrompt,
+            },
+          ],
+        });
+
+        const tokenUsage = extractTokenUsage(message);
+        
+        const msgContent = message.content[0];
+        if (msgContent.type !== "text") {
+          throw new Error("Unexpected response type");
+        }
+
+        const rawResponse = msgContent.text;
+        
+        // Parse JSON from response
+        const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error("No valid JSON found in response");
+        }
+
+        const parsed = safeParseJSON(jsonMatch[0]);
+        
+        return {
+          years: parsed.years || [],
+          rawResponse,
+          tokenUsage,
+        };
+      },
+      {
+        retries: 3,
+        minTimeout: 2000,
+        maxTimeout: 32000,
+        factor: 2,
+      }
+    )
+  );
+}

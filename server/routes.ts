@@ -1511,6 +1511,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate all goal levels at once (year, half, month, week, day)
+  app.post('/api/goals/ai-suggest-all', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { visionTitle, visionDescription, targetYear, visionStructure } = req.body;
+      
+      if (!visionTitle || !targetYear || !visionStructure) {
+        return res.status(400).json({ message: "필수 데이터가 누락되었습니다." });
+      }
+      
+      // Check rate limit
+      const rateLimitResult = await checkAIRateLimit(userId, "goals");
+      res.setHeader("X-RateLimit-Limit", rateLimitResult.limit);
+      res.setHeader("X-RateLimit-Remaining", rateLimitResult.remaining);
+      res.setHeader("X-RateLimit-Reset", rateLimitResult.reset);
+      if (!rateLimitResult.success) {
+        return res.status(429).json({ 
+          message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+          retryAfter: rateLimitResult.retryAfter
+        });
+      }
+
+      // Full plan generation costs 100 points
+      const planCost = 100;
+      
+      // Deduct with GP priority
+      const deductResult = await storage.deductUserPointsWithPriority(userId, planCost, '전체 액션 플랜 생성');
+      if (!deductResult.success) {
+        if (deductResult.errorCode === 'insufficient_balance') {
+          return res.status(402).json({ 
+            message: `포인트가 부족합니다. 전체 액션 플랜 생성을 위해 ${planCost} 포인트가 필요합니다.`,
+            requiredCredits: deductResult.totalRequired,
+            currentCredits: deductResult.creditBalance,
+            giftPoints: deductResult.gpBalance,
+          });
+        }
+        return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
+      }
+
+      // Create AI job record
+      const job = await storage.createAiJob({
+        userId,
+        profileId: null,
+        type: 'goal',
+        status: 'processing',
+        progress: 0,
+        payload: { type: 'full_plan', visionTitle, targetYear },
+      });
+
+      const { generateFullActionPlan } = await import('./ai');
+      const result = await generateFullActionPlan(
+        visionTitle,
+        visionDescription || '',
+        targetYear,
+        visionStructure
+      );
+
+      // Save token usage
+      const tokenUsage = result.tokenUsage ? {
+        inputTokens: result.tokenUsage.inputTokens,
+        outputTokens: result.tokenUsage.outputTokens,
+        cacheReadTokens: result.tokenUsage.cacheReadTokens,
+        cacheWriteTokens: result.tokenUsage.cacheWriteTokens,
+        totalTokens: result.tokenUsage.totalTokens,
+        estimatedCostCents: result.tokenUsage.estimatedCostCents,
+      } : undefined;
+      
+      await storage.updateAiJobResult(job.id, result, tokenUsage);
+
+      // Get updated user credits
+      const user = await storage.getUser(userId);
+
+      res.json({
+        years: result.years,
+        creditsUsed: planCost,
+        remainingCredits: user?.credits,
+        tokenUsage: tokenUsage,
+      });
+    } catch (error: any) {
+      console.error("Error generating full action plan:", error);
+      res.status(500).json({ message: "전체 액션 플랜 생성 중 오류가 발생했습니다.", details: error?.message });
+    }
+  });
+
   // ===== AI JOB QUEUE ENDPOINTS =====
   
   // Submit a new AI job
