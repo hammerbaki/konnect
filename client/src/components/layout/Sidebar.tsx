@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   PieChart,
@@ -21,10 +22,18 @@ import {
   Globe,
   Brain,
   Mic,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 import { usePageAccess } from "@/lib/usePageAccess";
+import { getAuthHeaders } from "@/lib/queryClient";
+
+interface ManagedGroup {
+  id: string;
+  name: string;
+  role: string;
+}
 
 const profileSubItems = [
   { id: "general", label: "구직자", icon: Briefcase },
@@ -37,11 +46,27 @@ const profileSubItems = [
 
 export function Sidebar() {
   const [location, setLocation] = useLocation();
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const { canAccess, userRole } = usePageAccess();
   const [profileExpanded, setProfileExpanded] = useState(location.startsWith("/profile"));
+  const [groupsExpanded, setGroupsExpanded] = useState(location.startsWith("/group"));
 
   const isAdminOrStaff = userRole === "admin" || userRole === "staff";
+
+  const { data: managedGroups = [] } = useQuery<ManagedGroup[]>({
+    queryKey: ["managed-groups"],
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/my-managed-groups", {
+        headers,
+        credentials: "include",
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const handleLogout = async () => {
     await logout();
@@ -175,6 +200,65 @@ export function Sidebar() {
               </Link>
             );
           })}
+          
+          {managedGroups.length > 0 && (
+            <div className="pt-4 mt-4 border-t border-[#F2F4F6]">
+              <button
+                onClick={() => setGroupsExpanded(!groupsExpanded)}
+                className={cn(
+                  "flex w-full items-center gap-4 rounded-xl px-5 py-4 text-base font-semibold transition-all duration-200",
+                  location.startsWith("/group")
+                    ? "bg-white text-[#3182F6] shadow-sm"
+                    : "text-[#8B95A1] hover:bg-white/50 hover:text-[#4E5968]",
+                )}
+                data-testid="button-groups-menu-toggle"
+              >
+                <Users
+                  className={cn(
+                    "h-5 w-5",
+                    location.startsWith("/group") ? "text-[#3182F6]" : "text-[#B0B8C1]",
+                  )}
+                />
+                그룹 대시보드
+                <span className="ml-auto">
+                  {groupsExpanded ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </span>
+              </button>
+              
+              {groupsExpanded && (
+                <div className="ml-4 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-200">
+                  {managedGroups.map((group) => {
+                    const groupHref = `/group/${group.id}`;
+                    const isActive = location === groupHref || location.startsWith(`/group/${group.id}/`);
+                    
+                    return (
+                      <Link
+                        key={group.id}
+                        href={groupHref}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200",
+                          isActive
+                            ? "bg-blue-50 text-[#3182F6]"
+                            : "text-[#8B95A1] hover:bg-gray-50 hover:text-[#4E5968]",
+                        )}
+                        data-testid={`link-group-${group.id}`}
+                      >
+                        <GraduationCap className={cn(
+                          "h-4 w-4",
+                          isActive ? "text-[#3182F6]" : "text-[#B0B8C1]"
+                        )} />
+                        {group.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         <div className="mt-auto pt-4 border-t border-[#F2F4F6] space-y-2 mb-2">

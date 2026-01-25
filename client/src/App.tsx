@@ -31,6 +31,8 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const MyTest = lazy(() => import("./pages/MyTest"));
 const Interview = lazy(() => import("./pages/Interview"));
+const GroupDashboard = lazy(() => import("./pages/GroupDashboard"));
+const GroupMemberDetail = lazy(() => import("./pages/GroupMemberDetail"));
 
 function LoadingSpinner() {
   return (
@@ -173,6 +175,12 @@ function Router() {
               <Interview {...params} />
             </RoleProtectedRoute>
           )}
+        </Route>
+        <Route path="/group/:groupId">
+          {(params) => <ProtectedRoute component={GroupDashboard} {...params} />}
+        </Route>
+        <Route path="/group/:groupId/member/:memberId">
+          {(params) => <ProtectedRoute component={GroupMemberDetail} {...params} />}
         </Route>
         <Route component={NotFound} />
       </Switch>

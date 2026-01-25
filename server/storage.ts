@@ -321,6 +321,60 @@ export interface IStorage {
   getGroupMemberAnalyses(groupId: string): Promise<Array<CareerAnalysis & { user: Pick<User, 'id' | 'email' | 'displayName'> }>>;
   getUserManagedGroupMemberIds(userId: string): Promise<string[]>;
   getUserManagedGroups(userId: string): Promise<Array<Group & { role: GroupMemberRole }>>;
+  getGroupStats(groupId: string): Promise<{
+    totalMembers: number;
+    completedAnalyses: number;
+    completedProfiles: number;
+    completedGoals: number;
+    completedEssays: number;
+    progressRate: number;
+  }>;
+  getGroupMemberProgress(groupId: string): Promise<Array<{
+    userId: string;
+    email: string;
+    displayName: string | null;
+    profileImageUrl: string | null;
+    hasProfile: boolean;
+    hasAnalysis: boolean;
+    hasGoals: boolean;
+    hasEssay: boolean;
+    analysisDate: string | null;
+    profileType: string | null;
+    progressScore: number;
+  }>>;
+  getGroupMemberDetail(memberId: string): Promise<{
+    user: {
+      id: string;
+      email: string;
+      displayName: string | null;
+      profileImageUrl: string | null;
+      createdAt: string;
+    };
+    profile: {
+      id: string;
+      profileType: string;
+      name: string | null;
+      createdAt: string;
+      updatedAt: string | null;
+    } | null;
+    analysis: {
+      id: string;
+      status: string;
+      createdAt: string;
+      analysisResult: any;
+    } | null;
+    goals: Array<{
+      id: string;
+      title: string;
+      status: string;
+      progress: number;
+    }>;
+    essays: Array<{
+      id: string;
+      title: string | null;
+      createdAt: string;
+    }>;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2646,6 +2700,314 @@ export class DatabaseStorage implements IStorage {
     
     // Return unique user IDs
     return Array.from(new Set(members.map(m => m.userId)));
+  }
+
+  async getGroupStats(groupId: string): Promise<{
+    totalMembers: number;
+    completedAnalyses: number;
+    completedProfiles: number;
+    completedGoals: number;
+    completedEssays: number;
+    progressRate: number;
+  }> {
+    // Get all group member user IDs
+    const memberRows = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, groupId));
+    
+    const memberUserIds = memberRows.map(m => m.userId);
+    const totalMembers = memberUserIds.length;
+    
+    if (totalMembers === 0) {
+      return {
+        totalMembers: 0,
+        completedAnalyses: 0,
+        completedProfiles: 0,
+        completedGoals: 0,
+        completedEssays: 0,
+        progressRate: 0,
+      };
+    }
+    
+    // Get profiles for these users
+    const userProfiles = await db
+      .select()
+      .from(profiles)
+      .where(inArray(profiles.userId, memberUserIds));
+    
+    const completedProfiles = new Set(userProfiles.map(p => p.userId)).size;
+    const profileIds = userProfiles.map(p => p.id);
+    
+    // Get analyses (any analysis counts as completed since schema doesn't have status)
+    let completedAnalyses = 0;
+    if (profileIds.length > 0) {
+      const analyses = await db
+        .select()
+        .from(careerAnalyses)
+        .where(inArray(careerAnalyses.profileId, profileIds));
+      const usersWithAnalysis = new Set(
+        analyses.map(a => userProfiles.find(p => p.id === a.profileId)?.userId)
+      );
+      completedAnalyses = usersWithAnalysis.size;
+    }
+    
+    // Get profiles with goals (goals are linked via profileId)
+    let completedGoals = 0;
+    if (profileIds.length > 0) {
+      const goalsResult = await db
+        .select({ profileId: kompassGoals.profileId })
+        .from(kompassGoals)
+        .where(inArray(kompassGoals.profileId, profileIds));
+      const profilesWithGoals = new Set(goalsResult.map(g => g.profileId));
+      const usersWithGoals = new Set(
+        Array.from(profilesWithGoals).map(pId => userProfiles.find(p => p.id === pId)?.userId)
+      );
+      completedGoals = usersWithGoals.size;
+    }
+    
+    // Get profiles with essays (essays are linked via profileId)
+    let completedEssays = 0;
+    if (profileIds.length > 0) {
+      const essaysResult = await db
+        .select({ profileId: personalEssays.profileId })
+        .from(personalEssays)
+        .where(inArray(personalEssays.profileId, profileIds));
+      const profilesWithEssays = new Set(essaysResult.map(e => e.profileId));
+      const usersWithEssays = new Set(
+        Array.from(profilesWithEssays).map(pId => userProfiles.find(p => p.id === pId)?.userId)
+      );
+      completedEssays = usersWithEssays.size;
+    }
+    
+    // Calculate progress rate (average of profile + analysis completion)
+    const progressRate = Math.round(
+      ((completedProfiles / totalMembers) * 50 + (completedAnalyses / totalMembers) * 50)
+    );
+    
+    return {
+      totalMembers,
+      completedAnalyses,
+      completedProfiles,
+      completedGoals,
+      completedEssays,
+      progressRate,
+    };
+  }
+
+  async getGroupMemberProgress(groupId: string): Promise<Array<{
+    userId: string;
+    email: string;
+    displayName: string | null;
+    profileImageUrl: string | null;
+    hasProfile: boolean;
+    hasAnalysis: boolean;
+    hasGoals: boolean;
+    hasEssay: boolean;
+    analysisDate: string | null;
+    profileType: string | null;
+    progressScore: number;
+  }>> {
+    // Get all group members with user info
+    const memberRows = await db
+      .select({
+        userId: groupMembers.userId,
+        email: users.email,
+        displayName: users.displayName,
+        profileImageUrl: users.profileImageUrl,
+      })
+      .from(groupMembers)
+      .innerJoin(users, eq(groupMembers.userId, users.id))
+      .where(eq(groupMembers.groupId, groupId));
+    
+    const memberUserIds = memberRows.map(m => m.userId);
+    if (memberUserIds.length === 0) return [];
+    
+    // Get profiles for these users
+    const userProfiles = await db
+      .select()
+      .from(profiles)
+      .where(inArray(profiles.userId, memberUserIds));
+    const profilesByUser = new Map(userProfiles.map(p => [p.userId, p]));
+    
+    // Get analyses for these profiles
+    const profileIds = userProfiles.map(p => p.id);
+    let analysesByProfile = new Map<string, any>();
+    if (profileIds.length > 0) {
+      const analyses = await db
+        .select()
+        .from(careerAnalyses)
+        .where(inArray(careerAnalyses.profileId, profileIds));
+      analysesByProfile = new Map(analyses.map(a => [a.profileId, a]));
+    }
+    
+    // Get profiles with goals (goals are linked via profileId)
+    let profilesWithGoals = new Set<string>();
+    if (profileIds.length > 0) {
+      const goalsResult = await db
+        .select({ profileId: kompassGoals.profileId })
+        .from(kompassGoals)
+        .where(inArray(kompassGoals.profileId, profileIds));
+      profilesWithGoals = new Set(goalsResult.map(g => g.profileId));
+    }
+    
+    // Get profiles with essays (essays are linked via profileId)
+    let profilesWithEssays = new Set<string>();
+    if (profileIds.length > 0) {
+      const essaysResult = await db
+        .select({ profileId: personalEssays.profileId })
+        .from(personalEssays)
+        .where(inArray(personalEssays.profileId, profileIds));
+      profilesWithEssays = new Set(essaysResult.map(e => e.profileId));
+    }
+    
+    return memberRows.map(member => {
+      const profile = profilesByUser.get(member.userId);
+      const analysis = profile ? analysesByProfile.get(profile.id) : null;
+      const hasGoals = profile ? profilesWithGoals.has(profile.id) : false;
+      const hasEssay = profile ? profilesWithEssays.has(profile.id) : false;
+      
+      // Calculate progress score (0-100)
+      let progressScore = 0;
+      if (profile) progressScore += 25;
+      if (analysis) progressScore += 50;
+      if (hasGoals) progressScore += 15;
+      if (hasEssay) progressScore += 10;
+      
+      return {
+        userId: member.userId,
+        email: member.email || '',
+        displayName: member.displayName,
+        profileImageUrl: member.profileImageUrl,
+        hasProfile: !!profile,
+        hasAnalysis: !!analysis,
+        hasGoals,
+        hasEssay,
+        analysisDate: analysis?.createdAt?.toISOString() || null,
+        profileType: profile?.type || null,
+        progressScore,
+      };
+    });
+  }
+
+  async getGroupMemberDetail(memberId: string): Promise<{
+    user: {
+      id: string;
+      email: string;
+      displayName: string | null;
+      profileImageUrl: string | null;
+      createdAt: string;
+    };
+    profile: {
+      id: string;
+      profileType: string;
+      name: string | null;
+      createdAt: string;
+      updatedAt: string | null;
+    } | null;
+    analysis: {
+      id: string;
+      status: string;
+      createdAt: string;
+      analysisResult: any;
+    } | null;
+    goals: Array<{
+      id: string;
+      title: string;
+      status: string;
+      progress: number;
+    }>;
+    essays: Array<{
+      id: string;
+      title: string | null;
+      createdAt: string;
+    }>;
+  }> {
+    // Get user info
+    const [user] = await db.select().from(users).where(eq(users.id, memberId));
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    // Get profile
+    const [profile] = await db.select().from(profiles).where(eq(profiles.userId, memberId));
+    
+    // Get latest analysis
+    let analysis = null;
+    if (profile) {
+      const [latestAnalysis] = await db
+        .select()
+        .from(careerAnalyses)
+        .where(eq(careerAnalyses.profileId, profile.id))
+        .orderBy(desc(careerAnalyses.createdAt))
+        .limit(1);
+      
+      if (latestAnalysis) {
+        analysis = {
+          id: latestAnalysis.id.toString(),
+          status: 'completed', // Analysis exists means it's completed
+          createdAt: latestAnalysis.createdAt?.toISOString() || '',
+          analysisResult: latestAnalysis.stats || latestAnalysis.summary || null,
+        };
+      }
+    }
+    
+    // Get goals (linked via profileId)
+    let goalRows: Array<{ id: string; progress: number; targetYear: number }> = [];
+    if (profile) {
+      goalRows = await db
+        .select({
+          id: kompassGoals.id,
+          progress: kompassGoals.progress,
+          targetYear: kompassGoals.targetYear,
+        })
+        .from(kompassGoals)
+        .where(eq(kompassGoals.profileId, profile.id))
+        .limit(10);
+    }
+    
+    // Get essays (linked via profileId)
+    let essayRows: Array<{ id: string; title: string | null; createdAt: Date | null }> = [];
+    if (profile) {
+      essayRows = await db
+        .select({
+          id: personalEssays.id,
+          title: personalEssays.title,
+          createdAt: personalEssays.createdAt,
+        })
+        .from(personalEssays)
+        .where(eq(personalEssays.profileId, profile.id))
+        .limit(10);
+    }
+    
+    return {
+      user: {
+        id: user.id,
+        email: user.email || '',
+        displayName: user.displayName,
+        profileImageUrl: user.profileImageUrl,
+        createdAt: user.createdAt?.toISOString() || '',
+      },
+      profile: profile ? {
+        id: profile.id.toString(),
+        profileType: profile.type, // Schema uses 'type' not 'profileType'
+        name: profile.title, // Schema uses 'title' not 'name'
+        createdAt: profile.createdAt?.toISOString() || '',
+        updatedAt: profile.updatedAt?.toISOString() || null,
+      } : null,
+      analysis,
+      goals: goalRows.map(g => ({
+        id: g.id.toString(),
+        title: `${g.targetYear}년 목표`, // Goals don't have title field, use year
+        status: 'active',
+        progress: g.progress || 0,
+      })),
+      essays: essayRows.map(e => ({
+        id: e.id.toString(),
+        title: e.title,
+        createdAt: e.createdAt?.toISOString() || '',
+      })),
+    };
   }
 }
 

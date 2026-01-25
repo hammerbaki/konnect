@@ -5360,6 +5360,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== GROUP DASHBOARD API =====
+  
+  // Get group info (for group managers)
+  app.get('/api/groups/:groupId', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      if (!isStaffOrAdmin) {
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (!memberRole || memberRole === 'member') {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+      
+      const group = await storage.getGroup(req.params.groupId);
+      if (!group) {
+        return res.status(404).json({ message: "그룹을 찾을 수 없습니다." });
+      }
+      res.json(group);
+    } catch (error: any) {
+      console.error("Error fetching group:", error);
+      res.status(500).json({ message: "그룹 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get group statistics (for group managers)
+  app.get('/api/groups/:groupId/stats', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      if (!isStaffOrAdmin) {
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (!memberRole || memberRole === 'member') {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+      
+      const stats = await storage.getGroupStats(req.params.groupId);
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Error fetching group stats:", error);
+      res.status(500).json({ message: "그룹 통계 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get group member progress (for group managers)
+  app.get('/api/groups/:groupId/members/progress', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      if (!isStaffOrAdmin) {
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (!memberRole || memberRole === 'member') {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+      
+      const memberProgress = await storage.getGroupMemberProgress(req.params.groupId);
+      res.json(memberProgress);
+    } catch (error: any) {
+      console.error("Error fetching member progress:", error);
+      res.status(500).json({ message: "멤버 진행현황 조회 중 오류가 발생했습니다." });
+    }
+  });
+  
+  // Get group member detail (for group managers)
+  app.get('/api/groups/:groupId/members/:memberId/detail', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      if (!isStaffOrAdmin) {
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (!memberRole || memberRole === 'member') {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+      
+      // Check if the member is in the group
+      const isMember = await storage.isGroupMember(req.params.groupId, req.params.memberId);
+      if (!isMember) {
+        return res.status(404).json({ message: "그룹 멤버를 찾을 수 없습니다." });
+      }
+      
+      const memberDetail = await storage.getGroupMemberDetail(req.params.memberId);
+      res.json(memberDetail);
+    } catch (error: any) {
+      console.error("Error fetching member detail:", error);
+      res.status(500).json({ message: "멤버 상세정보 조회 중 오류가 발생했습니다." });
+    }
+  });
+
   // Admin: Get specific user's groups
   app.get('/api/admin/users/:userId/groups', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
     try {
