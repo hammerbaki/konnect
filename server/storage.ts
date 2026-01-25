@@ -157,6 +157,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   updateUserRole(userId: string, role: UserRole): Promise<User>;
   updateUserCreditsAdmin(userId: string, credits: number): Promise<User>;
+  adminCreateUser(data: { email: string; firstName?: string; lastName?: string; role?: string; credits?: number }): Promise<User>;
   getSystemStats(): Promise<{
     totalUsers: number;
     totalProfiles: number;
@@ -934,6 +935,27 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ credits, updatedAt: new Date() })
       .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async adminCreateUser(data: { email: string; firstName?: string; lastName?: string; role?: string; credits?: number }): Promise<User> {
+    const existingUser = await this.getUserByEmail(data.email);
+    if (existingUser) {
+      throw new Error('이미 등록된 이메일입니다.');
+    }
+    
+    const userId = crypto.randomUUID();
+    const [user] = await db
+      .insert(users)
+      .values({
+        id: userId,
+        email: data.email,
+        firstName: data.firstName || null,
+        lastName: data.lastName || null,
+        role: (data.role as any) || 'user',
+        credits: data.credits || 100,
+      })
       .returning();
     return user;
   }

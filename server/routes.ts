@@ -1934,6 +1934,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Create new user (회원 등록)
+  const adminCreateUserSchema = z.object({
+    email: z.string().email("유효한 이메일을 입력해주세요."),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    role: z.enum(['user', 'staff', 'admin']).optional().default('user'),
+    credits: z.number().int().min(0).optional().default(100),
+  });
+
+  app.post('/api/admin/users', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const currentUserRole = req.userRole;
+      const parsed = adminCreateUserSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        return res.status(400).json({ message: "유효하지 않은 입력입니다.", errors: parsed.error.errors });
+      }
+      
+      // Staff cannot create admin users
+      if (currentUserRole === 'staff' && parsed.data.role === 'admin') {
+        return res.status(403).json({ message: "스태프는 관리자 계정을 생성할 수 없습니다." });
+      }
+      
+      const user = await storage.adminCreateUser(parsed.data);
+      res.status(201).json(user);
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      if (error.message === '이미 등록된 이메일입니다.') {
+        return res.status(409).json({ message: error.message });
+      }
+      res.status(500).json({ message: "회원 등록 중 오류가 발생했습니다." });
+    }
+  });
+
   // Zod schemas for admin PATCH requests
   const updateRoleSchema = z.object({
     role: z.enum(['user', 'staff', 'admin']),
