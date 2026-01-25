@@ -11,8 +11,13 @@ import {
   Users, Settings, Coins, Activity, 
   RefreshCw, Search, Shield, User, Crown,
   BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
-  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download, Users2
+  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download, Users2, X
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -777,6 +782,50 @@ export default function Admin() {
     enabled: isStaffOrAdmin,
     retry: false,
   });
+
+  // Fetch all groups for assignment
+  const { data: allGroups = [] } = useQuery<Array<{ id: string; name: string; iconEmoji: string | null; color: string | null }>>({
+    queryKey: ['/api/admin/groups'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/admin/groups');
+      return res.json();
+    },
+    enabled: isStaffOrAdmin,
+  });
+
+  // State for user group management
+  const [editingUserGroups, setEditingUserGroups] = useState<string | null>(null);
+  const [userGroupsCache, setUserGroupsCache] = useState<Record<string, Array<{ id: string; name: string; iconEmoji: string | null; color: string | null; role: string }>>>({});
+
+  const fetchUserGroups = async (userId: string) => {
+    try {
+      const res = await apiRequest('GET', `/api/admin/users/${userId}/groups`);
+      const groups = await res.json();
+      setUserGroupsCache(prev => ({ ...prev, [userId]: groups }));
+    } catch (error) {
+      console.error('Failed to fetch user groups:', error);
+    }
+  };
+
+  const handleAddToGroup = async (userId: string, groupId: string) => {
+    try {
+      await apiRequest('POST', `/api/admin/users/${userId}/groups/${groupId}`, { role: 'member' });
+      await fetchUserGroups(userId);
+      toast({ title: "그룹 추가 완료", description: "사용자가 그룹에 추가되었습니다." });
+    } catch (error) {
+      toast({ title: "오류", description: "그룹 추가에 실패했습니다.", variant: "destructive" });
+    }
+  };
+
+  const handleRemoveFromGroup = async (userId: string, groupId: string) => {
+    try {
+      await apiRequest('DELETE', `/api/admin/users/${userId}/groups/${groupId}`);
+      await fetchUserGroups(userId);
+      toast({ title: "그룹 제거 완료", description: "사용자가 그룹에서 제거되었습니다." });
+    } catch (error) {
+      toast({ title: "오류", description: "그룹 제거에 실패했습니다.", variant: "destructive" });
+    }
+  };
 
   const { data: systemStats, isLoading: statsLoading, refetch: refetchStats } = useQuery<SystemStats>({
     queryKey: ['/api/admin/stats/system'],
@@ -1548,6 +1597,88 @@ export default function Admin() {
                             )}
                           </div>
                           <div className="flex items-center gap-2">
+                            {/* Group badges */}
+                            {isStaffOrAdmin && (
+                              <Popover 
+                                open={editingUserGroups === user.id} 
+                                onOpenChange={(open) => {
+                                  if (open) {
+                                    setEditingUserGroups(user.id);
+                                    fetchUserGroups(user.id);
+                                  } else {
+                                    setEditingUserGroups(null);
+                                  }
+                                }}
+                              >
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 px-2 gap-1 border-dashed"
+                                    data-testid={`button-user-groups-${user.id}`}
+                                  >
+                                    <Users2 className="h-3.5 w-3.5" />
+                                    <span className="text-xs">
+                                      {userGroupsCache[user.id]?.length 
+                                        ? `${userGroupsCache[user.id].length}개 그룹` 
+                                        : "그룹"}
+                                    </span>
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-72 p-3" align="end">
+                                  <div className="space-y-3">
+                                    <div className="font-medium text-sm">그룹 관리</div>
+                                    
+                                    {/* Current groups */}
+                                    <div className="space-y-2">
+                                      <p className="text-xs text-[#8B95A1]">소속 그룹</p>
+                                      {userGroupsCache[user.id]?.length ? (
+                                        <div className="flex flex-wrap gap-1">
+                                          {userGroupsCache[user.id].map((group) => (
+                                            <Badge
+                                              key={group.id}
+                                              className="pl-2 pr-1 py-0.5 flex items-center gap-1 text-xs"
+                                              style={{ backgroundColor: group.color || '#E5E8EB', color: '#191F28' }}
+                                            >
+                                              {group.iconEmoji || '📁'} {group.name}
+                                              <button
+                                                onClick={() => handleRemoveFromGroup(user.id, group.id)}
+                                                className="ml-1 hover:bg-black/10 rounded p-0.5"
+                                              >
+                                                <X className="h-3 w-3" />
+                                              </button>
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <p className="text-xs text-[#8B95A1] italic">소속된 그룹이 없습니다</p>
+                                      )}
+                                    </div>
+                                    
+                                    {/* Add to group */}
+                                    {allGroups.filter(g => !userGroupsCache[user.id]?.some(ug => ug.id === g.id)).length > 0 && (
+                                      <div className="space-y-2 border-t pt-2">
+                                        <p className="text-xs text-[#8B95A1]">그룹 추가</p>
+                                        <div className="flex flex-wrap gap-1">
+                                          {allGroups
+                                            .filter(g => !userGroupsCache[user.id]?.some(ug => ug.id === g.id))
+                                            .map((group) => (
+                                              <Badge
+                                                key={group.id}
+                                                className="cursor-pointer hover:opacity-80 text-xs"
+                                                style={{ backgroundColor: group.color || '#E5E8EB', color: '#191F28' }}
+                                                onClick={() => handleAddToGroup(user.id, group.id)}
+                                              >
+                                                + {group.iconEmoji || '📁'} {group.name}
+                                              </Badge>
+                                            ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            )}
                             {getRoleBadge(user.role)}
                             {(isAdmin || isStaff) ? (
                               <Select

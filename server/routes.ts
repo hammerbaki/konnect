@@ -5325,6 +5325,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get specific user's groups
+  app.get('/api/admin/users/:userId/groups', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const groups = await storage.getUserGroups(userId);
+      res.json(groups);
+    } catch (error: any) {
+      console.error("Error fetching user groups:", error);
+      res.status(500).json({ message: "사용자 그룹 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Add user to group
+  const addUserToGroupSchema = z.object({
+    role: z.enum(['member', 'admin', 'owner']).optional().default('member'),
+  });
+
+  app.post('/api/admin/users/:userId/groups/:groupId', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
+    try {
+      const { userId, groupId } = req.params;
+      const parsed = addUserToGroupSchema.safeParse(req.body);
+      
+      if (!parsed.success) {
+        return res.status(400).json({ message: "유효하지 않은 입력입니다.", errors: parsed.error.errors });
+      }
+      
+      const isMember = await storage.isGroupMember(groupId, userId);
+      if (isMember) {
+        return res.status(409).json({ message: "이미 그룹에 속해 있습니다." });
+      }
+      
+      const member = await storage.addGroupMember(groupId, userId, parsed.data.role);
+      res.status(201).json(member);
+    } catch (error: any) {
+      console.error("Error adding user to group:", error);
+      res.status(500).json({ message: "그룹에 사용자 추가 중 오류가 발생했습니다." });
+    }
+  });
+
+  // Admin: Remove user from group
+  app.delete('/api/admin/users/:userId/groups/:groupId', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
+    try {
+      const { userId, groupId } = req.params;
+      
+      const isMember = await storage.isGroupMember(groupId, userId);
+      if (!isMember) {
+        return res.status(404).json({ message: "그룹 멤버십을 찾을 수 없습니다." });
+      }
+      
+      await storage.removeGroupMember(groupId, userId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error removing user from group:", error);
+      res.status(500).json({ message: "그룹에서 사용자 제거 중 오류가 발생했습니다." });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
