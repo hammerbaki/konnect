@@ -319,6 +319,8 @@ export interface IStorage {
   isGroupMember(groupId: string, userId: string): Promise<boolean>;
   getGroupMemberRole(groupId: string, userId: string): Promise<GroupMemberRole | undefined>;
   getGroupMemberAnalyses(groupId: string): Promise<Array<CareerAnalysis & { user: Pick<User, 'id' | 'email' | 'displayName'> }>>;
+  getUserManagedGroupMemberIds(userId: string): Promise<string[]>;
+  getUserManagedGroups(userId: string): Promise<Array<Group & { role: GroupMemberRole }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2604,6 +2606,46 @@ export class DatabaseStorage implements IStorage {
     );
     
     return analysesWithUsers.filter((a): a is CareerAnalysis & { user: Pick<User, 'id' | 'email' | 'displayName'> } => a !== null);
+  }
+
+  async getUserManagedGroups(userId: string): Promise<Array<Group & { role: GroupMemberRole }>> {
+    // Get groups where user is admin, consultant, or teacher
+    const memberships = await db
+      .select()
+      .from(groupMembers)
+      .where(
+        and(
+          eq(groupMembers.userId, userId),
+          inArray(groupMembers.role, ['admin', 'consultant', 'teacher'])
+        )
+      );
+    
+    const groupsWithRole = await Promise.all(
+      memberships.map(async (membership) => {
+        const [group] = await db.select().from(groups).where(eq(groups.id, membership.groupId));
+        return group ? { ...group, role: membership.role as GroupMemberRole } : null;
+      })
+    );
+    
+    return groupsWithRole.filter((g): g is Group & { role: GroupMemberRole } => g !== null);
+  }
+
+  async getUserManagedGroupMemberIds(userId: string): Promise<string[]> {
+    // Get all groups where user is admin, consultant, or teacher
+    const managedGroups = await this.getUserManagedGroups(userId);
+    
+    if (managedGroups.length === 0) return [];
+    
+    const groupIds = managedGroups.map(g => g.id);
+    
+    // Get all member user IDs from these groups
+    const members = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(inArray(groupMembers.groupId, groupIds));
+    
+    // Return unique user IDs
+    return [...new Set(members.map(m => m.userId))];
   }
 }
 
