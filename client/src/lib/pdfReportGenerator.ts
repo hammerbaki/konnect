@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export interface CareerReportData {
   title: string;
@@ -23,22 +24,6 @@ export interface ReportMetadata {
   profileTitle: string;
 }
 
-const COLORS = {
-  navy: [15, 30, 61] as [number, number, number],
-  primary: [49, 130, 246] as [number, number, number],
-  gold: [212, 175, 55] as [number, number, number],
-  accent: [0, 191, 165] as [number, number, number],
-  text: [33, 37, 41] as [number, number, number],
-  textSecondary: [73, 80, 87] as [number, number, number],
-  textMuted: [134, 142, 150] as [number, number, number],
-  success: [25, 135, 84] as [number, number, number],
-  warning: [255, 193, 7] as [number, number, number],
-  danger: [220, 53, 69] as [number, number, number],
-  light: [248, 249, 250] as [number, number, number],
-  white: [255, 255, 255] as [number, number, number],
-  border: [222, 226, 230] as [number, number, number],
-};
-
 function getProfileTypeKorean(type: string): string {
   const labels: Record<string, string> = {
     general: '구직자',
@@ -50,459 +35,190 @@ function getProfileTypeKorean(type: string): string {
   return labels[type] || type;
 }
 
-async function loadFontAsBase64(url: string): Promise<string | null> {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch font: ${response.status}`);
-    }
-    const arrayBuffer = await response.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    
-    const chunkSize = 32768;
-    let binary = '';
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.slice(i, i + chunkSize);
-      binary += String.fromCharCode.apply(null, Array.from(chunk));
-    }
-    return btoa(binary);
-  } catch (error) {
-    console.error('Font loading error:', error);
-    return null;
-  }
-}
+function createReportHTML(career: CareerReportData, metadata: ReportMetadata): string {
+  const reportId = `KR-${Date.now().toString(36).toUpperCase().slice(-8)}`;
+  
+  return `
+    <div id="pdf-report-container" style="width: 794px; padding: 40px; font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif; background: white; color: #191F28;">
+      <!-- Header -->
+      <div style="background: linear-gradient(135deg, #0F1E3D 0%, #1a2d5c 100%); padding: 30px; margin: -40px -40px 30px -40px; border-radius: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div style="font-size: 28px; font-weight: 800; color: white; margin-bottom: 8px;">
+              <span style="color: #3182F6;">K</span><span style="color: #FFD700;">o</span><span style="color: #FF6B6B;">n</span><span style="color: #4ECDC4;">n</span><span style="color: #FFD700;">e</span><span style="color: #3182F6;">c</span><span style="color: #FF6B6B;">t</span>
+            </div>
+            <div style="font-size: 12px; color: #A0AEC0;">Your AI Career Solution</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 8px;">AI 커리어 분석 리포트</div>
+            <div style="font-size: 11px; color: #A0AEC0; margin-bottom: 4px;">Report ID: ${reportId}</div>
+            <div style="font-size: 11px; color: #A0AEC0;">Date: ${metadata.analysisDate}</div>
+            <div style="margin-top: 12px; background: linear-gradient(135deg, #D4AF37, #F5D76E); color: #0F1E3D; padding: 6px 16px; border-radius: 20px; font-size: 10px; font-weight: 700; display: inline-block;">
+              CERTIFIED REPORT
+            </div>
+          </div>
+        </div>
+      </div>
 
-async function loadImageAsBase64(url: string): Promise<string | null> {
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
+      <!-- Match Score Section -->
+      <div style="display: flex; align-items: center; margin-bottom: 30px; padding: 25px; background: #F8FAFC; border-radius: 16px; border: 1px solid #E2E8F0;">
+        <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #3182F6 0%, #1565C0 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; margin-right: 25px; box-shadow: 0 4px 15px rgba(49, 130, 246, 0.3);">
+          <span style="font-size: 32px; font-weight: 800; color: white;">${career.matchScore}</span>
+          <span style="font-size: 14px; color: rgba(255,255,255,0.9);">%</span>
+          <span style="font-size: 9px; color: rgba(255,255,255,0.8); margin-top: 2px;">MATCH SCORE</span>
+        </div>
+        <div style="flex: 1;">
+          <h1 style="font-size: 26px; font-weight: 800; color: #191F28; margin: 0 0 10px 0;">${career.title}</h1>
+          <p style="font-size: 14px; color: #4A5568; line-height: 1.6; margin: 0;">${career.description || '해당 직업에 대한 상세 정보입니다.'}</p>
+        </div>
+      </div>
+
+      <!-- Overview Section -->
+      <div style="margin-bottom: 30px;">
+        <h2 style="font-size: 16px; font-weight: 700; color: #3182F6; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #3182F6;">개요</h2>
+        <div style="display: flex; gap: 20px;">
+          <div style="flex: 1; background: #F8FAFC; padding: 20px; border-radius: 12px; border-left: 4px solid #00BFA5;">
+            <div style="font-size: 11px; font-weight: 600; color: #00BFA5; margin-bottom: 8px; text-transform: uppercase;">연봉 정보</div>
+            <div style="font-size: 14px; color: #191F28; line-height: 1.6;">${career.salary || '정보 없음'}</div>
+          </div>
+          <div style="flex: 1; background: #F8FAFC; padding: 20px; border-radius: 12px; border-left: 4px solid #6366F1;">
+            <div style="font-size: 11px; font-weight: 600; color: #6366F1; margin-bottom: 8px; text-transform: uppercase;">시장 전망</div>
+            <div style="font-size: 14px; color: #191F28; line-height: 1.6;">${career.jobOutlook || '정보 없음'}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Competency Section -->
+      ${career.competencies && career.competencies.length > 0 ? `
+        <div style="margin-bottom: 30px;">
+          <h2 style="font-size: 16px; font-weight: 700; color: #3182F6; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #3182F6;">역량 분석</h2>
+          <div style="background: #F8FAFC; padding: 20px; border-radius: 12px;">
+            ${career.competencies.map(comp => `
+              <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="font-size: 13px; font-weight: 600; color: #191F28;">${comp.subject}</span>
+                  <span style="font-size: 13px; font-weight: 700; color: #3182F6;">${Math.round(comp.A / comp.fullMark * 100)}%</span>
+                </div>
+                <div style="height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden;">
+                  <div style="width: ${comp.A / comp.fullMark * 100}%; height: 100%; background: linear-gradient(90deg, #3182F6, #00BFA5); border-radius: 4px;"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Strengths & Weaknesses -->
+      <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+        <div style="flex: 1;">
+          <h2 style="font-size: 16px; font-weight: 700; color: #198754; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #198754;">강점</h2>
+          <div style="background: #F0FDF4; padding: 20px; border-radius: 12px; border: 1px solid #BBF7D0;">
+            ${career.strengths && career.strengths.length > 0 
+              ? career.strengths.map(s => `<div style="font-size: 13px; color: #166534; margin-bottom: 8px; padding-left: 15px; position: relative;"><span style="position: absolute; left: 0; color: #22C55E;">✓</span> ${s}</div>`).join('')
+              : '<div style="font-size: 13px; color: #86EFAC;">정보 없음</div>'}
+          </div>
+        </div>
+        <div style="flex: 1;">
+          <h2 style="font-size: 16px; font-weight: 700; color: #DC2626; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #DC2626;">개선점</h2>
+          <div style="background: #FEF2F2; padding: 20px; border-radius: 12px; border: 1px solid #FECACA;">
+            ${career.weaknesses && career.weaknesses.length > 0
+              ? career.weaknesses.map(w => `<div style="font-size: 13px; color: #991B1B; margin-bottom: 8px; padding-left: 15px; position: relative;"><span style="position: absolute; left: 0; color: #EF4444;">!</span> ${w}</div>`).join('')
+              : '<div style="font-size: 13px; color: #FCA5A5;">정보 없음</div>'}
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Plan -->
+      ${career.actions && (career.actions.portfolio?.length || career.actions.networking?.length || career.actions.mindset?.length) ? `
+        <div style="margin-bottom: 30px;">
+          <h2 style="font-size: 16px; font-weight: 700; color: #3182F6; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #3182F6;">액션 플랜</h2>
+          <div style="display: flex; gap: 15px;">
+            ${career.actions.portfolio && career.actions.portfolio.length > 0 ? `
+              <div style="flex: 1; background: linear-gradient(135deg, #EBF4FF 0%, #F0F7FF 100%); padding: 18px; border-radius: 12px;">
+                <div style="font-size: 12px; font-weight: 700; color: #3182F6; margin-bottom: 12px;">📁 포트폴리오</div>
+                ${career.actions.portfolio.map(item => `<div style="font-size: 12px; color: #1E40AF; margin-bottom: 6px; line-height: 1.5;">• ${item}</div>`).join('')}
+              </div>
+            ` : ''}
+            ${career.actions.networking && career.actions.networking.length > 0 ? `
+              <div style="flex: 1; background: linear-gradient(135deg, #E0F2F1 0%, #F0FDF4 100%); padding: 18px; border-radius: 12px;">
+                <div style="font-size: 12px; font-weight: 700; color: #00897B; margin-bottom: 12px;">🤝 네트워킹</div>
+                ${career.actions.networking.map(item => `<div style="font-size: 12px; color: #065F46; margin-bottom: 6px; line-height: 1.5;">• ${item}</div>`).join('')}
+              </div>
+            ` : ''}
+            ${career.actions.mindset && career.actions.mindset.length > 0 ? `
+              <div style="flex: 1; background: linear-gradient(135deg, #FFF7ED 0%, #FFFBEB 100%); padding: 18px; border-radius: 12px;">
+                <div style="font-size: 12px; font-weight: 700; color: #D97706; margin-bottom: 12px;">💡 마인드셋</div>
+                ${career.actions.mindset.map(item => `<div style="font-size: 12px; color: #92400E; margin-bottom: 6px; line-height: 1.5;">• ${item}</div>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Footer -->
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 11px; color: #8B95A1;">
+          분석 대상: ${metadata.userName} (${getProfileTypeKorean(metadata.profileType)})
+        </div>
+        <div style="font-size: 11px; color: #8B95A1;">
+          © ${new Date().getFullYear()} Konnect AI Career Platform
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 export async function generateCareerReportPDF(
   career: CareerReportData,
   metadata: ReportMetadata
 ): Promise<void> {
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 20;
-  const contentWidth = pageWidth - margin * 2;
-  let y = 0;
-  let currentPage = 1;
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.innerHTML = createReportHTML(career, metadata);
+  document.body.appendChild(container);
 
-  let koreanFontLoaded = false;
+  const reportElement = container.querySelector('#pdf-report-container') as HTMLElement;
   
-  const fontUrls = [
-    '/fonts/Pretendard-Regular.otf',
-    '/fonts/NotoSansKR-Regular.ttf',
-  ];
-  
-  for (const fontUrl of fontUrls) {
-    try {
-      const fontBase64 = await loadFontAsBase64(fontUrl);
-      if (fontBase64 && fontBase64.length > 1000) {
-        const fontName = fontUrl.includes('Pretendard') ? 'Pretendard' : 'NotoSansKR';
-        const extension = fontUrl.split('.').pop() || 'ttf';
-        pdf.addFileToVFS(`${fontName}.${extension}`, fontBase64);
-        pdf.addFont(`${fontName}.${extension}`, fontName, 'normal');
-        pdf.setFont(fontName, 'normal');
-        koreanFontLoaded = true;
-        console.log(`Korean font loaded: ${fontName}`);
-        break;
-      }
-    } catch (e) {
-      console.warn(`Failed to load font ${fontUrl}:`, e);
-    }
-  }
-
-  const setFont = (size: number, _weight: 'normal' | 'bold' = 'normal') => {
-    if (koreanFontLoaded) {
-      const currentFont = pdf.getFont().fontName;
-      pdf.setFont(currentFont, 'normal');
-    } else {
-      pdf.setFont('helvetica', _weight);
-    }
-    pdf.setFontSize(size);
-  };
-
-  const wrapText = (text: string, maxWidth: number): string[] => {
-    if (!text) return [''];
-    return pdf.splitTextToSize(text, maxWidth);
-  };
-
-  const drawPageFooter = () => {
-    pdf.setFillColor(...COLORS.navy);
-    pdf.rect(0, pageHeight - 12, pageWidth, 12, 'F');
-    
-    pdf.setFontSize(7);
-    pdf.setTextColor(...COLORS.white);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text('Konnect AI Career Analysis Platform', margin, pageHeight - 5);
-    pdf.text(`Page ${currentPage}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
-    pdf.text(`© ${new Date().getFullYear()} Konnect`, pageWidth - margin, pageHeight - 5, { align: 'right' });
-  };
-
-  const addPage = () => {
-    pdf.addPage();
-    currentPage++;
-    y = 25;
-  };
-
-  const checkPageBreak = (height: number): boolean => {
-    if (y + height > pageHeight - 20) {
-      drawPageFooter();
-      addPage();
-      return true;
-    }
-    return false;
-  };
-
-  pdf.setFillColor(...COLORS.navy);
-  pdf.rect(0, 0, pageWidth, 50, 'F');
-
-  const logoBase64 = await loadImageAsBase64('/konnect-logo.png');
-  if (logoBase64) {
-    pdf.addImage(logoBase64, 'PNG', margin, 10, 45, 15);
-  } else {
-    pdf.setFontSize(22);
-    pdf.setTextColor(...COLORS.white);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('KONNECT', margin, 22);
-    pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text('Your AI Career Solution', margin, 28);
-  }
-
-  pdf.setFontSize(10);
-  pdf.setTextColor(...COLORS.white);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('AI CAREER ANALYSIS REPORT', pageWidth - margin, 18, { align: 'right' });
-  
-  pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(200, 200, 220);
-  const reportId = `KR-${Date.now().toString(36).toUpperCase().slice(-8)}`;
-  pdf.text(`Report ID: ${reportId}`, pageWidth - margin, 26, { align: 'right' });
-  pdf.text(`Date: ${metadata.analysisDate || new Date().toLocaleDateString('ko-KR')}`, pageWidth - margin, 32, { align: 'right' });
-
-  pdf.setFillColor(...COLORS.gold);
-  pdf.roundedRect(pageWidth - margin - 28, 38, 28, 8, 1, 1, 'F');
-  pdf.setFontSize(6);
-  pdf.setTextColor(...COLORS.navy);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('CERTIFIED REPORT', pageWidth - margin - 14, 43.5, { align: 'center' });
-
-  y = 60;
-
-  pdf.setFillColor(...COLORS.light);
-  pdf.roundedRect(margin, y, contentWidth, 55, 4, 4, 'F');
-
-  pdf.setFillColor(...COLORS.primary);
-  pdf.circle(margin + 25, y + 27.5, 20, 'F');
-  
-  pdf.setFontSize(24);
-  pdf.setTextColor(...COLORS.white);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(`${career.matchScore}`, margin + 25, y + 26, { align: 'center' });
-  pdf.setFontSize(10);
-  pdf.text('%', margin + 25, y + 35, { align: 'center' });
-  
-  pdf.setFontSize(6);
-  pdf.text('MATCH SCORE', margin + 25, y + 43, { align: 'center' });
-
-  const titleX = margin + 55;
-  const titleMaxWidth = contentWidth - 65;
-  
-  setFont(16, 'bold');
-  pdf.setTextColor(...COLORS.text);
-  const titleLines = wrapText(career.title, titleMaxWidth);
-  pdf.text(titleLines.slice(0, 2), titleX, y + 15);
-  
-  const titleHeight = Math.min(titleLines.length, 2) * 6;
-  
-  setFont(9);
-  pdf.setTextColor(...COLORS.textSecondary);
-  const descLines = wrapText(career.description, titleMaxWidth);
-  pdf.text(descLines.slice(0, 3), titleX, y + titleHeight + 22);
-
-  y += 65;
-
-  pdf.setFontSize(11);
-  pdf.setTextColor(...COLORS.navy);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('OVERVIEW', margin, y);
-  
-  pdf.setDrawColor(...COLORS.primary);
-  pdf.setLineWidth(2);
-  pdf.line(margin, y + 3, margin + 25, y + 3);
-  
-  y += 12;
-
-  const boxWidth = (contentWidth - 10) / 2;
-  
-  pdf.setFillColor(...COLORS.white);
-  pdf.setDrawColor(...COLORS.border);
-  pdf.setLineWidth(0.5);
-  pdf.roundedRect(margin, y, boxWidth, 32, 3, 3, 'FD');
-  
-  pdf.setFillColor(...COLORS.primary);
-  pdf.roundedRect(margin, y, 4, 32, 2, 0, 'F');
-  
-  pdf.setFontSize(8);
-  pdf.setTextColor(...COLORS.textMuted);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('COMPENSATION', margin + 10, y + 10);
-  
-  setFont(10, 'bold');
-  pdf.setTextColor(...COLORS.text);
-  if (career.salary) {
-    const salaryLines = wrapText(career.salary, boxWidth - 20);
-    pdf.text(salaryLines.slice(0, 2), margin + 10, y + 20);
-  }
-
-  pdf.setFillColor(...COLORS.white);
-  pdf.roundedRect(margin + boxWidth + 10, y, boxWidth, 32, 3, 3, 'FD');
-  
-  pdf.setFillColor(...COLORS.accent);
-  pdf.roundedRect(margin + boxWidth + 10, y, 4, 32, 2, 0, 'F');
-  
-  pdf.setFontSize(8);
-  pdf.setTextColor(...COLORS.textMuted);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('MARKET OUTLOOK', margin + boxWidth + 20, y + 10);
-  
-  setFont(10, 'bold');
-  pdf.setTextColor(...COLORS.text);
-  if (career.jobOutlook) {
-    const outlookLines = wrapText(career.jobOutlook, boxWidth - 20);
-    pdf.text(outlookLines.slice(0, 2), margin + boxWidth + 20, y + 20);
-  }
-
-  y += 42;
-
-  if (career.competencies && career.competencies.length > 0) {
-    checkPageBreak(55);
-    
-    pdf.setFontSize(11);
-    pdf.setTextColor(...COLORS.navy);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('COMPETENCY ANALYSIS', margin, y);
-    
-    pdf.setDrawColor(...COLORS.primary);
-    pdf.setLineWidth(2);
-    pdf.line(margin, y + 3, margin + 45, y + 3);
-    
-    y += 15;
-
-    const compCount = Math.min(career.competencies.length, 5);
-    const barHeight = 8;
-    const barSpacing = 14;
-    
-    career.competencies.slice(0, 5).forEach((comp, i) => {
-      const barY = y + i * barSpacing;
-      const percentage = Math.round((comp.A / comp.fullMark) * 100);
-      
-      setFont(9);
-      pdf.setTextColor(...COLORS.text);
-      pdf.text(comp.subject, margin, barY + 5);
-      
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...COLORS.primary);
-      pdf.text(`${percentage}%`, margin + contentWidth, barY + 5, { align: 'right' });
-      
-      const barStartX = margin + 50;
-      const barWidth = contentWidth - 80;
-      
-      pdf.setFillColor(...COLORS.light);
-      pdf.roundedRect(barStartX, barY, barWidth, barHeight, 2, 2, 'F');
-      
-      const gradientWidth = Math.max(4, barWidth * (percentage / 100));
-      if (percentage >= 70) {
-        pdf.setFillColor(...COLORS.success);
-      } else if (percentage >= 50) {
-        pdf.setFillColor(...COLORS.primary);
-      } else {
-        pdf.setFillColor(...COLORS.warning);
-      }
-      pdf.roundedRect(barStartX, barY, gradientWidth, barHeight, 2, 2, 'F');
+  try {
+    const canvas = await html2canvas(reportElement, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
     });
-    
-    y += compCount * barSpacing + 10;
-  }
 
-  if (career.strengths?.length || career.weaknesses?.length) {
-    checkPageBreak(75);
-    
-    pdf.setFontSize(11);
-    pdf.setTextColor(...COLORS.navy);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('SWOT ANALYSIS', margin, y);
-    
-    pdf.setDrawColor(...COLORS.primary);
-    pdf.setLineWidth(2);
-    pdf.line(margin, y + 3, margin + 30, y + 3);
-    
-    y += 12;
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
 
-    const halfWidth = (contentWidth - 8) / 2;
-    const sectionY = y;
-    const sectionHeight = 60;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
     
-    if (career.strengths?.length) {
-      pdf.setFillColor(236, 253, 245);
-      pdf.roundedRect(margin, sectionY, halfWidth, sectionHeight, 4, 4, 'F');
-      
-      pdf.setFillColor(...COLORS.success);
-      pdf.roundedRect(margin, sectionY, halfWidth, 18, 4, 0, 'F');
-      pdf.rect(margin, sectionY + 14, halfWidth, 4, 'F');
-      
-      pdf.setFontSize(9);
-      pdf.setTextColor(...COLORS.white);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('STRENGTHS', margin + halfWidth / 2, sectionY + 11, { align: 'center' });
-      
-      setFont(8);
-      pdf.setTextColor(...COLORS.textSecondary);
-      
-      let itemY = sectionY + 26;
-      career.strengths.slice(0, 4).forEach((s) => {
-        pdf.setFillColor(...COLORS.success);
-        pdf.circle(margin + 8, itemY - 1.5, 1.5, 'F');
-        
-        const lines = wrapText(s, halfWidth - 18);
-        pdf.text(lines[0], margin + 14, itemY);
-        itemY += 9;
-      });
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
     }
-    
-    if (career.weaknesses?.length) {
-      pdf.setFillColor(255, 243, 205);
-      pdf.roundedRect(margin + halfWidth + 8, sectionY, halfWidth, sectionHeight, 4, 4, 'F');
-      
-      pdf.setFillColor(...COLORS.danger);
-      pdf.roundedRect(margin + halfWidth + 8, sectionY, halfWidth, 18, 4, 0, 'F');
-      pdf.rect(margin + halfWidth + 8, sectionY + 14, halfWidth, 4, 'F');
-      
-      pdf.setFontSize(9);
-      pdf.setTextColor(...COLORS.white);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('AREAS TO DEVELOP', margin + halfWidth + 8 + halfWidth / 2, sectionY + 11, { align: 'center' });
-      
-      setFont(8);
-      pdf.setTextColor(...COLORS.textSecondary);
-      
-      let itemY = sectionY + 26;
-      career.weaknesses.slice(0, 4).forEach((w) => {
-        pdf.setFillColor(...COLORS.danger);
-        pdf.circle(margin + halfWidth + 16, itemY - 1.5, 1.5, 'F');
-        
-        const lines = wrapText(w, halfWidth - 18);
-        pdf.text(lines[0], margin + halfWidth + 22, itemY);
-        itemY += 9;
-      });
-    }
-    
-    y += sectionHeight + 10;
+
+    const fileName = `Konnect_${career.title.replace(/\s+/g, '_')}_분석리포트_${metadata.analysisDate.replace(/\./g, '')}.pdf`;
+    pdf.save(fileName);
+  } finally {
+    document.body.removeChild(container);
   }
-
-  if (career.actions) {
-    checkPageBreak(30);
-    
-    pdf.setFontSize(11);
-    pdf.setTextColor(...COLORS.navy);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('RECOMMENDED ACTION PLAN', margin, y);
-    
-    pdf.setDrawColor(...COLORS.primary);
-    pdf.setLineWidth(2);
-    pdf.line(margin, y + 3, margin + 55, y + 3);
-    
-    y += 12;
-    
-    const drawActionCard = (
-      title: string,
-      subtitle: string,
-      items: string[] | undefined,
-      iconLetter: string,
-      accentColor: [number, number, number],
-      bgColor: [number, number, number]
-    ) => {
-      if (!items?.length) return;
-      
-      checkPageBreak(50);
-      
-      pdf.setFillColor(...bgColor);
-      pdf.roundedRect(margin, y, contentWidth, 42, 4, 4, 'F');
-      
-      pdf.setFillColor(...accentColor);
-      pdf.circle(margin + 15, y + 14, 10, 'F');
-      
-      pdf.setFontSize(14);
-      pdf.setTextColor(...COLORS.white);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(iconLetter, margin + 15, y + 17, { align: 'center' });
-      
-      pdf.setFontSize(11);
-      pdf.setTextColor(...COLORS.text);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(title, margin + 32, y + 12);
-      
-      setFont(8);
-      pdf.setTextColor(...COLORS.textMuted);
-      pdf.text(subtitle, margin + 32, y + 19);
-      
-      setFont(8);
-      pdf.setTextColor(...COLORS.textSecondary);
-      
-      let itemY = y + 28;
-      items.slice(0, 2).forEach((item, i) => {
-        const lines = wrapText(`${i + 1}. ${item}`, contentWidth - 40);
-        pdf.text(lines[0], margin + 32, itemY);
-        itemY += 7;
-      });
-      
-      y += 48;
-    };
-    
-    drawActionCard('Portfolio', '포트폴리오 구축', career.actions.portfolio, 'P', COLORS.primary, [239, 246, 255]);
-    drawActionCard('Networking', '네트워크 확장', career.actions.networking, 'N', [139, 92, 246], [245, 243, 255]);
-    drawActionCard('Mindset', '마인드셋 개발', career.actions.mindset, 'M', [236, 72, 153], [253, 242, 248]);
-  }
-
-  checkPageBreak(25);
-  y += 5;
-  
-  pdf.setDrawColor(...COLORS.border);
-  pdf.setLineWidth(0.5);
-  pdf.line(margin, y, pageWidth - margin, y);
-  
-  y += 8;
-  
-  pdf.setFontSize(7);
-  pdf.setTextColor(...COLORS.textMuted);
-  pdf.setFont('helvetica', 'italic');
-  pdf.text('Disclaimer: This report was generated by Konnect AI Career Analysis System.', margin, y);
-  pdf.text('The results provided are for informational purposes only and should not replace professional career counseling.', margin, y + 5);
-  
-  setFont(7);
-  const profileTypeText = getProfileTypeKorean(metadata.profileType);
-  pdf.text(`Profile Type: ${profileTypeText} | Generated: ${new Date().toISOString().slice(0, 10)}`, margin, y + 12);
-
-  drawPageFooter();
-
-  const safeTitle = career.title
-    .replace(/[^a-zA-Z0-9가-힣\s]/g, '')
-    .replace(/\s+/g, '_')
-    .substring(0, 20);
-  const fileName = `Konnect_Career_Report_${safeTitle}_${new Date().toISOString().slice(0, 10)}.pdf`;
-  pdf.save(fileName);
 }
