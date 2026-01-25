@@ -20,6 +20,8 @@ import {
   ArrowRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ExtendedResultView } from "@/components/ExtendedResultView";
+import { getExtendedResult, ExtendedResult } from "@/lib/extendedDiagnosis";
 
 interface KJobsQuestion {
   id: string;
@@ -56,6 +58,7 @@ interface AssessmentResult {
     ninetyDays: string[];
   };
   completedAt: string;
+  answers?: Record<string, number | string>;
 }
 
 const LIKERT_OPTIONS = [
@@ -94,8 +97,20 @@ export default function MyTest() {
 
   const { data: questions, isLoading: questionsLoading } = useQuery<KJobsQuestion[]>({
     queryKey: ["/api/kjobs/questions"],
-    enabled: !!user && !latestResult,
+    enabled: !!user,
   });
+
+  const extendedResult = useMemo<ExtendedResult | null>(() => {
+    if (!latestResult?.answers || !questions || questions.length === 0) {
+      return null;
+    }
+    try {
+      return getExtendedResult(questions, latestResult.answers);
+    } catch (error) {
+      console.error("Extended result calculation error:", error);
+      return null;
+    }
+  }, [latestResult?.answers, questions]);
 
   const initMutation = useMutation({
     mutationFn: async () => {
@@ -348,6 +363,10 @@ export default function MyTest() {
             </CardContent>
           </Card>
 
+          {extendedResult && (
+            <ExtendedResultView data={extendedResult} />
+          )}
+
           <div className="flex gap-3">
             <Button
               className="flex-1 bg-[#3182F6] hover:bg-[#1E5FD3]"
@@ -363,7 +382,7 @@ export default function MyTest() {
     );
   }
 
-  if (questionsLoading || initMutation.isPending) {
+  if ((questionsLoading && !latestResult) || initMutation.isPending) {
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">

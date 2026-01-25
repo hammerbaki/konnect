@@ -4192,6 +4192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         recommendedJobs: assessment.recommendedJobs,
         growthPlan: assessment.growthPlan,
         completedAt: assessment.completedAt,
+        answers: assessment.answers,
       });
     } catch (error: any) {
       console.error('K-JOBS latest error:', error);
