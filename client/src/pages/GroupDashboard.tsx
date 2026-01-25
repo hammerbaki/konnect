@@ -335,48 +335,6 @@ export default function GroupDashboard() {
               </CardContent>
             </Card>
 
-            {chartData.length > 0 && (
-              <Card className="mt-6" data-testid="card-profile-type-chart">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PieChart className="h-5 w-5" />
-                    프로필 유형별 현황
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="프로필" fill="#3182F6" name="프로필 작성" />
-                        <Bar dataKey="분석완료" fill="#22c55e" name="분석 완료" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {chartData.map((item, index) => {
-                      const Icon = profileTypeIcons[item.type] || Briefcase;
-                      return (
-                        <div key={item.type} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                          <Icon className="h-5 w-5" style={{ color: COLORS[index % COLORS.length] }} />
-                          <div>
-                            <p className="text-sm font-medium">{item.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {item.프로필}명 중 {item.분석완료}명 완료
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Profile Field Statistics */}
             <Card className="mt-6" data-testid="card-field-stats">
               <CardHeader>

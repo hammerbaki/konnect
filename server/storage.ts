@@ -2989,7 +2989,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     // Define fields to analyze based on profile type
-    const fieldsToAnalyze: Record<string, { label: string; key: string }[]> = {
+    const fieldsToAnalyze: Record<string, { label: string; key: string; isArray?: boolean; isTextCheck?: boolean }[]> = {
       international: [
         { label: '국적', key: 'intl_nationality' },
         { label: '비자 유형', key: 'intl_currentVisaType' },
@@ -2999,6 +2999,9 @@ export class DatabaseStorage implements IStorage {
         { label: '희망 근무지', key: 'intl_preferredLocation' },
         { label: '근무 유형', key: 'intl_availableWorkType' },
         { label: '영어 수준', key: 'intl_englishLevel' },
+        { label: '보유역량스킬', key: 'intl_skills', isArray: true },
+        { label: '컴퓨터/IT 활용능력', key: 'intl_computerItSkills' },
+        { label: '자기소개 작성', key: 'intl_strengthsAndPersonality', isTextCheck: true },
       ],
       general: [
         { label: '재직 상태', key: 'gen_currentStatus' },
@@ -3042,7 +3045,27 @@ export class DatabaseStorage implements IStorage {
         const profileData = profile.profileData as any;
         let value = profileData?.[field.key];
         
-        // Skip empty values
+        // Handle text check fields (just check if filled or not)
+        if (field.isTextCheck) {
+          const isFilled = value && typeof value === 'string' && value.trim().length > 0;
+          const label = isFilled ? '작성완료' : '미작성';
+          valueCounts[label] = (valueCounts[label] || 0) + 1;
+          continue;
+        }
+        
+        // Handle array fields (count each item in the array)
+        if (field.isArray) {
+          if (Array.isArray(value) && value.length > 0) {
+            for (const item of value) {
+              if (item && typeof item === 'string' && item.trim()) {
+                valueCounts[item] = (valueCounts[item] || 0) + 1;
+              }
+            }
+          }
+          continue;
+        }
+        
+        // Skip empty values for regular fields
         if (!value || value === '') continue;
         
         // Transform values for display
