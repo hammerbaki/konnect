@@ -94,7 +94,7 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  // Fetch profiles
+  // Fetch profiles - cache for 5 minutes to reduce API calls
   const { data: profiles } = useQuery({
     queryKey: ['/api/profiles'],
     queryFn: async () => {
@@ -102,14 +102,13 @@ export default function Dashboard() {
       return response.json();
     },
     enabled: !!user,
-    staleTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Get first profile ID if exists
   const firstProfileId = profiles?.[0]?.id;
 
-  // Fetch analyses for the first profile
+  // Fetch analyses for the first profile - with caching
   const { data: analyses } = useQuery({
     queryKey: ['/api/profiles', firstProfileId, 'analyses'],
     queryFn: async () => {
@@ -117,9 +116,10 @@ export default function Dashboard() {
       return response.json();
     },
     enabled: !!firstProfileId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Fetch essays for the first profile
+  // Fetch essays for the first profile - with caching
   const { data: essays } = useQuery({
     queryKey: ['/api/profiles', firstProfileId, 'essays'],
     queryFn: async () => {
@@ -127,9 +127,10 @@ export default function Dashboard() {
       return response.json();
     },
     enabled: !!firstProfileId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Fetch kompass for the first profile
+  // Fetch kompass for the first profile - with caching
   const { data: kompass } = useQuery({
     queryKey: ['/api/profiles', firstProfileId, 'kompass'],
     queryFn: async () => {
@@ -137,6 +138,7 @@ export default function Dashboard() {
       return response.json();
     },
     enabled: !!firstProfileId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const userName = user?.displayName 

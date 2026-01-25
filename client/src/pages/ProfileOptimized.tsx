@@ -289,7 +289,7 @@ export default function ProfileOptimized() {
       return response.json();
     },
     enabled: !!user,
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
   
   const { data: serverProfile, isLoading: isLoadingProfile } = useQuery({
@@ -299,7 +299,7 @@ export default function ProfileOptimized() {
       return response.json();
     },
     enabled: !!user,
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const saveIdentityMutation = useMutation({

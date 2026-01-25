@@ -43,9 +43,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
       return res.json();
     },
-    refetchInterval: 15000,
-    refetchIntervalInBackground: true,
-    staleTime: 10000,
+    refetchInterval: 60000, // 60 seconds - reduce API load
+    refetchIntervalInBackground: false, // Don't poll in background
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: unreadCountData, refetch: refetchUnreadCount } = useQuery<{ count: number }>({
@@ -62,9 +62,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
       return res.json();
     },
-    refetchInterval: 15000,
-    refetchIntervalInBackground: true,
-    staleTime: 10000,
+    refetchInterval: 60000, // 60 seconds - reduce API load
+    refetchIntervalInBackground: false, // Don't poll in background
+    staleTime: 30000, // 30 seconds
   });
 
   const markAsReadMutation = useMutation({

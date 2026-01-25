@@ -26,11 +26,11 @@ export function usePageAccess() {
       return res.json();
     },
     enabled: isAuthenticated && !!user?.id,
-    staleTime: 60 * 1000, // 1 minute
-    gcTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // 10 minutes - page visibility rarely changes
+    gcTime: 15 * 60 * 1000, // 15 minutes
     refetchOnMount: false, // Don't refetch on every mount
     refetchOnWindowFocus: false, // Don't refetch on window focus
-    retry: 2, // Retry twice on failure
+    retry: 1, // Only retry once
     retryDelay: 500,
   });
 

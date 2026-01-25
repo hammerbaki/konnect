@@ -321,8 +321,7 @@ export default function Analysis() {
             return response.json();
         },
         enabled: !!user,
-        staleTime: 0,
-        refetchOnMount: 'always',
+        staleTime: 5 * 60 * 1000, // 5 minutes - reduce API load
     });
 
     // Handle profile query parameter from URL (e.g., /analysis?profile=xxx)
