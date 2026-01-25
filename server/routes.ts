@@ -4220,8 +4220,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         questionCount: generatedQuestions.length,
       });
     } catch (error: any) {
-      console.error("Error creating interview session:", error);
-      res.status(500).json({ message: "면접 세션 생성 중 오류가 발생했습니다." });
+      console.error("Error creating interview session:", error?.message || error);
+      console.error("Error stack:", error?.stack);
+      res.status(500).json({ 
+        message: "면접 세션 생성 중 오류가 발생했습니다.",
+        error: process.env.NODE_ENV === 'development' ? error?.message : undefined
+      });
     }
   });
   

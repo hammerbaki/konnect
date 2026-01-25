@@ -306,8 +306,13 @@ function InterviewContent() {
       setView('session');
       toast({ title: '면접 준비 세션이 생성되었습니다.' });
     },
-    onError: () => {
-      toast({ title: '세션 생성 실패', variant: 'destructive' });
+    onError: (error: any) => {
+      console.error('Session creation error:', error);
+      toast({ 
+        title: '세션 생성 실패', 
+        description: error?.message || '면접 세션을 생성하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+        variant: 'destructive' 
+      });
     },
   });
   
