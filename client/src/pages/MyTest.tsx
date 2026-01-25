@@ -203,9 +203,15 @@ export default function MyTest() {
     if (!questions) return;
     const requiredAnswers = questions.length;
     if (Object.keys(answers).length < requiredAnswers) {
+      // Find first unanswered question and go to it
+      const firstUnanswered = questions.findIndex(q => answers[q.id] === undefined);
+      if (firstUnanswered !== -1) {
+        setCurrentQuestionIndex(firstUnanswered);
+        setShowMissingQuestions(true);
+      }
       toast({
         title: "미완료 문항 있음",
-        description: "모든 문항에 답변해 주세요.",
+        description: `${requiredAnswers - Object.keys(answers).length}개 문항에 답변이 필요합니다.`,
         variant: "destructive",
       });
       return;
@@ -224,6 +230,21 @@ export default function MyTest() {
   }, [questions, answers]);
 
   const isCurrentAnswered = currentQuestion ? answers[currentQuestion.id] !== undefined : false;
+
+  // Find unanswered questions
+  const unansweredQuestions = useMemo(() => {
+    if (!questions) return [];
+    return questions
+      .map((q, index) => ({ ...q, index }))
+      .filter(q => answers[q.id] === undefined);
+  }, [questions, answers]);
+
+  const [showMissingQuestions, setShowMissingQuestions] = useState(false);
+
+  const goToQuestion = (index: number) => {
+    setCurrentQuestionIndex(index);
+    setShowMissingQuestions(false);
+  };
 
   if (latestResult && !showResult) {
     return (
@@ -375,6 +396,37 @@ export default function MyTest() {
             <span className="text-sm font-medium text-[#3182F6]">{progress}%</span>
           </div>
           <Progress value={progress} className="h-2" />
+          
+          {/* Missing questions indicator */}
+          {unansweredQuestions.length > 0 && unansweredQuestions.length < questions.length && (
+            <div className="mt-3">
+              <button
+                onClick={() => setShowMissingQuestions(!showMissingQuestions)}
+                className="text-sm text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1"
+                data-testid="button-show-missing"
+              >
+                ⚠️ 미응답 {unansweredQuestions.length}문항 {showMissingQuestions ? '닫기' : '보기'}
+              </button>
+              
+              {showMissingQuestions && (
+                <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800 mb-2">클릭하면 해당 문항으로 이동합니다:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {unansweredQuestions.map((q) => (
+                      <button
+                        key={q.id}
+                        onClick={() => goToQuestion(q.index)}
+                        className="px-3 py-1.5 text-sm bg-white border border-amber-300 rounded-full hover:bg-amber-100 text-amber-700 font-medium transition-colors"
+                        data-testid={`button-goto-q-${q.index + 1}`}
+                      >
+                        {q.index + 1}번
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {currentQuestion && (
