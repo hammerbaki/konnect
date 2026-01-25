@@ -317,7 +317,7 @@ const CompetencyRadarWithEvidence = ({
                                                 : "bg-[#F2F4F6] text-[#B0B8C1] border-[#E5E8EB]"
                                     )}
                                 >
-                                    {comp.subject} {hasEvidence ? `(${comp.A}점)` : '(근거 부족)'}
+                                    {comp.subject} {hasEvidence ? `(${comp.A}점)` : ''}
                                 </button>
                             );
                         })}
@@ -377,7 +377,7 @@ const StrengthWeaknessWithEvidence = ({
                             <Icon className={cn("h-4 w-4 shrink-0 mt-0.5", iconColor)} />
                             {item.summary}
                         </p>
-                        {item.evidences.length > 0 ? (
+                        {item.evidences.length > 0 && (
                             <ul className="ml-6 space-y-1 mb-2">
                                 {item.evidences.slice(0, 3).map((ev, j) => (
                                     <li key={j} className="text-xs text-[#8B95A1] flex items-start gap-1">
@@ -385,8 +385,6 @@ const StrengthWeaknessWithEvidence = ({
                                     </li>
                                 ))}
                             </ul>
-                        ) : (
-                            <p className="ml-6 text-xs text-[#B0B8C1] mb-2">(근거 부족)</p>
                         )}
                         {item.recommendedAction && (
                             <p className="text-xs text-[#3182F6] font-medium flex items-center gap-1 ml-6">
