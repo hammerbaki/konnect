@@ -652,9 +652,11 @@ export default function Explorer() {
                                         <span className="text-purple-600 font-bold text-lg">₩</span>
                                     </div>
                                     <div className="text-2xl font-bold text-[#191F28]">
-                                        {stats.topSalary[0]?.salary >= 10000 
-                                            ? `${(stats.topSalary[0].salary / 10000).toFixed(1)}억`
-                                            : `${stats.topSalary[0]?.salary?.toLocaleString() || 0}만`}
+                                        {stats.topSalary?.[0]?.salary 
+                                            ? (stats.topSalary[0].salary >= 10000 
+                                                ? `${(stats.topSalary[0].salary / 10000).toFixed(1)}억`
+                                                : `${stats.topSalary[0].salary.toLocaleString()}만`)
+                                            : '데이터 없음'}
                                     </div>
                                     <div className="text-xs text-[#8B95A1]">최고 연봉</div>
                                 </CardContent>
@@ -750,9 +752,11 @@ export default function Explorer() {
                                         <span className="text-purple-600 font-bold text-lg">₩</span>
                                     </div>
                                     <div className="text-2xl font-bold text-[#191F28]">
-                                        {stats.topSalary[0]?.salary >= 10000 
-                                            ? `${(stats.topSalary[0].salary / 10000).toFixed(1)}억`
-                                            : `${stats.topSalary[0]?.salary.toLocaleString()}만`}
+                                        {stats.topSalary?.[0]?.salary 
+                                            ? (stats.topSalary[0].salary >= 10000 
+                                                ? `${(stats.topSalary[0].salary / 10000).toFixed(1)}억`
+                                                : `${stats.topSalary[0].salary.toLocaleString()}만`)
+                                            : '데이터 없음'}
                                     </div>
                                     <div className="text-xs text-[#8B95A1]">최고 연봉</div>
                                 </CardContent>
@@ -762,7 +766,7 @@ export default function Explorer() {
                                     <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-orange-50 mb-2">
                                         <Users className="h-5 w-5 text-orange-600" />
                                     </div>
-                                    <div className="text-2xl font-bold text-[#191F28]">{stats.totalCategories || Object.keys(displayHierarchy).length}</div>
+                                    <div className="text-2xl font-bold text-[#191F28]">{stats.totalCategories || Object.keys(displayHierarchy).length || 0}</div>
                                     <div className="text-xs text-[#8B95A1]">직군 분류</div>
                                 </CardContent>
                             </Card>
