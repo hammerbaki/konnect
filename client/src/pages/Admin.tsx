@@ -261,8 +261,7 @@ function GroupManagementTab() {
   const { data: groups = [], isLoading: isLoadingGroups, refetch: refetchGroups } = useQuery<GroupWithStats[]>({
     queryKey: ['/api/admin/groups'],
     queryFn: async () => {
-      const res = await fetch('/api/admin/groups', { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch groups');
+      const res = await apiRequest('GET', '/api/admin/groups');
       return res.json();
     },
   });
@@ -272,8 +271,7 @@ function GroupManagementTab() {
     queryKey: ['/api/admin/groups', selectedGroup?.id, 'members'],
     queryFn: async () => {
       if (!selectedGroup) return [];
-      const res = await fetch(`/api/admin/groups/${selectedGroup.id}/members`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch members');
+      const res = await apiRequest('GET', `/api/admin/groups/${selectedGroup.id}/members`);
       return res.json();
     },
     enabled: !!selectedGroup,
@@ -284,8 +282,7 @@ function GroupManagementTab() {
     queryKey: ['/api/admin/groups', selectedGroup?.id, 'analyses'],
     queryFn: async () => {
       if (!selectedGroup) return [];
-      const res = await fetch(`/api/admin/groups/${selectedGroup.id}/analyses`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch analyses');
+      const res = await apiRequest('GET', `/api/admin/groups/${selectedGroup.id}/analyses`);
       return res.json();
     },
     enabled: !!selectedGroup && viewMode === 'analyses',
