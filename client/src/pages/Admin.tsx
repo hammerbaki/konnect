@@ -756,6 +756,15 @@ export default function Admin() {
   const [editingInviteeGp, setEditingInviteeGp] = useState<number | null>(null);
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showRegisterDialog, setShowRegisterDialog] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
+    role: "user" as "user" | "staff" | "admin",
+    credits: 100,
+  });
+  const [isRegistering, setIsRegistering] = useState(false);
 
   const { user: currentUser, isLoading: userLoading, getAccessToken } = useAuth();
 
@@ -1266,6 +1275,31 @@ export default function Admin() {
     }
   };
 
+  const handleRegisterUser = async () => {
+    if (!newUserData.email.trim()) {
+      toast({ title: "오류", description: "이메일을 입력해주세요.", variant: "destructive" });
+      return;
+    }
+    
+    setIsRegistering(true);
+    try {
+      const res = await apiRequest('POST', '/api/admin/users', newUserData);
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+        toast({ title: "회원 등록 완료", description: `${newUserData.email}님이 등록되었습니다.` });
+        setShowRegisterDialog(false);
+        setNewUserData({ email: "", firstName: "", lastName: "", role: "user", credits: 100 });
+      } else {
+        const data = await res.json();
+        toast({ title: "등록 실패", description: data.message || "회원을 등록하는 중 오류가 발생했습니다.", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "등록 실패", description: "회원을 등록하는 중 오류가 발생했습니다.", variant: "destructive" });
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
   const createPackageMutation = useMutation({
     mutationFn: async (pkg: Partial<PointPackage>) => {
       const res = await apiRequest('POST', '/api/admin/packages', pkg);
@@ -1446,6 +1480,16 @@ export default function Admin() {
               <Badge className="bg-[#3182F6] text-white px-4 py-2">
                 총 {users.length}명
               </Badge>
+              {isStaffOrAdmin && (
+                <Button
+                  onClick={() => setShowRegisterDialog(true)}
+                  className="bg-[#3182F6] hover:bg-[#1B64DA] text-white rounded-xl h-12 px-6"
+                  data-testid="button-register-user"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  회원 등록
+                </Button>
+              )}
             </div>
 
             <Card className="toss-card">
@@ -3387,6 +3431,102 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Register User Dialog */}
+      <AlertDialog open={showRegisterDialog} onOpenChange={setShowRegisterDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-[#3182F6]" />
+              회원 등록
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              새로운 회원을 시스템에 등록합니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-[#191F28]">이메일 *</label>
+              <Input
+                type="email"
+                placeholder="user@example.com"
+                value={newUserData.email}
+                onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                className="bg-[#F2F4F6] border-none rounded-xl"
+                data-testid="input-register-email"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#191F28]">성</label>
+                <Input
+                  placeholder="홍"
+                  value={newUserData.lastName}
+                  onChange={(e) => setNewUserData({ ...newUserData, lastName: e.target.value })}
+                  className="bg-[#F2F4F6] border-none rounded-xl"
+                  data-testid="input-register-lastname"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#191F28]">이름</label>
+                <Input
+                  placeholder="길동"
+                  value={newUserData.firstName}
+                  onChange={(e) => setNewUserData({ ...newUserData, firstName: e.target.value })}
+                  className="bg-[#F2F4F6] border-none rounded-xl"
+                  data-testid="input-register-firstname"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#191F28]">역할</label>
+                <Select
+                  value={newUserData.role}
+                  onValueChange={(value) => setNewUserData({ ...newUserData, role: value as any })}
+                >
+                  <SelectTrigger className="bg-[#F2F4F6] border-none rounded-xl" data-testid="select-register-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">일반 회원</SelectItem>
+                    <SelectItem value="staff">스태프</SelectItem>
+                    {isAdmin && <SelectItem value="admin">관리자</SelectItem>}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#191F28]">초기 포인트</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={newUserData.credits}
+                  onChange={(e) => setNewUserData({ ...newUserData, credits: parseInt(e.target.value) || 0 })}
+                  className="bg-[#F2F4F6] border-none rounded-xl"
+                  data-testid="input-register-credits"
+                />
+              </div>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRegistering}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRegisterUser}
+              disabled={isRegistering || !newUserData.email.trim()}
+              className="bg-[#3182F6] hover:bg-[#1B64DA]"
+            >
+              {isRegistering ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  등록 중...
+                </>
+              ) : (
+                "회원 등록"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete User Confirmation Dialog */}
       <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
