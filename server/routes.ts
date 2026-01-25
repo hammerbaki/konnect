@@ -1923,11 +1923,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Get all users (admin/staff can view)
-  app.get('/api/admin/users', isAuthenticated, requireStaffOrAdmin, async (_req, res) => {
+  // Get all users (admin/staff can view all, group managers see only their group members)
+  app.get('/api/admin/users', isAuthenticated, async (req, res) => {
     try {
-      const users = await storage.getAllUsers();
-      res.json(users);
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      // Staff/admin can see all users
+      if (isStaffOrAdmin) {
+        const users = await storage.getAllUsers();
+        return res.json(users);
+      }
+      
+      // Check if user is a group manager (admin/consultant/teacher in any group)
+      const managedMemberIds = await storage.getUserManagedGroupMemberIds(userId);
+      if (managedMemberIds.length === 0) {
+        return res.status(403).json({ message: "권한이 없습니다." });
+      }
+      
+      // Server-side filtering: only return members of managed groups
+      const allUsers = await storage.getAllUsers();
+      const memberIdSet = new Set(managedMemberIds);
+      const filteredUsers = allUsers.filter(u => memberIdSet.has(u.id));
+      res.json(filteredUsers);
     } catch (error: any) {
       console.error("Error fetching users:", error);
       res.status(500).json({ message: "사용자 목록 조회 중 오류가 발생했습니다." });
@@ -5118,10 +5139,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "그룹을 찾을 수 없습니다." });
       }
       
-      // Check admin or group owner/admin
+      // Check admin or group admin
       const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
       const isAdmin = user?.role === 'admin' || user?.role === 'staff';
-      const isGroupAdmin = memberRole === 'owner' || memberRole === 'admin';
+      const isGroupAdmin = memberRole === 'admin';
       
       if (!isAdmin && !isGroupAdmin) {
         return res.status(403).json({ message: "권한이 없습니다." });
@@ -5172,7 +5193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isAdmin = user?.role === 'admin' || user?.role === 'staff';
       
       if (!isAdmin) {
-        // Check if user is a member of this group with admin/owner role
+        // Check if user is a group manager (admin/consultant/teacher)
         const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
         if (!memberRole || memberRole === 'member') {
           return res.status(403).json({ message: "권한이 없습니다." });
@@ -5269,13 +5290,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!isAdmin) {
         const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
-        if (memberRole !== 'owner') {
-          return res.status(403).json({ message: "그룹 소유자만 역할을 변경할 수 있습니다." });
+        if (memberRole !== 'admin') {
+          return res.status(403).json({ message: "그룹관리자만 역할을 변경할 수 있습니다." });
         }
       }
       
       const { role } = req.body;
-      if (!role || !['owner', 'admin', 'member'].includes(role)) {
+      if (!role || !['admin', 'consultant', 'teacher', 'member'].includes(role)) {
         return res.status(400).json({ message: "유효하지 않은 역할입니다." });
       }
       
@@ -5325,6 +5346,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's managed groups (where user is admin/consultant/teacher)
+  app.get('/api/my-managed-groups', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const groups = await storage.getUserManagedGroups(userId);
+      res.json(groups);
+    } catch (error: any) {
+      console.error("Error fetching managed groups:", error);
+      res.status(500).json({ message: "관리 그룹 목록 조회 중 오류가 발생했습니다." });
+    }
+  });
+
   // Admin: Get specific user's groups
   app.get('/api/admin/users/:userId/groups', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
     try {
@@ -5339,7 +5374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin: Add user to group
   const addUserToGroupSchema = z.object({
-    role: z.enum(['member', 'admin', 'owner']).optional().default('member'),
+    role: z.enum(['member', 'admin', 'consultant', 'teacher']).optional().default('member'),
   });
 
   app.post('/api/admin/users/:userId/groups/:groupId', isAuthenticated, requireStaffOrAdmin, async (req, res) => {

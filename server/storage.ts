@@ -2645,7 +2645,7 @@ export class DatabaseStorage implements IStorage {
       .where(inArray(groupMembers.groupId, groupIds));
     
     // Return unique user IDs
-    return [...new Set(members.map(m => m.userId))];
+    return Array.from(new Set(members.map(m => m.userId)));
   }
 }
 

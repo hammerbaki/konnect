@@ -11,7 +11,8 @@ import {
   Users, Settings, Coins, Activity, 
   RefreshCw, Search, Shield, User, Crown,
   BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
-  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download, Users2, X
+  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download, Users2, X,
+  Briefcase, GraduationCap
 } from "lucide-react";
 import {
   Popover,
@@ -29,7 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { useLocation } from "wouter";
@@ -383,10 +384,12 @@ function GroupManagementTab() {
 
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case 'owner':
-        return <Badge className="bg-amber-500 text-white"><Crown className="h-3 w-3 mr-1" />소유자</Badge>;
       case 'admin':
-        return <Badge className="bg-purple-500 text-white"><Shield className="h-3 w-3 mr-1" />관리자</Badge>;
+        return <Badge className="bg-purple-500 text-white"><Shield className="h-3 w-3 mr-1" />그룹관리자</Badge>;
+      case 'consultant':
+        return <Badge className="bg-blue-500 text-white"><Briefcase className="h-3 w-3 mr-1" />컨설턴트</Badge>;
+      case 'teacher':
+        return <Badge className="bg-green-500 text-white"><GraduationCap className="h-3 w-3 mr-1" />선생님</Badge>;
       default:
         return <Badge className="bg-gray-500 text-white"><User className="h-3 w-3 mr-1" />멤버</Badge>;
     }
@@ -625,7 +628,9 @@ function GroupManagementTab() {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="member">멤버</SelectItem>
-                                <SelectItem value="admin">관리자</SelectItem>
+                                <SelectItem value="teacher">선생님</SelectItem>
+                                <SelectItem value="consultant">컨설턴트</SelectItem>
+                                <SelectItem value="admin">그룹관리자</SelectItem>
                               </SelectContent>
                             </Select>
                             <Button 
@@ -675,7 +680,9 @@ function GroupManagementTab() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="member">멤버</SelectItem>
-                      <SelectItem value="admin">관리자</SelectItem>
+                      <SelectItem value="teacher">선생님</SelectItem>
+                      <SelectItem value="consultant">컨설턴트</SelectItem>
+                      <SelectItem value="admin">그룹관리자</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -777,11 +784,55 @@ export default function Admin() {
   const isStaff = currentUser?.role === 'staff';
   const isStaffOrAdmin = isAdmin || isStaff;
 
+  // Fetch user's managed groups (where user is admin/consultant/teacher)
+  const { data: managedGroups = [] } = useQuery<Array<{ id: string; name: string; iconEmoji: string | null; color: string | null; role: string }>>({
+    queryKey: ['/api/my-managed-groups'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/my-managed-groups');
+      return res.json();
+    },
+    enabled: !!currentUser && !isStaffOrAdmin,
+  });
+
+  // Check if user is a group manager (has managed groups)
+  const isGroupManager = managedGroups.length > 0;
+  const hasAdminAccess = isStaffOrAdmin || isGroupManager;
+
+  // Fetch managed group member IDs for filtering
+  const [managedGroupMemberIds, setManagedGroupMemberIds] = useState<Set<string>>(new Set());
+  
+  useEffect(() => {
+    const fetchManagedMembers = async () => {
+      if (!isGroupManager || isStaffOrAdmin) return;
+      
+      const allMemberIds = new Set<string>();
+      for (const group of managedGroups) {
+        try {
+          const res = await apiRequest('GET', `/api/admin/groups/${group.id}/members`);
+          const members = await res.json();
+          members.forEach((m: any) => allMemberIds.add(m.userId));
+        } catch (error) {
+          console.error('Failed to fetch group members:', error);
+        }
+      }
+      setManagedGroupMemberIds(allMemberIds);
+    };
+    
+    fetchManagedMembers();
+  }, [managedGroups, isGroupManager, isStaffOrAdmin]);
+
   const { data: users = [], isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useQuery<AdminUser[]>({
     queryKey: ['/api/admin/users'],
-    enabled: isStaffOrAdmin,
+    enabled: hasAdminAccess,
     retry: false,
   });
+
+  // Filter users based on group membership for group managers
+  const filteredUsers = useMemo(() => {
+    if (isStaffOrAdmin) return users;
+    if (!isGroupManager) return [];
+    return users.filter(user => managedGroupMemberIds.has(user.id));
+  }, [users, isStaffOrAdmin, isGroupManager, managedGroupMemberIds]);
 
   // Fetch all groups for assignment
   const { data: allGroups = [] } = useQuery<Array<{ id: string; name: string; iconEmoji: string | null; color: string | null }>>({
@@ -1420,7 +1471,7 @@ export default function Admin() {
     }
   };
 
-  const filteredUsers = users.filter(user => 
+  const searchFilteredUsers = filteredUsers.filter(user => 
     user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -1545,11 +1596,11 @@ export default function Admin() {
               <CardContent className="p-0">
                 {usersLoading ? (
                   <div className="p-8 text-center text-[#8B95A1]">로딩 중...</div>
-                ) : filteredUsers.length === 0 ? (
+                ) : searchFilteredUsers.length === 0 ? (
                   <div className="p-8 text-center text-[#8B95A1]">사용자가 없습니다.</div>
                 ) : (
                   <div className="divide-y divide-[#F2F4F6]">
-                    {filteredUsers.map((user) => (
+                    {searchFilteredUsers.map((user) => (
                       <div key={user.id} className="p-4 flex items-center justify-between" data-testid={`row-user-${user.id}`}>
                         <div className="flex-1">
                           <p className="font-bold text-[#191F28]">
