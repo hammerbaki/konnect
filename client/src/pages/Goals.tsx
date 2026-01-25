@@ -228,7 +228,7 @@ export default function Goals() {
 
   const handleSubmit = () => {
     if (!newTitle || !newTargetYear) {
-      toast({ title: "필수 입력 항목", description: "목표 제목과 목표 연도를 입력해주세요.", variant: "destructive" });
+      toast({ title: "필수 입력 항목", description: "목표 제목과 달성 목표 연도를 입력해주세요.", variant: "destructive" });
       return;
     }
 
@@ -461,7 +461,7 @@ export default function Goals() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="year" className="text-sm font-bold text-[#333D4B]">목표 연도</Label>
+                        <Label htmlFor="year" className="text-sm font-bold text-[#333D4B]">달성 목표 연도 <span className="font-normal text-[#8B95A1]">(몇 년에 달성하고 싶으십니까?)</span></Label>
                         <Input 
                             id="year" 
                             type="number"
