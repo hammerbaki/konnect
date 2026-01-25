@@ -328,6 +328,18 @@ export interface IStorage {
     completedGoals: number;
     completedEssays: number;
     progressRate: number;
+    profileTypeBreakdown: Array<{ type: string; count: number }>;
+    analysisTypeBreakdown: Array<{ type: string; count: number }>;
+  }>;
+  getGroupDetailedStats(groupId: string): Promise<{
+    recentAnalyses: Array<{
+      userId: string;
+      userName: string | null;
+      profileType: string;
+      analysisDate: string;
+      summary: string | null;
+    }>;
+    profileTypeStats: Array<{ type: string; label: string; count: number; withAnalysis: number }>;
   }>;
   getGroupMemberProgress(groupId: string): Promise<Array<{
     userId: string;
@@ -2709,6 +2721,8 @@ export class DatabaseStorage implements IStorage {
     completedGoals: number;
     completedEssays: number;
     progressRate: number;
+    profileTypeBreakdown: Array<{ type: string; count: number }>;
+    analysisTypeBreakdown: Array<{ type: string; count: number }>;
   }> {
     // Get all group member user IDs
     const memberRows = await db
@@ -2727,6 +2741,8 @@ export class DatabaseStorage implements IStorage {
         completedGoals: 0,
         completedEssays: 0,
         progressRate: 0,
+        profileTypeBreakdown: [],
+        analysisTypeBreakdown: [],
       };
     }
     
@@ -2739,8 +2755,19 @@ export class DatabaseStorage implements IStorage {
     const completedProfiles = new Set(userProfiles.map(p => p.userId)).size;
     const profileIds = userProfiles.map(p => p.id);
     
+    // Calculate profile type breakdown
+    const profileTypeCounts: Record<string, number> = {};
+    userProfiles.forEach(p => {
+      profileTypeCounts[p.type] = (profileTypeCounts[p.type] || 0) + 1;
+    });
+    const profileTypeBreakdown = Object.entries(profileTypeCounts).map(([type, count]) => ({
+      type,
+      count,
+    }));
+    
     // Get analyses (any analysis counts as completed since schema doesn't have status)
     let completedAnalyses = 0;
+    const analysisTypeCounts: Record<string, number> = {};
     if (profileIds.length > 0) {
       const analyses = await db
         .select()
@@ -2750,7 +2777,19 @@ export class DatabaseStorage implements IStorage {
         analyses.map(a => userProfiles.find(p => p.id === a.profileId)?.userId)
       );
       completedAnalyses = usersWithAnalysis.size;
+      
+      // Calculate analysis type breakdown based on profile type
+      analyses.forEach(a => {
+        const profile = userProfiles.find(p => p.id === a.profileId);
+        if (profile) {
+          analysisTypeCounts[profile.type] = (analysisTypeCounts[profile.type] || 0) + 1;
+        }
+      });
     }
+    const analysisTypeBreakdown = Object.entries(analysisTypeCounts).map(([type, count]) => ({
+      type,
+      count,
+    }));
     
     // Get profiles with goals (goals are linked via profileId)
     let completedGoals = 0;
@@ -2792,7 +2831,114 @@ export class DatabaseStorage implements IStorage {
       completedGoals,
       completedEssays,
       progressRate,
+      profileTypeBreakdown,
+      analysisTypeBreakdown,
     };
+  }
+
+  async getGroupDetailedStats(groupId: string): Promise<{
+    recentAnalyses: Array<{
+      userId: string;
+      userName: string | null;
+      profileType: string;
+      analysisDate: string;
+      summary: string | null;
+    }>;
+    profileTypeStats: Array<{ type: string; label: string; count: number; withAnalysis: number }>;
+  }> {
+    const profileTypeLabels: Record<string, string> = {
+      general: "구직자",
+      international: "외국인유학생",
+      university: "대학생",
+      high: "고등학생",
+      middle: "중학생",
+      elementary: "초등학생",
+    };
+    
+    // Get all group member user IDs
+    const memberRows = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, groupId));
+    
+    const memberUserIds = memberRows.map(m => m.userId);
+    if (memberUserIds.length === 0) {
+      return { recentAnalyses: [], profileTypeStats: [] };
+    }
+    
+    // Get profiles and users
+    const userProfiles = await db
+      .select({
+        profile: profiles,
+        user: {
+          id: users.id,
+          displayName: users.displayName,
+          email: users.email,
+        },
+      })
+      .from(profiles)
+      .innerJoin(users, eq(profiles.userId, users.id))
+      .where(inArray(profiles.userId, memberUserIds));
+    
+    const profileIds = userProfiles.map(p => p.profile.id);
+    
+    // Get analyses
+    let analysesList: any[] = [];
+    if (profileIds.length > 0) {
+      analysesList = await db
+        .select()
+        .from(careerAnalyses)
+        .where(inArray(careerAnalyses.profileId, profileIds))
+        .orderBy(desc(careerAnalyses.createdAt))
+        .limit(10);
+    }
+    
+    // Build recent analyses
+    const recentAnalyses = analysesList.map(a => {
+      const profileData = userProfiles.find(p => p.profile.id === a.profileId);
+      let summary: string | null = null;
+      if (a.stats && typeof a.stats === 'object') {
+        summary = a.stats.overview?.summary || a.stats.summary || null;
+      }
+      return {
+        userId: profileData?.user.id || '',
+        userName: profileData?.user.displayName || profileData?.user.email?.split('@')[0] || null,
+        profileType: profileData?.profile.type || 'general',
+        analysisDate: a.createdAt?.toISOString() || '',
+        summary,
+      };
+    });
+    
+    // Build profile type stats
+    const profileTypeCounts: Record<string, { count: number; withAnalysis: number }> = {};
+    Object.keys(profileTypeLabels).forEach(type => {
+      profileTypeCounts[type] = { count: 0, withAnalysis: 0 };
+    });
+    
+    userProfiles.forEach(p => {
+      const type = p.profile.type;
+      if (!profileTypeCounts[type]) {
+        profileTypeCounts[type] = { count: 0, withAnalysis: 0 };
+      }
+      profileTypeCounts[type].count++;
+      
+      // Check if has analysis
+      const hasAnalysis = analysesList.some(a => a.profileId === p.profile.id);
+      if (hasAnalysis) {
+        profileTypeCounts[type].withAnalysis++;
+      }
+    });
+    
+    const profileTypeStats = Object.entries(profileTypeCounts)
+      .filter(([_, data]) => data.count > 0)
+      .map(([type, data]) => ({
+        type,
+        label: profileTypeLabels[type] || type,
+        count: data.count,
+        withAnalysis: data.withAnalysis,
+      }));
+    
+    return { recentAnalyses, profileTypeStats };
   }
 
   async getGroupMemberProgress(groupId: string): Promise<Array<{

@@ -19,8 +19,28 @@ import {
   TrendingUp,
   AlertCircle,
   Eye,
+  PieChart,
+  Briefcase,
+  GraduationCap,
+  School,
+  BookOpen,
+  Backpack,
+  Globe,
 } from "lucide-react";
 import { getAuthHeaders } from "@/lib/queryClient";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  Legend,
+} from "recharts";
 
 interface GroupStats {
   totalMembers: number;
@@ -29,6 +49,19 @@ interface GroupStats {
   completedGoals: number;
   completedEssays: number;
   progressRate: number;
+  profileTypeBreakdown: Array<{ type: string; count: number }>;
+  analysisTypeBreakdown: Array<{ type: string; count: number }>;
+}
+
+interface DetailedStats {
+  recentAnalyses: Array<{
+    userId: string;
+    userName: string | null;
+    profileType: string;
+    analysisDate: string;
+    summary: string | null;
+  }>;
+  profileTypeStats: Array<{ type: string; label: string; count: number; withAnalysis: number }>;
 }
 
 interface MemberProgress {
@@ -51,6 +84,26 @@ interface GroupInfo {
   description: string | null;
   createdAt: string;
 }
+
+const profileTypeLabels: Record<string, string> = {
+  general: "구직자",
+  international: "외국인유학생",
+  university: "대학생",
+  high: "고등학생",
+  middle: "중학생",
+  elementary: "초등학생",
+};
+
+const profileTypeIcons: Record<string, typeof Briefcase> = {
+  general: Briefcase,
+  international: Globe,
+  university: GraduationCap,
+  high: School,
+  middle: BookOpen,
+  elementary: Backpack,
+};
+
+const COLORS = ["#3182F6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 export default function GroupDashboard() {
   const params = useParams<{ groupId: string }>();
@@ -84,6 +137,19 @@ export default function GroupDashboard() {
     },
   });
 
+  const { data: detailedStats } = useQuery<DetailedStats>({
+    queryKey: ["group-detailed-stats", groupId],
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/groups/${groupId}/stats/detailed`, {
+        headers,
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch detailed stats");
+      return res.json();
+    },
+  });
+
   const { data: members, isLoading: membersLoading } = useQuery<MemberProgress[]>({
     queryKey: ["group-members-progress", groupId],
     queryFn: async () => {
@@ -112,6 +178,15 @@ export default function GroupDashboard() {
     return { label: "미시작", variant: "outline" as const, color: "bg-gray-400" };
   };
 
+  // Prepare chart data
+  const chartData = detailedStats?.profileTypeStats.map((item, index) => ({
+    name: item.label,
+    type: item.type,
+    프로필: item.count,
+    분석완료: item.withAnalysis,
+    color: COLORS[index % COLORS.length],
+  })) || [];
+
   if (groupLoading) {
     return (
       <Layout>
@@ -135,8 +210,9 @@ export default function GroupDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="overview" data-testid="tab-overview">통계 개요</TabsTrigger>
+            <TabsTrigger value="analysis" data-testid="tab-analysis">분석 현황</TabsTrigger>
             <TabsTrigger value="members" data-testid="tab-members">학생 목록</TabsTrigger>
           </TabsList>
 
@@ -238,6 +314,129 @@ export default function GroupDashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {chartData.length > 0 && (
+              <Card className="mt-6" data-testid="card-profile-type-chart">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5" />
+                    프로필 유형별 현황
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="프로필" fill="#3182F6" name="프로필 작성" />
+                        <Bar dataKey="분석완료" fill="#22c55e" name="분석 완료" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {chartData.map((item, index) => {
+                      const Icon = profileTypeIcons[item.type] || Briefcase;
+                      return (
+                        <div key={item.type} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                          <Icon className="h-5 w-5" style={{ color: COLORS[index % COLORS.length] }} />
+                          <div>
+                            <p className="text-sm font-medium">{item.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {item.프로필}명 중 {item.분석완료}명 완료
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="analysis" className="mt-6 space-y-6">
+            <Card data-testid="card-recent-analyses">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  최근 분석 결과
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {detailedStats?.recentAnalyses && detailedStats.recentAnalyses.length > 0 ? (
+                  <div className="divide-y">
+                    {detailedStats.recentAnalyses.map((analysis, index) => (
+                      <div key={index} className="py-4 first:pt-0 last:pb-0">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium">{analysis.userName || "알 수 없음"}</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {profileTypeLabels[analysis.profileType] || analysis.profileType}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-500 mb-2">
+                              {format(new Date(analysis.analysisDate), "yyyy년 M월 d일 HH:mm", { locale: ko })}
+                            </p>
+                            {analysis.summary && (
+                              <p className="text-sm text-gray-700 line-clamp-2 bg-gray-50 p-3 rounded-lg">
+                                {analysis.summary}
+                              </p>
+                            )}
+                          </div>
+                          <Link href={`/group/${groupId}/member/${analysis.userId}`}>
+                            <Button variant="outline" size="sm" data-testid={`button-view-analysis-${index}`}>
+                              <Eye className="h-4 w-4 mr-1" />
+                              상세보기
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <AlertCircle className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p>아직 분석 결과가 없습니다</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-analysis-by-type">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  유형별 분석 완료 현황
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {detailedStats?.profileTypeStats.map((item, index) => {
+                    const Icon = profileTypeIcons[item.type] || Briefcase;
+                    const percentage = item.count > 0 ? Math.round((item.withAnalysis / item.count) * 100) : 0;
+                    return (
+                      <div key={item.type} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" style={{ color: COLORS[index % COLORS.length] }} />
+                            <span className="text-sm font-medium">{item.label}</span>
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {item.withAnalysis}/{item.count}명 ({percentage}%)
+                          </span>
+                        </div>
+                        <Progress value={percentage} className="h-2" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="members" className="mt-6">
@@ -274,6 +473,7 @@ export default function GroupDashboard() {
                   <div className="divide-y">
                     {filteredMembers?.map((member) => {
                       const progress = getProgressBadge(member.progressScore);
+                      const Icon = member.profileType ? profileTypeIcons[member.profileType] || Briefcase : null;
                       return (
                         <div
                           key={member.userId}
@@ -291,9 +491,17 @@ export default function GroupDashboard() {
                               )}
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">
-                                {member.displayName || member.email.split("@")[0]}
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-gray-900">
+                                  {member.displayName || member.email.split("@")[0]}
+                                </p>
+                                {member.profileType && Icon && (
+                                  <Badge variant="outline" className="text-xs flex items-center gap-1">
+                                    <Icon className="h-3 w-3" />
+                                    {profileTypeLabels[member.profileType]}
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-sm text-gray-500">{member.email}</p>
                             </div>
                           </div>
