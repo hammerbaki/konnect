@@ -5356,7 +5356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(409).json({ message: "이미 그룹에 속해 있습니다." });
       }
       
-      const member = await storage.addGroupMember(groupId, userId, parsed.data.role);
+      const member = await storage.addGroupMember({ groupId, userId, role: parsed.data.role });
       res.status(201).json(member);
     } catch (error: any) {
       console.error("Error adding user to group:", error);
