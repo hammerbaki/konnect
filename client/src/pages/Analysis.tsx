@@ -7,11 +7,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { 
     Brain, Sparkles, Loader2, 
     Briefcase, School, GraduationCap, 
-    Star, Compass,
+    Star, Compass, Globe,
     ChevronRight, LayoutDashboard, History,
-    AlertTriangle, User,
+    AlertTriangle, User, Plane, CheckCircle2, Clock as ClockIcon,
     Clock, Bot, XCircle, Plus, ExternalLink, Target,
-    Activity, Award, ArrowDown, Lightbulb, TrendingUp, Zap, Shuffle
+    Activity, Award, ArrowDown, Lightbulb, TrendingUp, Zap, Shuffle, FileText
 } from "lucide-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -45,6 +45,10 @@ const FIELD_LABELS: Record<string, string> = {
     gen_desiredIndustry: "희망 산업 분야",
     gen_desiredRole: "희망 직무",
     gen_skills: "보유 핵심 스킬",
+    // Foreign student fields
+    intl_desiredPosition: "희망 직무",
+    intl_currentVisaType: "현재 비자 유형",
+    intl_nationality: "국적",
 };
 
 // Minimum required fields for meaningful analysis by profile type
@@ -60,6 +64,10 @@ const MINIMUM_REQUIRED_FIELDS: Record<string, { fields: string[]; description: s
     general: {
         fields: ["gen_desiredIndustry", "gen_desiredRole"],
         description: "희망 산업과 희망 직무를 입력해야 분석을 실행할 수 있습니다.",
+    },
+    foreign_student: {
+        fields: ["intl_desiredPosition"],
+        description: "희망 직무를 입력해야 분석을 실행할 수 있습니다.",
     },
 };
 
@@ -97,6 +105,7 @@ function validateProfileForAnalysis(profileType: string, profileData: any): {
 }
 
 const profileTypeIcons: Record<string, any> = {
+    foreign_student: Globe,
     general: Briefcase,
     international: Compass,
     university: GraduationCap,
@@ -621,6 +630,8 @@ export default function Analysis() {
         const { summary, stats, recommendations } = latestAnalysis;
         const careerRecommendations: CareerRecommendation[] = recommendations?.careers || [];
         const profileType = activeProfile?.type || 'general';
+        const isForeignStudent = recommendations?.profileType === 'foreign_student';
+        const foreignStudentData = recommendations?.foreignStudentData;
 
         return (
             <div className="space-y-6">
@@ -1339,7 +1350,278 @@ export default function Analysis() {
                     </div>
                 )}
 
-                {careerRecommendations.length > 0 && (
+                {/* Foreign Student Specialized Analysis UI */}
+                {isForeignStudent && foreignStudentData && (
+                    <div className="space-y-6" data-testid="section-foreign-student-analysis">
+                        {/* Visa Warning Banner */}
+                        <Alert className="border-amber-300 bg-amber-50">
+                            <Plane className="h-4 w-4 text-amber-600" />
+                            <AlertTitle className="text-amber-800 font-semibold">비자 안내</AlertTitle>
+                            <AlertDescription className="text-amber-700 text-sm">
+                                {foreignStudentData.visaWarning || "비자 유형에 따라 취업 가능 범위가 달라질 수 있습니다. 학교 국제처, 출입국관리사무소, 또는 전문가에게 확인하세요."}
+                            </AlertDescription>
+                        </Alert>
+
+                        {/* Summary Card */}
+                        {foreignStudentData.summary && (
+                            <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200">
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                                        <Globe className="h-5 w-5 text-[#3182F6]" />
+                                        프로필 요약
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
+                                            <p className="text-[#8B95A1] text-xs mb-1">희망 직무</p>
+                                            <p className="font-semibold text-[#191F28]">{foreignStudentData.summary.desiredRole || "미입력"}</p>
+                                        </div>
+                                        <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
+                                            <p className="text-[#8B95A1] text-xs mb-1">전공</p>
+                                            <p className="font-semibold text-[#191F28]">{foreignStudentData.summary.major || "미입력"}</p>
+                                        </div>
+                                        <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
+                                            <p className="text-[#8B95A1] text-xs mb-1">비자 유형</p>
+                                            <p className="font-semibold text-[#191F28]">{foreignStudentData.summary.visaType || "미입력"}</p>
+                                        </div>
+                                        <div className="bg-white/70 rounded-lg p-3 border border-blue-100">
+                                            <p className="text-[#8B95A1] text-xs mb-1">한국어 (TOPIK)</p>
+                                            <p className="font-semibold text-[#191F28]">
+                                                {foreignStudentData.summary.korean?.level || "미입력"} 
+                                                {foreignStudentData.summary.korean?.topik && ` (${foreignStudentData.summary.korean.topik})`}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Fit Score Section */}
+                        {foreignStudentData.fit && (
+                            <Card className="border-[#E5E8EB]">
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                                        <Target className="h-5 w-5 text-[#3182F6]" />
+                                        희망 직무 적합도
+                                        <Badge 
+                                            className={cn(
+                                                "ml-2",
+                                                foreignStudentData.fit.score >= 70 ? "bg-green-100 text-green-700" :
+                                                foreignStudentData.fit.score >= 40 ? "bg-amber-100 text-amber-700" :
+                                                "bg-red-100 text-red-700"
+                                            )}
+                                        >
+                                            {foreignStudentData.fit.score}점
+                                        </Badge>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {foreignStudentData.fit.reasons && foreignStudentData.fit.reasons.length > 0 && (
+                                        <div className="space-y-2">
+                                            {foreignStudentData.fit.reasons.map((reason: any, idx: number) => (
+                                                <div 
+                                                    key={idx} 
+                                                    className={cn(
+                                                        "flex items-start gap-2 p-3 rounded-lg text-sm",
+                                                        reason.impact === 'positive' ? "bg-green-50 border border-green-200" :
+                                                        reason.impact === 'negative' ? "bg-red-50 border border-red-200" :
+                                                        "bg-gray-50 border border-gray-200"
+                                                    )}
+                                                >
+                                                    {reason.impact === 'positive' ? (
+                                                        <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                                    ) : reason.impact === 'negative' ? (
+                                                        <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                                                    ) : (
+                                                        <FileText className="h-4 w-4 text-gray-600 mt-0.5 flex-shrink-0" />
+                                                    )}
+                                                    <div>
+                                                        <p className="font-medium text-[#191F28]">{reason.note}</p>
+                                                        <p className="text-xs text-[#8B95A1] mt-0.5">{reason.field}: {reason.value}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Ready Now Recommendations */}
+                        {foreignStudentData.recommendations?.readyNow && foreignStudentData.recommendations.readyNow.length > 0 && (
+                            <Card className="border-green-200 bg-green-50/30">
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-lg font-bold text-green-700 flex items-center gap-2">
+                                        <CheckCircle2 className="h-5 w-5" />
+                                        즉시 지원 가능 직무
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {foreignStudentData.recommendations.readyNow.map((job: any, idx: number) => (
+                                        <div key={idx} className="bg-white rounded-xl p-4 border border-green-200 shadow-sm">
+                                            <h4 className="font-bold text-[#191F28] mb-2">{job.role}</h4>
+                                            <div className="space-y-2">
+                                                <div>
+                                                    <p className="text-xs text-[#8B95A1] mb-1">추천 이유</p>
+                                                    <ul className="text-sm text-[#4E5968] space-y-1">
+                                                        {job.reasons?.map((reason: string, i: number) => (
+                                                            <li key={i} className="flex items-start gap-1">
+                                                                <span className="text-green-500 mt-1">•</span>
+                                                                {reason}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                {job.requiredNext && job.requiredNext.length > 0 && (
+                                                    <div>
+                                                        <p className="text-xs text-[#8B95A1] mb-1">추가 준비사항</p>
+                                                        <ul className="text-sm text-[#4E5968] space-y-1">
+                                                            {job.requiredNext.map((item: string, i: number) => (
+                                                                <li key={i} className="flex items-start gap-1">
+                                                                    <span className="text-blue-500 mt-1">→</span>
+                                                                    {item}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* After Prep Recommendations */}
+                        {foreignStudentData.recommendations?.afterPrep && foreignStudentData.recommendations.afterPrep.length > 0 && (
+                            <Card className="border-amber-200 bg-amber-50/30">
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-lg font-bold text-amber-700 flex items-center gap-2">
+                                        <TrendingUp className="h-5 w-5" />
+                                        준비 후 도전 가능 직무
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {foreignStudentData.recommendations.afterPrep.map((job: any, idx: number) => (
+                                        <div key={idx} className="bg-white rounded-xl p-4 border border-amber-200 shadow-sm">
+                                            <h4 className="font-bold text-[#191F28] mb-2">{job.role}</h4>
+                                            <div className="space-y-2">
+                                                {job.missingConditions && job.missingConditions.length > 0 && (
+                                                    <div>
+                                                        <p className="text-xs text-[#8B95A1] mb-1">부족한 조건</p>
+                                                        <ul className="text-sm text-[#4E5968] space-y-1">
+                                                            {job.missingConditions.map((condition: string, i: number) => (
+                                                                <li key={i} className="flex items-start gap-1">
+                                                                    <span className="text-amber-500 mt-1">⚠</span>
+                                                                    {condition}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                                {job.howToFill && job.howToFill.length > 0 && (
+                                                    <div>
+                                                        <p className="text-xs text-[#8B95A1] mb-1">채우는 방법</p>
+                                                        <ul className="text-sm text-[#4E5968] space-y-1">
+                                                            {job.howToFill.map((item: string, i: number) => (
+                                                                <li key={i} className="flex items-start gap-1">
+                                                                    <span className="text-green-500 mt-1">✓</span>
+                                                                    {item}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Action Plan */}
+                        {foreignStudentData.actionPlan && (
+                            <Card className="border-[#E5E8EB]">
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
+                                        <ClockIcon className="h-5 w-5 text-[#3182F6]" />
+                                        액션 플랜
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {foreignStudentData.actionPlan.shortTerm && foreignStudentData.actionPlan.shortTerm.length > 0 && (
+                                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                                            <h4 className="font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                                                <Badge className="bg-blue-100 text-blue-700">1~3개월</Badge>
+                                                단기 목표
+                                            </h4>
+                                            <ul className="space-y-1.5">
+                                                {foreignStudentData.actionPlan.shortTerm.map((item: string, idx: number) => (
+                                                    <li key={idx} className="text-sm text-[#4E5968] flex items-start gap-2">
+                                                        <span className="text-blue-500 mt-0.5">□</span>
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                    {foreignStudentData.actionPlan.midTerm && foreignStudentData.actionPlan.midTerm.length > 0 && (
+                                        <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
+                                            <h4 className="font-semibold text-purple-700 mb-2 flex items-center gap-2">
+                                                <Badge className="bg-purple-100 text-purple-700">4~6개월</Badge>
+                                                중기 목표
+                                            </h4>
+                                            <ul className="space-y-1.5">
+                                                {foreignStudentData.actionPlan.midTerm.map((item: string, idx: number) => (
+                                                    <li key={idx} className="text-sm text-[#4E5968] flex items-start gap-2">
+                                                        <span className="text-purple-500 mt-0.5">□</span>
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                    {foreignStudentData.actionPlan.longTerm && foreignStudentData.actionPlan.longTerm.length > 0 && (
+                                        <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                                            <h4 className="font-semibold text-green-700 mb-2 flex items-center gap-2">
+                                                <Badge className="bg-green-100 text-green-700">6개월+</Badge>
+                                                장기 목표
+                                            </h4>
+                                            <ul className="space-y-1.5">
+                                                {foreignStudentData.actionPlan.longTerm.map((item: string, idx: number) => (
+                                                    <li key={idx} className="text-sm text-[#4E5968] flex items-start gap-2">
+                                                        <span className="text-green-500 mt-0.5">□</span>
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Data Gaps Notice */}
+                        {foreignStudentData.dataGaps && foreignStudentData.dataGaps.length > 0 && (
+                            <Alert className="border-gray-300 bg-gray-50">
+                                <FileText className="h-4 w-4 text-gray-600" />
+                                <AlertTitle className="text-gray-800 font-semibold">입력 정보 부족 안내</AlertTitle>
+                                <AlertDescription className="text-gray-600 text-sm">
+                                    다음 정보를 추가하면 더 정확한 분석을 받을 수 있습니다:
+                                    <ul className="mt-2 space-y-1">
+                                        {foreignStudentData.dataGaps.map((gap: string, idx: number) => (
+                                            <li key={idx}>• {gap}</li>
+                                        ))}
+                                    </ul>
+                                </AlertDescription>
+                            </Alert>
+                        )}
+                    </div>
+                )}
+
+                {/* Standard career recommendations for non-foreign-student profiles */}
+                {!isForeignStudent && careerRecommendations.length > 0 && (
                     <div>
                         <div className="flex items-center gap-2 mb-2 px-1">
                             <Target className="h-5 w-5 text-[#3182F6]" />

@@ -18,7 +18,7 @@ import {
   payments,
 } from "@shared/schema";
 import { z } from "zod";
-import { generateCareerAnalysis, generatePersonalEssay, generateGoals, type GoalLevel, checkAIRateLimit } from "./ai";
+import { generateCareerAnalysis, generateForeignStudentAnalysis, generatePersonalEssay, generateGoals, type GoalLevel, checkAIRateLimit } from "./ai";
 import { generateInterviewQuestions, generateAnswerFeedback, improveAnswer } from "./interview-ai";
 import { interviewSessions, interviewQuestions, interviewAnswers } from "@shared/schema";
 import { fetchCompanyInfo } from "./webFetcher";
@@ -1176,29 +1176,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         birthDate: user?.birthDate || undefined,
       };
 
-      // Get K-JOBS test result if available
-      const kjobsAssessment = await storage.getLatestCompletedKjobsAssessment(userId);
-      const kjobsTestResult = kjobsAssessment ? {
-        careerDna: kjobsAssessment.careerDna || undefined,
-        scores: kjobsAssessment.scores as Record<string, number> | undefined,
-        facetScores: kjobsAssessment.facetScores as Record<string, number> | undefined,
-        keywords: kjobsAssessment.keywords as string[] | undefined,
-        recommendedJobs: kjobsAssessment.recommendedJobs as Array<{ title: string; matchPercentage: number; keyCompetencies: string[] }> | undefined,
-      } : null;
+      // Branch based on profile type
+      let analysis;
+      
+      if (profile.type === 'foreign_student') {
+        // Use specialized foreign student analysis
+        const result = await generateForeignStudentAnalysis(profile, userIdentity);
+        
+        analysis = await storage.createAnalysis({
+          profileId: req.params.profileId,
+          summary: result.summary.oneLine,
+          stats: {
+            label1: "취업 준비도",
+            val1: result.fit.score >= 70 ? "높음" : result.fit.score >= 40 ? "보통" : "준비필요",
+            label2: "TOPIK",
+            val2: result.summary.korean.topik || "미입력",
+            label3: "비자",
+            val3: result.summary.visaType || "미입력",
+          },
+          chartData: null,
+          recommendations: {
+            profileType: 'foreign_student',
+            foreignStudentData: result,
+          },
+          aiRawResponse: result.rawResponse,
+        });
+      } else {
+        // Use standard analysis for other profile types
+        const kjobsAssessment = await storage.getLatestCompletedKjobsAssessment(userId);
+        const kjobsTestResult = kjobsAssessment ? {
+          careerDna: kjobsAssessment.careerDna || undefined,
+          scores: kjobsAssessment.scores as Record<string, number> | undefined,
+          facetScores: kjobsAssessment.facetScores as Record<string, number> | undefined,
+          keywords: kjobsAssessment.keywords as string[] | undefined,
+          recommendedJobs: kjobsAssessment.recommendedJobs as Array<{ title: string; matchPercentage: number; keyCompetencies: string[] }> | undefined,
+        } : null;
 
-      const result = await generateCareerAnalysis(profile, userIdentity, kjobsTestResult);
+        const result = await generateCareerAnalysis(profile, userIdentity, kjobsTestResult);
 
-      // Store careerRecommendations in the recommendations field
-      const analysis = await storage.createAnalysis({
-        profileId: req.params.profileId,
-        summary: result.summary,
-        stats: result.stats,
-        chartData: null,
-        recommendations: {
-          careers: result.careerRecommendations,
-        },
-        aiRawResponse: result.rawResponse,
-      });
+        analysis = await storage.createAnalysis({
+          profileId: req.params.profileId,
+          summary: result.summary,
+          stats: result.stats,
+          chartData: null,
+          recommendations: {
+            careers: result.careerRecommendations,
+          },
+          aiRawResponse: result.rawResponse,
+        });
+      }
 
       await storage.updateProfile(req.params.profileId, {
         lastAnalyzed: new Date(),
