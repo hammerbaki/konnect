@@ -559,7 +559,7 @@ export default function ProfileOptimized() {
                   disabled={isSaving}
                   onClick={async () => {
                     await handleSave();
-                    window.location.href = `/analysis?profile=${serverProfile.id}`;
+                    window.location.href = `/my-test?profile=${serverProfile.id}`;
                   }}
                 >
                   {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
