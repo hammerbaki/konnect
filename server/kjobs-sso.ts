@@ -70,6 +70,7 @@ function verifyHmacSignature(token: string, secret: string): SSOPayload | null {
 }
 
 export async function handleKJobsSSO(req: Request, res: Response) {
+  console.log('SSO: Received SSO request');
   const token = req.query.token as string;
   
   if (!token) {
@@ -77,16 +78,22 @@ export async function handleKJobsSSO(req: Request, res: Response) {
     return res.redirect('/?error=sso_no_token');
   }
 
+  console.log('SSO: Token received, length:', token.length);
+
   if (!SSO_SECRET) {
     console.error('SSO: KJOBS_SSO_SECRET not configured');
     return res.redirect('/?error=sso_config_error');
   }
 
+  console.log('SSO: Secret configured, verifying token...');
   const payload = verifyHmacSignature(token, SSO_SECRET);
   
   if (!payload) {
+    console.error('SSO: Token verification failed');
     return res.redirect('/?error=sso_invalid_token');
   }
+  
+  console.log('SSO: Token verified successfully, userId:', payload.userId);
 
   try {
     const ssoUserId = `kjobs_${payload.userId}`;
