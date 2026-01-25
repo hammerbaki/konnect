@@ -26,7 +26,7 @@ import { createRateLimitMiddleware, checkRedisConnection, redis } from "./rateLi
 import { startWorker, submitQueuedJob } from "./aiWorker";
 import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
-import { handleKJobsSSO, generateTestToken } from "./kjobs-sso";
+import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt } from "drizzle-orm";
 import { giftPointLedger, users, referrals } from "@shared/schema";
 
@@ -173,6 +173,9 @@ function convertAIPlanToVisionData(
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
+
+  // Apply SSO middleware globally to handle tokens at any URL
+  app.use(ssoMiddleware);
 
   // Apply global rate limiting unconditionally (uses in-memory fallback if Redis is down)
   app.use('/api', createRateLimitMiddleware());

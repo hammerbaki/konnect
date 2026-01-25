@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { storage } from './storage';
 
 const SSO_SECRET = process.env.KJOBS_SSO_SECRET || '';
@@ -10,6 +10,52 @@ interface SSOPayload {
   name?: string;
   exp?: number;
   iat?: number;
+}
+
+export async function ssoMiddleware(req: Request, res: Response, next: NextFunction) {
+  const token = req.query.token as string;
+  
+  if (!token || !SSO_SECRET) {
+    return next();
+  }
+
+  console.log('SSO Middleware: Token detected, length:', token.length);
+  
+  try {
+    const payload = jwt.verify(token, SSO_SECRET, { algorithms: ['HS256'] }) as SSOPayload;
+    console.log('SSO Middleware: Token verified, userId:', payload.userId);
+    
+    if (!payload.userId) {
+      console.error('SSO Middleware: No userId in token');
+      return next();
+    }
+
+    const ssoUserId = `kjobs_${payload.userId}`;
+    
+    const user = await storage.upsertUser({
+      id: ssoUserId,
+      email: payload.email || null,
+      firstName: payload.name?.split(' ')[0] || null,
+      lastName: payload.name?.split(' ').slice(1).join(' ') || null,
+      profileImageUrl: null,
+    });
+    
+    console.log(`SSO Middleware: User logged in via K-JOBS: ${user.id}`);
+
+    if (req.session) {
+      (req.session as any).userId = user.id;
+      (req.session as any).ssoProvider = 'kjobs';
+      (req.session as any).email = payload.email;
+      (req.session as any).name = payload.name;
+    }
+
+    const redirectPath = req.path === '/' ? '/dashboard' : req.path;
+    console.log('SSO Middleware: Redirecting to:', redirectPath);
+    return res.redirect(redirectPath);
+  } catch (error: any) {
+    console.error('SSO Middleware: Token verification failed:', error.message);
+    return next();
+  }
 }
 
 export async function handleKJobsSSO(req: Request, res: Response) {
