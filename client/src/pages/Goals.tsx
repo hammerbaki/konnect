@@ -15,7 +15,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -68,7 +67,6 @@ export default function Goals() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newTargetYear, setNewTargetYear] = useState(String(new Date().getFullYear() + 2)); // Default 3 years (current + 2)
-  const [newStartMonth, setNewStartMonth] = useState(String(new Date().getMonth() + 1)); // Default current month (1-12)
   const [newDescription, setNewDescription] = useState("");
   const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const [importedData, setImportedData] = useState<ImportedCareerData | null>(null);
@@ -107,7 +105,6 @@ export default function Goals() {
       setIsCreateModalOpen(false);
       setNewTitle("");
       setNewDescription("");
-      setNewStartMonth(String(new Date().getMonth() + 1));
       setSelectedProfileId("");
       setImportedData(null);
       toast({ 
@@ -223,7 +220,6 @@ export default function Goals() {
     setImportedData(null);
     setNewTitle("");
     setNewDescription("");
-    setNewStartMonth(String(new Date().getMonth() + 1));
     if (profiles.length > 0) {
       setSelectedProfileId(profiles[0].id);
     }
@@ -242,7 +238,7 @@ export default function Goals() {
     }
 
     const targetYear = parseInt(newTargetYear);
-    const startMonth = parseInt(newStartMonth);
+    const startMonth = 1;
 
     if (importedData) {
       const visionData = generateLightTree(`temp-${Date.now()}`, newTitle, targetYear, newDescription, startMonth);
@@ -464,32 +460,17 @@ export default function Goals() {
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                            <Label htmlFor="year" className="text-sm font-bold text-[#333D4B]">목표 연도</Label>
-                            <Input 
-                                id="year" 
-                                type="number"
-                                placeholder="예: 2028" 
-                                value={newTargetYear}
-                                onChange={(e) => setNewTargetYear(e.target.value)}
-                                className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6]"
-                                data-testid="input-target-year"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="startMonth" className="text-sm font-bold text-[#333D4B]">시작 월</Label>
-                            <Select value={newStartMonth} onValueChange={setNewStartMonth}>
-                                <SelectTrigger className="h-12 rounded-xl border-[#E5E8EB]" data-testid="select-start-month">
-                                    <SelectValue placeholder="시작 월 선택" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {[1,2,3,4,5,6,7,8,9,10,11,12].map((m) => (
-                                        <SelectItem key={m} value={String(m)}>{m}월</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="year" className="text-sm font-bold text-[#333D4B]">목표 연도</Label>
+                        <Input 
+                            id="year" 
+                            type="number"
+                            placeholder="예: 2028" 
+                            value={newTargetYear}
+                            onChange={(e) => setNewTargetYear(e.target.value)}
+                            className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6]"
+                            data-testid="input-target-year"
+                        />
                     </div>
 
                     <div className="space-y-2">
