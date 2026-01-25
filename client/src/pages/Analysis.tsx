@@ -65,7 +65,7 @@ const MINIMUM_REQUIRED_FIELDS: Record<string, { fields: string[]; description: s
         fields: ["gen_desiredIndustry", "gen_desiredRole"],
         description: "희망 산업과 희망 직무를 입력해야 분석을 실행할 수 있습니다.",
     },
-    foreign_student: {
+    international: {
         fields: ["intl_desiredPosition"],
         description: "희망 직무를 입력해야 분석을 실행할 수 있습니다.",
     },
@@ -630,7 +630,7 @@ export default function Analysis() {
         const { summary, stats, recommendations } = latestAnalysis;
         const careerRecommendations: CareerRecommendation[] = recommendations?.careers || [];
         const profileType = activeProfile?.type || 'general';
-        const isForeignStudent = recommendations?.profileType === 'foreign_student';
+        const isForeignStudent = recommendations?.profileType === 'international';
         const foreignStudentData = recommendations?.foreignStudentData;
 
         return (
