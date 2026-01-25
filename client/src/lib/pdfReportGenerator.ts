@@ -1,5 +1,4 @@
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import html2pdf from 'html2pdf.js';
 
 export interface CareerReportData {
   title: string;
@@ -42,6 +41,24 @@ function getProfileTypeKorean(type: string): string {
   return labels[type] || type;
 }
 
+function getScoreLabelKorean(key: string): string {
+  const labels: Record<string, string> = {
+    valuesPurpose: '가치관/목적의식',
+    careerInterests: '직업 흥미도',
+    interactionStyle: '대인관계 유형',
+    pressureResponse: '스트레스 대응력',
+    analyticalThinking: '분석적 사고력',
+    creativity: '창의성',
+    leadership: '리더십',
+    teamwork: '협업 능력',
+    communication: '의사소통',
+    problemSolving: '문제해결력',
+    adaptability: '적응력',
+    technicalSkills: '기술 역량',
+  };
+  return labels[key] || key;
+}
+
 function createIntegratedReportHTML(
   career: CareerReportData, 
   metadata: ReportMetadata,
@@ -51,7 +68,7 @@ function createIntegratedReportHTML(
   
   const kjobsSection = kjobsData ? `
     <!-- K-JOBS 진로진단 결과 -->
-    <div style="margin-bottom: 30px; page-break-inside: avoid;">
+    <div class="avoid-break" style="margin-bottom: 30px; page-break-inside: avoid;">
       <h2 style="font-size: 16px; font-weight: 700; color: #6366F1; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #6366F1; display: flex; align-items: center;">
         <span style="margin-right: 8px;">🧬</span> K-JOBS 진로진단 결과
       </h2>
@@ -83,7 +100,7 @@ function createIntegratedReportHTML(
           ${Object.entries(kjobsData.scores).slice(0, 6).map(([key, value]) => `
             <div style="margin-bottom: 10px;">
               <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="font-size: 12px; color: #4A5568;">${key}</span>
+                <span style="font-size: 12px; color: #4A5568;">${getScoreLabelKorean(key)}</span>
                 <span style="font-size: 12px; font-weight: 700; color: #6366F1;">${value}점</span>
               </div>
               <div style="height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden;">
@@ -111,7 +128,22 @@ function createIntegratedReportHTML(
   ` : '';
   
   return `
+    <style>
+      .pdf-page { 
+        min-height: 1100px; 
+        page-break-after: always; 
+        page-break-inside: avoid;
+        padding-bottom: 40px;
+      }
+      .pdf-page:last-child { page-break-after: avoid; }
+      .section-box, .avoid-break {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+    </style>
     <div id="pdf-report-container" style="width: 794px; padding: 40px; font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif; background: white; color: #191F28;">
+      <!-- Page 1: Header + K-JOBS -->
+      <div class="pdf-page">
       <!-- Header -->
       <div style="background: linear-gradient(135deg, #0F1E3D 0%, #1a2d5c 100%); padding: 30px; margin: -40px -40px 30px -40px; border-radius: 0;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -142,7 +174,10 @@ function createIntegratedReportHTML(
       </div>
 
       ${kjobsSection}
+      </div><!-- End Page 1 -->
 
+      <!-- Page 2: AI Career Analysis -->
+      <div class="pdf-page">
       <!-- AI Career Analysis Section -->
       <div style="margin-bottom: 30px;">
         <h2 style="font-size: 16px; font-weight: 700; color: #3182F6; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #3182F6; display: flex; align-items: center;">
@@ -151,7 +186,7 @@ function createIntegratedReportHTML(
       </div>
 
       <!-- Match Score Section -->
-      <div style="display: flex; align-items: center; margin-bottom: 30px; padding: 25px; background: #F8FAFC; border-radius: 16px; border: 1px solid #E2E8F0;">
+      <div class="avoid-break" style="display: flex; align-items: center; margin-bottom: 30px; padding: 25px; background: #F8FAFC; border-radius: 16px; border: 1px solid #E2E8F0;">
         <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #3182F6 0%, #1565C0 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; margin-right: 25px; box-shadow: 0 4px 15px rgba(49, 130, 246, 0.3);">
           <span style="font-size: 32px; font-weight: 800; color: white;">${career.matchScore}</span>
           <span style="font-size: 14px; color: rgba(255,255,255,0.9);">%</span>
@@ -164,7 +199,7 @@ function createIntegratedReportHTML(
       </div>
 
       <!-- Overview Section -->
-      <div style="margin-bottom: 30px;">
+      <div class="avoid-break" style="margin-bottom: 30px;">
         <h3 style="font-size: 14px; font-weight: 700; color: #191F28; margin-bottom: 15px;">개요</h3>
         <div style="display: flex; gap: 20px;">
           <div style="flex: 1; background: #F8FAFC; padding: 20px; border-radius: 12px; border-left: 4px solid #00BFA5;">
@@ -180,7 +215,7 @@ function createIntegratedReportHTML(
 
       <!-- Competency Section -->
       ${career.competencies && career.competencies.length > 0 ? `
-        <div style="margin-bottom: 30px; page-break-inside: avoid;">
+        <div class="avoid-break" style="margin-bottom: 30px; page-break-inside: avoid;">
           <h3 style="font-size: 14px; font-weight: 700; color: #191F28; margin-bottom: 15px;">역량 분석</h3>
           <div style="background: #F8FAFC; padding: 20px; border-radius: 12px;">
             ${career.competencies.map(comp => `
@@ -199,46 +234,46 @@ function createIntegratedReportHTML(
       ` : ''}
 
       <!-- Strengths & Weaknesses -->
-      <div style="display: flex; gap: 20px; margin-bottom: 30px; page-break-inside: avoid;">
+      <div class="section-box avoid-break" style="display: flex; gap: 20px; margin-bottom: 30px; page-break-inside: avoid;">
         <div style="flex: 1;">
           <h3 style="font-size: 14px; font-weight: 700; color: #198754; margin-bottom: 15px;">강점</h3>
-          <div style="background: #F0FDF4; padding: 20px; border-radius: 12px; border: 1px solid #BBF7D0;">
+          <div style="background: #F0FDF4; padding: 15px; border-radius: 12px; border: 1px solid #BBF7D0;">
             ${career.strengths && career.strengths.length > 0 
-              ? career.strengths.map(s => `<div style="font-size: 13px; color: #166534; margin-bottom: 8px; padding-left: 15px; position: relative;"><span style="position: absolute; left: 0; color: #22C55E;">✓</span> ${s}</div>`).join('')
-              : '<div style="font-size: 13px; color: #86EFAC;">정보 없음</div>'}
+              ? career.strengths.slice(0, 4).map(s => `<div style="font-size: 12px; color: #166534; margin-bottom: 6px; padding-left: 15px; position: relative;"><span style="position: absolute; left: 0; color: #22C55E;">✓</span> ${s}</div>`).join('')
+              : '<div style="font-size: 12px; color: #86EFAC;">정보 없음</div>'}
           </div>
         </div>
         <div style="flex: 1;">
           <h3 style="font-size: 14px; font-weight: 700; color: #DC2626; margin-bottom: 15px;">개선점</h3>
-          <div style="background: #FEF2F2; padding: 20px; border-radius: 12px; border: 1px solid #FECACA;">
+          <div style="background: #FEF2F2; padding: 15px; border-radius: 12px; border: 1px solid #FECACA;">
             ${career.weaknesses && career.weaknesses.length > 0
-              ? career.weaknesses.map(w => `<div style="font-size: 13px; color: #991B1B; margin-bottom: 8px; padding-left: 15px; position: relative;"><span style="position: absolute; left: 0; color: #EF4444;">!</span> ${w}</div>`).join('')
-              : '<div style="font-size: 13px; color: #FCA5A5;">정보 없음</div>'}
+              ? career.weaknesses.slice(0, 4).map(w => `<div style="font-size: 12px; color: #991B1B; margin-bottom: 6px; padding-left: 15px; position: relative;"><span style="position: absolute; left: 0; color: #EF4444;">!</span> ${w}</div>`).join('')
+              : '<div style="font-size: 12px; color: #FCA5A5;">정보 없음</div>'}
           </div>
         </div>
       </div>
 
       <!-- Action Plan -->
       ${career.actions && (career.actions.portfolio?.length || career.actions.networking?.length || career.actions.mindset?.length) ? `
-        <div style="margin-bottom: 30px; page-break-inside: avoid;">
-          <h3 style="font-size: 14px; font-weight: 700; color: #191F28; margin-bottom: 15px;">액션 플랜</h3>
-          <div style="display: flex; gap: 15px;">
+        <div class="section-box avoid-break" style="margin-bottom: 30px; page-break-inside: avoid;">
+          <h3 style="font-size: 14px; font-weight: 700; color: #191F28; margin-bottom: 12px;">액션 플랜</h3>
+          <div style="display: flex; gap: 12px;">
             ${career.actions.portfolio && career.actions.portfolio.length > 0 ? `
-              <div style="flex: 1; background: linear-gradient(135deg, #EBF4FF 0%, #F0F7FF 100%); padding: 18px; border-radius: 12px;">
-                <div style="font-size: 12px; font-weight: 700; color: #3182F6; margin-bottom: 12px;">📁 포트폴리오</div>
-                ${career.actions.portfolio.map(item => `<div style="font-size: 12px; color: #1E40AF; margin-bottom: 6px; line-height: 1.5;">• ${item}</div>`).join('')}
+              <div style="flex: 1; background: linear-gradient(135deg, #EBF4FF 0%, #F0F7FF 100%); padding: 14px; border-radius: 12px;">
+                <div style="font-size: 11px; font-weight: 700; color: #3182F6; margin-bottom: 10px;">📁 포트폴리오</div>
+                ${career.actions.portfolio.slice(0, 3).map(item => `<div style="font-size: 11px; color: #1E40AF; margin-bottom: 5px; line-height: 1.4;">• ${item}</div>`).join('')}
               </div>
             ` : ''}
             ${career.actions.networking && career.actions.networking.length > 0 ? `
-              <div style="flex: 1; background: linear-gradient(135deg, #E0F2F1 0%, #F0FDF4 100%); padding: 18px; border-radius: 12px;">
-                <div style="font-size: 12px; font-weight: 700; color: #00897B; margin-bottom: 12px;">🤝 네트워킹</div>
-                ${career.actions.networking.map(item => `<div style="font-size: 12px; color: #065F46; margin-bottom: 6px; line-height: 1.5;">• ${item}</div>`).join('')}
+              <div style="flex: 1; background: linear-gradient(135deg, #E0F2F1 0%, #F0FDF4 100%); padding: 14px; border-radius: 12px;">
+                <div style="font-size: 11px; font-weight: 700; color: #00897B; margin-bottom: 10px;">🤝 네트워킹</div>
+                ${career.actions.networking.slice(0, 3).map(item => `<div style="font-size: 11px; color: #065F46; margin-bottom: 5px; line-height: 1.4;">• ${item}</div>`).join('')}
               </div>
             ` : ''}
             ${career.actions.mindset && career.actions.mindset.length > 0 ? `
-              <div style="flex: 1; background: linear-gradient(135deg, #FFF7ED 0%, #FFFBEB 100%); padding: 18px; border-radius: 12px;">
-                <div style="font-size: 12px; font-weight: 700; color: #D97706; margin-bottom: 12px;">💡 마인드셋</div>
-                ${career.actions.mindset.map(item => `<div style="font-size: 12px; color: #92400E; margin-bottom: 6px; line-height: 1.5;">• ${item}</div>`).join('')}
+              <div style="flex: 1; background: linear-gradient(135deg, #FFF7ED 0%, #FFFBEB 100%); padding: 14px; border-radius: 12px;">
+                <div style="font-size: 11px; font-weight: 700; color: #D97706; margin-bottom: 10px;">💡 마인드셋</div>
+                ${career.actions.mindset.slice(0, 3).map(item => `<div style="font-size: 11px; color: #92400E; margin-bottom: 5px; line-height: 1.4;">• ${item}</div>`).join('')}
               </div>
             ` : ''}
           </div>
@@ -254,6 +289,7 @@ function createIntegratedReportHTML(
           © ${new Date().getFullYear()} Konnect AI Career Platform
         </div>
       </div>
+      </div><!-- End Page 2 -->
     </div>
   `;
 }
@@ -272,43 +308,34 @@ export async function generateCareerReportPDF(
 
   const reportElement = container.querySelector('#pdf-report-container') as HTMLElement;
   
-  try {
-    const canvas = await html2canvas(reportElement, {
+  const fileName = `Konnect_${career.title.replace(/\s+/g, '_')}_통합분석리포트_${metadata.analysisDate.replace(/\./g, '')}.pdf`;
+  
+  const opt = {
+    margin: 0,
+    filename: fileName,
+    image: { type: 'jpeg' as const, quality: 0.98 },
+    html2canvas: { 
       scale: 2,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       logging: false,
-    });
-
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+    },
+    jsPDF: { 
+      unit: 'mm' as const, 
+      format: 'a4' as const, 
+      orientation: 'portrait' as const
+    },
+    pagebreak: { 
+      mode: ['avoid-all', 'css', 'legacy'],
+      before: '.page-break-before',
+      after: '.page-break-after',
+      avoid: '.avoid-break'
     }
+  };
 
-    const fileName = `Konnect_${career.title.replace(/\s+/g, '_')}_통합분석리포트_${metadata.analysisDate.replace(/\./g, '')}.pdf`;
-    pdf.save(fileName);
+  try {
+    await html2pdf().set(opt).from(reportElement).save();
   } finally {
     document.body.removeChild(container);
   }
