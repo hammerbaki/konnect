@@ -9,7 +9,7 @@ import {
     FolderOpen, Users, Heart, Compass, ArrowRight, Award,
     ChevronDown, ChevronUp, MapPin, Cpu, BadgeCheck, HelpCircle,
     BookOpen, DollarSign, BarChart3, TrendingDown, AlertCircle,
-    GraduationCap, Target
+    GraduationCap, Target, Download, Loader2
 } from "lucide-react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import type { 
@@ -26,6 +26,7 @@ interface EnhancedCareerCardProps {
     isExpanded: boolean;
     onToggle: (value: string) => void;
     onExportToKompass: (career: CareerRecommendation) => void;
+    onDownloadPDF?: (career: CareerRecommendation) => Promise<void>;
     matchScoreLabel: string;
 }
 
@@ -459,8 +460,20 @@ export function EnhancedCareerCard({
     isExpanded,
     onToggle,
     onExportToKompass,
+    onDownloadPDF,
     matchScoreLabel
 }: EnhancedCareerCardProps) {
+    const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
+    
+    const handleDownloadPDF = async () => {
+        if (!onDownloadPDF) return;
+        setIsDownloadingPDF(true);
+        try {
+            await onDownloadPDF(career);
+        } finally {
+            setIsDownloadingPDF(false);
+        }
+    };
     const defaultSalaryRanges: SalaryRange[] = career.salary ? [
         { level: '신입', min: 2800, max: 3500 },
         { level: '3년차', min: 3500, max: 4500 },
@@ -656,6 +669,22 @@ export function EnhancedCareerCard({
                             )}
 
                             <div className="flex gap-3">
+                                {onDownloadPDF && (
+                                    <Button 
+                                        onClick={handleDownloadPDF}
+                                        disabled={isDownloadingPDF}
+                                        variant="outline"
+                                        className="h-12 px-4 rounded-xl border-[#3182F6] text-[#3182F6] hover:bg-[#3182F6]/10"
+                                        data-testid={`button-download-pdf-${index}`}
+                                    >
+                                        {isDownloadingPDF ? (
+                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                        ) : (
+                                            <Download className="h-5 w-5" />
+                                        )}
+                                        <span className="ml-2 hidden sm:inline">PDF</span>
+                                    </Button>
+                                )}
                                 <Button 
                                     onClick={() => onExportToKompass(career)}
                                     className="flex-1 h-12 rounded-xl bg-gradient-to-r from-[#3182F6] to-[#1565C0] text-white font-bold hover:opacity-90 transition-opacity"

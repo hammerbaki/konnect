@@ -482,6 +482,41 @@ export default function Analysis() {
         toast({ title: "Kompass로 이동", description: "목표를 설정해보세요!" });
     };
 
+    const handleDownloadPDF = async (career: CareerRecommendation) => {
+        try {
+            const careerData: CareerReportData = {
+                title: career.title,
+                matchScore: career.matchScore ?? 80,
+                description: career.description || '',
+                salary: career.salary || '정보 없음',
+                jobOutlook: career.jobOutlook || '정보 없음',
+                strengths: career.strengths || [],
+                weaknesses: career.weaknesses || [],
+                competencies: career.competencies || [],
+                actions: career.actions || { portfolio: [], networking: [], mindset: [] },
+            };
+            
+            const metadata: ReportMetadata = {
+                userName: user?.displayName || user?.firstName || '사용자',
+                profileType: activeProfile?.type || 'general',
+                analysisDate: latestAnalysis?.createdAt 
+                    ? new Date(latestAnalysis.createdAt).toLocaleDateString('ko-KR') 
+                    : new Date().toLocaleDateString('ko-KR'),
+                profileTitle: activeProfile?.title || '',
+            };
+            
+            await generateCareerReportPDF(careerData, metadata);
+            toast({ title: "PDF 다운로드 완료", description: `${career.title} 분석 리포트가 다운로드되었습니다.` });
+        } catch (error) {
+            console.error('PDF generation error:', error);
+            toast({ 
+                title: "PDF 생성 실패", 
+                description: "리포트 생성 중 오류가 발생했습니다.", 
+                variant: "destructive" 
+            });
+        }
+    };
+
     const DashboardContent = () => {
         // 탭 상태 관리 (희망직무 기반이 기본) - 컴포넌트 최상위에 선언
         const [jobRecommendationTab, setJobRecommendationTab] = useState<'desired' | 'diagnosis'>('desired');
@@ -1345,6 +1380,7 @@ export default function Analysis() {
                                     isExpanded={expandedCareer === `career-${idx}`}
                                     onToggle={setExpandedCareer}
                                     onExportToKompass={handleExportToKompass}
+                                    onDownloadPDF={handleDownloadPDF}
                                     matchScoreLabel={matchScoreLabels[activeProfile?.type || 'general']}
                                 />
                             ))}
