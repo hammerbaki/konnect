@@ -427,6 +427,20 @@ export default function MyTest() {
               )}
             </div>
           )}
+          
+          {/* Quick submit button when all questions are answered */}
+          {unansweredQuestions.length === 0 && questions && questions.length > 0 && currentQuestionIndex !== questions.length - 1 && (
+            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+              <p className="text-sm text-green-700 font-medium">✅ 모든 문항 완료!</p>
+              <button
+                onClick={() => setCurrentQuestionIndex(questions.length - 1)}
+                className="px-4 py-1.5 text-sm bg-green-600 text-white rounded-full hover:bg-green-700 font-medium transition-colors flex items-center gap-1"
+                data-testid="button-go-to-submit"
+              >
+                제출하기로 이동 <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {currentQuestion && (
