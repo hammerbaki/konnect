@@ -506,7 +506,7 @@ export default function Goals() {
                         ) : importedData ? (
                             <><Compass className="h-5 w-5 mr-2" /> 목표로 저장하기</>
                         ) : (
-                            <><Sparkles className="h-5 w-5 mr-2" /> AI로 목표 자동 생성</>
+                            <><Sparkles className="h-5 w-5 mr-2" /> 목표달성을 위한 세부 내용 생성하기</>
                         )}
                     </Button>
                 </DialogFooter>
