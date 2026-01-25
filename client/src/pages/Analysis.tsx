@@ -24,7 +24,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useAIJob } from "@/hooks/useAIJob";
 import { useTokens } from "@/lib/TokenContext";
-import { generateCareerReportPDF, CareerReportData, ReportMetadata } from "@/lib/pdfReportGenerator";
+import { generateCareerReportPDF, CareerReportData, ReportMetadata, KJobsDiagnosisData } from "@/lib/pdfReportGenerator";
 import { EnhancedCareerCard } from "@/components/analysis/EnhancedCareerCard";
 import type { CareerRecommendation } from "@/types/career-analysis";
 
@@ -505,8 +505,18 @@ export default function Analysis() {
                 profileTitle: activeProfile?.title || '',
             };
             
-            await generateCareerReportPDF(careerData, metadata);
-            toast({ title: "PDF 다운로드 완료", description: `${career.title} 분석 리포트가 다운로드되었습니다.` });
+            const kjobsDiagnosisData: KJobsDiagnosisData | undefined = kjobsResult ? {
+                careerDna: kjobsResult.careerDna,
+                keywords: kjobsResult.keywords,
+                scores: kjobsResult.scores,
+                recommendedJobs: kjobsResult.recommendedJobs?.map((job: any) => ({
+                    title: job.title,
+                    matchScore: job.matchScore
+                })),
+            } : undefined;
+            
+            await generateCareerReportPDF(careerData, metadata, kjobsDiagnosisData);
+            toast({ title: "PDF 다운로드 완료", description: `${career.title} 통합 분석 리포트가 다운로드되었습니다.` });
         } catch (error) {
             console.error('PDF generation error:', error);
             toast({ 
