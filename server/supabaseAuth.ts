@@ -50,11 +50,29 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  
+  // First, check for SSO session (K-JOBS SSO)
+  const session = req.session as any;
+  if (session?.userId && session?.ssoProvider === 'kjobs') {
+    const ssoUser = await storage.getUser(session.userId);
+    if (ssoUser) {
+      req.user = {
+        id: ssoUser.id,
+        email: ssoUser.email || undefined,
+        user_metadata: {
+          first_name: ssoUser.firstName,
+          last_name: ssoUser.lastName,
+        },
+      };
+      return next();
+    }
+  }
+  
+  // Then check for Supabase Bearer token
   if (!supabaseAdmin) {
     return res.status(503).json({ message: "Authentication service unavailable" });
   }
-  
-  const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Unauthorized" });

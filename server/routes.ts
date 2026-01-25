@@ -203,6 +203,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/sso/kjobs', handleKJobsSSO);
 
+  // SSO session check endpoint - for frontend to detect SSO login
+  app.get('/api/sso/session', async (req: any, res) => {
+    const session = req.session as any;
+    if (session?.userId && session?.ssoProvider === 'kjobs') {
+      const ssoUser = await storage.getUser(session.userId);
+      if (ssoUser) {
+        return res.json({
+          authenticated: true,
+          provider: 'kjobs',
+          user: {
+            id: ssoUser.id,
+            email: ssoUser.email,
+            firstName: ssoUser.firstName,
+            lastName: ssoUser.lastName,
+            displayName: ssoUser.displayName || `${ssoUser.firstName || ''} ${ssoUser.lastName || ''}`.trim(),
+            credits: ssoUser.credits,
+            giftPoints: ssoUser.giftPoints,
+            role: ssoUser.role,
+          }
+        });
+      }
+    }
+    return res.json({ authenticated: false });
+  });
+
   if (process.env.NODE_ENV === 'development') {
     app.get('/api/sso/kjobs/test-token', (req, res) => {
       try {

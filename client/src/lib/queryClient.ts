@@ -62,6 +62,7 @@ export async function apiRequest(
   
   const res = await fetch(url, {
     method,
+    credentials: 'include', // Include cookies for SSO session
     headers: {
       ...authHeaders,
       ...(data ? { "Content-Type": "application/json" } : {}),
@@ -82,6 +83,7 @@ export const getQueryFn: <T>(options: {
     const authHeaders = await getAuthHeaders();
     
     const res = await fetch(queryKey.join("/") as string, {
+      credentials: 'include', // Include cookies for SSO session
       headers: authHeaders,
     });
 

@@ -144,6 +144,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function initAuth() {
       try {
+        // First, check for SSO session (K-JOBS SSO)
+        try {
+          const ssoResponse = await fetch('/api/sso/session', { credentials: 'include' });
+          const ssoData = await ssoResponse.json();
+          
+          if (ssoData.authenticated && ssoData.provider === 'kjobs') {
+            console.log('[Auth] SSO session detected, user:', ssoData.user.id);
+            setUser(ssoData.user);
+            setIsLoading(false);
+            return; // Skip Supabase auth for SSO users
+          }
+        } catch (ssoError) {
+          console.log('[Auth] SSO check failed, falling back to Supabase:', ssoError);
+        }
+
         const supabase = await getSupabase();
         setSupabaseClient(supabase);
 
