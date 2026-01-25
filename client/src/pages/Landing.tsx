@@ -69,9 +69,9 @@ export default function Landing() {
     },
     {
       icon: Target,
-      title: "Kompass 목표 관리",
+      title: "Kompass - AI 목표관리",
       description:
-        "연간 비전부터 일일 할 일까지 체계적으로 관리하세요. AI가 실현 가능한 단계별 목표를 자동으로 생성해드립니다.",
+        "프로필과 커리어 분석 결과를 바탕으로 장기·중기·단기 목표를 체계적으로 관리합니다. AI가 꿈을 현실로 만들 수 있도록 실현 가능한 단계별 목표를 자동으로 생성해드립니다.",
       gradient: "from-violet-500 to-purple-400",
     },
     {

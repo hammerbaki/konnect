@@ -260,7 +260,10 @@ export default function Goals() {
       <div className="space-y-8 max-w-5xl mx-auto pb-20 px-4 md:px-0">
         <div className="text-center mb-8 pt-6">
             <h2 className="text-[28px] font-bold text-[#191F28]">Kompass</h2>
-            <p className="text-[#8B95A1] mt-2 text-lg">나만의 커리어 나침반을 관리하세요</p>
+            <p className="text-[#4E5968] mt-2 text-lg font-medium">AI 기반 목표관리 시스템</p>
+            <p className="text-[#8B95A1] mt-1 text-sm max-w-md mx-auto">
+              프로필과 커리어 분석을 바탕으로 장기·중기·단기 목표를 체계적으로 관리하여 꿈을 현실로 만들어보세요
+            </p>
         </div>
 
         {isLoading ? (
@@ -385,11 +388,12 @@ export default function Goals() {
                             </Badge>
                         )}
                     </div>
-                    {importedData && (
-                        <DialogDescription className="text-sm text-[#8B95A1]">
-                            커리어 분석에서 추천받은 목표를 Kompass로 저장하세요
-                        </DialogDescription>
-                    )}
+                    <DialogDescription className="text-sm text-[#8B95A1]">
+                        {importedData 
+                            ? '커리어 분석에서 추천받은 목표를 Kompass로 저장하세요'
+                            : 'AI 기반 목표관리 시스템으로 장기·중기·단기 목표를 체계적으로 관리하세요'
+                        }
+                    </DialogDescription>
                 </DialogHeader>
                 
                 <div className="space-y-5 py-4">

@@ -177,7 +177,7 @@ export default function Dashboard() {
     },
     {
       title: "Kompass",
-      description: "목표 관리",
+      description: "AI 목표관리",
       icon: Compass,
       color: "#FFB300",
       bgColor: "bg-amber-50",
@@ -262,7 +262,7 @@ export default function Dashboard() {
                 </Link>
               </div>
               <CardDescription className="text-[#8B95A1] mt-1">
-                목표를 향한 여정을 관리하세요
+                AI 기반 장기·중기·단기 목표 관리
               </CardDescription>
             </CardHeader>
             <CardContent className="px-0 pb-0 mt-4 space-y-4">
@@ -303,7 +303,7 @@ export default function Dashboard() {
                     <span className="font-bold text-[#191F28]">목표 설정하기</span>
                   </div>
                   <p className="text-sm text-[#8B95A1]">
-                    Kompass에서 커리어 목표를 설정해보세요.
+                    프로필과 커리어 분석을 바탕으로 장기·중기·단기 목표를 체계적으로 관리하세요.
                   </p>
                   <Link href="/goals">
                     <Button className="w-full mt-4 rounded-xl h-11 bg-[#3182F6] font-bold" data-testid="button-go-to-kompass">
