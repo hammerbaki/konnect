@@ -77,6 +77,9 @@ export default function KompassDetail() {
   }
   const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [goalModalData, setGoalModalData] = useState<GoalModalData | null>(null);
+  
+  // Full Action Plan Generation State
+  const [isGeneratingFullPlan, setIsGeneratingFullPlan] = useState(false);
 
   const openGoalModal = (goal: { id: string; title: string; description?: string; dateDisplay?: string; progress?: number }, level: GoalLevel) => {
     setGoalModalData({
@@ -317,6 +320,160 @@ export default function KompassDetail() {
       setGeneratingLevel(null);
     },
   });
+
+  // Full Action Plan Generation Mutation - generates all levels at once
+  const fullPlanMutation = useMutation({
+    mutationFn: async (params: {
+      visionTitle: string;
+      visionDescription: string;
+      targetYear: number;
+      visionStructure: any;
+    }) => {
+      const response = await apiRequest('POST', '/api/goals/ai-suggest-all', params);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.creditsUsed > 0) {
+        refreshCredits();
+      }
+      
+      // Validate response has years data
+      if (!data?.years || !Array.isArray(data.years) || data.years.length === 0) {
+        toast({
+          title: "생성 실패",
+          description: "AI 응답이 올바르지 않습니다. 다시 시도해주세요.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "전체 액션 플랜 생성 완료",
+        description: "연간/반기/월간/주간/일간 목표가 모두 생성되었습니다.",
+      });
+      
+      // Apply all suggestions to the vision tree
+      applyFullActionPlan(data.years);
+    },
+    onError: (error: any) => {
+      const message = error?.message || "전체 액션 플랜 생성 중 오류가 발생했습니다.";
+      toast({
+        title: "생성 실패",
+        description: message,
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setIsGeneratingFullPlan(false);
+    },
+  });
+
+  // Apply full action plan to the vision tree
+  const applyFullActionPlan = (years: any[]) => {
+    if (!vision) return;
+    
+    const newVision = JSON.parse(JSON.stringify(vision)) as VisionGoal;
+    
+    // Match AI-generated years to existing years by ID or index
+    years.forEach((aiYear, yearIdx) => {
+      const targetYear = newVision.children.find(y => y.id === aiYear.id) || newVision.children[yearIdx];
+      if (!targetYear) return;
+      
+      targetYear.title = aiYear.title;
+      targetYear.description = aiYear.description;
+      
+      // Apply halves
+      aiYear.halves?.forEach((aiHalf: any, halfIdx: number) => {
+        const targetHalf = targetYear.children.find((h: any) => h.id === aiHalf.id) || targetYear.children[halfIdx];
+        if (!targetHalf) return;
+        
+        targetHalf.title = aiHalf.title;
+        targetHalf.description = aiHalf.description;
+        
+        // Apply months
+        aiHalf.months?.forEach((aiMonth: any, monthIdx: number) => {
+          const targetMonth = targetHalf.children.find((m: any) => m.id === aiMonth.id) || targetHalf.children[monthIdx];
+          if (!targetMonth) return;
+          
+          targetMonth.title = aiMonth.title;
+          if (aiMonth.tasks?.length) {
+            targetMonth.description = aiMonth.tasks.map((t: string) => `• ${t}`).join('\n');
+          }
+          
+          // Apply weeks
+          aiMonth.weeks?.forEach((aiWeek: any, weekIdx: number) => {
+            const targetWeek = targetMonth.children.find((w: any) => w.id === aiWeek.id) || targetMonth.children[weekIdx];
+            if (!targetWeek) return;
+            
+            targetWeek.title = aiWeek.title;
+            if (aiWeek.tasks?.length) {
+              targetWeek.description = aiWeek.tasks.map((t: string) => `• ${t}`).join('\n');
+            }
+            
+            // Apply days
+            aiWeek.days?.forEach((aiDay: any, dayIdx: number) => {
+              const targetDay = targetWeek.children.find((d: any) => d.id === aiDay.id) || targetWeek.children[dayIdx];
+              if (!targetDay) return;
+              
+              if (aiDay.todos?.length) {
+                targetDay.todos = aiDay.todos.map((todo: string, idx: number) => ({
+                  id: `${targetDay.id}-ai-${idx}`,
+                  title: todo,
+                  completed: false,
+                }));
+              }
+            });
+          });
+        });
+      });
+    });
+    
+    visionRef.current = newVision;
+    setVision(newVision);
+  };
+
+  // Handle full action plan generation
+  const handleGenerateFullPlan = () => {
+    if (!vision) return;
+    
+    setIsGeneratingFullPlan(true);
+    
+    // Build vision structure for the API
+    const visionStructure = {
+      years: vision.children.map(year => ({
+        id: year.id,
+        dateDisplay: year.dateDisplay,
+        halves: year.children.map(half => ({
+          id: half.id,
+          dateDisplay: half.dateDisplay,
+          months: half.children.map(month => ({
+            id: month.id,
+            dateDisplay: month.dateDisplay,
+            weeks: month.children.map(week => ({
+              id: week.id,
+              dateDisplay: week.dateDisplay,
+              days: week.children.map(day => ({
+                id: day.id,
+                dateDisplay: day.dateDisplay,
+              })),
+            })),
+          })),
+        })),
+      })),
+    };
+    
+    fullPlanMutation.mutate({
+      visionTitle: vision.title,
+      visionDescription: vision.description,
+      targetYear: vision.targetYear,
+      visionStructure,
+    });
+  };
+
+  // Check if action plan has been generated (any year has a meaningful title)
+  const hasActionPlanGenerated = vision?.children?.some(year => 
+    year.title && year.title.length > 0 && !year.title.match(/^\d{4}년?$/)
+  ) || false;
 
   // Apply AI suggestions to the tree - updates title and description with bullets
   const applyAISuggestions = (level: GoalLevel, suggestions: { title: string; description: string; bullets: string[] }[]) => {
@@ -904,12 +1061,35 @@ export default function KompassDetail() {
             </div>
         </div>
 
+        {/* Full Action Plan Generation Button */}
+        <div className="flex justify-center mb-8">
+          {hasActionPlanGenerated ? (
+            <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="text-sm font-medium">액션 플랜이 생성되었습니다</span>
+            </div>
+          ) : (
+            <Button
+              size="lg"
+              onClick={handleGenerateFullPlan}
+              disabled={isGeneratingFullPlan || fullPlanMutation.isPending}
+              className="h-12 px-6 gap-2 bg-gradient-to-r from-[#3182F6] to-purple-500 hover:from-[#2b72d7] hover:to-purple-600 text-white shadow-lg"
+            >
+              {isGeneratingFullPlan ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Sparkles className="h-5 w-5" />
+              )}
+              {isGeneratingFullPlan ? '액션 플랜 생성 중...' : 'AI 전체 액션 플랜 생성 (100 포인트)'}
+            </Button>
+          )}
+        </div>
+
         {/* Level 2: Yearly Goals (3 Cards) */}
         <div className="space-y-2 relative">
              <div className="text-center space-y-2">
                 <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">연간 목표</Badge>
                 <p className="text-sm text-[#8B95A1]">각 연도의 핵심 목표를 설정하세요.</p>
-                <AIGenerateButton level="year" isStrategic={true} hasGenerated={(vision?.children?.length || 0) > 0} />
              </div>
              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {vision.children.map((year) => (
@@ -978,7 +1158,6 @@ export default function KompassDetail() {
                 <div className="text-center space-y-2">
                     <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">반기별 목표</Badge>
                     <p className="text-sm text-[#8B95A1]">연간 목표를 상반기와 하반기로 나누어 계획하세요.</p>
-                    <AIGenerateButton level="half" isStrategic={true} hasGenerated={(selectedYear?.children?.length || 0) > 0} />
                 </div>
                 <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
                     {selectedYear.children.map((half) => (
@@ -1048,7 +1227,6 @@ export default function KompassDetail() {
                 <div className="text-center space-y-2">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">월간 목표</Badge>
                      <p className="text-sm text-[#8B95A1]">매월 달성해야 할 핵심 목표를 계획하세요.</p>
-                     <AIGenerateButton level="month" hasGenerated={(selectedHalfYear?.children?.length || 0) > 0} />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
                     {selectedHalfYear.children.map((month) => (
@@ -1111,7 +1289,6 @@ export default function KompassDetail() {
                 <div className="text-center space-y-2">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">주간 목표</Badge>
                      <p className="text-sm text-[#8B95A1]">이번 주에 집중해야 할 과제를 확인하세요.</p>
-                     <AIGenerateButton level="week" hasGenerated={(selectedMonth?.children?.length || 0) > 0} />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto">
                     {selectedMonth.children.map((week) => (
@@ -1174,7 +1351,6 @@ export default function KompassDetail() {
                 <div className="text-center space-y-2">
                      <Badge variant="outline" className="bg-white border-[#E5E8EB] text-[#8B95A1] text-[10px]">일일 과제</Badge>
                      <p className="text-sm text-[#8B95A1]">향후 24시간 내에 해야 할 상위 3가지 과제</p>
-                     <AIGenerateButton level="day" hasGenerated={(selectedWeek?.children?.length || 0) > 0} />
                 </div>
                 
                 {/* Compact Grid for 7 Days - Expanded for direct editing */}
