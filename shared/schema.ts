@@ -1141,7 +1141,8 @@ export type InsertVideoRecording = z.infer<typeof insertVideoRecordingSchema>;
 export type VideoInterviewRecording = typeof videoInterviewRecordings.$inferSelect;
 
 // ===== GROUPS TABLE (그룹 관리) =====
-export type GroupMemberRole = 'owner' | 'admin' | 'member';
+// Roles: admin (그룹관리자), consultant (컨설턴트), teacher (선생님), member (멤버)
+export type GroupMemberRole = 'admin' | 'consultant' | 'teacher' | 'member';
 
 export const groups = pgTable("groups", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
