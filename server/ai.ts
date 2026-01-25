@@ -364,13 +364,16 @@ function extractTokenUsage(message: any): TokenUsage {
 const getAnalysisSystemPrompt = (profileType: string): string => {
   const basePrompt = `당신은 한국의 커리어 컨설턴트 AI입니다. 사용자의 프로필을 분석하여 진로 방향을 제시합니다. 모든 응답은 한국어로 작성하세요.`;
 
+  const foreignStudentPrompt = `외국인 유학생의 한국 취업을 위해 비자 조건, 언어 능력(특히 한국어 TOPIK), 전공과 희망 직무의 연관성, 보유 역량을 분석하세요. 반드시 희망 직무 중심으로만 분석하고, 근거 없는 추천은 금지합니다.`;
+  
   const specificPrompts: Record<string, string> = {
     elementary: `초등학생의 흥미와 재능을 발견하고 다양한 직업 세계를 소개하는데 초점을 맞추세요.`,
     middle: `중학생의 적성과 관심사를 파악하고 고등학교 진로 선택을 돕는데 초점을 맞추세요.`,
     high: `고등학생의 대학 진학 목표를 위해 학업 역량, 내신, 수능, 입시 전략을 분석하세요.`,
     university: `대학생의 취업 준비를 위해 전공 역량, 인턴십, 자격증, 포트폴리오 개발을 분석하세요.`,
     general: `구직자의 이직 및 경력 개발을 위해 직무 경험, 역량, 연봉 협상, 승진 전략을 분석하세요.`,
-    foreign_student: `외국인 유학생의 한국 취업을 위해 비자 조건, 언어 능력(특히 한국어 TOPIK), 전공과 희망 직무의 연관성, 보유 역량을 분석하세요. 반드시 희망 직무 중심으로만 분석하고, 근거 없는 추천은 금지합니다.`,
+    foreign_student: foreignStudentPrompt,
+    international: foreignStudentPrompt,
   };
 
   return `${basePrompt}\n\n${specificPrompts[profileType] || specificPrompts.general}`;
@@ -560,6 +563,7 @@ const getProfileContextData = (profile: Profile, userIdentity?: { displayName?: 
       context += `${profileData.gen_concerns || '미제공'}\n`;
       break;
       
+    case 'international':
     case 'foreign_student':
       context += `\n### 외국인 유학생 프로필 정보\n`;
       
@@ -944,6 +948,7 @@ function getProfileTypeContext(profileType: string): {
         competencySubjects: ["전공역량", "실무경험", "어학능력", "대외활동", "자격증"],
         actionContext: "취업 준비와 인턴십에 초점. 포트폴리오는 '프로젝트/자격증', 네트워킹은 '현직자 커피챗/링크드인', 마인드셋은 '취준 마인드셋'"
       };
+    case 'international':
     case 'foreign_student':
       return {
         statsExample: { label1: "취업 준비도", val1: "양호", label2: "TOPIK", val2: "4급", label3: "비자 적합성", val3: "확인필요" },
