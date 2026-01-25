@@ -84,14 +84,23 @@ export default function Goals() {
   });
 
   const createKompassMutation = useMutation({
-    mutationFn: async (data: { profileId: string; targetYear: number; startMonth: number; visionData: VisionGoal }) => {
-      const response = await apiRequest('POST', `/api/profiles/${data.profileId}/kompass`, {
-        targetYear: data.targetYear,
-        startMonth: data.startMonth,
-        visionData: data.visionData,
-        progress: 0,
-      });
-      return response.json();
+    mutationFn: async (data: { profileId: string; targetYear: number; startMonth: number; visionData?: VisionGoal; title?: string; description?: string; useAI?: boolean }) => {
+      if (data.useAI) {
+        const response = await apiRequest('POST', `/api/profiles/${data.profileId}/kompass/generate`, {
+          title: data.title,
+          targetYear: data.targetYear,
+          description: data.description,
+        });
+        return { ...(await response.json()), _usedAI: true };
+      } else {
+        const response = await apiRequest('POST', `/api/profiles/${data.profileId}/kompass`, {
+          targetYear: data.targetYear,
+          startMonth: data.startMonth,
+          visionData: data.visionData,
+          progress: 0,
+        });
+        return { ...(await response.json()), _usedAI: false };
+      }
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/kompass'] });
@@ -103,9 +112,9 @@ export default function Goals() {
       setImportedData(null);
       toast({ 
         title: "Kompass 생성 완료", 
-        description: importedData 
-          ? "AI 분석 기반 목표가 생성되었습니다!" 
-          : "새로운 목표 나침반이 생성되었습니다." 
+        description: data._usedAI 
+          ? "AI가 연간/분기별 목표를 자동으로 생성했습니다!" 
+          : "커리어 분석 기반 목표가 저장되었습니다." 
       });
       setLocation(`/goals/${data.id}`);
     },
@@ -234,14 +243,25 @@ export default function Goals() {
 
     const targetYear = parseInt(newTargetYear);
     const startMonth = parseInt(newStartMonth);
-    const visionData = generateLightTree(`temp-${Date.now()}`, newTitle, targetYear, newDescription, startMonth);
 
-    createKompassMutation.mutate({
-      profileId: selectedProfileId,
-      targetYear,
-      startMonth,
-      visionData,
-    });
+    if (importedData) {
+      const visionData = generateLightTree(`temp-${Date.now()}`, newTitle, targetYear, newDescription, startMonth);
+      createKompassMutation.mutate({
+        profileId: selectedProfileId,
+        targetYear,
+        startMonth,
+        visionData,
+      });
+    } else {
+      createKompassMutation.mutate({
+        profileId: selectedProfileId,
+        targetYear,
+        startMonth,
+        title: newTitle,
+        description: newDescription,
+        useAI: true,
+      });
+    }
   };
 
   useEffect(() => {
@@ -493,18 +513,19 @@ export default function Goals() {
                         disabled={createKompassMutation.isPending || !selectedProfileId}
                         className={cn(
                             "w-full h-12 text-white font-bold rounded-xl text-lg",
-                            importedData 
-                                ? "bg-gradient-to-r from-[#3182F6] to-[#1565C0] hover:opacity-90"
-                                : "bg-[#3182F6] hover:bg-[#2b72d7]"
+                            "bg-gradient-to-r from-[#3182F6] to-[#1565C0] hover:opacity-90"
                         )}
                         data-testid="button-submit-kompass"
                     >
                         {createKompassMutation.isPending ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <>
+                                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                                AI가 목표를 생성하고 있어요...
+                            </>
                         ) : importedData ? (
                             <><Compass className="h-5 w-5 mr-2" /> 목표로 저장하기</>
                         ) : (
-                            'Kompass 생성하기'
+                            <><Sparkles className="h-5 w-5 mr-2" /> AI로 목표 자동 생성</>
                         )}
                     </Button>
                 </DialogFooter>

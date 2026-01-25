@@ -1514,3 +1514,188 @@ ${getLevelPrompt(level, count)}
     )
   );
 }
+
+// ============================================================================
+// AI Kompass Goal Generation - Auto-generate yearly/quarterly goals
+// ============================================================================
+
+export interface KompassAIGoal {
+  title: string;
+  description: string;
+}
+
+export interface KompassAIPlan {
+  visionDescription: string;
+  yearlyGoals: Array<{
+    year: number;
+    title: string;
+    description: string;
+    halfYearlyGoals: Array<{
+      half: 1 | 2;
+      title: string;
+      description: string;
+      monthlyGoals: Array<{
+        month: number;
+        title: string;
+        keyTasks: string[];
+      }>;
+    }>;
+  }>;
+  rawResponse?: string;
+  tokenUsage?: { input: number; output: number };
+}
+
+export async function generateKompassPlan(
+  profile: Profile,
+  goalTitle: string,
+  targetYear: number,
+  userAge: number | null,
+  description?: string
+): Promise<KompassAIPlan> {
+  return throttleClaudeCall(() =>
+    retryWithBackoff(
+      async () => {
+        const startYear = new Date().getFullYear();
+        const yearsCount = Math.min(Math.max(targetYear - startYear + 1, 1), 3);
+        
+        const profileContext = getProfileContextForKompass(profile, userAge);
+        
+        const systemPrompt = `당신은 커리어 코치이자 목표 관리 전문가입니다. 사용자의 프로필과 최종 목표를 분석하여 현실적이고 실현 가능한 단계별 목표를 생성합니다.
+
+규칙:
+1. 사용자의 현재 상태(나이, 학력, 경력 등)를 고려하여 현실적인 목표 설정
+2. 각 기간별로 구체적이고 측정 가능한 목표 제시
+3. 장기 목표를 달성하기 위한 논리적인 단계별 진행
+4. 한국어로 모든 내용 작성
+5. JSON 형식으로만 응답`;
+
+        const userPrompt = `## 사용자 프로필
+${profileContext}
+
+## 최종 목표
+- 목표: ${goalTitle}
+- 목표 달성 연도: ${targetYear}년
+${description ? `- 추가 설명: ${description}` : ''}
+
+## 기간
+- 시작 연도: ${startYear}년
+- 총 ${yearsCount}년 계획
+
+## 요청
+위 목표를 달성하기 위한 연간/반기/월별 세부 계획을 JSON으로 생성해주세요.
+
+응답 형식:
+{
+  "visionDescription": "이 목표를 향한 여정 설명 (1-2문장)",
+  "yearlyGoals": [
+    {
+      "year": ${startYear},
+      "title": "올해의 핵심 목표",
+      "description": "올해 집중할 내용 설명",
+      "halfYearlyGoals": [
+        {
+          "half": 1,
+          "title": "상반기 목표",
+          "description": "상반기 핵심 과제",
+          "monthlyGoals": [
+            { "month": 1, "title": "1월 목표", "keyTasks": ["할 일 1", "할 일 2", "할 일 3"] },
+            { "month": 2, "title": "2월 목표", "keyTasks": ["할 일 1", "할 일 2"] },
+            ...
+          ]
+        },
+        {
+          "half": 2,
+          "title": "하반기 목표",
+          "description": "하반기 핵심 과제",
+          "monthlyGoals": [...]
+        }
+      ]
+    }
+  ]
+}
+
+각 연도별로 해당 연도의 모든 월(1-12월)에 대한 목표를 포함하세요.`;
+
+        const client = anthropic;
+        const message = await client.messages.create({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 4000,
+          messages: [
+            { role: "user", content: userPrompt }
+          ],
+          system: systemPrompt,
+        });
+
+        const tokenUsage = {
+          input: message.usage?.input_tokens || 0,
+          output: message.usage?.output_tokens || 0,
+        };
+        
+        const msgContent = message.content[0];
+        if (msgContent.type !== "text") {
+          throw new Error("Unexpected response type");
+        }
+
+        const rawResponse = msgContent.text;
+        
+        const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error("No valid JSON found in response");
+        }
+
+        const parsed = safeParseJSON(jsonMatch[0]);
+        
+        return {
+          visionDescription: parsed.visionDescription || "목표를 향한 여정",
+          yearlyGoals: parsed.yearlyGoals || [],
+          rawResponse,
+          tokenUsage,
+        };
+      },
+      {
+        retries: 3,
+        minTimeout: 2000,
+        maxTimeout: 32000,
+        factor: 2,
+      }
+    )
+  );
+}
+
+function getProfileContextForKompass(profile: Profile, userAge: number | null): string {
+  const profileTypeNames: Record<string, string> = {
+    elementary: '초등학생',
+    middle: '중학생',
+    high: '고등학생',
+    university: '대학생',
+    general: '일반/구직자'
+  };
+  
+  let context = `- 프로필 유형: ${profileTypeNames[profile.type] || profile.type}\n`;
+  
+  if (userAge) {
+    context += `- 나이: ${userAge}세\n`;
+  }
+  
+  const data = (profile.profileData || {}) as Record<string, any>;
+  
+  if (profile.type === 'general') {
+    if (data.currentJob) context += `- 현재 직업: ${data.currentJob}\n`;
+    if (data.experience) context += `- 경력: ${data.experience}년\n`;
+    if (data.skills?.length) context += `- 보유 스킬: ${data.skills.join(', ')}\n`;
+    if (data.desiredJob) context += `- 희망 직무: ${data.desiredJob}\n`;
+  } else if (profile.type === 'university') {
+    if (data.university) context += `- 대학: ${data.university}\n`;
+    if (data.major) context += `- 전공: ${data.major}\n`;
+    if (data.grade) context += `- 학년: ${data.grade}학년\n`;
+  } else if (profile.type === 'high') {
+    if (data.school) context += `- 학교: ${data.school}\n`;
+    if (data.grade) context += `- 학년: ${data.grade}학년\n`;
+    if (data.track) context += `- 계열: ${data.track}\n`;
+  }
+  
+  if (data.interests?.length) context += `- 관심 분야: ${data.interests.join(', ')}\n`;
+  if (data.strengths?.length) context += `- 강점: ${data.strengths.join(', ')}\n`;
+  
+  return context;
+}

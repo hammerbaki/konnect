@@ -63,6 +63,113 @@ function getProfileColor(type: string): string {
   return colors[type] || '#3182F6';
 }
 
+// Convert AI-generated plan to VisionData structure for Kompass
+function convertAIPlanToVisionData(
+  aiPlan: any,
+  idSuffix: string,
+  title: string,
+  targetYear: number,
+  startMonth: number
+): any {
+  const vision: any = {
+    id: `vision-${idSuffix}`,
+    title: title,
+    description: aiPlan.visionDescription || "나의 커리어 목표를 향한 여정",
+    targetYear: targetYear,
+    progress: 0,
+    children: []
+  };
+
+  // Process each year from AI plan
+  for (const yearGoal of aiPlan.yearlyGoals || []) {
+    const yearNode: any = {
+      id: `y${yearGoal.year}-${idSuffix}`,
+      title: yearGoal.title || `${yearGoal.year}년 목표`,
+      description: yearGoal.description || "",
+      dateDisplay: String(yearGoal.year),
+      progress: 0,
+      children: []
+    };
+
+    // Process half-yearly goals
+    for (const halfGoal of yearGoal.halfYearlyGoals || []) {
+      const halfNode: any = {
+        id: `h${halfGoal.half}-${yearGoal.year}-${idSuffix}`,
+        title: halfGoal.title || (halfGoal.half === 1 ? "상반기 목표" : "하반기 목표"),
+        description: halfGoal.description || "",
+        dateDisplay: halfGoal.half === 1 ? "01-06" : "07-12",
+        progress: 0,
+        children: []
+      };
+
+      // Process monthly goals
+      for (const monthGoal of halfGoal.monthlyGoals || []) {
+        const monthNode: any = {
+          id: `m${monthGoal.month}-${yearGoal.year}-${idSuffix}`,
+          title: monthGoal.title || `${monthGoal.month}월 목표`,
+          description: "",
+          dateDisplay: String(monthGoal.month).padStart(2, '0'),
+          progress: 0,
+          children: []
+        };
+
+        // Create weeks with AI-generated tasks
+        const daysInMonth = new Date(yearGoal.year, monthGoal.month, 0).getDate();
+        const numberOfWeeks = Math.ceil(daysInMonth / 7);
+        const keyTasks = monthGoal.keyTasks || [];
+
+        for (let w = 1; w <= numberOfWeeks; w++) {
+          const weekStartDay = (w - 1) * 7 + 1;
+          const weekEndDay = Math.min(w * 7, daysInMonth);
+          
+          const weekNode: any = {
+            id: `w${w}-m${monthGoal.month}-${yearGoal.year}-${idSuffix}`,
+            title: `${w}주차`,
+            description: "",
+            dateDisplay: `${String(monthGoal.month).padStart(2, '0')}.${String(weekStartDay).padStart(2, '0')}-${String(weekEndDay).padStart(2, '0')}`,
+            progress: 0,
+            children: []
+          };
+
+          // Create daily nodes with tasks distributed across weeks
+          for (let d = weekStartDay; d <= weekEndDay; d++) {
+            const dayNode: any = {
+              id: `d${d}-m${monthGoal.month}-${yearGoal.year}-${idSuffix}`,
+              title: `${d}일`,
+              date: `${yearGoal.year}-${String(monthGoal.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
+              dateDisplay: `${yearGoal.year}.${String(monthGoal.month).padStart(2, '0')}.${String(d).padStart(2, '0')}`,
+              progress: 0,
+              todos: []
+            };
+
+            // Add key tasks to the first day of each week
+            if (d === weekStartDay && keyTasks.length > 0) {
+              const taskIndex = (w - 1) % keyTasks.length;
+              dayNode.todos.push({
+                id: `todo-${d}-m${monthGoal.month}-${yearGoal.year}-${idSuffix}`,
+                title: keyTasks[taskIndex],
+                completed: false
+              });
+            }
+
+            weekNode.children.push(dayNode);
+          }
+
+          monthNode.children.push(weekNode);
+        }
+
+        halfNode.children.push(monthNode);
+      }
+
+      yearNode.children.push(halfNode);
+    }
+
+    vision.children.push(yearNode);
+  }
+
+  return vision;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
@@ -832,6 +939,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error creating kompass:", error);
       res.status(500).json({ message: "Failed to create kompass" });
+    }
+  });
+
+  // AI-powered Kompass generation
+  app.post('/api/profiles/:profileId/kompass/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const profile = await storage.getProfile(req.params.profileId);
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      const { title, targetYear, description } = req.body;
+      if (!title || !targetYear) {
+        return res.status(400).json({ message: "Title and targetYear are required" });
+      }
+
+      // Get user's birth date to calculate age
+      const user = await storage.getUser(userId);
+      let userAge: number | null = null;
+      if (user?.birthDate) {
+        const today = new Date();
+        const birthDate = new Date(user.birthDate);
+        userAge = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          userAge--;
+        }
+      }
+
+      // Generate AI plan
+      const { generateKompassPlan } = await import('./ai');
+      const aiPlan = await generateKompassPlan(profile, title, targetYear, userAge, description);
+      
+      // Convert AI plan to visionData structure
+      const startYear = new Date().getFullYear();
+      const startMonth = new Date().getMonth() + 1;
+      const idSuffix = `ai-${Date.now()}`;
+      
+      const visionData = convertAIPlanToVisionData(aiPlan, idSuffix, title, targetYear, startMonth);
+      
+      // Create the kompass with AI-generated data
+      const data = insertKompassGoalSchema.parse({
+        profileId: req.params.profileId,
+        targetYear,
+        startMonth,
+        visionData,
+      });
+      
+      const kompass = await storage.createKompass(data);
+      res.status(201).json(kompass);
+    } catch (error: any) {
+      console.error("Error generating AI kompass:", error);
+      res.status(500).json({ message: error.message || "Failed to generate AI kompass" });
     }
   });
 
