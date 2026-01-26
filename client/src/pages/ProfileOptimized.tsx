@@ -459,17 +459,18 @@ export default function ProfileOptimized() {
     }
   }, [selectedType]);
 
-  const handleSave = useCallback(() => performSave(true), [performSave]);
+  const handleSaveRef = useRef(() => performSave(true));
+  handleSaveRef.current = () => performSave(true);
 
   useEffect(() => {
     setAction({
       icon: isSaving ? Loader2 : Save,
       label: isSaving ? "저장 중..." : "저장",
-      onClick: handleSave,
+      onClick: () => handleSaveRef.current(),
       disabled: isSaving,
     });
     return () => setAction(null);
-  }, [isSaving, setAction, handleSave]);
+  }, [isSaving, setAction]);
 
   const formProps: ProfileFormProps = useMemo(() => ({
     profileData,
