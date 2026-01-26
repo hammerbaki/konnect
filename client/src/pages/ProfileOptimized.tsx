@@ -518,7 +518,7 @@ export default function ProfileOptimized() {
               </span>
             )}
             <Button 
-              onClick={handleSave} 
+              onClick={() => handleSaveRef.current()} 
               disabled={isSaving}
               className="gap-2 h-12 px-6 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base disabled:opacity-50"
             >
@@ -559,7 +559,7 @@ export default function ProfileOptimized() {
                   data-testid="button-go-to-analysis"
                   disabled={isSaving}
                   onClick={async () => {
-                    await handleSave();
+                    await handleSaveRef.current();
                     window.location.href = `/mytest?profile=${serverProfile.id}`;
                   }}
                 >
@@ -574,7 +574,7 @@ export default function ProfileOptimized() {
         {/* Fixed bottom save button */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E5E8EB] md:hidden z-50">
           <Button 
-            onClick={handleSave} 
+            onClick={() => handleSaveRef.current()} 
             disabled={isSaving}
             className="w-full gap-2 h-14 rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] shadow-lg shadow-blue-500/20 font-bold text-base disabled:opacity-50"
             data-testid="button-save-profile-mobile"

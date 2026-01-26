@@ -1,0 +1,140 @@
+AuthContext.tsx:68 [Referral] Checking URL for referral code: null
+AuthContext.tsx:116 [Auth] fetchUserData called, isNewSession: false
+AuthContext.tsx:116 [Auth] fetchUserData called, isNewSession: false
+ProfileOptimized.tsx:521 Uncaught ReferenceError: handleSave is not defined
+    at ProfileOptimized (ProfileOptimized.tsx:521:24)
+    at Object.react_stack_bottom_frame (react-dom_client.js?v=de782c9f:18509:20)
+    at renderWithHooks (react-dom_client.js?v=de782c9f:5654:24)
+    at updateFunctionComponent (react-dom_client.js?v=de782c9f:7475:21)
+    at beginWork (react-dom_client.js?v=de782c9f:8484:199)
+    at runWithFiberInDEV (react-dom_client.js?v=de782c9f:997:72)
+    at performUnitOfWork (react-dom_client.js?v=de782c9f:12561:98)
+    at workLoopSync (react-dom_client.js?v=de782c9f:12424:43)
+    at renderRootSync (react-dom_client.js?v=de782c9f:12408:13)
+    at performWorkOnRoot (react-dom_client.js?v=de782c9f:11827:37)
+ProfileOptimized @ ProfileOptimized.tsx:521
+react_stack_bottom_frame @ react-dom_client.js?v=de782c9f:18509
+renderWithHooks @ react-dom_client.js?v=de782c9f:5654
+updateFunctionComponent @ react-dom_client.js?v=de782c9f:7475
+beginWork @ react-dom_client.js?v=de782c9f:8484
+runWithFiberInDEV @ react-dom_client.js?v=de782c9f:997
+performUnitOfWork @ react-dom_client.js?v=de782c9f:12561
+workLoopSync @ react-dom_client.js?v=de782c9f:12424
+renderRootSync @ react-dom_client.js?v=de782c9f:12408
+performWorkOnRoot @ react-dom_client.js?v=de782c9f:11827
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=de782c9f:13505
+performWorkUntilDeadline @ react-dom_client.js?v=de782c9f:36
+<...>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=de782c9f:247
+children @ App.tsx:123
+h_route @ wouter.js?v=de782c9f:182
+Route @ wouter.js?v=de782c9f:200
+react_stack_bottom_frame @ react-dom_client.js?v=de782c9f:18509
+renderWithHooks @ react-dom_client.js?v=de782c9f:5654
+updateFunctionComponent @ react-dom_client.js?v=de782c9f:7475
+beginWork @ react-dom_client.js?v=de782c9f:8525
+runWithFiberInDEV @ react-dom_client.js?v=de782c9f:997
+performUnitOfWork @ react-dom_client.js?v=de782c9f:12561
+workLoopSync @ react-dom_client.js?v=de782c9f:12424
+renderRootSync @ react-dom_client.js?v=de782c9f:12408
+performWorkOnRoot @ react-dom_client.js?v=de782c9f:11827
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=de782c9f:13505
+performWorkUntilDeadline @ react-dom_client.js?v=de782c9f:36
+<Route>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=de782c9f:247
+Router @ App.tsx:92
+react_stack_bottom_frame @ react-dom_client.js?v=de782c9f:18509
+renderWithHooks @ react-dom_client.js?v=de782c9f:5654
+updateFunctionComponent @ react-dom_client.js?v=de782c9f:7475
+beginWork @ react-dom_client.js?v=de782c9f:8525
+runWithFiberInDEV @ react-dom_client.js?v=de782c9f:997
+performUnitOfWork @ react-dom_client.js?v=de782c9f:12561
+workLoopSync @ react-dom_client.js?v=de782c9f:12424
+renderRootSync @ react-dom_client.js?v=de782c9f:12408
+performWorkOnRoot @ react-dom_client.js?v=de782c9f:11766
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=de782c9f:13505
+performWorkUntilDeadline @ react-dom_client.js?v=de782c9f:36
+<Router>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=de782c9f:247
+App @ App.tsx:201
+react_stack_bottom_frame @ react-dom_client.js?v=de782c9f:18509
+renderWithHooks @ react-dom_client.js?v=de782c9f:5654
+updateFunctionComponent @ react-dom_client.js?v=de782c9f:7475
+beginWork @ react-dom_client.js?v=de782c9f:8525
+runWithFiberInDEV @ react-dom_client.js?v=de782c9f:997
+performUnitOfWork @ react-dom_client.js?v=de782c9f:12561
+workLoopSync @ react-dom_client.js?v=de782c9f:12424
+renderRootSync @ react-dom_client.js?v=de782c9f:12408
+performWorkOnRoot @ react-dom_client.js?v=de782c9f:11766
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=de782c9f:13505
+performWorkUntilDeadline @ react-dom_client.js?v=de782c9f:36
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=de782c9f:247
+(anonymous) @ main.tsx:5
+installHook.js:1 An error occurred in the <ProfileOptimized> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+overrideMethod @ installHook.js:1
+defaultOnUncaughtError @ react-dom_client.js?v=de782c9f:6966
+logUncaughtError @ react-dom_client.js?v=de782c9f:7020
+runWithFiberInDEV @ react-dom_client.js?v=de782c9f:997
+lane.callback @ react-dom_client.js?v=de782c9f:7048
+callCallback @ react-dom_client.js?v=de782c9f:5491
+commitCallbacks @ react-dom_client.js?v=de782c9f:5503
+runWithFiberInDEV @ react-dom_client.js?v=de782c9f:999
+commitLayoutEffectOnFiber @ react-dom_client.js?v=de782c9f:9976
+flushLayoutEffects @ react-dom_client.js?v=de782c9f:12924
+commitRoot @ react-dom_client.js?v=de782c9f:12803
+commitRootWhenReady @ react-dom_client.js?v=de782c9f:12016
+performWorkOnRoot @ react-dom_client.js?v=de782c9f:11950
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=de782c9f:13505
+performWorkUntilDeadline @ react-dom_client.js?v=de782c9f:36
+<...>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=de782c9f:247
+children @ App.tsx:123
+h_route @ wouter.js?v=de782c9f:182
+Route @ wouter.js?v=de782c9f:200
+react_stack_bottom_frame @ react-dom_client.js?v=de782c9f:18509
+renderWithHooks @ react-dom_client.js?v=de782c9f:5654
+updateFunctionComponent @ react-dom_client.js?v=de782c9f:7475
+beginWork @ react-dom_client.js?v=de782c9f:8525
+runWithFiberInDEV @ react-dom_client.js?v=de782c9f:997
+performUnitOfWork @ react-dom_client.js?v=de782c9f:12561
+workLoopSync @ react-dom_client.js?v=de782c9f:12424
+renderRootSync @ react-dom_client.js?v=de782c9f:12408
+performWorkOnRoot @ react-dom_client.js?v=de782c9f:11827
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=de782c9f:13505
+performWorkUntilDeadline @ react-dom_client.js?v=de782c9f:36
+<Route>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=de782c9f:247
+Router @ App.tsx:92
+react_stack_bottom_frame @ react-dom_client.js?v=de782c9f:18509
+renderWithHooks @ react-dom_client.js?v=de782c9f:5654
+updateFunctionComponent @ react-dom_client.js?v=de782c9f:7475
+beginWork @ react-dom_client.js?v=de782c9f:8525
+runWithFiberInDEV @ react-dom_client.js?v=de782c9f:997
+performUnitOfWork @ react-dom_client.js?v=de782c9f:12561
+workLoopSync @ react-dom_client.js?v=de782c9f:12424
+renderRootSync @ react-dom_client.js?v=de782c9f:12408
+performWorkOnRoot @ react-dom_client.js?v=de782c9f:11766
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=de782c9f:13505
+performWorkUntilDeadline @ react-dom_client.js?v=de782c9f:36
+<Router>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=de782c9f:247
+App @ App.tsx:201
+react_stack_bottom_frame @ react-dom_client.js?v=de782c9f:18509
+renderWithHooks @ react-dom_client.js?v=de782c9f:5654
+updateFunctionComponent @ react-dom_client.js?v=de782c9f:7475
+beginWork @ react-dom_client.js?v=de782c9f:8525
+runWithFiberInDEV @ react-dom_client.js?v=de782c9f:997
+performUnitOfWork @ react-dom_client.js?v=de782c9f:12561
+workLoopSync @ react-dom_client.js?v=de782c9f:12424
+renderRootSync @ react-dom_client.js?v=de782c9f:12408
+performWorkOnRoot @ react-dom_client.js?v=de782c9f:11766
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=de782c9f:13505
+performWorkUntilDeadline @ react-dom_client.js?v=de782c9f:36
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=de782c9f:247
+(anonymous) @ main.tsx:5
