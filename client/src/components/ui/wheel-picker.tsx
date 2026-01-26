@@ -34,24 +34,33 @@ export function WheelPicker({ items, value, onChange, label, loop = false }: Whe
   useEffect(() => {
     if (!emblaApi) return
     
-    emblaApi.on('select', onSelect)
-    emblaApi.on('scroll', () => { isScrolling.current = true })
-    emblaApi.on('settle', () => { 
-        isScrolling.current = false 
-        const index = emblaApi.selectedScrollSnap()
-        onChange(items[index])
-    })
+    const handleScroll = () => { isScrolling.current = true }
+    const handleSettle = () => { 
+      isScrolling.current = false 
+      const index = emblaApi.selectedScrollSnap()
+      const newValue = items[index]
+      if (newValue !== value) {
+        onChange(newValue)
+      }
+    }
     
-    // Initial scroll
+    emblaApi.on('select', onSelect)
+    emblaApi.on('scroll', handleScroll)
+    emblaApi.on('settle', handleSettle)
+    
+    // Initial scroll - only if value changed and differs from current selection
     const initialIndex = items.indexOf(value)
-    if (initialIndex !== -1) {
-        emblaApi.scrollTo(initialIndex, true)
+    const currentIndex = emblaApi.selectedScrollSnap()
+    if (initialIndex !== -1 && initialIndex !== currentIndex) {
+      emblaApi.scrollTo(initialIndex, true)
     }
     
     return () => {
-        emblaApi.off('select', onSelect)
+      emblaApi.off('select', onSelect)
+      emblaApi.off('scroll', handleScroll)
+      emblaApi.off('settle', handleSettle)
     }
-  }, [emblaApi, onSelect, value, items])
+  }, [emblaApi, onSelect, value, items, onChange])
 
   return (
     <div className="relative flex flex-col items-center justify-center h-48 w-full overflow-hidden cursor-grab active:cursor-grabbing touch-pan-y select-none">
