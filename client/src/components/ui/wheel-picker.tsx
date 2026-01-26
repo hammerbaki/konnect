@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import { EmblaCarouselType } from 'embla-carousel'
 import { cn } from '@/lib/utils'
@@ -102,28 +102,51 @@ interface DateWheelPickerProps {
 export function DateWheelPicker({ value = new Date(), onChange }: DateWheelPickerProps) {
     const years = Array.from({ length: 50 }, (_, i) => (new Date().getFullYear() - 40 + i).toString())
     const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'))
-    // Simple days (28-31 logic can be added, but keeping simple 1-31 for now)
     const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'))
 
     const [selectedYear, setSelectedYear] = useState(value.getFullYear().toString())
     const [selectedMonth, setSelectedMonth] = useState((value.getMonth() + 1).toString().padStart(2, '0'))
     const [selectedDay, setSelectedDay] = useState(value.getDate().toString().padStart(2, '0'))
+    const lastNotifiedDate = useRef<string>('')
+    const isUserInteracting = useRef(false)
+
+    const handleYearChange = useCallback((val: string) => {
+        isUserInteracting.current = true
+        setSelectedYear(val)
+    }, [])
+
+    const handleMonthChange = useCallback((val: string) => {
+        isUserInteracting.current = true
+        setSelectedMonth(val)
+    }, [])
+
+    const handleDayChange = useCallback((val: string) => {
+        isUserInteracting.current = true
+        setSelectedDay(val)
+    }, [])
 
     useEffect(() => {
+        if (!isUserInteracting.current) return
+        
+        const dateKey = `${selectedYear}-${selectedMonth}-${selectedDay}`
+        if (dateKey === lastNotifiedDate.current) return
+        
+        lastNotifiedDate.current = dateKey
         const date = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay))
         onChange(date)
-    }, [selectedYear, selectedMonth, selectedDay])
+        isUserInteracting.current = false
+    }, [selectedYear, selectedMonth, selectedDay, onChange])
 
     return (
         <div className="flex gap-2 w-full justify-center px-8">
             <div className="flex-1">
-                <WheelPicker items={years} value={selectedYear} onChange={setSelectedYear} label="년" />
+                <WheelPicker items={years} value={selectedYear} onChange={handleYearChange} label="년" />
             </div>
             <div className="flex-1">
-                <WheelPicker items={months} value={selectedMonth} onChange={setSelectedMonth} label="월" loop={true} />
+                <WheelPicker items={months} value={selectedMonth} onChange={handleMonthChange} label="월" loop={true} />
             </div>
             <div className="flex-1">
-                <WheelPicker items={days} value={selectedDay} onChange={setSelectedDay} label="일" loop={true} />
+                <WheelPicker items={days} value={selectedDay} onChange={handleDayChange} label="일" loop={true} />
             </div>
         </div>
     )

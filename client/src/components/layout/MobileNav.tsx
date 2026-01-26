@@ -34,55 +34,53 @@ export function MobileNav() {
           const isActive = location === item.href;
           
           if (index === 2 && location !== "/dashboard") {
-            return (
-              <React.Fragment key="special-action-wrapper">
-                <div className="relative -top-8">
-                  <Button 
-                    onClick={handleActionClick}
-                    className={cn(
-                      "h-16 w-16 rounded-full flex items-center justify-center transition-all duration-300 active:scale-95",
-                      "bg-gradient-to-br from-[#3182F6] to-[#1B64DA]",
-                      "shadow-[0_8px_24px_rgba(49,130,246,0.4)]",
-                      "border-[4px] border-white/50 backdrop-blur-sm"
-                    )}
-                  >
-                    {action?.icon ? (
-                      <action.icon className="h-7 w-7 text-white" />
-                    ) : (
-                      <Plus className="h-7 w-7 text-white" />
-                    )}
-                  </Button>
-                  {action && (
-                    <div className="absolute inset-0 rounded-full bg-[#3182F6] opacity-20 animate-ping -z-10" />
+            return [
+              <div key="special-action-button" className="relative -top-8">
+                <Button 
+                  onClick={handleActionClick}
+                  className={cn(
+                    "h-16 w-16 rounded-full flex items-center justify-center transition-all duration-300 active:scale-95",
+                    "bg-gradient-to-br from-[#3182F6] to-[#1B64DA]",
+                    "shadow-[0_8px_24px_rgba(49,130,246,0.4)]",
+                    "border-[4px] border-white/50 backdrop-blur-sm"
                   )}
-                </div>
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex flex-col items-center justify-center gap-1.5 min-w-[60px] relative group"
                 >
-                  <div className={cn(
-                    "p-1.5 rounded-xl transition-all duration-300",
-                    isActive ? "bg-blue-50" : "bg-transparent"
-                  )}>
-                    <Icon 
-                      className={cn(
-                        "h-6 w-6 transition-colors duration-300",
-                        isActive ? "text-[#3182F6]" : "text-[#B0B8C1] group-hover:text-[#8B95A1]"
-                      )} 
-                    />
-                  </div>
-                  <span 
+                  {action?.icon ? (
+                    <action.icon className="h-7 w-7 text-white" />
+                  ) : (
+                    <Plus className="h-7 w-7 text-white" />
+                  )}
+                </Button>
+                {action && (
+                  <div className="absolute inset-0 rounded-full bg-[#3182F6] opacity-20 animate-ping -z-10" />
+                )}
+              </div>,
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex flex-col items-center justify-center gap-1.5 min-w-[60px] relative group"
+              >
+                <div className={cn(
+                  "p-1.5 rounded-xl transition-all duration-300",
+                  isActive ? "bg-blue-50" : "bg-transparent"
+                )}>
+                  <Icon 
                     className={cn(
-                      "text-[11px] font-bold transition-colors duration-300",
-                      isActive ? "text-[#3182F6]" : "text-[#B0B8C1]"
-                    )}
-                  >
-                    {item.label}
-                  </span>
-                </Link>
-              </React.Fragment>
-            );
+                      "h-6 w-6 transition-colors duration-300",
+                      isActive ? "text-[#3182F6]" : "text-[#B0B8C1] group-hover:text-[#8B95A1]"
+                    )} 
+                  />
+                </div>
+                <span 
+                  className={cn(
+                    "text-[11px] font-bold transition-colors duration-300",
+                    isActive ? "text-[#3182F6]" : "text-[#B0B8C1]"
+                  )}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            ];
           }
 
           return (
