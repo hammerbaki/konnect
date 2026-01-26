@@ -13,7 +13,10 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
+  SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { RedeemDialog } from "@/components/token/RedeemDialog";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useTokens } from "@/lib/TokenContext";
@@ -44,7 +47,10 @@ export function Header() {
               <Menu className="h-5 w-5 sm:h-6 sm:w-6 text-[#191F28]" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 bg-[#F2F4F6] border-none w-[280px]">
+          <SheetContent side="left" className="p-0 bg-[#F2F4F6] border-none w-[280px]" aria-describedby={undefined}>
+            <VisuallyHidden.Root>
+              <SheetTitle>메뉴</SheetTitle>
+            </VisuallyHidden.Root>
             <Sidebar />
           </SheetContent>
         </Sheet>
