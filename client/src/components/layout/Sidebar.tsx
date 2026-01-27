@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   PieChart,
@@ -68,10 +68,48 @@ export function Sidebar() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const queryClient = useQueryClient();
+
   const handleLogout = async () => {
     await logout();
     setLocation("/");
   };
+
+  const prefetchPageData = useCallback(async (href: string) => {
+    const headers = await getAuthHeaders();
+    if (!headers.Authorization) return;
+
+    const prefetchMap: Record<string, string[]> = {
+      "/dashboard": ["/api/profiles", "/api/notifications"],
+      "/profile": ["/api/profiles", "/api/user-profile"],
+      "/mytest": ["/api/kjobs/latest", "/api/profiles"],
+      "/analysis": ["/api/profiles", "/api/kjobs/latest"],
+      "/goals": ["/api/profiles"],
+      "/personal-statement": ["/api/profiles"],
+      "/interview": ["/api/profiles"],
+      "/explorer": [],
+      "/recharge": ["/api/point-packages", "/api/credit-history"],
+      "/settings": ["/api/user-settings"],
+      "/admin": ["/api/admin/users", "/api/admin/groups"],
+    };
+
+    const endpoints = prefetchMap[href] || [];
+    
+    endpoints.forEach(endpoint => {
+      queryClient.prefetchQuery({
+        queryKey: [endpoint],
+        queryFn: async () => {
+          const res = await fetch(endpoint, {
+            headers,
+            credentials: "include",
+          });
+          if (!res.ok) throw new Error("Prefetch failed");
+          return res.json();
+        },
+        staleTime: 60 * 1000,
+      });
+    });
+  }, [queryClient]);
 
   const allNavItems = [
     { href: "/dashboard", slug: "/dashboard", icon: LayoutDashboard, label: "대시보드" },
@@ -157,6 +195,7 @@ export function Sidebar() {
                           <Link
                             key={subItem.id}
                             href={subHref}
+                            onMouseEnter={() => prefetchPageData("/profile")}
                             className={cn(
                               "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200",
                               isSubActive
@@ -183,6 +222,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onMouseEnter={() => prefetchPageData(item.href)}
                 className={cn(
                   "flex items-center gap-4 rounded-xl px-5 py-4 text-base font-semibold transition-all duration-200",
                   isActive
@@ -269,6 +309,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onMouseEnter={() => prefetchPageData(item.href)}
                 className={cn(
                   "flex items-center gap-4 rounded-xl px-5 py-3 text-sm font-medium transition-all duration-200",
                   isActive
