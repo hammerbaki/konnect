@@ -2859,11 +2859,14 @@ export class DatabaseStorage implements IStorage {
       elementary: "초등학생",
     };
     
-    // Get all group member user IDs
+    // Get only 'member' role user IDs (exclude admin, consultant, teacher)
     const memberRows = await db
       .select({ userId: groupMembers.userId })
       .from(groupMembers)
-      .where(eq(groupMembers.groupId, groupId));
+      .where(and(
+        eq(groupMembers.groupId, groupId),
+        eq(groupMembers.role, 'member')
+      ));
     
     const memberUserIds = memberRows.map(m => m.userId);
     if (memberUserIds.length === 0) {
