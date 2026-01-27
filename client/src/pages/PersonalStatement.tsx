@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -816,7 +815,7 @@ export default function PersonalStatement() {
     // Loading state
     if (isLoadingProfiles) {
         return (
-            <Layout>
+            <>
                 <div className="max-w-6xl mx-auto h-[calc(100vh-40px)] md:h-[calc(100vh-80px)] flex md:rounded-2xl md:shadow-sm md:border border-[#E5E8EB] overflow-hidden bg-white">
                     <div className="hidden md:flex w-[260px] border-r border-[#E5E8EB] bg-white flex-col">
                         <div className="p-4 border-b border-[#E5E8EB] flex items-center gap-2">
@@ -844,14 +843,14 @@ export default function PersonalStatement() {
                         </div>
                     </div>
                 </div>
-            </Layout>
+            </>
         );
     }
 
     // No eligible profiles state
     if (eligibleProfiles.length === 0) {
         return (
-            <Layout>
+            <>
                 <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] gap-4">
                     <User className="h-16 w-16 text-[#B0B8C1]" />
                     <h3 className="text-lg font-bold text-[#191F28]">자기소개서 작성을 위한 프로필이 필요합니다</h3>
@@ -864,12 +863,12 @@ export default function PersonalStatement() {
                         </Button>
                     </Link>
                 </div>
-            </Layout>
+            </>
         );
     }
 
     return (
-        <Layout>
+        <>
             <div className="max-w-6xl mx-auto h-[calc(100vh-40px)] md:h-[calc(100vh-80px)] flex md:rounded-2xl md:shadow-sm md:border border-[#E5E8EB] overflow-hidden bg-white relative">
                 {/* Desktop Sidebar */}
                 <div className="hidden md:flex w-[260px] border-r border-[#E5E8EB] bg-white flex-col">
@@ -1404,6 +1403,6 @@ export default function PersonalStatement() {
                     )}
                 </div>
             </div>
-        </Layout>
+        </>
     );
 }

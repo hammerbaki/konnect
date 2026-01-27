@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -287,7 +286,7 @@ export default function TokenRecharge() {
   };
 
   return (
-    <Layout>
+    <>
       <div className="max-w-2xl mx-auto pb-20">
         <h2
           className="text-[28px] font-bold text-[#191F28] mb-6"
@@ -550,6 +549,6 @@ export default function TokenRecharge() {
           </CardContent>
         </Card>
       </div>
-    </Layout>
+    </>
   );
 }

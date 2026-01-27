@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -271,7 +270,7 @@ export default function MyTest() {
 
   if (latestResult && !showResult) {
     return (
-      <Layout>
+      <>
         <div className="max-w-2xl mx-auto p-4 space-y-6">
           <Card className="border-0 shadow-lg bg-gradient-to-br from-[#3182F6] to-[#1E5FD3]">
             <CardContent className="p-6 text-white">
@@ -386,13 +385,13 @@ export default function MyTest() {
             </Button>
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   if ((questionsLoading && !latestResult) || initMutation.isPending) {
     return (
-      <Layout>
+      <>
         <div className="max-w-2xl mx-auto space-y-6 py-8">
           <div className="text-center mb-8">
             <Skeleton className="h-8 w-48 mx-auto mb-2" />
@@ -428,23 +427,23 @@ export default function MyTest() {
             ))}
           </div>
         </div>
-      </Layout>
+      </>
     );
   }
 
   if (!questions || questions.length === 0) {
     return (
-      <Layout>
+      <>
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <p className="text-[#8B95A1]">질문을 불러올 수 없습니다.</p>
           <Button onClick={() => window.location.reload()}>다시 시도</Button>
         </div>
-      </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
+    <>
       <div className="max-w-2xl mx-auto p-4">
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -612,6 +611,6 @@ export default function MyTest() {
           )}
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

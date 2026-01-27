@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -918,7 +917,7 @@ export default function KompassDetail() {
 
     if (isLoading) {
       return (
-        <Layout>
+        <>
           <div className="space-y-8 max-w-5xl mx-auto pb-20 px-4 md:px-0">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#F9FAFB] p-4 rounded-xl mb-6 gap-4">
               <div className="flex items-center gap-3">
@@ -956,25 +955,25 @@ export default function KompassDetail() {
               </div>
             </div>
           </div>
-        </Layout>
+        </>
       );
     }
 
     if (error || !vision) {
       return (
-        <Layout>
+        <>
           <div className="flex flex-col justify-center items-center h-[60vh] space-y-4">
             <p className="text-[#8B95A1]">Kompass를 찾을 수 없습니다.</p>
             <Button onClick={() => setLocation('/goals')} variant="outline">
               목록으로 돌아가기
             </Button>
           </div>
-        </Layout>
+        </>
       );
     }
 
   return (
-    <Layout>
+    <>
       <div className="space-y-8 max-w-5xl mx-auto pb-20 px-4 md:px-0">
         
         {/* Reminder Section */}
@@ -1580,6 +1579,6 @@ export default function KompassDetail() {
         </Dialog>
 
       </div>
-    </Layout>
+    </>
   );
 }

@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -598,7 +597,7 @@ export default function Explorer() {
     // Show skeleton UI while loading (shows stats if available, skeleton cards for careers)
     if (isLoading) {
         return (
-            <Layout>
+            <>
                 <div className="max-w-6xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-6 px-4">
                     {/* Header */}
                     <div className="mb-8 text-center space-y-3">
@@ -683,14 +682,14 @@ export default function Explorer() {
                         </div>
                     </div>
                 </div>
-            </Layout>
+            </>
         );
     }
 
     // Error state
     if (loadError) {
         return (
-            <Layout>
+            <>
                 <div className="flex flex-col items-center justify-center min-h-[60vh]">
                     <div className="text-center space-y-4">
                         <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-red-50 mb-2">
@@ -702,12 +701,12 @@ export default function Explorer() {
                         </Button>
                     </div>
                 </div>
-            </Layout>
+            </>
         );
     }
 
     return (
-        <Layout>
+        <>
             <div className="max-w-6xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-6 px-4">
                 
                 {/* Header */}
@@ -1018,6 +1017,6 @@ export default function Explorer() {
                     </div>
                 )}
             </div>
-        </Layout>
+        </>
     );
 }

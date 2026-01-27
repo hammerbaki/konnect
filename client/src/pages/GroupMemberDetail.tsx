@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -114,21 +113,21 @@ export default function GroupMemberDetail() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
         </div>
-      </Layout>
+      </>
     );
   }
 
   if (!member) {
     return (
-      <Layout>
+      <>
         <div className="p-6 text-center">
           <p className="text-gray-500">멤버 정보를 찾을 수 없습니다</p>
         </div>
-      </Layout>
+      </>
     );
   }
 
@@ -176,7 +175,7 @@ export default function GroupMemberDetail() {
   const personalityTraits = analysisResult?.personalityTraits || analysisResult?.personality || [];
 
   return (
-    <Layout>
+    <>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
           <Link href={`/group/${groupId}`}>
@@ -915,6 +914,6 @@ export default function GroupMemberDetail() {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
+    </>
   );
 }

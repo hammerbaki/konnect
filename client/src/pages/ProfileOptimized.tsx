@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -497,7 +496,7 @@ export default function ProfileOptimized() {
   }, [selectedType, formProps]);
 
   return (
-    <Layout>
+    <>
       <div className="max-w-4xl mx-auto space-y-8 pb-20">
         <div className="flex items-center justify-between">
           <div>
@@ -584,6 +583,6 @@ export default function ProfileOptimized() {
           </Button>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

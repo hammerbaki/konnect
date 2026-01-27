@@ -10,7 +10,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
-import { Layout } from '@/components/layout/Layout';
 import { 
   Mic, 
   MicOff,
@@ -1158,10 +1157,10 @@ function InterviewContent() {
 
 export default function Interview() {
   return (
-    <Layout>
+    <>
       <div className="pb-20 px-4">
         <InterviewContent />
       </div>
-    </Layout>
+    </>
   );
 }

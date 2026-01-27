@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1403,7 +1402,7 @@ export default function Admin() {
 
   if (userLoading) {
     return (
-      <Layout>
+      <>
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="mb-8">
             <Skeleton className="h-8 w-48 mb-2" />
@@ -1444,13 +1443,13 @@ export default function Admin() {
             </div>
           </Card>
         </div>
-      </Layout>
+      </>
     );
   }
 
   if (!isStaffOrAdmin) {
     return (
-      <Layout>
+      <>
         <div className="max-w-md mx-auto mt-20 text-center">
           <Card className="toss-card">
             <CardContent className="p-8">
@@ -1465,7 +1464,7 @@ export default function Admin() {
             </CardContent>
           </Card>
         </div>
-      </Layout>
+      </>
     );
   }
 
@@ -1655,7 +1654,7 @@ export default function Admin() {
     : [];
 
   return (
-    <Layout>
+    <>
       <div className="max-w-6xl mx-auto pb-20">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[28px] font-bold text-[#191F28] flex items-center gap-2">
@@ -3911,6 +3910,6 @@ export default function Admin() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Layout>
+    </>
   );
 }

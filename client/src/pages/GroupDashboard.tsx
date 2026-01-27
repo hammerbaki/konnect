@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -239,7 +238,7 @@ export default function GroupDashboard() {
 
   if (groupLoading) {
     return (
-      <Layout>
+      <>
         <div className="p-6 max-w-7xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -310,12 +309,12 @@ export default function GroupDashboard() {
             </CardContent>
           </Card>
         </div>
-      </Layout>
+      </>
     );
   }
 
   return (
-    <Layout>
+    <>
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -754,6 +753,6 @@ export default function GroupDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
+    </>
   );
 }

@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ import {
 
 function DashboardSkeleton() {
   return (
-    <Layout>
+    <>
       <div className="space-y-5 sm:space-y-8 pb-6 sm:pb-10">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
           <div>
@@ -86,7 +85,7 @@ function DashboardSkeleton() {
           </Card>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
 
@@ -272,7 +271,7 @@ export default function Dashboard() {
   }
 
   return (
-    <Layout>
+    <>
       <div className="space-y-5 sm:space-y-8 pb-6 sm:pb-10">
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
@@ -548,6 +547,6 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

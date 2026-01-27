@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from "@/lib/AuthContext";
 import { NotificationProvider } from "@/lib/NotificationContext";
 import { ActiveJobsProvider } from "@/lib/ActiveJobsContext";
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
-import { ContentSkeleton } from "@/components/PageSkeleton";
+import { AuthenticatedLayout } from "@/components/layout/AuthenticatedLayout";
 import { Suspense, lazy, useEffect } from "react";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -48,8 +48,16 @@ function LoadingSpinner() {
   );
 }
 
-function PageLoader() {
-  return <ContentSkeleton />;
+function PublicPageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#F2F4F6]">
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse"></div>
+        <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" style={{ animationDelay: "150ms" }}></div>
+        <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" style={{ animationDelay: "300ms" }}></div>
+      </div>
+    </div>
+  );
 }
 
 function usePageTracking() {
@@ -80,18 +88,10 @@ function ProtectedRoute({ component: Component, ...rest }: { component: React.Co
   return <Component {...rest} />;
 }
 
-function Router() {
-  usePageTracking();
-  
+function AuthenticatedRoutes() {
   return (
-    <Suspense fallback={<PageLoader />}>
+    <AuthenticatedLayout>
       <Switch>
-        <Route path="/" component={Landing} />
-        <Route path="/privacy" component={Privacy} />
-        <Route path="/terms" component={Terms} />
-        <Route path="/login" component={Login} />
-        <Route path="/login/email" component={EmailPasswordLogin} />
-        <Route path="/auth/callback" component={AuthCallback} />
         <Route path="/dashboard">
           {(params) => (
             <RoleProtectedRoute slug="/dashboard">
@@ -187,8 +187,34 @@ function Router() {
         </Route>
         <Route component={NotFound} />
       </Switch>
-    </Suspense>
+    </AuthenticatedLayout>
   );
+}
+
+function Router() {
+  usePageTracking();
+  const { isAuthenticated, user } = useAuth();
+  const [location] = useLocation();
+  
+  const publicPaths = ['/', '/privacy', '/terms', '/login', '/login/email', '/auth/callback'];
+  const isPublicPath = publicPaths.includes(location);
+  
+  if (isPublicPath) {
+    return (
+      <Suspense fallback={<PublicPageLoader />}>
+        <Switch>
+          <Route path="/" component={Landing} />
+          <Route path="/privacy" component={Privacy} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/login" component={Login} />
+          <Route path="/login/email" component={EmailPasswordLogin} />
+          <Route path="/auth/callback" component={AuthCallback} />
+        </Switch>
+      </Suspense>
+    );
+  }
+  
+  return <AuthenticatedRoutes />;
 }
 
 function App() {

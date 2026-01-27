@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -40,7 +39,7 @@ const salaryData = [
 
 export default function Report() {
   return (
-    <Layout>
+    <>
       <div className="max-w-5xl mx-auto space-y-8 pb-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -196,6 +195,6 @@ export default function Report() {
           </Card>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -271,7 +270,7 @@ export default function Goals() {
   const isLoading = isLoadingKompass || isLoadingProfiles;
 
   return (
-    <Layout>
+    <>
       <div className="space-y-8 max-w-5xl mx-auto pb-20 px-4 md:px-0">
         <div className="text-center mb-8 pt-6">
             <h2 className="text-[28px] font-bold text-[#191F28]">Kompass</h2>
@@ -513,6 +512,6 @@ export default function Goals() {
         </Dialog>
 
       </div>
-    </Layout>
+    </>
   );
 }

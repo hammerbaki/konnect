@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +31,7 @@ interface UserSettings {
 
 function SettingsSkeleton() {
     return (
-        <Layout>
+        <>
             <div className="max-w-2xl mx-auto pb-20">
                 <Skeleton className="h-8 w-24 mb-6" />
 
@@ -99,7 +98,7 @@ function SettingsSkeleton() {
                     <Skeleton className="h-14 w-full rounded-xl" />
                 </div>
             </div>
-        </Layout>
+        </>
     );
 }
 
@@ -334,7 +333,7 @@ export default function Settings() {
     const userEmail = user?.email || "";
 
     return (
-        <Layout>
+        <>
             <div className="max-w-2xl mx-auto pb-20">
                 <h2 className="text-xl sm:text-[28px] font-bold text-[#191F28] mb-4 sm:mb-6">설정</h2>
 
@@ -704,6 +703,6 @@ export default function Settings() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </Layout>
+        </>
     );
 }

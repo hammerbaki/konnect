@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1684,7 +1683,7 @@ export default function Analysis() {
     };
 
     return (
-        <Layout>
+        <>
             <div className="min-h-screen bg-[#F9FAFB]">
                 <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 lg:py-8">
                     {/* Mobile profile header */}
@@ -1791,6 +1790,6 @@ export default function Analysis() {
                     </div>
                 </div>
             </div>
-        </Layout>
+        </>
     );
 }
