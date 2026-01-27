@@ -237,7 +237,7 @@ export default function ProfileOptimized() {
         setSelectedType(typeParam);
       }
     }
-  }, [searchString]);
+  }, [searchString, selectedType]);
 
   useEffect(() => {
     if (hasScrolledToField.current) return;
