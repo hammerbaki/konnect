@@ -2,6 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +20,75 @@ import {
   Clock,
   Coins
 } from "lucide-react";
+
+function DashboardSkeleton() {
+  return (
+    <Layout>
+      <div className="space-y-5 sm:space-y-8 pb-6 sm:pb-10">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
+          <div>
+            <Skeleton className="h-7 sm:h-8 w-48 mb-2" />
+            <Skeleton className="h-5 w-64" />
+          </div>
+          <Card className="hidden md:flex toss-card px-5 py-4 items-center gap-3 w-fit">
+            <Skeleton className="h-10 w-10 rounded-xl" />
+            <div>
+              <Skeleton className="h-4 w-16 mb-1" />
+              <Skeleton className="h-6 w-12" />
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="toss-card p-3 sm:p-5 h-full">
+              <div className="flex flex-col h-full">
+                <Skeleton className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl mb-2 sm:mb-4" />
+                <Skeleton className="h-5 w-20 mb-1" />
+                <Skeleton className="h-4 w-24 mb-3 hidden sm:block" />
+                <div className="mt-auto flex items-center justify-between">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-5 w-5" />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+          <Card className="toss-card">
+            <CardHeader className="pb-2 sm:pb-4">
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent className="space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="flex-1">
+                  <Skeleton className="h-5 w-24 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="toss-card">
+            <CardHeader className="pb-2 sm:pb-4">
+              <Skeleton className="h-6 w-28" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="h-4 w-4 rounded-full" />
+                  <Skeleton className="h-4 flex-1" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </Layout>
+  );
+}
 
 // Profile field definitions for each profile type
 const PROFILE_FIELDS: Record<string, { required: string[]; optional: string[] }> = {
@@ -95,7 +165,7 @@ export default function Dashboard() {
   });
 
   // Fetch profiles - cache for 5 minutes to reduce API calls
-  const { data: profiles } = useQuery({
+  const { data: profiles, isLoading: isLoadingProfiles } = useQuery({
     queryKey: ['/api/profiles'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/profiles');
@@ -196,6 +266,10 @@ export default function Dashboard() {
       stat: essayCount > 0 ? `${essayCount}개 작성` : "작성하기",
     },
   ];
+
+  if (isLoadingProfiles) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <Layout>

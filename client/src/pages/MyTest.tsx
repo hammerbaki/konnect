@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -392,9 +393,40 @@ export default function MyTest() {
   if ((questionsLoading && !latestResult) || initMutation.isPending) {
     return (
       <Layout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-[#3182F6]" />
-          <p className="text-[#8B95A1]">검사를 준비하는 중...</p>
+        <div className="max-w-2xl mx-auto space-y-6 py-8">
+          <div className="text-center mb-8">
+            <Skeleton className="h-8 w-48 mx-auto mb-2" />
+            <Skeleton className="h-5 w-64 mx-auto" />
+          </div>
+          
+          <Card className="toss-card p-6">
+            <div className="flex items-center gap-4 mb-6">
+              <Skeleton className="h-12 w-12 rounded-xl" />
+              <div className="flex-1">
+                <Skeleton className="h-6 w-40 mb-2" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+            
+            <div className="mt-6 flex justify-center">
+              <Skeleton className="h-12 w-40 rounded-xl" />
+            </div>
+          </Card>
+          
+          <div className="grid grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="toss-card p-4">
+                <Skeleton className="h-10 w-10 rounded-lg mb-3" />
+                <Skeleton className="h-5 w-24 mb-1" />
+                <Skeleton className="h-4 w-16" />
+              </Card>
+            ))}
+          </div>
         </div>
       </Layout>
     );

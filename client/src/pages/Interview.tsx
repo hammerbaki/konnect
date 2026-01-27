@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
@@ -1113,11 +1114,41 @@ function InterviewContent() {
     );
   }
   
-  // Loading state
+  // Loading state with skeleton
   if (loadingSessions || loadingSession) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-8 h-8 animate-spin text-[#3182F6]" />
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="text-center mb-8 pt-6">
+          <Skeleton className="h-8 w-40 mx-auto mb-2" />
+          <Skeleton className="h-5 w-64 mx-auto" />
+        </div>
+        <Card className="toss-card p-6">
+          <div className="flex items-center gap-4 mb-4">
+            <Skeleton className="h-12 w-12 rounded-xl" />
+            <div className="flex-1">
+              <Skeleton className="h-6 w-48 mb-2" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-3/4" />
+        </Card>
+        <div className="grid gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="toss-card p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 rounded-xl" />
+                  <div>
+                    <Skeleton className="h-5 w-32 mb-1" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </div>
+                <Skeleton className="h-6 w-16 rounded-full" />
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
