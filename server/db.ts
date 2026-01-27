@@ -6,19 +6,23 @@ import * as schema from "@shared/schema";
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Log which database we're using
-// Always use Replit-managed DATABASE_URL for both development and production
-console.log(`Using ${isProduction ? 'production' : 'development'} database (Replit-managed)`);
+// Production uses PROD_DATABASE_URL (Supabase), Development uses DATABASE_URL (Replit)
+console.log(`Using ${isProduction ? 'production (Supabase)' : 'development (Replit)'} database`);
 
-// Get database URL safely - always use Replit-managed DATABASE_URL
+// Get database URL safely
+// Production: PROD_DATABASE_URL (Supabase)
+// Development: DATABASE_URL (Replit-managed)
 function getDatabaseUrl(): string {
   try {
-    const url = process.env.DATABASE_URL || '';
+    const url = isProduction 
+      ? (process.env.PROD_DATABASE_URL || process.env.DATABASE_URL || '')
+      : (process.env.DATABASE_URL || '');
     if (!url) {
-      console.warn('WARNING: DATABASE_URL not set');
+      console.warn('WARNING: Database URL not set');
     }
     return url;
   } catch (err) {
-    console.error('Error reading DATABASE_URL:', err);
+    console.error('Error reading database URL:', err);
     return '';
   }
 }
