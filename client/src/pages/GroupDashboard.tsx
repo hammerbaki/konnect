@@ -501,9 +501,15 @@ export default function GroupDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {detailedStats?.recentAnalyses && detailedStats.recentAnalyses.length > 0 ? (
+                {detailedStats?.recentAnalyses && detailedStats.recentAnalyses.filter(a => 
+                  allowedProfileTypes.includes(a.profileType) || 
+                  (a.profileType === 'international' && allowedProfileTypes.includes('international_university'))
+                ).length > 0 ? (
                   <div className="divide-y">
-                    {detailedStats.recentAnalyses.map((analysis, index) => (
+                    {detailedStats.recentAnalyses.filter(a => 
+                      allowedProfileTypes.includes(a.profileType) || 
+                      (a.profileType === 'international' && allowedProfileTypes.includes('international_university'))
+                    ).map((analysis, index) => (
                       <div key={index} className="py-4 first:pt-0 last:pb-0">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">

@@ -5534,7 +5534,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "그룹 멤버를 찾을 수 없습니다." });
       }
       
-      const memberDetail = await storage.getGroupMemberDetail(req.params.memberId);
+      // Get group's allowed profile types to filter the results
+      const group = await storage.getGroup(req.params.groupId);
+      const allowedProfileTypes = (group?.allowedProfileTypes as string[]) || ['general', 'international_university', 'university', 'high', 'middle', 'elementary'];
+      
+      // Also include 'international' if 'international_university' is allowed (for backward compatibility)
+      const expandedTypes = [...allowedProfileTypes];
+      if (allowedProfileTypes.includes('international_university') && !allowedProfileTypes.includes('international')) {
+        expandedTypes.push('international');
+      }
+      
+      const memberDetail = await storage.getGroupMemberDetailWithFilter(req.params.memberId, expandedTypes);
       res.json(memberDetail);
     } catch (error: any) {
       console.error("Error fetching member detail:", error);

@@ -67,6 +67,7 @@ interface MemberDetail {
 
 const profileTypeIcons: Record<string, typeof Briefcase> = {
   general: Briefcase,
+  international_university: Globe,
   international: Globe,
   university: GraduationCap,
   high: School,
@@ -76,6 +77,7 @@ const profileTypeIcons: Record<string, typeof Briefcase> = {
 
 const profileTypeLabels: Record<string, string> = {
   general: "구직자",
+  international_university: "외국인유학생",
   international: "외국인유학생",
   university: "대학생",
   high: "고등학생",

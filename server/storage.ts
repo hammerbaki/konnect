@@ -391,6 +391,40 @@ export interface IStorage {
       createdAt: string;
     }>;
   }>;
+  
+  getGroupMemberDetailWithFilter(memberId: string, allowedProfileTypes: string[]): Promise<{
+    user: {
+      id: string;
+      email: string;
+      displayName: string | null;
+      profileImageUrl: string | null;
+      createdAt: string;
+    };
+    profile: {
+      id: string;
+      profileType: string;
+      name: string | null;
+      createdAt: string;
+      updatedAt: string | null;
+    } | null;
+    analysis: {
+      id: string;
+      status: string;
+      createdAt: string;
+      analysisResult: any;
+    } | null;
+    goals: Array<{
+      id: string;
+      title: string;
+      status: string;
+      progress: number;
+    }>;
+    essays: Array<{
+      id: string;
+      title: string | null;
+      createdAt: string;
+    }>;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3398,6 +3432,144 @@ export class DatabaseStorage implements IStorage {
       goals: goalRows.map(g => ({
         id: g.id.toString(),
         title: `${g.targetYear}년 목표`, // Goals don't have title field, use year
+        status: 'active',
+        progress: g.progress || 0,
+      })),
+      essays: essayRows.map(e => ({
+        id: e.id.toString(),
+        title: e.title,
+        createdAt: e.createdAt?.toISOString() || '',
+      })),
+    };
+  }
+
+  async getGroupMemberDetailWithFilter(memberId: string, allowedProfileTypes: string[]): Promise<{
+    user: {
+      id: string;
+      email: string;
+      displayName: string | null;
+      profileImageUrl: string | null;
+      createdAt: string;
+    };
+    profile: {
+      id: string;
+      profileType: string;
+      name: string | null;
+      createdAt: string;
+      updatedAt: string | null;
+    } | null;
+    analysis: {
+      id: string;
+      status: string;
+      createdAt: string;
+      analysisResult: any;
+    } | null;
+    goals: Array<{
+      id: string;
+      title: string;
+      status: string;
+      progress: number;
+    }>;
+    essays: Array<{
+      id: string;
+      title: string | null;
+      createdAt: string;
+    }>;
+  }> {
+    // Get user info
+    const [user] = await db.select().from(users).where(eq(users.id, memberId));
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    // Get all profiles and filter by allowed types
+    const allProfiles = await db.select().from(profiles).where(eq(profiles.userId, memberId));
+    const filteredProfiles = allProfiles.filter(p => allowedProfileTypes.includes(p.type));
+    const profile = filteredProfiles[0] || null;
+    
+    // Get latest analysis for the filtered profile
+    let analysis = null;
+    if (profile) {
+      const [latestAnalysis] = await db
+        .select()
+        .from(careerAnalyses)
+        .where(eq(careerAnalyses.profileId, profile.id))
+        .orderBy(desc(careerAnalyses.createdAt))
+        .limit(1);
+      
+      if (latestAnalysis) {
+        let analysisResult: any = null;
+        
+        if (latestAnalysis.recommendations && typeof latestAnalysis.recommendations === 'object') {
+          analysisResult = latestAnalysis.recommendations;
+        } else if (latestAnalysis.stats && typeof latestAnalysis.stats === 'object') {
+          analysisResult = latestAnalysis.stats;
+        }
+        
+        if (!analysisResult && latestAnalysis.summary) {
+          analysisResult = { summary: latestAnalysis.summary };
+        }
+        
+        if (analysisResult && latestAnalysis.summary && !analysisResult.summary) {
+          analysisResult.summary = latestAnalysis.summary;
+        }
+        
+        analysis = {
+          id: latestAnalysis.id.toString(),
+          status: 'completed',
+          createdAt: latestAnalysis.createdAt?.toISOString() || '',
+          analysisResult,
+        };
+      }
+    }
+    
+    // Get goals (linked via profileId)
+    let goalRows: Array<{ id: string; progress: number; targetYear: number }> = [];
+    if (profile) {
+      goalRows = await db
+        .select({
+          id: kompassGoals.id,
+          progress: kompassGoals.progress,
+          targetYear: kompassGoals.targetYear,
+        })
+        .from(kompassGoals)
+        .where(eq(kompassGoals.profileId, profile.id))
+        .limit(10);
+    }
+    
+    // Get essays (linked via profileId)
+    let essayRows: Array<{ id: string; title: string | null; createdAt: Date | null }> = [];
+    if (profile) {
+      essayRows = await db
+        .select({
+          id: personalEssays.id,
+          title: personalEssays.title,
+          createdAt: personalEssays.createdAt,
+        })
+        .from(personalEssays)
+        .where(eq(personalEssays.profileId, profile.id))
+        .limit(10);
+    }
+    
+    return {
+      user: {
+        id: user.id,
+        email: user.email || '',
+        displayName: user.displayName,
+        profileImageUrl: user.profileImageUrl,
+        createdAt: user.createdAt?.toISOString() || '',
+      },
+      profile: profile ? {
+        id: profile.id.toString(),
+        profileType: profile.type,
+        name: profile.title,
+        createdAt: profile.createdAt?.toISOString() || '',
+        updatedAt: profile.updatedAt?.toISOString() || null,
+      } : null,
+      analysis,
+      goals: goalRows.map(g => ({
+        id: g.id.toString(),
+        title: `${g.targetYear}년 목표`,
         status: 'active',
         progress: g.progress || 0,
       })),
