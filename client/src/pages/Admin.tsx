@@ -260,8 +260,18 @@ function GroupManagementTab() {
   const [newGroupEmoji, setNewGroupEmoji] = useState("👥");
   const [newGroupColor, setNewGroupColor] = useState("#3B82F6");
   const [newGroupLogoUrl, setNewGroupLogoUrl] = useState("");
+  const [newGroupProfileTypes, setNewGroupProfileTypes] = useState<string[]>(['general', 'international', 'university', 'high', 'middle', 'elementary']);
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<string>("member");
+  
+  const PROFILE_TYPE_OPTIONS = [
+    { value: 'general', label: '구직자' },
+    { value: 'international', label: '외국인유학생' },
+    { value: 'university', label: '대학생' },
+    { value: 'high', label: '고등학생' },
+    { value: 'middle', label: '중학생' },
+    { value: 'elementary', label: '초등학생' },
+  ];
   const [viewMode, setViewMode] = useState<'groups' | 'members' | 'analyses'>('groups');
 
   // Fetch all groups
@@ -308,6 +318,7 @@ function GroupManagementTab() {
         iconEmoji: newGroupEmoji,
         color: newGroupColor,
         logoUrl: newGroupLogoUrl || null,
+        allowedProfileTypes: newGroupProfileTypes,
       });
       toast({ title: "성공", description: "그룹이 생성되었습니다." });
       setShowCreateModal(false);
@@ -316,6 +327,7 @@ function GroupManagementTab() {
       setNewGroupEmoji("👥");
       setNewGroupColor("#3B82F6");
       setNewGroupLogoUrl("");
+      setNewGroupProfileTypes(['general', 'international', 'university', 'high', 'middle', 'elementary']);
       refetchGroups();
     } catch (error: any) {
       toast({ title: "오류", description: error.message || "그룹 생성에 실패했습니다.", variant: "destructive" });
@@ -531,6 +543,35 @@ function GroupManagementTab() {
                   data-testid="input-group-logo-url"
                 />
                 <p className="text-xs text-muted-foreground mt-1">학교/기관 로고 이미지 URL을 입력하세요</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">표시할 프로필 유형 *</label>
+                <p className="text-xs text-muted-foreground mb-2">그룹 대시보드에 표시할 프로필 유형을 선택하세요</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {PROFILE_TYPE_OPTIONS.map((option) => (
+                    <label 
+                      key={option.value} 
+                      className={`flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-gray-50 ${
+                        newGroupProfileTypes.includes(option.value) ? 'border-blue-500 bg-blue-50' : ''
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={newGroupProfileTypes.includes(option.value)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setNewGroupProfileTypes([...newGroupProfileTypes, option.value]);
+                          } else {
+                            setNewGroupProfileTypes(newGroupProfileTypes.filter(t => t !== option.value));
+                          }
+                        }}
+                        className="rounded"
+                        data-testid={`checkbox-profile-${option.value}`}
+                      />
+                      <span className="text-sm">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
             <AlertDialogFooter>
