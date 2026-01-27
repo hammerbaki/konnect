@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import { Layout } from "@/components/layout/Layout";
@@ -83,6 +83,8 @@ interface GroupInfo {
   name: string;
   description: string | null;
   createdAt: string;
+  allowedProfileTypes?: string[];
+  logoUrl?: string;
 }
 
 const profileTypeLabels: Record<string, string> = {
@@ -119,9 +121,19 @@ export default function GroupDashboard() {
   const groupId = params.groupId;
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
-  const [selectedProfileType, setSelectedProfileType] = useState("international");
+  const [selectedProfileType, setSelectedProfileType] = useState("");
   const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({});
   const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>({});
+
+  // Get allowed profile types from group, default to all if not set
+  const allowedProfileTypes = group?.allowedProfileTypes || ['general', 'international', 'university', 'high', 'middle', 'elementary'];
+
+  // Set default profile type when group loads
+  useEffect(() => {
+    if (group && allowedProfileTypes.length > 0 && !selectedProfileType) {
+      setSelectedProfileType(allowedProfileTypes[0]);
+    }
+  }, [group, allowedProfileTypes, selectedProfileType]);
 
   const toggleFieldExpanded = (fieldLabel: string) => {
     setExpandedFields(prev => ({ ...prev, [fieldLabel]: !prev[fieldLabel] }));
@@ -199,10 +211,13 @@ export default function GroupDashboard() {
 
   const filteredMembers = members?.filter((member) => {
     const searchLower = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = (
       member.email.toLowerCase().includes(searchLower) ||
       (member.displayName?.toLowerCase() || "").includes(searchLower)
     );
+    // Filter by allowed profile types (if member has a profile type)
+    const matchesProfileType = !member.profileType || allowedProfileTypes.includes(member.profileType);
+    return matchesSearch && matchesProfileType;
   });
 
   const getProgressBadge = (score: number) => {
@@ -363,9 +378,9 @@ export default function GroupDashboard() {
                     className="text-sm font-normal px-3 py-1.5 border rounded-md bg-white"
                     data-testid="select-profile-type"
                   >
-                    <option value="international">외국인유학생</option>
-                    <option value="general">일반구직자</option>
-                    <option value="university">대학생</option>
+                    {allowedProfileTypes.map((type) => (
+                      <option key={type} value={type}>{profileTypeLabels[type] || type}</option>
+                    ))}
                   </select>
                 </CardTitle>
               </CardHeader>
