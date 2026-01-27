@@ -419,11 +419,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         gender: user.gender || null,
         birthDate: user.birthDate || null,
       });
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       console.error("Error updating user identity:", error);
+      
+      // Handle duplicate email error
+      if (error?.code === '23505' && error?.constraint === 'users_email_unique') {
+        return res.status(409).json({ message: "이미 사용 중인 이메일입니다. 다른 이메일을 입력해 주세요." });
+      }
+      
       res.status(500).json({ message: "Failed to update user identity" });
     }
   });

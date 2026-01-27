@@ -1,0 +1,219 @@
+Deployment
+Source
+Log
+2026-01-27 13:08:08.54
+a3d03c12
+User
+4:08:08 AM [express] PUT /api/admin/groups/7c2a473a-0435-44ec-a76a-a4b30390036e 200 in 1175ms :: {"success":true}
+2026-01-27 13:08:57.99
+a3d03c12
+User
+4:08:57 AM [express] GET /api/notifications 304 in 1118ms :: [array:20]
+2026-01-27 13:08:57.99
+a3d03c12
+User
+4:08:57 AM [express] GET /api/notifications/unread-count 304 in 1125ms :: {"count":11}
+2026-01-27 13:08:59.67
+a3d03c12
+User
+4:08:59 AM [express] POST /api/track/pageview 200 in 780ms :: {"tracked":true}
+2026-01-27 13:09:08.89
+a3d03c12
+User
+4:09:08 AM [express] POST /api/track/pageview 200 in 1165ms :: {"tracked":true}
+2026-01-27 13:09:09.16
+a3d03c12
+User
+4:09:09 AM [express] GET /api/kjobs/latest 304 in 1134ms
+2026-01-27 13:09:09.17
+a3d03c12
+User
+4:09:09 AM [express] GET /api/profiles 304 in 1139ms :: [array:6]
+2026-01-27 13:09:15.43
+a3d03c12
+User
+4:09:15 AM [express] POST /api/auth/logout 200 in 1451ms :: {"success":true}
+2026-01-27 13:09:17.61
+a3d03c12
+User
+4:09:17 AM [express] POST /api/track/pageview 200 in 840ms :: {"tracked":true}
+2026-01-27 13:09:18.78
+a3d03c12
+User
+4:09:18 AM [express] POST /api/track/pageview 200 in 795ms :: {"tracked":true}
+2026-01-27 13:09:44.31
+a3d03c12
+User
+4:09:44 AM [express] GET /api/auth/user 200 in 1465ms :: [object:20]
+2026-01-27 13:09:45.35
+a3d03c12
+User
+4:09:45 AM [express] POST /api/track/pageview 200 in 839ms :: {"tracked":true}
+2026-01-27 13:09:45.78
+a3d03c12
+User
+[PageVisibility] User s54305430@gmail.com (role: user) - /admin access: false
+2026-01-27 13:09:45.78
+a3d03c12
+User
+4:09:45 AM [express] GET /api/page-visibility 200 in 1261ms :: [object:2]
+2026-01-27 13:09:48.44
+a3d03c12
+User
+4:09:48 AM [express] POST /api/track/pageview 200 in 843ms :: {"tracked":true}
+2026-01-27 13:09:48.65
+a3d03c12
+User
+4:09:48 AM [express] GET /api/profiles 200 in 1052ms :: [array:6]
+2026-01-27 13:09:49.22
+a3d03c12
+User
+✓ Database connection established
+2026-01-27 13:09:49.85
+a3d03c12
+User
+4:09:49 AM [express] GET /api/profiles/d7563ab7-813d-4c28-94f2-6049607498e9/analyses 403 in 2248ms :: {"message":"Forbidden"}
+2026-01-27 13:09:55.05
+a3d03c12
+User
+4:09:55 AM [express] POST /api/track/pageview 200 in 892ms :: {"tracked":true}
+2026-01-27 13:09:56.60
+a3d03c12
+User
+4:09:56 AM [express] GET /api/user-profile 200 in 1087ms :: [object:10]
+2026-01-27 13:09:56.72
+a3d03c12
+User
+4:09:56 AM [express] GET /api/user-profile 200 in 1231ms :: [object:10]
+2026-01-27 13:09:59.28
+a3d03c12
+User
+4:09:59 AM [express] GET /api/notifications 304 in 1018ms :: [array:20]
+2026-01-27 13:09:59.30
+a3d03c12
+User
+4:09:59 AM [express] GET /api/notifications/unread-count 304 in 1035ms :: {"count":11}
+2026-01-27 13:10:15.56
+a3d03c12
+User
+detail: 'Key (email)=(ckm5430@kjobs.co.kr) already exists.',
+2026-01-27 13:10:15.56
+a3d03c12
+User
+at async gu.updateUserIdentity (/home/runner/workspace/dist/index.cjs:702:64236)
+2026-01-27 13:10:15.56
+a3d03c12
+User
+file: 'nbtinsert.c',
+2026-01-27 13:10:15.56
+a3d03c12
+User
+position: undefined,
+2026-01-27 13:10:15.56
+a3d03c12
+User
+routine: '_bt_check_unique'
+2026-01-27 13:10:15.56
+a3d03c12
+User
+table: 'users',
+2026-01-27 13:10:15.56
+a3d03c12
+User
+column: undefined,
+2026-01-27 13:10:15.56
+a3d03c12
+User
+internalPosition: undefined,
+2026-01-27 13:10:15.56
+a3d03c12
+User
+at async /home/runner/workspace/dist/index.cjs:795:19554 {
+2026-01-27 13:10:15.56
+a3d03c12
+User
+length: 217,
+2026-01-27 13:10:15.56
+a3d03c12
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2026-01-27 13:10:15.56
+a3d03c12
+User
+hint: undefined,
+2026-01-27 13:10:15.56
+a3d03c12
+User
+constraint: 'users_email_unique',
+2026-01-27 13:10:15.56
+a3d03c12
+User
+schema: 'public',
+2026-01-27 13:10:15.56
+a3d03c12
+User
+line: '666',
+2026-01-27 13:10:15.56
+a3d03c12
+User
+}
+2026-01-27 13:10:15.56
+a3d03c12
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2026-01-27 13:10:15.56
+a3d03c12
+User
+where: undefined,
+2026-01-27 13:10:15.56
+a3d03c12
+User
+dataType: undefined,
+2026-01-27 13:10:15.56
+a3d03c12
+User
+code: '23505',
+2026-01-27 13:10:15.56
+a3d03c12
+User
+internalQuery: undefined,
+2026-01-27 13:10:15.56
+a3d03c12
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-01-27 13:10:15.56
+a3d03c12
+User
+severity: 'ERROR',
+2026-01-27 13:10:15.56
+a3d03c12
+User
+Error updating user identity: error: duplicate key value violates unique constraint "users_email_unique"
+2026-01-27 13:10:15.56
+a3d03c12
+User
+4:10:15 AM [express] PATCH /api/user-identity 500 in 1097ms :: {"message":"Failed to update user identity"}
+2026-01-27 13:10:15.72
+a3d03c12
+User
+4:10:15 AM [express] PUT /api/user-profile 200 in 1258ms :: [object:10]
+2026-01-27 13:10:16.96
+a3d03c12
+User
+4:10:16 AM [express] GET /api/user-profile 200 in 1055ms :: [object:10]
+2026-01-27 13:10:17.67
+a3d03c12
+User
+4:10:17 AM [express] POST /api/track/pageview 200 in 846ms :: {"tracked":true}
+2026-01-27 13:10:18.31
+a3d03c12
+User
+4:10:18 AM [express] GET /api/user-profile 304 in 1180ms :: [object:10]
+2026-01-27 13:10:18.64
+a3d03c12
+User
+✓ Database connection established
+2026-01-27 13:10:18.73
+a3d03c12
+User
+✓ Database connection established
