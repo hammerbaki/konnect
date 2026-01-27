@@ -1,0 +1,34 @@
+index-C2-xPp7Q.js:125 [Referral] Checking URL for referral code: null
+unread-count:1  Failed to load resource: the server responded with a status of 401 ()
+notifications?limit=20:1  Failed to load resource: the server responded with a status of 401 ()
+otp?redirect_to=https%3A%2F%2Fkonnect.careers%2Fauth%2Fcallback:1  Failed to load resource: the server responded with a status of 429 ()
+otp?redirect_to=https%3A%2F%2Fkonnect.careers%2Fauth%2Fcallback:1  Failed to load resource: the server responded with a status of 429 ()
+otp?redirect_to=https%3A%2F%2Fkonnect.careers%2Fauth%2Fcallback:1  Failed to load resource: the server responded with a status of 429 ()
+otp?redirect_to=https%3A%2F%2Fkonnect.careers%2Fauth%2Fcallback:1  Failed to load resource: the server responded with a status of 429 ()
+unread-count:1  Failed to load resource: the server responded with a status of 401 ()
+notifications?limit=20:1  Failed to load resource: the server responded with a status of 401 ()
+notifications?limit=20:1  Failed to load resource: the server responded with a status of 401 ()
+unread-count:1  Failed to load resource: the server responded with a status of 401 ()
+index-C2-xPp7Q.js:125  GET https://konnect.careers/api/notifications?limit=20 401 (Unauthorized)
+queryFn @ index-C2-xPp7Q.js:125
+await in queryFn
+l @ index-C2-xPp7Q.js:58
+S @ index-C2-xPp7Q.js:58
+start @ index-C2-xPp7Q.js:58
+fetch @ index-C2-xPp7Q.js:58
+#f @ index-C2-xPp7Q.js:58
+(anonymous) @ index-C2-xPp7Q.js:58
+index-C2-xPp7Q.js:125  GET https://konnect.careers/api/notifications/unread-count 401 (Unauthorized)
+queryFn @ index-C2-xPp7Q.js:125
+await in queryFn
+l @ index-C2-xPp7Q.js:58
+S @ index-C2-xPp7Q.js:58
+start @ index-C2-xPp7Q.js:58
+fetch @ index-C2-xPp7Q.js:58
+#f @ index-C2-xPp7Q.js:58
+(anonymous) @ index-C2-xPp7Q.js:58
+index-C2-xPp7Q.js:125 [Auth] fetchUserData called, isNewSession: true
+index-C2-xPp7Q.js:125 [Referral] New session detected, triggering claim
+index-C2-xPp7Q.js:125 [Referral] Retrieved referral code from localStorage: null
+index-C2-xPp7Q.js:125 [Referral] claimReferralReward called, code: null alreadyAttempted: false
+index-C2-xPp7Q.js:125 [Referral] Skipping claim - no code or already attempted
