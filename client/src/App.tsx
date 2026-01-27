@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/lib/AuthContext";
 import { NotificationProvider } from "@/lib/NotificationContext";
 import { ActiveJobsProvider } from "@/lib/ActiveJobsContext";
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
+import { ContentSkeleton } from "@/components/PageSkeleton";
 import { Suspense, lazy, useEffect } from "react";
 
 const Landing = lazy(() => import("./pages/Landing"));
@@ -48,7 +49,7 @@ function LoadingSpinner() {
 }
 
 function PageLoader() {
-  return null;
+  return <ContentSkeleton />;
 }
 
 function usePageTracking() {
