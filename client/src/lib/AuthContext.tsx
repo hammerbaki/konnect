@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { getSupabase } from "./supabase";
+import { queryClient } from "./queryClient";
 import type { Session, User as SupabaseUser, SupabaseClient } from "@supabase/supabase-js";
 
 const REFERRAL_CODE_KEY = 'konnect_referral_code';
@@ -227,6 +228,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchUserData]);
 
   const logout = async () => {
+    console.log('[Auth] Logout initiated - clearing all caches and session data');
+    
     // Track logout in backend
     if (session?.access_token) {
       try {
@@ -241,12 +244,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     
+    // 1. Clear Supabase session
     if (supabaseClient) {
       await supabaseClient.auth.signOut();
     }
+    
+    // 2. Clear React Query cache - prevents stale user data
+    queryClient.clear();
+    console.log('[Auth] React Query cache cleared');
+    
+    // 3. Clear localStorage (except critical items)
+    const keysToPreserve = ['supabase.auth.token']; // Supabase handles its own cleanup
+    const allKeys = Object.keys(localStorage);
+    allKeys.forEach(key => {
+      if (!keysToPreserve.some(preserve => key.includes(preserve))) {
+        localStorage.removeItem(key);
+      }
+    });
+    console.log('[Auth] localStorage cleared');
+    
+    // 4. Clear sessionStorage
+    sessionStorage.clear();
+    console.log('[Auth] sessionStorage cleared');
+    
+    // 5. Clear React state
     setUser(null);
     setSupabaseUser(null);
     setSession(null);
+    
+    // 6. Reset referral claim flag
+    referralClaimAttempted.current = false;
+    
+    // 7. Force page reload to ensure clean state
+    console.log('[Auth] Redirecting to login page');
+    window.location.href = '/login';
   };
 
   const refreshUser = async () => {
