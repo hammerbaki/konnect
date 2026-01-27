@@ -1718,7 +1718,7 @@ export default function Analysis() {
 
                     <div className="flex gap-6">
                         <main className="flex-1 min-w-0">
-                            <div className="max-w-3xl">
+                            <div className="max-w-3xl mx-auto">
                             {(isCurrentProfileAnalyzing || isSubmitting) ? (
                                 <AnalysisLoadingState 
                                     progress={aiJob.progress}
