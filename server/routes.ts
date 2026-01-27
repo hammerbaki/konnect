@@ -1179,7 +1179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Branch based on profile type
       let analysis;
       
-      if (profile.type === 'international') {
+      if (profile.type === 'international_university' || profile.type === 'international') {
         // Use specialized foreign student (international) analysis
         const result = await generateForeignStudentAnalysis(profile, userIdentity);
         
@@ -1196,7 +1196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
           chartData: null,
           recommendations: {
-            profileType: 'international',
+            profileType: 'international_university',
             foreignStudentData: result,
           },
           aiRawResponse: result.rawResponse,

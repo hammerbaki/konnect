@@ -210,12 +210,14 @@ interface GroupWithStats {
   description: string | null;
   iconEmoji: string | null;
   color: string | null;
+  logoUrl: string | null;
   ownerId: string;
   isActive: number;
   memberCount: number;
   analysisCount: number;
   lastActivityAt: string | null;
   createdAt: string | null;
+  allowedProfileTypes?: string[];
 }
 
 interface GroupMemberWithUser {
@@ -260,13 +262,13 @@ function GroupManagementTab() {
   const [newGroupEmoji, setNewGroupEmoji] = useState("👥");
   const [newGroupColor, setNewGroupColor] = useState("#3B82F6");
   const [newGroupLogoUrl, setNewGroupLogoUrl] = useState("");
-  const [newGroupProfileTypes, setNewGroupProfileTypes] = useState<string[]>(['general', 'international', 'university', 'high', 'middle', 'elementary']);
+  const [newGroupProfileTypes, setNewGroupProfileTypes] = useState<string[]>(['general', 'international_university', 'university', 'high', 'middle', 'elementary']);
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<string>("member");
   
   const PROFILE_TYPE_OPTIONS = [
     { value: 'general', label: '구직자' },
-    { value: 'international', label: '외국인유학생' },
+    { value: 'international_university', label: '외국인유학생' },
     { value: 'university', label: '대학생' },
     { value: 'high', label: '고등학생' },
     { value: 'middle', label: '중학생' },
@@ -327,7 +329,7 @@ function GroupManagementTab() {
       setNewGroupEmoji("👥");
       setNewGroupColor("#3B82F6");
       setNewGroupLogoUrl("");
-      setNewGroupProfileTypes(['general', 'international', 'university', 'high', 'middle', 'elementary']);
+      setNewGroupProfileTypes(['general', 'international_university', 'university', 'high', 'middle', 'elementary']);
       refetchGroups();
     } catch (error: any) {
       toast({ title: "오류", description: error.message || "그룹 생성에 실패했습니다.", variant: "destructive" });

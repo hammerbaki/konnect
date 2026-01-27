@@ -1152,7 +1152,7 @@ export const groups = pgTable("groups", {
   color: varchar("color", { length: 20 }).default('#3B82F6'),
   logoUrl: varchar("logo_url", { length: 500 }),
   ownerId: varchar("owner_id").notNull().references(() => users.id),
-  allowedProfileTypes: jsonb("allowed_profile_types").default(['general', 'international', 'university', 'high', 'middle', 'elementary']),
+  allowedProfileTypes: jsonb("allowed_profile_types").default(['general', 'international_university', 'university', 'high', 'middle', 'elementary']),
   settings: jsonb("settings").default({}),
   isActive: integer("is_active").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow(),

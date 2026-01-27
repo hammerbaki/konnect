@@ -89,7 +89,7 @@ interface GroupInfo {
 
 const profileTypeLabels: Record<string, string> = {
   general: "구직자",
-  international: "외국인유학생",
+  international_university: "외국인유학생",
   university: "대학생",
   high: "고등학생",
   middle: "중학생",
@@ -98,7 +98,7 @@ const profileTypeLabels: Record<string, string> = {
 
 const profileTypeIcons: Record<string, typeof Briefcase> = {
   general: Briefcase,
-  international: Globe,
+  international_university: Globe,
   university: GraduationCap,
   high: School,
   middle: BookOpen,
@@ -125,16 +125,6 @@ export default function GroupDashboard() {
   const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({});
   const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>({});
 
-  // Get allowed profile types from group, default to all if not set
-  const allowedProfileTypes = group?.allowedProfileTypes || ['general', 'international', 'university', 'high', 'middle', 'elementary'];
-
-  // Set default profile type when group loads
-  useEffect(() => {
-    if (group && allowedProfileTypes.length > 0 && !selectedProfileType) {
-      setSelectedProfileType(allowedProfileTypes[0]);
-    }
-  }, [group, allowedProfileTypes, selectedProfileType]);
-
   const toggleFieldExpanded = (fieldLabel: string) => {
     setExpandedFields(prev => ({ ...prev, [fieldLabel]: !prev[fieldLabel] }));
   };
@@ -155,6 +145,16 @@ export default function GroupDashboard() {
       return res.json();
     },
   });
+
+  // Get allowed profile types from group, default to all if not set
+  const allowedProfileTypes = group?.allowedProfileTypes || ['general', 'international_university', 'university', 'high', 'middle', 'elementary'];
+
+  // Set default profile type when group loads
+  useEffect(() => {
+    if (group && allowedProfileTypes.length > 0 && !selectedProfileType) {
+      setSelectedProfileType(allowedProfileTypes[0]);
+    }
+  }, [group, allowedProfileTypes, selectedProfileType]);
 
   const { data: stats, isLoading: statsLoading } = useQuery<GroupStats>({
     queryKey: ["group-stats", groupId],

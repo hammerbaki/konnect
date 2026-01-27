@@ -630,7 +630,7 @@ export default function Analysis() {
         const { summary, stats, recommendations } = latestAnalysis;
         const careerRecommendations: CareerRecommendation[] = recommendations?.careers || [];
         const profileType = activeProfile?.type || 'general';
-        const isForeignStudent = recommendations?.profileType === 'international';
+        const isForeignStudent = recommendations?.profileType === 'international_university';
         const foreignStudentData = recommendations?.foreignStudentData;
 
         return (

@@ -285,7 +285,7 @@ function InterviewContent() {
         return data.univ_desiredIndustry || null;
       case 'general':
         return data.gen_desiredRole || null;
-      case 'international':
+      case 'international_university':
         return data.intl_desiredPosition || null;
       default:
         return null;

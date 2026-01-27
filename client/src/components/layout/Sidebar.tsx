@@ -37,7 +37,7 @@ interface ManagedGroup {
 
 const profileSubItems = [
   { id: "general", label: "구직자", icon: Briefcase },
-  { id: "international", label: "외국인유학생", icon: Globe },
+  { id: "international_university", label: "외국인유학생", icon: Globe },
   { id: "university", label: "대학생", icon: GraduationCap },
   { id: "high", label: "고등학생", icon: School },
   { id: "middle", label: "중학생", icon: BookOpen },

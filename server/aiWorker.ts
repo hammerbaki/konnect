@@ -223,7 +223,7 @@ export async function processJob(job: AiJob): Promise<any> {
         };
         
         // Use specialized analysis for international students
-        if (payload.profileType === 'international') {
+        if (payload.profileType === 'international_university' || payload.profileType === 'international') {
           console.log(`[AI Worker] Using international student analysis for job ${job.id}`);
           result = await withProcessingTimeout(
             generateForeignStudentAnalysis(profileForAnalysis as any, payload.userIdentity),
@@ -248,7 +248,7 @@ export async function processJob(job: AiJob): Promise<any> {
               stats: null,
               chartData: null,
               recommendations: {
-                profileType: 'international',
+                profileType: 'international_university',
                 foreignStudentData: foreignStudentData,
               },
               aiRawResponse: result.rawResponse,

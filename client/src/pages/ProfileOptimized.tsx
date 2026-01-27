@@ -39,7 +39,7 @@ const ProfileFormSkeleton = memo(() => (
 
 const PROFILE_TYPE_OPTIONS = [
   { id: 'general' as ProfileType, label: '구직자' },
-  { id: 'international' as ProfileType, label: '외국인유학생' },
+  { id: 'international_university' as ProfileType, label: '외국인유학생' },
   { id: 'university' as ProfileType, label: '대학생' },
   { id: 'high' as ProfileType, label: '고등학생' },
   { id: 'middle' as ProfileType, label: '중학생' },
@@ -233,7 +233,7 @@ export default function ProfileOptimized() {
     const params = new URLSearchParams(searchString);
     const typeParam = params.get('type') as ProfileType | null;
     
-    if (typeParam && ['elementary', 'middle', 'high', 'university', 'general', 'international'].includes(typeParam)) {
+    if (typeParam && ['elementary', 'middle', 'high', 'university', 'general', 'international_university'].includes(typeParam)) {
       if (typeParam !== selectedType) {
         setSelectedType(typeParam);
       }
@@ -253,7 +253,7 @@ export default function ProfileOptimized() {
         'gen_': 'general',
         'elem_': 'elementary',
         'mid_': 'middle',
-        'intl_': 'international',
+        'intl_': 'international_university',
       };
       
       const prefix = Object.keys(fieldTypeMap).find(p => fieldKey.startsWith(p));
@@ -488,7 +488,7 @@ export default function ProfileOptimized() {
         return <HighSchoolForm {...formProps} />;
       case 'university':
         return <UniversityForm {...formProps} />;
-      case 'international':
+      case 'international_university':
         return <InternationalStudentForm {...formProps} />;
       case 'general':
       default:

@@ -1,4 +1,4 @@
-export type ProfileType = "elementary" | "middle" | "high" | "university" | "general" | "international";
+export type ProfileType = "elementary" | "middle" | "high" | "university" | "general" | "international_university";
 
 export type ProfileDataType = {
   type: ProfileType;
