@@ -26,12 +26,16 @@ CREATE TABLE IF NOT EXISTS groups (
   description TEXT,
   icon_emoji VARCHAR(10) DEFAULT '👥',
   color VARCHAR(20) DEFAULT '#3B82F6',
+  logo_url VARCHAR(500),
   owner_id VARCHAR NOT NULL REFERENCES users(id),
   settings JSONB DEFAULT '{}',
   is_active INTEGER NOT NULL DEFAULT 1,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Add logo_url column if table already exists
+ALTER TABLE groups ADD COLUMN IF NOT EXISTS logo_url VARCHAR(500);
 
 CREATE INDEX IF NOT EXISTS "IDX_groups_owner" ON groups(owner_id);
 CREATE INDEX IF NOT EXISTS "IDX_groups_active" ON groups(is_active);

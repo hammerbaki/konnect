@@ -259,6 +259,7 @@ function GroupManagementTab() {
   const [newGroupDescription, setNewGroupDescription] = useState("");
   const [newGroupEmoji, setNewGroupEmoji] = useState("👥");
   const [newGroupColor, setNewGroupColor] = useState("#3B82F6");
+  const [newGroupLogoUrl, setNewGroupLogoUrl] = useState("");
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<string>("member");
   const [viewMode, setViewMode] = useState<'groups' | 'members' | 'analyses'>('groups');
@@ -306,6 +307,7 @@ function GroupManagementTab() {
         description: newGroupDescription || null,
         iconEmoji: newGroupEmoji,
         color: newGroupColor,
+        logoUrl: newGroupLogoUrl || null,
       });
       toast({ title: "성공", description: "그룹이 생성되었습니다." });
       setShowCreateModal(false);
@@ -313,6 +315,7 @@ function GroupManagementTab() {
       setNewGroupDescription("");
       setNewGroupEmoji("👥");
       setNewGroupColor("#3B82F6");
+      setNewGroupLogoUrl("");
       refetchGroups();
     } catch (error: any) {
       toast({ title: "오류", description: error.message || "그룹 생성에 실패했습니다.", variant: "destructive" });
@@ -518,6 +521,17 @@ function GroupManagementTab() {
                   />
                 </div>
               </div>
+              <div>
+                <label className="text-sm font-medium">로고 URL</label>
+                <Input 
+                  value={newGroupLogoUrl} 
+                  onChange={(e) => setNewGroupLogoUrl(e.target.value)}
+                  placeholder="https://example.com/logo.png"
+                  className="mt-1"
+                  data-testid="input-group-logo-url"
+                />
+                <p className="text-xs text-muted-foreground mt-1">학교/기관 로고 이미지 URL을 입력하세요</p>
+              </div>
             </div>
             <AlertDialogFooter>
               <AlertDialogCancel>취소</AlertDialogCancel>
@@ -544,7 +558,16 @@ function GroupManagementTab() {
           ← 그룹 목록
         </Button>
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{selectedGroup.iconEmoji || '👥'}</span>
+          {selectedGroup.logoUrl ? (
+            <img 
+              src={selectedGroup.logoUrl} 
+              alt={selectedGroup.name} 
+              className="h-10 w-10 object-contain rounded"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : (
+            <span className="text-2xl">{selectedGroup.iconEmoji || '👥'}</span>
+          )}
           <h3 className="text-lg font-semibold">{selectedGroup.name}</h3>
         </div>
       </div>

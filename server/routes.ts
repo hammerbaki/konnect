@@ -5080,7 +5080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "관리자 권한이 필요합니다." });
       }
       
-      const { name, description, iconEmoji, color } = req.body;
+      const { name, description, iconEmoji, color, logoUrl } = req.body;
       if (!name) {
         return res.status(400).json({ message: "그룹 이름은 필수입니다." });
       }
@@ -5090,6 +5090,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: description || null,
         iconEmoji: iconEmoji || '👥',
         color: color || '#3B82F6',
+        logoUrl: logoUrl || null,
         ownerId: userId,
       });
       

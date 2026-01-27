@@ -1150,6 +1150,7 @@ export const groups = pgTable("groups", {
   description: text("description"),
   iconEmoji: varchar("icon_emoji", { length: 10 }).default('👥'),
   color: varchar("color", { length: 20 }).default('#3B82F6'),
+  logoUrl: varchar("logo_url", { length: 500 }),
   ownerId: varchar("owner_id").notNull().references(() => users.id),
   settings: jsonb("settings").default({}),
   isActive: integer("is_active").notNull().default(1),

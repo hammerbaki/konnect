@@ -2380,11 +2380,11 @@ export class DatabaseStorage implements IStorage {
   // ===== Groups =====
   async createGroup(data: InsertGroup): Promise<Group> {
     const [group] = await db.insert(groups).values(data).returning();
-    // Add owner as a member with 'owner' role
+    // Add creator as a member with 'admin' role (highest group role)
     await db.insert(groupMembers).values({
       groupId: group.id,
       userId: data.ownerId,
-      role: 'owner',
+      role: 'admin',
     });
     return group;
   }
