@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -46,6 +46,7 @@ const profileSubItems = [
 
 export function Sidebar() {
   const [location, setLocation] = useLocation();
+  const searchString = useSearch();
   const { logout, isAuthenticated } = useAuth();
   const { canAccess, userRole } = usePageAccess();
   const [profileExpanded, setProfileExpanded] = useState(location.startsWith("/profile"));
@@ -189,7 +190,7 @@ export function Sidebar() {
                         const SubIcon = subItem.icon;
                         const subHref = `/profile?type=${subItem.id}`;
                         const isSubActive = location === "/profile" && 
-                          new URLSearchParams(window.location.search).get("type") === subItem.id;
+                          new URLSearchParams(searchString).get("type") === subItem.id;
                         
                         return (
                           <Link
