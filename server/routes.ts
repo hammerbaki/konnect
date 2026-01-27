@@ -5184,6 +5184,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "그룹 삭제 중 오류가 발생했습니다." });
     }
   });
+
+  // Update group settings (admin only)
+  app.put('/api/admin/groups/:groupId', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "관리자 권한이 필요합니다." });
+      }
+      
+      const { allowedProfileTypes, ...otherUpdates } = req.body;
+      
+      await storage.updateGroup(req.params.groupId, {
+        ...otherUpdates,
+        allowedProfileTypes: allowedProfileTypes || undefined,
+      });
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error updating group:", error);
+      res.status(500).json({ message: "그룹 설정 업데이트 중 오류가 발생했습니다." });
+    }
+  });
   
   // Get group members
   app.get('/api/admin/groups/:groupId/members', isAuthenticated, async (req, res) => {

@@ -274,7 +274,8 @@ function GroupManagementTab() {
     { value: 'middle', label: '중학생' },
     { value: 'elementary', label: '초등학생' },
   ];
-  const [viewMode, setViewMode] = useState<'groups' | 'members' | 'analyses'>('groups');
+  const [viewMode, setViewMode] = useState<'groups' | 'members' | 'analyses' | 'settings'>('groups');
+  const [editProfileTypes, setEditProfileTypes] = useState<string[]>([]);
 
   // Fetch all groups
   const { data: groups = [], isLoading: isLoadingGroups, refetch: refetchGroups } = useQuery<GroupWithStats[]>({
@@ -635,6 +636,18 @@ function GroupManagementTab() {
           <BarChart3 className="h-4 w-4 mr-2" />
           분석 결과 ({selectedGroup.analysisCount})
         </Button>
+        <Button 
+          variant={viewMode === 'settings' ? 'default' : 'ghost'}
+          onClick={() => {
+            setViewMode('settings');
+            setEditProfileTypes(selectedGroup.allowedProfileTypes || ['general', 'international_university', 'university', 'high', 'middle', 'elementary']);
+          }}
+          className={viewMode === 'settings' ? 'bg-[#3182F6]' : ''}
+          data-testid="button-view-settings"
+        >
+          <Settings className="h-4 w-4 mr-2" />
+          설정
+        </Button>
       </div>
 
       {/* Members view */}
@@ -804,6 +817,80 @@ function GroupManagementTab() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Settings view */}
+      {viewMode === 'settings' && (
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                그룹 설정
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <label className="text-sm font-medium text-[#4E5968] block mb-3">
+                  표시할 프로필 유형 *
+                </label>
+                <p className="text-sm text-[#8B95A1] mb-4">
+                  그룹 대시보드에 표시할 프로필 유형을 선택하세요.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {PROFILE_TYPE_OPTIONS.map(option => (
+                    <label 
+                      key={option.value}
+                      className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+                        editProfileTypes.includes(option.value) 
+                          ? 'border-[#3182F6] bg-blue-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={editProfileTypes.includes(option.value)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setEditProfileTypes([...editProfileTypes, option.value]);
+                          } else {
+                            setEditProfileTypes(editProfileTypes.filter(t => t !== option.value));
+                          }
+                        }}
+                        className="w-4 h-4 text-[#3182F6] rounded"
+                        data-testid={`checkbox-profile-${option.value}`}
+                      />
+                      <span className="text-sm">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={async () => {
+                    if (editProfileTypes.length === 0) {
+                      toast({ title: "오류", description: "최소 하나의 프로필 유형을 선택하세요.", variant: "destructive" });
+                      return;
+                    }
+                    try {
+                      await apiRequest('PUT', `/api/admin/groups/${selectedGroup.id}`, {
+                        allowedProfileTypes: editProfileTypes,
+                      });
+                      toast({ title: "성공", description: "그룹 설정이 저장되었습니다." });
+                      refetchGroups();
+                    } catch (error: any) {
+                      toast({ title: "오류", description: error.message || "설정 저장에 실패했습니다.", variant: "destructive" });
+                    }
+                  }}
+                  className="bg-[#3182F6]"
+                  data-testid="button-save-settings"
+                >
+                  설정 저장
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
