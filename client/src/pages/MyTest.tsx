@@ -88,7 +88,11 @@ export default function MyTest() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
-  const [showResult, setShowResult] = useState(false);
+  
+  // Check URL for showResult parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialShowResult = urlParams.get('showResult') === 'true';
+  const [showResult, setShowResult] = useState(initialShowResult);
 
   const { data: latestResult } = useQuery<AssessmentResult | null>({
     queryKey: ["/api/kjobs/latest"],
@@ -157,13 +161,16 @@ export default function MyTest() {
       });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/kjobs/latest"] });
-      setShowResult(true);
       toast({
         title: "검사 완료!",
-        description: "진로진단 결과가 저장되었습니다.",
+        description: "진로진단 결과 페이지로 이동합니다.",
       });
+      // Redirect to results page with showResult flag
+      setTimeout(() => {
+        window.location.href = `/mytest?showResult=true`;
+      }, 500);
     },
     onError: (error: any) => {
       const errorMessage = error.message || "검사 제출에 실패했습니다.";
