@@ -44,10 +44,12 @@ function LoadingSpinner() {
 }
 
 export function RoleProtectedRoute({ children, slug, fallback }: RoleProtectedRouteProps) {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { canAccess, isLoading: accessLoading } = usePageAccess();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { canAccess, isLoading: accessLoading, visibility } = usePageAccess();
 
-  if (authLoading) {
+  // Only show spinner on initial auth check (when we have no user data yet)
+  // This prevents full-page spinner on every navigation
+  if (authLoading && !user) {
     return <LoadingSpinner />;
   }
 
@@ -55,7 +57,9 @@ export function RoleProtectedRoute({ children, slug, fallback }: RoleProtectedRo
     return <Redirect to="/" />;
   }
 
-  if (accessLoading) {
+  // Don't show spinner for page access check if we already have visibility data cached
+  // or if user has a role (we can use role-based defaults while loading)
+  if (accessLoading && !visibility && !user?.role) {
     return <LoadingSpinner />;
   }
 

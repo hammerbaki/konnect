@@ -64,9 +64,11 @@ function usePageTracking() {
 }
 
 function ProtectedRoute({ component: Component, ...rest }: { component: React.ComponentType<any>; [key: string]: any }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
-  if (isLoading) {
+  // Only show spinner on initial auth check (when we have no user data yet)
+  // This prevents full-page spinner on every navigation
+  if (isLoading && !user) {
     return <LoadingSpinner />;
   }
 
