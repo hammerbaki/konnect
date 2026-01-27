@@ -280,7 +280,7 @@ export default function MyTest() {
                 </div>
                 <div>
                   <p className="text-sm opacity-80">나의 Career DNA</p>
-                  <h2 className="text-2xl font-bold mt-1">{latestResult.careerDna}</h2>
+                  <h2 className="text-2xl font-bold mt-1 text-[#ffffff]">{latestResult.careerDna}</h2>
                 </div>
                 {latestResult.keywords && latestResult.keywords.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2 mt-4">
