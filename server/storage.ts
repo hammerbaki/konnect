@@ -2943,7 +2943,7 @@ export class DatabaseStorage implements IStorage {
       elementary: "초등학생",
     };
     
-    // Get only 'member' role user IDs (exclude admin, consultant, teacher)
+    // Get only 'member' role user IDs (students, not staff/managers)
     const memberRows = await db
       .select({ userId: groupMembers.userId })
       .from(groupMembers)
@@ -3067,7 +3067,7 @@ export class DatabaseStorage implements IStorage {
     const { page, limit, search, profileTypes } = options;
     const offset = (page - 1) * limit;
 
-    // Get only 'member' role user IDs
+    // Get only 'member' role user IDs (students, not staff/managers)
     const memberRows = await db
       .select({ userId: groupMembers.userId })
       .from(groupMembers)
@@ -3178,7 +3178,7 @@ export class DatabaseStorage implements IStorage {
       responses: Array<{ userName: string; response: string }>;
     }>;
   }> {
-    // Get only student members (role='member'), exclude admins/consultants/teachers
+    // Get only 'member' role user IDs (students, not staff/managers)
     const memberRows = await db
       .select({ userId: groupMembers.userId })
       .from(groupMembers)
@@ -3408,14 +3408,21 @@ export class DatabaseStorage implements IStorage {
     const memberUserIds = memberRows.map(m => m.userId);
     if (memberUserIds.length === 0) return [];
     
-    // Get profiles for these users
+    // Get ALL profiles for these users (users can have multiple profiles)
     const userProfiles = await db
       .select()
       .from(profiles)
       .where(inArray(profiles.userId, memberUserIds));
-    const profilesByUser = new Map(userProfiles.map(p => [p.userId, p]));
     
-    // Get analyses for these profiles
+    // Group profiles by user (store array of profiles per user)
+    const profilesByUser = new Map<string, typeof userProfiles>();
+    userProfiles.forEach(p => {
+      const existing = profilesByUser.get(p.userId) || [];
+      existing.push(p);
+      profilesByUser.set(p.userId, existing);
+    });
+    
+    // Get analyses for ALL profiles
     const profileIds = userProfiles.map(p => p.id);
     let analysesByProfile = new Map<string, any>();
     if (profileIds.length > 0) {
@@ -3447,15 +3454,36 @@ export class DatabaseStorage implements IStorage {
     }
     
     return memberRows.map(member => {
-      const profile = profilesByUser.get(member.userId);
-      const analysis = profile ? analysesByProfile.get(profile.id) : null;
-      const hasGoals = profile ? profilesWithGoals.has(profile.id) : false;
-      const hasEssay = profile ? profilesWithEssays.has(profile.id) : false;
+      const memberProfiles = profilesByUser.get(member.userId) || [];
+      
+      // Find the most recently analyzed profile, or the most recent profile
+      let selectedProfile = memberProfiles[0] || null;
+      let selectedAnalysis = null;
+      
+      for (const profile of memberProfiles) {
+        const analysis = analysesByProfile.get(profile.id);
+        if (analysis) {
+          // Prefer profile with analysis
+          if (!selectedAnalysis || (analysis.createdAt > selectedAnalysis.createdAt)) {
+            selectedProfile = profile;
+            selectedAnalysis = analysis;
+          }
+        }
+      }
+      
+      // If no analysis found, just use the first profile
+      if (!selectedAnalysis && selectedProfile) {
+        selectedAnalysis = analysesByProfile.get(selectedProfile.id) || null;
+      }
+      
+      // Check if ANY profile has goals/essays
+      const hasGoals = memberProfiles.some(p => profilesWithGoals.has(p.id));
+      const hasEssay = memberProfiles.some(p => profilesWithEssays.has(p.id));
       
       // Calculate progress score (0-100)
       let progressScore = 0;
-      if (profile) progressScore += 25;
-      if (analysis) progressScore += 50;
+      if (selectedProfile) progressScore += 25;
+      if (selectedAnalysis) progressScore += 50;
       if (hasGoals) progressScore += 15;
       if (hasEssay) progressScore += 10;
       
@@ -3464,12 +3492,12 @@ export class DatabaseStorage implements IStorage {
         email: member.email || '',
         displayName: member.displayName,
         profileImageUrl: member.profileImageUrl,
-        hasProfile: !!profile,
-        hasAnalysis: !!analysis,
+        hasProfile: memberProfiles.length > 0,
+        hasAnalysis: !!selectedAnalysis,
         hasGoals,
         hasEssay,
-        analysisDate: analysis?.createdAt?.toISOString() || null,
-        profileType: profile?.type || null,
+        analysisDate: selectedAnalysis?.createdAt?.toISOString() || null,
+        profileType: selectedProfile?.type || null,
         progressScore,
       };
     });
