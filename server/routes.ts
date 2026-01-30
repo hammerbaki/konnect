@@ -5594,6 +5594,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get all users' groups (bulk fetch)
+  app.get('/api/admin/users/groups/all', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
+    try {
+      const allUserGroups = await storage.getAllUsersGroups();
+      res.json(allUserGroups);
+    } catch (error: any) {
+      console.error("Error fetching all users groups:", error);
+      res.status(500).json({ message: "사용자 그룹 조회 중 오류가 발생했습니다." });
+    }
+  });
+
   // Admin: Get specific user's groups
   app.get('/api/admin/users/:userId/groups', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
     try {

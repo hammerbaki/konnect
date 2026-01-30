@@ -316,6 +316,7 @@ export interface IStorage {
   updateGroupMemberRole(groupId: string, userId: string, role: GroupMemberRole): Promise<GroupMember>;
   getGroupMembers(groupId: string): Promise<GroupMemberWithUser[]>;
   getUserGroups(userId: string): Promise<Array<Group & { role: GroupMemberRole }>>;
+  getAllUsersGroups(): Promise<Record<string, Array<{ id: string; name: string; iconEmoji: string | null; color: string | null; role: string }>>>;
   isGroupMember(groupId: string, userId: string): Promise<boolean>;
   getGroupMemberRole(groupId: string, userId: string): Promise<GroupMemberRole | undefined>;
   getGroupMemberAnalyses(groupId: string): Promise<Array<CareerAnalysis & { user: Pick<User, 'id' | 'email' | 'displayName'> }>>;
@@ -2659,6 +2660,37 @@ export class DatabaseStorage implements IStorage {
     );
     
     return groupsWithRole.filter((g): g is Group & { role: GroupMemberRole } => g !== null);
+  }
+
+  async getAllUsersGroups(): Promise<Record<string, Array<{ id: string; name: string; iconEmoji: string | null; color: string | null; role: string }>>> {
+    const allMemberships = await db
+      .select({
+        userId: groupMembers.userId,
+        role: groupMembers.role,
+        groupId: groups.id,
+        groupName: groups.name,
+        iconEmoji: groups.iconEmoji,
+        color: groups.color,
+      })
+      .from(groupMembers)
+      .innerJoin(groups, eq(groupMembers.groupId, groups.id));
+
+    const result: Record<string, Array<{ id: string; name: string; iconEmoji: string | null; color: string | null; role: string }>> = {};
+    
+    for (const m of allMemberships) {
+      if (!result[m.userId]) {
+        result[m.userId] = [];
+      }
+      result[m.userId].push({
+        id: m.groupId,
+        name: m.groupName,
+        iconEmoji: m.iconEmoji,
+        color: m.color,
+        role: m.role,
+      });
+    }
+    
+    return result;
   }
 
   async isGroupMember(groupId: string, userId: string): Promise<boolean> {

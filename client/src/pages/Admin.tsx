@@ -998,35 +998,52 @@ export default function Admin() {
 
   // State for user group management
   const [editingUserGroups, setEditingUserGroups] = useState<string | null>(null);
-  const [userGroupsCache, setUserGroupsCache] = useState<Record<string, Array<{ id: string; name: string; iconEmoji: string | null; color: string | null; role: string }>>>({});
+  const [loadingGroupActions, setLoadingGroupActions] = useState<Set<string>>(new Set());
 
-  const fetchUserGroups = async (userId: string) => {
-    try {
-      const res = await apiRequest('GET', `/api/admin/users/${userId}/groups`);
-      const groups = await res.json();
-      setUserGroupsCache(prev => ({ ...prev, [userId]: groups }));
-    } catch (error) {
-      console.error('Failed to fetch user groups:', error);
-    }
-  };
+  // Preload all users' groups when visiting admin page
+  const { data: userGroupsCache = {}, refetch: refetchAllUserGroups } = useQuery<Record<string, Array<{ id: string; name: string; iconEmoji: string | null; color: string | null; role: string }>>>({
+    queryKey: ['/api/admin/users/groups/all'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/admin/users/groups/all');
+      return res.json();
+    },
+    enabled: isStaffOrAdmin,
+    staleTime: 30000,
+  });
 
   const handleAddToGroup = async (userId: string, groupId: string) => {
+    const actionKey = `add-${userId}-${groupId}`;
+    setLoadingGroupActions(prev => new Set(prev).add(actionKey));
     try {
       await apiRequest('POST', `/api/admin/users/${userId}/groups/${groupId}`, { role: 'member' });
-      await fetchUserGroups(userId);
+      await refetchAllUserGroups();
       toast({ title: "그룹 추가 완료", description: "사용자가 그룹에 추가되었습니다." });
     } catch (error) {
       toast({ title: "오류", description: "그룹 추가에 실패했습니다.", variant: "destructive" });
+    } finally {
+      setLoadingGroupActions(prev => {
+        const next = new Set(prev);
+        next.delete(actionKey);
+        return next;
+      });
     }
   };
 
   const handleRemoveFromGroup = async (userId: string, groupId: string) => {
+    const actionKey = `remove-${userId}-${groupId}`;
+    setLoadingGroupActions(prev => new Set(prev).add(actionKey));
     try {
       await apiRequest('DELETE', `/api/admin/users/${userId}/groups/${groupId}`);
-      await fetchUserGroups(userId);
+      await refetchAllUserGroups();
       toast({ title: "그룹 제거 완료", description: "사용자가 그룹에서 제거되었습니다." });
     } catch (error) {
       toast({ title: "오류", description: "그룹 제거에 실패했습니다.", variant: "destructive" });
+    } finally {
+      setLoadingGroupActions(prev => {
+        const next = new Set(prev);
+        next.delete(actionKey);
+        return next;
+      });
     }
   };
 
@@ -1804,14 +1821,7 @@ export default function Admin() {
                             {isStaffOrAdmin && (
                               <Popover 
                                 open={editingUserGroups === user.id} 
-                                onOpenChange={(open) => {
-                                  if (open) {
-                                    setEditingUserGroups(user.id);
-                                    fetchUserGroups(user.id);
-                                  } else {
-                                    setEditingUserGroups(null);
-                                  }
-                                }}
+                                onOpenChange={(open) => setEditingUserGroups(open ? user.id : null)}
                               >
                                 <PopoverTrigger asChild>
                                   <Button
@@ -1847,8 +1857,13 @@ export default function Admin() {
                                               <button
                                                 onClick={() => handleRemoveFromGroup(user.id, group.id)}
                                                 className="ml-1 hover:bg-black/10 rounded p-0.5"
+                                                disabled={loadingGroupActions.has(`remove-${user.id}-${group.id}`)}
                                               >
-                                                <X className="h-3 w-3" />
+                                                {loadingGroupActions.has(`remove-${user.id}-${group.id}`) ? (
+                                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                  <X className="h-3 w-3" />
+                                                )}
                                               </button>
                                             </Badge>
                                           ))}
@@ -1865,16 +1880,24 @@ export default function Admin() {
                                         <div className="flex flex-wrap gap-1">
                                           {allGroups
                                             .filter(g => !userGroupsCache[user.id]?.some(ug => ug.id === g.id))
-                                            .map((group) => (
-                                              <Badge
-                                                key={group.id}
-                                                className="cursor-pointer hover:opacity-80 text-xs"
-                                                style={{ backgroundColor: group.color || '#E5E8EB', color: '#191F28' }}
-                                                onClick={() => handleAddToGroup(user.id, group.id)}
-                                              >
-                                                + {group.iconEmoji || '📁'} {group.name}
-                                              </Badge>
-                                            ))}
+                                            .map((group) => {
+                                              const isLoading = loadingGroupActions.has(`add-${user.id}-${group.id}`);
+                                              return (
+                                                <Badge
+                                                  key={group.id}
+                                                  className={`cursor-pointer hover:opacity-80 text-xs flex items-center gap-1 ${isLoading ? 'opacity-70' : ''}`}
+                                                  style={{ backgroundColor: group.color || '#E5E8EB', color: '#191F28' }}
+                                                  onClick={() => !isLoading && handleAddToGroup(user.id, group.id)}
+                                                >
+                                                  {isLoading ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                  ) : (
+                                                    '+'
+                                                  )}
+                                                  {group.iconEmoji || '📁'} {group.name}
+                                                </Badge>
+                                              );
+                                            })}
                                         </div>
                                       </div>
                                     )}
