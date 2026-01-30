@@ -341,6 +341,24 @@ export interface IStorage {
     }>;
     profileTypeStats: Array<{ type: string; label: string; count: number; withAnalysis: number }>;
   }>;
+  getGroupAnalysesPaginated(groupId: string, options: {
+    page: number;
+    limit: number;
+    search?: string;
+    profileTypes?: string[];
+  }): Promise<{
+    analyses: Array<{
+      id: string;
+      userId: string;
+      userName: string | null;
+      profileType: string;
+      analysisDate: string;
+      summary: string | null;
+    }>;
+    total: number;
+    page: number;
+    totalPages: number;
+  }>;
   getGroupProfileFieldStats(groupId: string, profileType: string): Promise<{
     totalProfiles: number;
     fieldStats: Record<string, Array<{ value: string; count: number; percentage: number }>>;
@@ -2994,6 +3012,130 @@ export class DatabaseStorage implements IStorage {
       }));
     
     return { recentAnalyses, profileTypeStats };
+  }
+
+  async getGroupAnalysesPaginated(groupId: string, options: {
+    page: number;
+    limit: number;
+    search?: string;
+    profileTypes?: string[];
+  }): Promise<{
+    analyses: Array<{
+      id: string;
+      userId: string;
+      userName: string | null;
+      profileType: string;
+      analysisDate: string;
+      summary: string | null;
+    }>;
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const { page, limit, search, profileTypes } = options;
+    const offset = (page - 1) * limit;
+
+    // Get only 'member' role user IDs
+    const memberRows = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(and(
+        eq(groupMembers.groupId, groupId),
+        eq(groupMembers.role, 'member')
+      ));
+
+    const memberUserIds = memberRows.map(m => m.userId);
+    if (memberUserIds.length === 0) {
+      return { analyses: [], total: 0, page, totalPages: 0 };
+    }
+
+    // Get profiles and users for these members
+    const userProfiles = await db
+      .select({
+        profile: profiles,
+        user: {
+          id: users.id,
+          displayName: users.displayName,
+          email: users.email,
+        },
+      })
+      .from(profiles)
+      .innerJoin(users, eq(profiles.userId, users.id))
+      .where(inArray(profiles.userId, memberUserIds));
+
+    // Filter by profile types if specified
+    let filteredProfiles = userProfiles;
+    if (profileTypes && profileTypes.length > 0) {
+      filteredProfiles = userProfiles.filter(p => 
+        profileTypes.includes(p.profile.type) ||
+        (p.profile.type === 'international' && profileTypes.includes('international_university'))
+      );
+    }
+
+    const profileIds = filteredProfiles.map(p => p.profile.id);
+    if (profileIds.length === 0) {
+      return { analyses: [], total: 0, page, totalPages: 0 };
+    }
+
+    // Get all analyses for these profiles
+    const allAnalyses = await db
+      .select()
+      .from(careerAnalyses)
+      .where(inArray(careerAnalyses.profileId, profileIds))
+      .orderBy(desc(careerAnalyses.createdAt));
+
+    // Build full analyses list with user info
+    let analysesList = allAnalyses.map(a => {
+      const profileData = filteredProfiles.find(p => p.profile.id === a.profileId);
+      let summary: string | null = null;
+
+      if (a.recommendations && typeof a.recommendations === 'object') {
+        const rec = a.recommendations as any;
+        summary = rec.foreignStudentData?.summary?.oneLine || 
+                  rec.summary?.oneLine || 
+                  rec.summary || 
+                  null;
+      }
+      if (!summary && a.stats && typeof a.stats === 'object') {
+        const stats = a.stats as any;
+        summary = stats.overview?.summary || stats.summary || null;
+      }
+      if (!summary && a.summary) {
+        summary = a.summary;
+      }
+
+      return {
+        id: a.id,
+        userId: profileData?.user.id || '',
+        userName: profileData?.user.displayName || profileData?.user.email?.split('@')[0] || null,
+        profileType: profileData?.profile.type || 'general',
+        analysisDate: a.createdAt?.toISOString() || '',
+        summary,
+      };
+    });
+
+    // Apply search filter if provided
+    if (search && search.trim()) {
+      const searchLower = search.toLowerCase().trim();
+      analysesList = analysesList.filter(a => 
+        (a.userName?.toLowerCase().includes(searchLower)) ||
+        (a.summary?.toLowerCase().includes(searchLower)) ||
+        (a.profileType?.toLowerCase().includes(searchLower))
+      );
+    }
+
+    const total = analysesList.length;
+    const totalPages = Math.ceil(total / limit);
+
+    // Apply pagination
+    const paginatedAnalyses = analysesList.slice(offset, offset + limit);
+
+    return {
+      analyses: paginatedAnalyses,
+      total,
+      page,
+      totalPages,
+    };
   }
 
   async getGroupProfileFieldStats(groupId: string, profileType: string): Promise<{

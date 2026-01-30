@@ -116,6 +116,20 @@ interface ProfileFieldStats {
   }>;
 }
 
+interface PaginatedAnalyses {
+  analyses: Array<{
+    id: string;
+    userId: string;
+    userName: string | null;
+    profileType: string;
+    analysisDate: string;
+    summary: string | null;
+  }>;
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 export default function GroupDashboard() {
   const params = useParams<{ groupId: string }>();
   const groupId = params.groupId;
@@ -124,6 +138,9 @@ export default function GroupDashboard() {
   const [selectedProfileType, setSelectedProfileType] = useState("");
   const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({});
   const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>({});
+  const [analysisPage, setAnalysisPage] = useState(1);
+  const [analysisSearch, setAnalysisSearch] = useState("");
+  const [debouncedAnalysisSearch, setDebouncedAnalysisSearch] = useState("");
 
   const toggleFieldExpanded = (fieldLabel: string) => {
     setExpandedFields(prev => ({ ...prev, [fieldLabel]: !prev[fieldLabel] }));
@@ -156,6 +173,15 @@ export default function GroupDashboard() {
     }
   }, [group, allowedProfileTypes, selectedProfileType]);
 
+  // Debounce analysis search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedAnalysisSearch(analysisSearch);
+      setAnalysisPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [analysisSearch]);
+
   const { data: stats, isLoading: statsLoading } = useQuery<GroupStats>({
     queryKey: ["group-stats", groupId],
     queryFn: async () => {
@@ -180,6 +206,28 @@ export default function GroupDashboard() {
       if (!res.ok) throw new Error("Failed to fetch detailed stats");
       return res.json();
     },
+  });
+
+  const { data: paginatedAnalyses, isLoading: analysesLoading } = useQuery<PaginatedAnalyses>({
+    queryKey: ["group-analyses", groupId, analysisPage, debouncedAnalysisSearch, allowedProfileTypes],
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const params = new URLSearchParams({
+        page: analysisPage.toString(),
+        limit: "10",
+        profileTypes: allowedProfileTypes.join(","),
+      });
+      if (debouncedAnalysisSearch) {
+        params.append("search", debouncedAnalysisSearch);
+      }
+      const res = await fetch(`/api/groups/${groupId}/analyses?${params}`, {
+        headers,
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch analyses");
+      return res.json();
+    },
+    enabled: activeTab === "analysis",
   });
 
   const { data: members, isLoading: membersLoading } = useQuery<MemberProgress[]>({
@@ -560,55 +608,103 @@ export default function GroupDashboard() {
           </TabsContent>
 
           <TabsContent value="analysis" className="mt-6 space-y-6">
-            <Card data-testid="card-recent-analyses">
+            <Card data-testid="card-all-analyses">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  최근 분석 결과
-                </CardTitle>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    분석 결과 ({paginatedAnalyses?.total || 0}건)
+                  </CardTitle>
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="이름, 내용으로 검색..."
+                      value={analysisSearch}
+                      onChange={(e) => setAnalysisSearch(e.target.value)}
+                      className="pl-9"
+                      data-testid="input-analysis-search"
+                    />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                {detailedStats?.recentAnalyses && detailedStats.recentAnalyses.filter(a => 
-                  allowedProfileTypes.includes(a.profileType) || 
-                  (a.profileType === 'international' && allowedProfileTypes.includes('international_university'))
-                ).length > 0 ? (
-                  <div className="divide-y">
-                    {detailedStats.recentAnalyses.filter(a => 
-                      allowedProfileTypes.includes(a.profileType) || 
-                      (a.profileType === 'international' && allowedProfileTypes.includes('international_university'))
-                    ).map((analysis, index) => (
-                      <div key={index} className="py-4 first:pt-0 last:pb-0">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium">{analysis.userName || "알 수 없음"}</span>
-                              <Badge variant="secondary" className="text-xs">
-                                {profileTypeLabels[analysis.profileType] || analysis.profileType}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-gray-500 mb-2">
-                              {format(new Date(analysis.analysisDate), "yyyy년 M월 d일 HH:mm", { locale: ko })}
-                            </p>
-                            {analysis.summary && (
-                              <p className="text-sm text-gray-700 line-clamp-2 bg-gray-50 p-3 rounded-lg">
-                                {analysis.summary}
-                              </p>
-                            )}
-                          </div>
-                          <Link href={`/group/${groupId}/member/${analysis.userId}`}>
-                            <Button variant="outline" size="sm" data-testid={`button-view-analysis-${index}`}>
-                              <Eye className="h-4 w-4 mr-1" />
-                              상세보기
-                            </Button>
-                          </Link>
-                        </div>
+                {analysesLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="py-4 border-b last:border-0">
+                        <Skeleton className="h-5 w-32 mb-2" />
+                        <Skeleton className="h-4 w-24 mb-2" />
+                        <Skeleton className="h-16 w-full" />
                       </div>
                     ))}
                   </div>
+                ) : paginatedAnalyses?.analyses && paginatedAnalyses.analyses.length > 0 ? (
+                  <>
+                    <div className="divide-y">
+                      {paginatedAnalyses.analyses.map((analysis, index) => (
+                        <div key={analysis.id} className="py-4 first:pt-0 last:pb-0">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium">{analysis.userName || "알 수 없음"}</span>
+                                <Badge variant="secondary" className="text-xs">
+                                  {profileTypeLabels[analysis.profileType] || analysis.profileType}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-500 mb-2">
+                                {format(new Date(analysis.analysisDate), "yyyy년 M월 d일 HH:mm", { locale: ko })}
+                              </p>
+                              {analysis.summary && (
+                                <p className="text-sm text-gray-700 line-clamp-2 bg-gray-50 p-3 rounded-lg">
+                                  {analysis.summary}
+                                </p>
+                              )}
+                            </div>
+                            <Link href={`/group/${groupId}/member/${analysis.userId}`}>
+                              <Button variant="outline" size="sm" data-testid={`button-view-analysis-${index}`}>
+                                <Eye className="h-4 w-4 mr-1" />
+                                상세보기
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {paginatedAnalyses.totalPages > 1 && (
+                      <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                        <p className="text-sm text-gray-500">
+                          {paginatedAnalyses.total}건 중 {((analysisPage - 1) * 10) + 1}-{Math.min(analysisPage * 10, paginatedAnalyses.total)}건
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setAnalysisPage(p => Math.max(1, p - 1))}
+                            disabled={analysisPage === 1}
+                            data-testid="button-prev-page"
+                          >
+                            이전
+                          </Button>
+                          <span className="flex items-center px-3 text-sm text-gray-600">
+                            {analysisPage} / {paginatedAnalyses.totalPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setAnalysisPage(p => Math.min(paginatedAnalyses.totalPages, p + 1))}
+                            disabled={analysisPage >= paginatedAnalyses.totalPages}
+                            data-testid="button-next-page"
+                          >
+                            다음
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <AlertCircle className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p>아직 분석 결과가 없습니다</p>
+                    <p>{debouncedAnalysisSearch ? "검색 결과가 없습니다" : "아직 분석 결과가 없습니다"}</p>
                   </div>
                 )}
               </CardContent>

@@ -5469,6 +5469,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "상세 통계 조회 중 오류가 발생했습니다." });
     }
   });
+
+  // Get paginated group analyses with search
+  app.get('/api/groups/:groupId/analyses', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+      
+      const user = await storage.getUser(userId);
+      const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'staff';
+      
+      if (!isStaffOrAdmin) {
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (!memberRole || memberRole === 'member') {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+      
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string | undefined;
+      const profileTypesStr = req.query.profileTypes as string | undefined;
+      const profileTypes = profileTypesStr ? profileTypesStr.split(',') : undefined;
+      
+      const result = await storage.getGroupAnalysesPaginated(req.params.groupId, {
+        page,
+        limit,
+        search,
+        profileTypes,
+      });
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error fetching group analyses:", error);
+      res.status(500).json({ message: "분석 결과 조회 중 오류가 발생했습니다." });
+    }
+  });
   
   // Get profile field statistics for a specific profile type (for group managers)
   app.get('/api/groups/:groupId/stats/fields/:profileType', isAuthenticated, async (req, res) => {
