@@ -1,0 +1,124 @@
+2026-01-30 10:55:32.35
+517d6301
+User
+1:55:32 AM [express] GET /api/admin/sessions 200 in 3115ms :: [array:50]
+2026-01-30 10:55:32.50
+517d6301
+User
+1:55:32 AM [express] GET /api/admin/system-settings 200 in 3258ms :: [object:4]
+2026-01-30 10:55:32.63
+517d6301
+User
+1:55:32 AM [express] GET /api/admin/stats/ai 200 in 3386ms :: {"totalJobs":157,"completedJobs":132,"failedJobs":25,"avgTokensPerJob":0,"jobsByType":{"essay":24,"analysis":94,"essay_revision":11,"goal":28}}
+2026-01-30 10:55:32.82
+517d6301
+User
+1:55:32 AM [express] GET /api/admin/gift-points/stats 200 in 3571ms :: {"totalGiftPoints":9112,"totalUsersWithGP":32,"expiringIn30Days":0,"expiringIn30DaysUsers":0}
+2026-01-30 10:55:33.03
+517d6301
+User
+1:55:33 AM [express] GET /api/admin/stats/system 200 in 3792ms :: {"totalUsers":49,"totalProfiles":102,"totalAnalyses":77,"totalEssays":10,"pendingJobs":0,"processingJobs":0}
+2026-01-30 10:55:33.06
+517d6301
+User
+1:55:33 AM [express] GET /api/admin/referrals/stats 200 in 3813ms :: [object:4]
+2026-01-30 10:55:33.11
+517d6301
+User
+1:55:33 AM [express] GET /api/admin/groups 200 in 3872ms :: [array:1]
+2026-01-30 10:55:35.15
+517d6301
+User
+1:55:35 AM [express] GET /api/admin/users/a8f022ac-c025-44cd-818b-d31414a7cb83/groups 200 in 1357ms :: [array:1]
+2026-01-30 10:55:35.59
+517d6301
+User
+1:55:35 AM [express] GET /api/ai/queue/stats 200 in 1266ms :: {"goal":{"queued":0,"processing":0},"essay":{"queued":0,"processing":0},"essay_revision":{"queued":0,"processing":0},"analysis":{"queued":0,"processing":0},"totalProcessing":0}
+2026-01-30 10:55:37.73
+517d6301
+User
+1:55:37 AM [express] GET /api/admin/jobs/recent 200 in 2187ms :: [array:50]
+2026-01-30 10:55:39.99
+517d6301
+User
+1:55:39 AM [express] GET /api/ai/queue/stats 200 in 1206ms :: {"goal":{"queued":0,"processing":0},"essay":{"queued":0,"processing":0},"essay_revision":{"queued":0,"processing":0},"analysis":{"queued":0,"processing":0},"totalProcessing":0}
+2026-01-30 10:55:40.24
+517d6301
+User
+1:55:40 AM [express] GET /api/admin/users/e23f2878-9260-40fc-b2d3-87270e91880f/groups 200 in 1405ms :: [array:1]
+2026-01-30 10:55:43.08
+517d6301
+User
+1:55:43 AM [express] GET /api/admin/jobs/recent 200 in 2101ms :: [array:50]
+2026-01-30 10:55:44.38
+517d6301
+User
+1:55:44 AM [express] GET /api/ai/queue/stats 200 in 1165ms :: {"goal":{"queued":0,"processing":0},"essay":{"queued":0,"processing":0},"essay_revision":{"queued":0,"processing":0},"analysis":{"queued":0,"processing":0},"totalProcessing":0}
+2026-01-30 10:55:46.07
+517d6301
+User
+1:55:46 AM [express] POST /api/track/pageview 200 in 825ms :: {"tracked":true}
+2026-01-30 10:55:46.72
+517d6301
+User
+1:55:46 AM [express] GET /api/groups/7c2a473a-0435-44ec-a76a-a4b30390036e 200 in 1166ms :: [object:12]
+2026-01-30 10:55:47.59
+517d6301
+User
+1:55:47 AM [express] GET /api/groups/7c2a473a-0435-44ec-a76a-a4b30390036e/stats/detailed 200 in 2037ms :: [object:2]
+2026-01-30 10:55:48.37
+517d6301
+User
+1:55:48 AM [express] GET /api/groups/7c2a473a-0435-44ec-a76a-a4b30390036e/stats 200 in 2807ms :: [object:8]
+2026-01-30 10:55:48.42
+517d6301
+User
+1:55:48 AM [express] GET /api/groups/7c2a473a-0435-44ec-a76a-a4b30390036e/members/progress 200 in 2874ms :: [array:20]
+2026-01-30 10:55:48.72
+517d6301
+User
+1:55:48 AM [express] GET /api/groups/7c2a473a-0435-44ec-a76a-a4b30390036e/stats/fields/international_university 200 in 1782ms :: {"totalProfiles":8,"fieldStats":{}}
+2026-01-30 10:55:52.61
+517d6301
+User
+1:55:52 AM [express] GET /api/point-packages 200 in 224ms
+2026-01-30 10:55:52.81
+517d6301
+User
+1:55:52 AM [express] GET /api/credit-history 200 in 427ms
+2026-01-30 10:55:53.53
+517d6301
+User
+1:55:53 AM [express] GET /api/user-settings 200 in 1116ms :: {"phone":"010-1223-4444","marketingConsent":false,"emailNotifications":false,"pushNotifications":true}
+2026-01-30 10:55:53.54
+517d6301
+User
+1:55:53 AM [express] GET /api/point-packages 200 in 161ms
+2026-01-30 10:55:53.54
+517d6301
+User
+1:55:53 AM [express] GET /api/credit-history 200 in 165ms
+2026-01-30 10:55:54.08
+517d6301
+User
+1:55:54 AM [express] POST /api/track/pageview 200 in 987ms :: {"tracked":true}
+2026-01-30 10:55:57.26
+517d6301
+User
+1:55:57 AM [express] GET /api/ai/queue/stats 200 in 1176ms :: {"goal":{"queued":0,"processing":0},"essay":{"queued":0,"processing":0},"essay_revision":{"queued":0,"processing":0},"analysis":{"queued":0,"processing":0},"totalProcessing":0}
+2026-01-30 10:55:58.35
+517d6301
+User
+1:55:58 AM [express] GET /api/admin/jobs/recent 200 in 2261ms :: [array:50]
+2026-01-30 10:55:58.44
+517d6301
+User
+1:55:58 AM [express] GET /api/admin/users/a8f022ac-c025-44cd-818b-d31414a7cb83/groups 200 in 1329ms :: [array:1]
+2026-01-30 10:55:59.20
+517d6301
+User
+1:55:59 AM [express] POST /api/admin/users/a8f022ac-c025-44cd-818b-d31414a7cb83/groups/7c2a473a-0435-44ec-a76a-a4b30390036e 409 in 1186ms :: {"message":"이미 그룹에 속해 있습니다."}
+2026-01-30 10:56:01.95
+517d6301
+User
+1:56:01 AM [express] GET /api/ai/queue/stats 200 in 1453ms :: {"goal":{"queued":0,"processing":0},"essay":{"queued":0,"processing":0},"essay_revision":{"queued":0,"processing":0},"analysis":{"queued":0,"processing":0},"totalProcessing":0}
