@@ -94,7 +94,7 @@ export default function MyTest() {
   const initialShowResult = urlParams.get('showResult') === 'true';
   const [showResult, setShowResult] = useState(initialShowResult);
 
-  const { data: latestResult } = useQuery<AssessmentResult | null>({
+  const { data: latestResult, isLoading: latestResultLoading } = useQuery<AssessmentResult | null>({
     queryKey: ["/api/kjobs/latest"],
     enabled: !!user,
   });
@@ -186,10 +186,15 @@ export default function MyTest() {
   });
 
   useEffect(() => {
-    if (user && !latestResult && questions && !assessmentId) {
+    // Don't init if we're loading the latest result, showing results, or already have an assessment
+    if (latestResultLoading || showResult || assessmentId) {
+      return;
+    }
+    // Only init if we have user, questions, and confirmed no existing result
+    if (user && !latestResult && questions) {
       initMutation.mutate();
     }
-  }, [user, latestResult, questions, assessmentId]);
+  }, [user, latestResult, latestResultLoading, questions, assessmentId, showResult]);
 
   const handleAnswer = useCallback((questionId: string, value: number | string) => {
     setAnswers(prev => {
