@@ -612,16 +612,37 @@ export default function Landing() {
         </div>
       </section>
       {/* Footer */}
-      <footer className="py-12 bg-white border-t border-gray-200">
+      <footer className="py-12 bg-gray-50 border-t border-gray-200">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-3">
-              <img
-                src="/konnect-logo.png"
-                alt="Konnect"
-                className="h-8 w-auto opacity-80"
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <img
+                  src="/konnect-logo.png"
+                  alt="Konnect"
+                  className="h-8 w-auto opacity-80"
+                />
+              </div>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p><span className="font-medium">케이잡스 주식회사</span></p>
+                <p>대표자: 김우진, 박선용</p>
+                <p>사업자등록번호: 113-86-93304</p>
+                <p>통신판매업 신고번호: 2021-서울용산-1135</p>
+                <p>직업정보제공사업: 서울 서부 제 2018-15호</p>
+              </div>
             </div>
+            <div>
+              <div className="text-sm text-gray-600 space-y-1 md:text-right">
+                <p className="font-medium">사업장 주소</p>
+                <p>서울특별시 용산구 한강대로80길 11-49, 1층 2호</p>
+                <p>(남영동, 남영빌딩)</p>
+                <p className="mt-3 font-medium">고객센터</p>
+                <p>Tel: 02-6959-8983 | Fax: 02-6958-9297</p>
+                <p>E-mail: ai@kjobs.co.kr</p>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-200 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-6 text-sm text-gray-500">
               <Link
                 href="/privacy"
@@ -648,7 +669,7 @@ export default function Landing() {
               </a>
             </div>
             <p className="text-sm text-gray-400">
-              &copy; 2025 Konnect.careers. All rights reserved.
+              &copy; 2025 케이잡스 주식회사. All rights reserved.
             </p>
           </div>
         </div>
