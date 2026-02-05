@@ -125,6 +125,7 @@ interface PaginatedAnalyses {
     id: string;
     userId: string;
     userName: string | null;
+    userEmail: string | null;
     profileType: string;
     analysisDate: string;
     summary: string | null;
@@ -763,6 +764,9 @@ export default function GroupDashboard() {
                                   {profileTypeLabels[analysis.profileType] || analysis.profileType}
                                 </Badge>
                               </div>
+                              {analysis.userEmail && (
+                                <p className="text-xs text-gray-400 mb-1">{analysis.userEmail}</p>
+                              )}
                               <p className="text-sm text-gray-500 mb-2">
                                 {format(new Date(analysis.analysisDate), "yyyy년 M월 d일 HH:mm", { locale: ko })}
                               </p>

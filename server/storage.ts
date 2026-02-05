@@ -352,6 +352,7 @@ export interface IStorage {
       id: string;
       userId: string;
       userName: string | null;
+      userEmail: string | null;
       profileType: string;
       analysisDate: string;
       summary: string | null;
@@ -3056,6 +3057,7 @@ export class DatabaseStorage implements IStorage {
       id: string;
       userId: string;
       userName: string | null;
+      userEmail: string | null;
       profileType: string;
       analysisDate: string;
       summary: string | null;
@@ -3140,6 +3142,7 @@ export class DatabaseStorage implements IStorage {
         id: a.id,
         userId: profileData?.user.id || '',
         userName: profileData?.user.displayName || profileData?.user.email?.split('@')[0] || null,
+        userEmail: profileData?.user.email || null,
         profileType: profileData?.profile.type || 'general',
         analysisDate: a.createdAt?.toISOString() || '',
         summary,
