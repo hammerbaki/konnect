@@ -154,18 +154,12 @@ export default function GroupDashboard() {
     setDownloadingPdfId(analysis.id);
     try {
       const headers = await getAuthHeaders();
-      const url = `/api/groups/${groupId}/members/${analysis.userId}/detail`;
-      console.log("[PDF Download] Fetching from:", url, "groupId:", groupId, "userId:", analysis.userId);
-      const res = await fetch(url, {
+      const res = await fetch(`/api/groups/${groupId}/members/${analysis.userId}/detail`, {
         headers,
         credentials: "include",
       });
       
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("[PDF Download] Error response:", res.status, errorText.substring(0, 200));
-        throw new Error("Failed to fetch member data");
-      }
+      if (!res.ok) throw new Error("Failed to fetch member data");
       
       const member = await res.json();
       const analysisResult = member.analysis?.analysisResult;
