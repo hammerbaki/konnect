@@ -483,7 +483,7 @@ function createGroupMemberReportHTML(data: GroupMemberReportData): string {
               <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 8px;">커리어 분석 리포트</div>
               <div style="font-size: 11px; color: #A0AEC0; margin-bottom: 4px;">Report ID: ${reportId}</div>
               <div style="font-size: 11px; color: #A0AEC0;">Date: ${data.analysisDate}</div>
-              <div style="margin-top: 12px; background: linear-gradient(135deg, #D4AF37, #F5D76E); color: #0F1E3D; padding: 6px 16px 8px 16px; border-radius: 20px; font-size: 10px; font-weight: 700; display: inline-block; text-align: center; vertical-align: middle;">
+              <div style="margin-top: 12px; background: linear-gradient(135deg, #D4AF37, #F5D76E); color: #0F1E3D; padding: 7px 16px; border-radius: 20px; font-size: 10px; font-weight: 700; display: inline-block; text-align: center;">
                 CERTIFIED REPORT
               </div>
             </div>
@@ -498,9 +498,9 @@ function createGroupMemberReportHTML(data: GroupMemberReportData): string {
               <div style="font-size: 12px; color: #0284C7;">${data.email}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
-              <span style="background: #0EA5E9; color: white; padding: 6px 14px 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-align: center; vertical-align: middle;">${getProfileTypeKorean(data.profileType)}</span>
+              <span style="background: #0EA5E9; color: white; padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-align: center;">${getProfileTypeKorean(data.profileType)}</span>
               ${data.fitScore !== undefined ? `
-                <span style="background: linear-gradient(135deg, #3182F6, #1565C0); color: white; padding: 6px 14px 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-align: center; vertical-align: middle;">적합도 ${data.fitScore}점</span>
+                <span style="background: linear-gradient(135deg, #3182F6, #1565C0); color: white; padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-align: center;">적합도 ${data.fitScore}점</span>
               ` : ''}
             </div>
           </div>
