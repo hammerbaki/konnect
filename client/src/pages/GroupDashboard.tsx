@@ -168,14 +168,15 @@ export default function GroupDashboard() {
       }
       
       const member = await res.json();
-      const analysisResult = member.analysis?.result;
-      const isForeignStudent = member.profile?.profileType === "international_university";
-      const foreignStudentData = isForeignStudent ? analysisResult?.foreignStudentData : null;
+      const analysisResult = member.analysis?.analysisResult;
+      const foreignStudentData = analysisResult?.foreignStudentData;
+      const isForeignStudent = !!foreignStudentData;
       
-      let summary = analysis.summary || "";
-      if (!summary && foreignStudentData?.summary) {
-        summary = foreignStudentData.summary;
-      }
+      const summary = foreignStudentData?.summary?.oneLine || 
+                      analysisResult?.overview?.summary || 
+                      analysisResult?.summary || 
+                      analysisResult?.요약 ||
+                      analysis.summary || "";
       
       let strengths: string[] = [];
       let weaknesses: string[] = [];
@@ -225,10 +226,10 @@ export default function GroupDashboard() {
       );
       
       const reportData: GroupMemberReportData = {
-        userName: member.user?.displayName || analysis.userName || member.user?.email?.split("@")[0] || "사용자",
+        userName: member.user?.displayName || member.user?.email?.split("@")[0] || analysis.userName || "사용자",
         email: member.user?.email || "",
-        profileType: analysis.profileType || "general",
-        analysisDate: format(new Date(analysis.analysisDate), "yyyy.MM.dd", { locale: ko }),
+        profileType: member.profile?.profileType || analysis.profileType || "general",
+        analysisDate: format(new Date(member.analysis?.createdAt || analysis.analysisDate), "yyyy.MM.dd", { locale: ko }),
         summary: summary,
         fitScore: foreignStudentData?.fit?.score,
         visaWarning: foreignStudentData?.visaWarning,
