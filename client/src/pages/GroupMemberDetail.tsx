@@ -25,10 +25,14 @@ import {
   TrendingUp,
   AlertTriangle,
   Lightbulb,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { getAuthHeaders } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { generateGroupMemberReportPDF, type GroupMemberReportData } from "@/lib/pdfReportGenerator";
+import { useToast } from "@/hooks/use-toast";
 
 interface MemberDetail {
   user: {
@@ -93,6 +97,8 @@ export default function GroupMemberDetail() {
     weaknesses: true,
     recommendations: true,
   });
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const { toast } = useToast();
 
   const { data: member, isLoading } = useQuery<MemberDetail>({
     queryKey: ["group-member-detail", groupId, memberId],
@@ -109,6 +115,102 @@ export default function GroupMemberDetail() {
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!member || !member.analysis) return;
+    
+    setIsDownloadingPdf(true);
+    try {
+      const analysisResult = member.analysis.analysisResult;
+      const foreignStudentData = analysisResult?.foreignStudentData;
+      const isForeignStudent = !!foreignStudentData;
+      
+      const summary = foreignStudentData?.summary?.oneLine || 
+                      analysisResult?.overview?.summary || 
+                      analysisResult?.summary || 
+                      analysisResult?.요약;
+      
+      let strengths: string[] = [];
+      let weaknesses: string[] = [];
+      let recommendations: string[] = [];
+      
+      if (isForeignStudent) {
+        const fitReasons = foreignStudentData?.fit?.reasons || [];
+        strengths = fitReasons
+          .filter((r: any) => r.impact === 'positive')
+          .map((r: any) => `${r.field}: ${r.note || r.value || ''}`);
+        weaknesses = fitReasons
+          .filter((r: any) => r.impact === 'negative')
+          .map((r: any) => `${r.field}: ${r.note || r.value || ''}`);
+        
+        const dataGaps = foreignStudentData?.dataGaps || [];
+        if (dataGaps.length > 0) {
+          const gapStrings = dataGaps.map((gap: any) => 
+            typeof gap === 'string' ? gap : (gap.item || gap.description || String(gap))
+          );
+          weaknesses = [...weaknesses, ...gapStrings];
+        }
+        
+        const readyNowTitles = (foreignStudentData?.recommendations?.readyNow || [])
+          .map((job: any) => `[즉시 도전] ${job.role || job.title || '직무'}`);
+        const afterPrepTitles = (foreignStudentData?.recommendations?.afterPrep || [])
+          .map((job: any) => `[준비 후 도전] ${job.role || job.title || '직무'}`);
+        recommendations = [...readyNowTitles, ...afterPrepTitles];
+      } else {
+        const rawStrengths = analysisResult?.strengths || analysisResult?.강점 || [];
+        strengths = Array.isArray(rawStrengths) 
+          ? rawStrengths.map((s: any) => typeof s === 'string' ? s : (s.text || String(s)))
+          : [];
+        const rawWeaknesses = analysisResult?.weaknesses || analysisResult?.약점 || analysisResult?.개선점 || [];
+        weaknesses = Array.isArray(rawWeaknesses)
+          ? rawWeaknesses.map((w: any) => typeof w === 'string' ? w : (w.text || String(w)))
+          : [];
+        const rawRecommendations = analysisResult?.recommendations || 
+                                   analysisResult?.추천 || 
+                                   analysisResult?.career_recommendations || [];
+        recommendations = Array.isArray(rawRecommendations) 
+          ? rawRecommendations.map((r: any) => typeof r === 'string' ? r : (r.text || String(r)))
+          : [];
+      }
+      
+      const fitReasonStrings = (foreignStudentData?.fit?.reasons || []).map((r: any) => 
+        typeof r === 'string' ? r : `${r.field}: ${r.note || r.value || ''}`
+      );
+      
+      const reportData: GroupMemberReportData = {
+        userName: member.user.displayName || member.user.email.split("@")[0],
+        email: member.user.email,
+        profileType: member.profile?.profileType || "general",
+        analysisDate: format(new Date(member.analysis.createdAt), "yyyy.MM.dd", { locale: ko }),
+        summary: summary,
+        fitScore: foreignStudentData?.fit?.score,
+        visaWarning: foreignStudentData?.visaWarning,
+        strengths: Array.isArray(strengths) ? strengths : [],
+        weaknesses: Array.isArray(weaknesses) ? weaknesses : [],
+        recommendations: recommendations,
+        fitReasons: fitReasonStrings,
+        readyNowJobs: foreignStudentData?.recommendations?.readyNow || [],
+        afterPrepJobs: foreignStudentData?.recommendations?.afterPrep || [],
+        actionPlan: foreignStudentData?.actionPlan,
+      };
+      
+      await generateGroupMemberReportPDF(reportData);
+      
+      toast({
+        title: "PDF 다운로드 완료",
+        description: "분석 리포트가 다운로드되었습니다.",
+      });
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast({
+        title: "다운로드 실패",
+        description: "PDF 생성 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   if (isLoading) {
@@ -213,13 +315,37 @@ export default function GroupMemberDetail() {
                   가입일: {format(new Date(member.user.createdAt), "yyyy년 M월 d일", { locale: ko })}
                 </p>
               </div>
-              <div className="flex flex-col gap-2">
-                <Badge variant={member.profile ? "default" : "outline"} className="justify-center">
-                  프로필 {member.profile ? "완료" : "미작성"}
-                </Badge>
-                <Badge variant={member.analysis ? "default" : "outline"} className="justify-center">
-                  분석 {member.analysis ? "완료" : "미완료"}
-                </Badge>
+              <div className="flex flex-col gap-2 items-end">
+                <div className="flex gap-2">
+                  <Badge variant={member.profile ? "default" : "outline"} className="justify-center">
+                    프로필 {member.profile ? "완료" : "미작성"}
+                  </Badge>
+                  <Badge variant={member.analysis ? "default" : "outline"} className="justify-center">
+                    분석 {member.analysis ? "완료" : "미완료"}
+                  </Badge>
+                </div>
+                {member.analysis && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadPdf}
+                    disabled={isDownloadingPdf}
+                    data-testid="button-download-pdf"
+                    className="gap-2"
+                  >
+                    {isDownloadingPdf ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        다운로드 중...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        PDF 다운로드
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           </CardHeader>

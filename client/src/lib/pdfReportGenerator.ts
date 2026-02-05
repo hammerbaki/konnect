@@ -30,6 +30,27 @@ export interface ReportMetadata {
   profileTitle: string;
 }
 
+export interface GroupMemberReportData {
+  userName: string;
+  email: string;
+  profileType: string;
+  analysisDate: string;
+  summary?: string;
+  fitScore?: number;
+  visaWarning?: string;
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+  fitReasons?: string[];
+  readyNowJobs?: Array<{ role?: string; title?: string; reasons?: string[]; requiredNext?: string[] }>;
+  afterPrepJobs?: Array<{ role?: string; title?: string; missingConditions?: string[]; howToFill?: string[] }>;
+  actionPlan?: {
+    immediate?: string[];
+    shortTerm?: string[];
+    longTerm?: string[];
+  };
+}
+
 function getProfileTypeKorean(type: string): string {
   const labels: Record<string, string> = {
     general: '구직자',
@@ -37,6 +58,8 @@ function getProfileTypeKorean(type: string): string {
     high: '고등학생',
     middle: '중학생',
     elementary: '초등학생',
+    international_university: '외국인유학생',
+    international: '외국인유학생',
   };
   return labels[type] || type;
 }
@@ -309,6 +332,268 @@ export async function generateCareerReportPDF(
   const reportElement = container.querySelector('#pdf-report-container') as HTMLElement;
   
   const fileName = `Konnect_${career.title.replace(/\s+/g, '_')}_통합분석리포트_${metadata.analysisDate.replace(/\./g, '')}.pdf`;
+  
+  const opt = {
+    margin: 0,
+    filename: fileName,
+    image: { type: 'jpeg' as const, quality: 0.98 },
+    html2canvas: { 
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    },
+    jsPDF: { 
+      unit: 'mm' as const, 
+      format: 'a4' as const, 
+      orientation: 'portrait' as const
+    },
+    pagebreak: { 
+      mode: ['avoid-all', 'css', 'legacy'],
+      before: '.page-break-before',
+      after: '.page-break-after',
+      avoid: '.avoid-break'
+    }
+  };
+
+  try {
+    await html2pdf().set(opt).from(reportElement).save();
+  } finally {
+    document.body.removeChild(container);
+  }
+}
+
+function createGroupMemberReportHTML(data: GroupMemberReportData): string {
+  const reportId = `GMR-${Date.now().toString(36).toUpperCase().slice(-8)}`;
+  
+  const visaSection = data.visaWarning ? `
+    <div class="avoid-break" style="margin-bottom: 25px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); padding: 20px; border-radius: 12px; border-left: 4px solid #F59E0B;">
+      <div style="display: flex; align-items: flex-start; gap: 12px;">
+        <span style="font-size: 20px;">⚠️</span>
+        <div>
+          <div style="font-size: 14px; font-weight: 700; color: #92400E; margin-bottom: 8px;">비자 관련 안내</div>
+          <div style="font-size: 13px; color: #78350F; line-height: 1.6;">${data.visaWarning}</div>
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  const fitReasonsSection = data.fitReasons && data.fitReasons.length > 0 ? `
+    <div class="avoid-break" style="margin-bottom: 25px;">
+      <h3 style="font-size: 14px; font-weight: 700; color: #191F28; margin-bottom: 15px; display: flex; align-items: center;">
+        <span style="margin-right: 8px;">📊</span> 적합도 분석
+      </h3>
+      <div style="background: #F8FAFC; padding: 20px; border-radius: 12px;">
+        ${data.fitReasons.map((reason, i) => `
+          <div style="margin-bottom: ${i < data.fitReasons!.length - 1 ? '12px' : '0'}; padding-left: 20px; position: relative;">
+            <span style="position: absolute; left: 0; color: #3182F6;">•</span>
+            <span style="font-size: 13px; color: #4A5568; line-height: 1.6;">${reason}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const readyNowSection = data.readyNowJobs && data.readyNowJobs.length > 0 ? `
+    <div class="avoid-break" style="margin-bottom: 25px;">
+      <h3 style="font-size: 14px; font-weight: 700; color: #059669; margin-bottom: 15px; display: flex; align-items: center;">
+        <span style="margin-right: 8px;">✅</span> 지금 바로 도전 가능한 직무
+      </h3>
+      <div style="background: #ECFDF5; padding: 20px; border-radius: 12px; border: 1px solid #A7F3D0;">
+        ${data.readyNowJobs.map((job, i) => `
+          <div style="margin-bottom: ${i < data.readyNowJobs!.length - 1 ? '15px' : '0'};">
+            <div style="font-size: 14px; font-weight: 600; color: #065F46; margin-bottom: 4px;">${job.role || job.title || '직무'}</div>
+            ${job.reasons && job.reasons.length > 0 ? `<div style="font-size: 12px; color: #047857;">${job.reasons.join(', ')}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const afterPrepSection = data.afterPrepJobs && data.afterPrepJobs.length > 0 ? `
+    <div class="avoid-break" style="margin-bottom: 25px;">
+      <h3 style="font-size: 14px; font-weight: 700; color: #6366F1; margin-bottom: 15px; display: flex; align-items: center;">
+        <span style="margin-right: 8px;">🎯</span> 준비 후 도전 추천 직무
+      </h3>
+      <div style="background: #EEF2FF; padding: 20px; border-radius: 12px; border: 1px solid #C7D2FE;">
+        ${data.afterPrepJobs.map((job, i) => `
+          <div style="margin-bottom: ${i < data.afterPrepJobs!.length - 1 ? '15px' : '0'};">
+            <div style="font-size: 14px; font-weight: 600; color: #4338CA; margin-bottom: 4px;">${job.role || job.title || '직무'}</div>
+            ${job.missingConditions && job.missingConditions.length > 0 ? `<div style="font-size: 12px; color: #4F46E5;">필요 조건: ${job.missingConditions.join(', ')}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const actionPlanSection = data.actionPlan ? `
+    <div class="avoid-break" style="margin-bottom: 25px;">
+      <h3 style="font-size: 14px; font-weight: 700; color: #191F28; margin-bottom: 15px; display: flex; align-items: center;">
+        <span style="margin-right: 8px;">📋</span> 실행 계획
+      </h3>
+      <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        ${data.actionPlan.immediate && data.actionPlan.immediate.length > 0 ? `
+          <div style="flex: 1; min-width: 200px; background: #FEF2F2; padding: 15px; border-radius: 12px; border-left: 4px solid #DC2626;">
+            <div style="font-size: 12px; font-weight: 600; color: #DC2626; margin-bottom: 10px;">즉시 실행</div>
+            ${data.actionPlan.immediate.map(item => `<div style="font-size: 12px; color: #7F1D1D; margin-bottom: 6px;">• ${item}</div>`).join('')}
+          </div>
+        ` : ''}
+        ${data.actionPlan.shortTerm && data.actionPlan.shortTerm.length > 0 ? `
+          <div style="flex: 1; min-width: 200px; background: #FEF3C7; padding: 15px; border-radius: 12px; border-left: 4px solid #F59E0B;">
+            <div style="font-size: 12px; font-weight: 600; color: #D97706; margin-bottom: 10px;">단기 목표</div>
+            ${data.actionPlan.shortTerm.map(item => `<div style="font-size: 12px; color: #78350F; margin-bottom: 6px;">• ${item}</div>`).join('')}
+          </div>
+        ` : ''}
+        ${data.actionPlan.longTerm && data.actionPlan.longTerm.length > 0 ? `
+          <div style="flex: 1; min-width: 200px; background: #ECFDF5; padding: 15px; border-radius: 12px; border-left: 4px solid #10B981;">
+            <div style="font-size: 12px; font-weight: 600; color: #059669; margin-bottom: 10px;">장기 목표</div>
+            ${data.actionPlan.longTerm.map(item => `<div style="font-size: 12px; color: #065F46; margin-bottom: 6px;">• ${item}</div>`).join('')}
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  ` : '';
+
+  return `
+    <style>
+      @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+      .pdf-page { 
+        min-height: 1100px; 
+        page-break-after: always; 
+        page-break-inside: avoid;
+        padding-bottom: 40px;
+      }
+      .pdf-page:last-child { page-break-after: avoid; }
+      .section-box, .avoid-break {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+    </style>
+    <div id="pdf-member-report-container" style="width: 794px; padding: 40px; font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif; background: white; color: #191F28;">
+      <div class="pdf-page">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #0F1E3D 0%, #1a2d5c 100%); padding: 30px; margin: -40px -40px 30px -40px; border-radius: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="font-size: 28px; font-weight: 800; color: white; margin-bottom: 8px;">
+                <span style="color: #3182F6;">K</span><span style="color: #FFD700;">o</span><span style="color: #FF6B6B;">n</span><span style="color: #4ECDC4;">n</span><span style="color: #FFD700;">e</span><span style="color: #3182F6;">c</span><span style="color: #FF6B6B;">t</span>
+              </div>
+              <div style="font-size: 12px; color: #A0AEC0;">Your AI Career Solution</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 8px;">커리어 분석 리포트</div>
+              <div style="font-size: 11px; color: #A0AEC0; margin-bottom: 4px;">Report ID: ${reportId}</div>
+              <div style="font-size: 11px; color: #A0AEC0;">Date: ${data.analysisDate}</div>
+              <div style="margin-top: 12px; background: linear-gradient(135deg, #D4AF37, #F5D76E); color: #0F1E3D; padding: 6px 16px; border-radius: 20px; font-size: 10px; font-weight: 700; display: inline-block;">
+                CERTIFIED REPORT
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Info Banner -->
+        <div style="background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%); padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <div style="font-size: 18px; font-weight: 700; color: #0369A1; margin-bottom: 4px;">${data.userName}</div>
+              <div style="font-size: 12px; color: #0284C7;">${data.email}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="background: #0EA5E9; color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;">${getProfileTypeKorean(data.profileType)}</span>
+              ${data.fitScore !== undefined ? `
+                <span style="background: linear-gradient(135deg, #3182F6, #1565C0); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;">적합도 ${data.fitScore}점</span>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        ${data.summary ? `
+          <div class="avoid-break" style="margin-bottom: 25px; background: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 100%); padding: 25px; border-radius: 12px; border-left: 4px solid #3182F6;">
+            <h3 style="font-size: 14px; font-weight: 700; color: #3182F6; margin-bottom: 12px; display: flex; align-items: center;">
+              <span style="margin-right: 8px;">📝</span> 분석 요약
+            </h3>
+            <p style="font-size: 14px; color: #4A5568; line-height: 1.8; margin: 0;">${data.summary}</p>
+          </div>
+        ` : ''}
+
+        ${visaSection}
+
+        ${fitReasonsSection}
+
+        <!-- Strengths & Weaknesses -->
+        <div class="section-box avoid-break" style="display: flex; gap: 20px; margin-bottom: 25px;">
+          <div style="flex: 1;">
+            <h3 style="font-size: 14px; font-weight: 700; color: #198754; margin-bottom: 15px; display: flex; align-items: center;">
+              <span style="margin-right: 8px;">💪</span> 강점
+            </h3>
+            <div style="background: #F0FDF4; padding: 20px; border-radius: 12px; border: 1px solid #BBF7D0;">
+              ${data.strengths && data.strengths.length > 0 
+                ? data.strengths.map(s => `<div style="font-size: 13px; color: #166534; margin-bottom: 8px; padding-left: 20px; position: relative;"><span style="position: absolute; left: 0; color: #22C55E;">✓</span> ${s}</div>`).join('')
+                : '<div style="font-size: 13px; color: #86EFAC;">정보 없음</div>'}
+            </div>
+          </div>
+          <div style="flex: 1;">
+            <h3 style="font-size: 14px; font-weight: 700; color: #DC2626; margin-bottom: 15px; display: flex; align-items: center;">
+              <span style="margin-right: 8px;">📈</span> 개선점
+            </h3>
+            <div style="background: #FEF2F2; padding: 20px; border-radius: 12px; border: 1px solid #FECACA;">
+              ${data.weaknesses && data.weaknesses.length > 0 
+                ? data.weaknesses.map(w => `<div style="font-size: 13px; color: #991B1B; margin-bottom: 8px; padding-left: 20px; position: relative;"><span style="position: absolute; left: 0; color: #EF4444;">!</span> ${w}</div>`).join('')
+                : '<div style="font-size: 13px; color: #FCA5A5;">정보 없음</div>'}
+            </div>
+          </div>
+        </div>
+
+        ${readyNowSection}
+        ${afterPrepSection}
+
+        <!-- Recommendations -->
+        ${data.recommendations && data.recommendations.length > 0 ? `
+          <div class="avoid-break" style="margin-bottom: 25px;">
+            <h3 style="font-size: 14px; font-weight: 700; color: #191F28; margin-bottom: 15px; display: flex; align-items: center;">
+              <span style="margin-right: 8px;">💡</span> 추천 사항
+            </h3>
+            <div style="background: #FFFBEB; padding: 20px; border-radius: 12px; border: 1px solid #FDE68A;">
+              ${data.recommendations.map((rec, i) => `
+                <div style="margin-bottom: ${i < data.recommendations.length - 1 ? '12px' : '0'}; padding-left: 25px; position: relative;">
+                  <span style="position: absolute; left: 0; font-size: 14px; color: #D97706;">${i + 1}.</span>
+                  <span style="font-size: 13px; color: #78350F; line-height: 1.6;">${rec}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${actionPlanSection}
+
+        <!-- Footer -->
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 11px; color: #8B95A1;">
+            본 리포트는 AI 분석을 기반으로 생성되었습니다.
+          </div>
+          <div style="font-size: 11px; color: #8B95A1;">
+            © ${new Date().getFullYear()} Konnect AI Career Platform
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export async function generateGroupMemberReportPDF(data: GroupMemberReportData): Promise<void> {
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.innerHTML = createGroupMemberReportHTML(data);
+  document.body.appendChild(container);
+
+  const reportElement = container.querySelector('#pdf-member-report-container') as HTMLElement;
+  
+  const safeUserName = data.userName.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+  const fileName = `Konnect_${safeUserName}_분석리포트_${data.analysisDate.replace(/\./g, '')}.pdf`;
   
   const opt = {
     margin: 0,
