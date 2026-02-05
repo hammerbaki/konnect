@@ -154,7 +154,7 @@ export default function GroupDashboard() {
     setDownloadingPdfId(analysis.id);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch(`/api/groups/${groupId}/members/${analysis.userId}`, {
+      const res = await fetch(`/api/groups/${groupId}/members/${analysis.userId}/detail`, {
         headers,
         credentials: "include",
       });
