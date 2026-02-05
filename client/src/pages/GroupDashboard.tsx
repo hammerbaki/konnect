@@ -26,7 +26,11 @@ import {
   BookOpen,
   Backpack,
   Globe,
+  Download,
+  Loader2,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { generateGroupMemberReportPDF, type GroupMemberReportData } from "@/lib/pdfReportGenerator";
 import { getAuthHeaders } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -141,6 +145,113 @@ export default function GroupDashboard() {
   const [analysisPage, setAnalysisPage] = useState(1);
   const [analysisSearch, setAnalysisSearch] = useState("");
   const [debouncedAnalysisSearch, setDebouncedAnalysisSearch] = useState("");
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleDownloadPdf = async (analysis: { id: string; userId: string; userName: string | null; profileType: string; analysisDate: string; summary: string | null }) => {
+    if (downloadingPdfId) return;
+    
+    setDownloadingPdfId(analysis.id);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/groups/${groupId}/members/${analysis.userId}`, {
+        headers,
+        credentials: "include",
+      });
+      
+      if (!res.ok) throw new Error("Failed to fetch member data");
+      
+      const member = await res.json();
+      const analysisResult = member.analysis?.result;
+      const isForeignStudent = member.profile?.profileType === "international_university";
+      const foreignStudentData = isForeignStudent ? analysisResult?.foreignStudentData : null;
+      
+      let summary = analysis.summary || "";
+      if (!summary && foreignStudentData?.summary) {
+        summary = foreignStudentData.summary;
+      }
+      
+      let strengths: string[] = [];
+      let weaknesses: string[] = [];
+      let recommendations: string[] = [];
+      
+      if (isForeignStudent) {
+        const fitReasons = foreignStudentData?.fit?.reasons || [];
+        strengths = fitReasons
+          .filter((r: any) => r.impact === 'positive')
+          .map((r: any) => `${r.field}: ${r.note || r.value || ''}`);
+        weaknesses = fitReasons
+          .filter((r: any) => r.impact === 'negative')
+          .map((r: any) => `${r.field}: ${r.note || r.value || ''}`);
+        
+        const dataGaps = foreignStudentData?.dataGaps || [];
+        if (dataGaps.length > 0) {
+          const gapStrings = dataGaps.map((gap: any) => 
+            typeof gap === 'string' ? gap : (gap.item || gap.description || String(gap))
+          );
+          weaknesses = [...weaknesses, ...gapStrings];
+        }
+        
+        const readyNowTitles = (foreignStudentData?.recommendations?.readyNow || [])
+          .map((job: any) => `[즉시 도전] ${job.role || job.title || '직무'}`);
+        const afterPrepTitles = (foreignStudentData?.recommendations?.afterPrep || [])
+          .map((job: any) => `[준비 후 도전] ${job.role || job.title || '직무'}`);
+        recommendations = [...readyNowTitles, ...afterPrepTitles];
+      } else {
+        const rawStrengths = analysisResult?.strengths || analysisResult?.강점 || [];
+        strengths = Array.isArray(rawStrengths) 
+          ? rawStrengths.map((s: any) => typeof s === 'string' ? s : (s.text || String(s)))
+          : [];
+        const rawWeaknesses = analysisResult?.weaknesses || analysisResult?.약점 || analysisResult?.개선점 || [];
+        weaknesses = Array.isArray(rawWeaknesses)
+          ? rawWeaknesses.map((w: any) => typeof w === 'string' ? w : (w.text || String(w)))
+          : [];
+        const rawRecommendations = analysisResult?.recommendations || 
+                                   analysisResult?.추천 || 
+                                   analysisResult?.career_recommendations || [];
+        recommendations = Array.isArray(rawRecommendations) 
+          ? rawRecommendations.map((r: any) => typeof r === 'string' ? r : (r.text || String(r)))
+          : [];
+      }
+      
+      const fitReasonStrings = (foreignStudentData?.fit?.reasons || []).map((r: any) => 
+        typeof r === 'string' ? r : `${r.field}: ${r.note || r.value || ''}`
+      );
+      
+      const reportData: GroupMemberReportData = {
+        userName: member.user?.displayName || analysis.userName || member.user?.email?.split("@")[0] || "사용자",
+        email: member.user?.email || "",
+        profileType: analysis.profileType || "general",
+        analysisDate: format(new Date(analysis.analysisDate), "yyyy.MM.dd", { locale: ko }),
+        summary: summary,
+        fitScore: foreignStudentData?.fit?.score,
+        visaWarning: foreignStudentData?.visaWarning,
+        strengths: Array.isArray(strengths) ? strengths : [],
+        weaknesses: Array.isArray(weaknesses) ? weaknesses : [],
+        recommendations: recommendations,
+        fitReasons: fitReasonStrings,
+        readyNowJobs: foreignStudentData?.recommendations?.readyNow || [],
+        afterPrepJobs: foreignStudentData?.recommendations?.afterPrep || [],
+        actionPlan: foreignStudentData?.actionPlan,
+      };
+      
+      await generateGroupMemberReportPDF(reportData);
+      
+      toast({
+        title: "PDF 다운로드 완료",
+        description: "분석 리포트가 다운로드되었습니다.",
+      });
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast({
+        title: "다운로드 실패",
+        description: "PDF 생성 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingPdfId(null);
+    }
+  };
 
   const toggleFieldExpanded = (fieldLabel: string) => {
     setExpandedFields(prev => ({ ...prev, [fieldLabel]: !prev[fieldLabel] }));
@@ -660,12 +771,29 @@ export default function GroupDashboard() {
                                 </p>
                               )}
                             </div>
-                            <Link href={`/group/${groupId}/member/${analysis.userId}`}>
-                              <Button variant="outline" size="sm" data-testid={`button-view-analysis-${index}`}>
-                                <Eye className="h-4 w-4 mr-1" />
-                                상세보기
+                            <div className="flex flex-col gap-2">
+                              <Link href={`/group/${groupId}/member/${analysis.userId}`}>
+                                <Button variant="outline" size="sm" className="w-full" data-testid={`button-view-analysis-${index}`}>
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  상세보기
+                                </Button>
+                              </Link>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="w-full"
+                                onClick={() => handleDownloadPdf(analysis)}
+                                disabled={downloadingPdfId === analysis.id}
+                                data-testid={`button-download-pdf-${index}`}
+                              >
+                                {downloadingPdfId === analysis.id ? (
+                                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                ) : (
+                                  <Download className="h-4 w-4 mr-1" />
+                                )}
+                                PDF 다운로드
                               </Button>
-                            </Link>
+                            </div>
                           </div>
                         </div>
                       ))}
