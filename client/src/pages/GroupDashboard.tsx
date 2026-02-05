@@ -377,7 +377,10 @@ export default function GroupDashboard() {
       (member.displayName?.toLowerCase() || "").includes(searchLower)
     );
     // Filter by allowed profile types (if member has a profile type)
-    const matchesProfileType = !member.profileType || allowedProfileTypes.includes(member.profileType);
+    // Handle 'international' -> 'international_university' mapping
+    const matchesProfileType = !member.profileType || 
+      allowedProfileTypes.includes(member.profileType) ||
+      (member.profileType === 'international' && allowedProfileTypes.includes('international_university'));
     return matchesSearch && matchesProfileType;
   });
 
