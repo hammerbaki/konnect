@@ -459,12 +459,10 @@ function createGroupMemberReportHTML(data: GroupMemberReportData): string {
     <style>
       @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
       .pdf-page { 
-        min-height: 1100px; 
-        page-break-after: always; 
+        page-break-after: avoid; 
         page-break-inside: avoid;
-        padding-bottom: 40px;
+        padding-bottom: 20px;
       }
-      .pdf-page:last-child { page-break-after: avoid; }
       .section-box, .avoid-break {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
