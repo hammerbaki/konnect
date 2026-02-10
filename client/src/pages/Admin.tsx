@@ -4376,9 +4376,9 @@ export default function Admin() {
                 return sections;
               };
               return (<>
-              <div className="bg-white border-b border-[#F2F4F6] px-6 pt-6 pb-5 flex-shrink-0">
+              <div className="bg-white border-b border-[#F2F4F6] px-6 pr-12 pt-6 pb-5 flex-shrink-0">
                 <div className="flex items-start gap-4">
-                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#3182F6] to-[#1B64DA] flex items-center justify-center text-white font-bold text-xl">
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#3182F6] to-[#1B64DA] flex items-center justify-center text-white font-bold text-xl shrink-0">
                     {(userDetail.user.displayName || userDetail.user.email || '?').charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
