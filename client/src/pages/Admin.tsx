@@ -4414,7 +4414,7 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="flex gap-1 px-4 pt-1 bg-white border-b border-[#F2F4F6] overflow-x-auto flex-shrink-0">
+              <div className="relative flex gap-1 px-4 pt-1 bg-white overflow-x-auto flex-shrink-0" style={{ boxShadow: 'inset 0 -1px 0 #F2F4F6' }}>
                 {[
                   { key: "overview", label: "개요", icon: <User className="h-3.5 w-3.5" /> },
                   { key: "profiles", label: "프로필", icon: <Briefcase className="h-3.5 w-3.5" /> },
@@ -4427,15 +4427,18 @@ export default function Admin() {
                   <button
                     key={tab.key}
                     onClick={() => setDetailTab(tab.key)}
-                    className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
+                    className={`relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors duration-200 ${
                       detailTab === tab.key
-                        ? "border-[#3182F6] text-[#3182F6]"
-                        : "border-transparent text-[#8B95A1] hover:text-[#4E5968]"
+                        ? "text-[#3182F6]"
+                        : "text-[#8B95A1] hover:text-[#4E5968]"
                     }`}
                     data-testid={`tab-detail-${tab.key}`}
                   >
                     {tab.icon}
                     {tab.label}
+                    {detailTab === tab.key && (
+                      <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-[#3182F6] rounded-full" />
+                    )}
                   </button>
                 ))}
               </div>
