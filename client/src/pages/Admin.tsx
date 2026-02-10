@@ -4531,9 +4531,9 @@ export default function Admin() {
                       </div>
                     ) : userDetail.analyses.map((analysis: any) => {
                       const isExpanded = expandedItems.has(`analysis-${analysis.id}`);
-                      let ai = analysis.aiResult || {};
-                      if (typeof ai === 'string') { try { ai = JSON.parse(ai); } catch { ai = { summary: ai }; } }
-                      const rec = ai.recommendations || {};
+                      let rec = analysis.recommendations || {};
+                      if (typeof rec === 'string') { try { rec = JSON.parse(rec); } catch { rec = {}; } }
+                      const ai = { summary: analysis.summary, stats: analysis.stats, overallFit: rec.overallFit, recommendations: rec };
                       const foreignData = rec.foreignStudentData;
                       const careers = rec.careers;
                       return (
@@ -4546,9 +4546,9 @@ export default function Admin() {
                             <div className="space-y-1 min-w-0 flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <Badge className="bg-[#059669]/10 text-[#059669] border-0 text-[11px] font-bold px-2.5 py-0.5 rounded-lg">{analysis.profileName || '프로필'}</Badge>
-                                {ai.desiredJob && <span className="text-sm font-medium text-[#191F28]">{ai.desiredJob}</span>}
+                                {analysis.profileType && <Badge variant="outline" className="text-[10px] border-[#E5E8EB] text-[#8B95A1] px-1.5 py-0 rounded-md">{analysis.profileType}</Badge>}
                               </div>
-                              {ai.summary && <p className="text-xs text-[#8B95A1] line-clamp-1">{typeof ai.summary === 'string' ? ai.summary.slice(0, 100) + '...' : typeof ai.summary === 'object' && ai.summary.desiredRole ? ai.summary.desiredRole : ''}</p>}
+                              {analysis.summary && <p className="text-xs text-[#8B95A1] line-clamp-1">{typeof analysis.summary === 'string' ? analysis.summary.slice(0, 120) : typeof analysis.summary === 'object' && (analysis.summary as any).desiredRole ? (analysis.summary as any).desiredRole : ''}</p>}
                             </div>
                             <div className="flex items-center gap-3 shrink-0">
                               <span className="text-xs text-[#C4C9D0] whitespace-nowrap">
@@ -4559,69 +4559,259 @@ export default function Admin() {
                               </div>
                             </div>
                           </button>
-                          {isExpanded && (
+                          {isExpanded && (() => {
+                            const summaryObj = typeof ai.summary === 'object' && ai.summary ? ai.summary : null;
+                            const summaryStr = typeof ai.summary === 'string' ? ai.summary : (typeof analysis.summary === 'string' ? analysis.summary : null);
+                            const st = analysis.stats || ai.stats;
+                            const overallFit = ai.overallFit || rec.overallFit;
+                            const allCareers = careers || rec.recommendedCareers || [];
+                            const readyNow = foreignData?.recommendations?.readyNow || foreignData?.readyJobs || [];
+                            const afterPrep = foreignData?.recommendations?.afterPrep || foreignData?.afterPrepJobs || [];
+                            const fitData = foreignData?.fit || (foreignData?.fitScore !== undefined ? { score: foreignData.fitScore, reasons: foreignData.fitReasons } : null);
+                            const actPlan = foreignData?.actionPlan;
+                            return (
                             <div className="px-5 pb-5 space-y-4 border-t border-[#F2F4F6] pt-4" data-testid={`analysis-detail-${analysis.id}`}>
-                              {ai.summary && (
+                              {(summaryStr || summaryObj) && (
                                 <div className="bg-[#F8F9FA] rounded-2xl p-4">
-                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">요약</p>
-                                  {typeof ai.summary === 'string' ? (
-                                    <p className="text-sm text-[#191F28] whitespace-pre-wrap leading-relaxed">{ai.summary}</p>
-                                  ) : renderObjectReadable(ai.summary)}
-                                </div>
-                              )}
-                              {analysis.stats && (
-                                <div>
-                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">통계</p>
-                                  <div className="grid grid-cols-3 gap-2">
-                                    {Object.entries(analysis.stats as Record<string, any>).map(([k, v]) => (
-                                      <div key={k} className="bg-[#F8F9FA] rounded-xl p-3 text-center">
-                                        <p className="text-[10px] text-[#8B95A1] font-medium">{k}</p>
-                                        <p className="text-sm font-bold text-[#191F28]">{String(v)}</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              {ai.overallFit && renderFieldSection('적합도', [{ label: '전체 적합도', value: ai.overallFit }])}
-                              {foreignData && (
-                                <div className="space-y-3 bg-[#FFFBEB] rounded-2xl p-4">
-                                  <p className="text-[11px] font-bold text-[#D97706] uppercase tracking-wider">외국인 유학생 분석</p>
-                                  {renderFieldSection('적합도', [
-                                    { label: '적합 점수', value: foreignData.fitScore },
-                                    { label: '적합 이유', value: foreignData.fitReasons },
-                                  ])}
-                                  {foreignData.readyJobs?.length > 0 && renderFieldSection('바로 가능한 직업', foreignData.readyJobs.map((j: any, i: number) => ({
-                                    label: `직업 ${i + 1}`, value: typeof j === 'string' ? j : `${j.title || j.name || ''} - ${j.reason || ''}`,
-                                  })))}
-                                  {foreignData.afterPrepJobs?.length > 0 && renderFieldSection('준비 후 가능한 직업', foreignData.afterPrepJobs.map((j: any, i: number) => ({
-                                    label: `직업 ${i + 1}`, value: typeof j === 'string' ? j : `${j.title || j.name || ''} - ${j.reason || ''}`,
-                                  })))}
-                                  {foreignData.actionPlan && renderFieldSection('실행 계획', [
-                                    { label: '단기', value: foreignData.actionPlan.shortTerm || foreignData.actionPlan.short },
-                                    { label: '중기', value: foreignData.actionPlan.midTerm || foreignData.actionPlan.mid },
-                                    { label: '장기', value: foreignData.actionPlan.longTerm || foreignData.actionPlan.long },
-                                  ])}
-                                  {foreignData.visaWarning && (
-                                    <div className="bg-[#FEF2F2] rounded-xl p-3">{renderField('비자 경고', foreignData.visaWarning)}</div>
+                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">분석 요약</p>
+                                  {summaryStr && <p className="text-sm text-[#191F28] whitespace-pre-wrap leading-relaxed">{summaryStr}</p>}
+                                  {summaryObj && (
+                                    <div className="grid grid-cols-2 gap-3 mt-2">
+                                      {summaryObj.desiredRole && (
+                                        <div className="bg-white rounded-xl p-3 border border-[#E5E8EB]">
+                                          <p className="text-[10px] text-[#8B95A1] mb-0.5">희망 직무</p>
+                                          <p className="text-sm font-medium text-[#191F28]">{summaryObj.desiredRole}</p>
+                                        </div>
+                                      )}
+                                      {summaryObj.major && (
+                                        <div className="bg-white rounded-xl p-3 border border-[#E5E8EB]">
+                                          <p className="text-[10px] text-[#8B95A1] mb-0.5">전공</p>
+                                          <p className="text-sm font-medium text-[#191F28]">{summaryObj.major}</p>
+                                        </div>
+                                      )}
+                                      {summaryObj.visaType && (
+                                        <div className="bg-white rounded-xl p-3 border border-[#E5E8EB]">
+                                          <p className="text-[10px] text-[#8B95A1] mb-0.5">비자 유형</p>
+                                          <p className="text-sm font-medium text-[#191F28]">{summaryObj.visaType}</p>
+                                        </div>
+                                      )}
+                                      {(summaryObj.korean || summaryObj.koreanLevel) && (
+                                        <div className="bg-white rounded-xl p-3 border border-[#E5E8EB]">
+                                          <p className="text-[10px] text-[#8B95A1] mb-0.5">한국어 수준</p>
+                                          <p className="text-sm font-medium text-[#191F28]">
+                                            {typeof summaryObj.korean === 'object' ? `${summaryObj.korean.level || ''}${summaryObj.korean.topik ? ` (TOPIK ${summaryObj.korean.topik})` : ''}` : summaryObj.koreanLevel || summaryObj.korean || '-'}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
                                   )}
-                                  {foreignData.dataGaps && renderField('데이터 누락', foreignData.dataGaps)}
                                 </div>
                               )}
-                              {careers?.length > 0 && (
-                                <div className="space-y-2">
-                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider">추천 직업</p>
-                                  {careers.map((career: any, idx: number) => (
-                                    <div key={idx} className="bg-[#F8F9FA] rounded-xl p-3.5 space-y-1">
-                                      <p className="text-sm font-bold text-[#191F28]">{career.title || career.name || `직업 ${idx + 1}`}</p>
-                                      {career.fitScore && <p className="text-xs font-medium text-[#059669]">적합도: {career.fitScore}</p>}
-                                      {career.reason && <p className="text-xs text-[#8B95A1] leading-relaxed">{career.reason}</p>}
-                                      {career.description && <p className="text-xs text-[#8B95A1] leading-relaxed">{career.description}</p>}
+
+                              {st && (
+                                <div className="grid grid-cols-3 gap-2">
+                                  {st.label1 !== undefined ? (
+                                    <>
+                                      <div className="bg-[#F8F9FA] rounded-xl p-3 text-center">
+                                        <p className="text-[10px] text-[#8B95A1] font-medium">{st.label1}</p>
+                                        <p className="text-sm font-bold text-[#3182F6]">{st.val1}</p>
+                                      </div>
+                                      <div className="bg-[#F8F9FA] rounded-xl p-3 text-center">
+                                        <p className="text-[10px] text-[#8B95A1] font-medium">{st.label2}</p>
+                                        <p className="text-sm font-bold text-[#191F28]">{st.val2}</p>
+                                      </div>
+                                      <div className="bg-[#F8F9FA] rounded-xl p-3 text-center">
+                                        <p className="text-[10px] text-[#8B95A1] font-medium">{st.label3}</p>
+                                        <p className="text-sm font-bold text-[#059669]">{st.val3}</p>
+                                      </div>
+                                    </>
+                                  ) : Object.entries(st as Record<string, any>).filter(([k]) => !k.startsWith('label') && !k.startsWith('val')).map(([k, v]) => (
+                                    <div key={k} className="bg-[#F8F9FA] rounded-xl p-3 text-center">
+                                      <p className="text-[10px] text-[#8B95A1] font-medium">{k}</p>
+                                      <p className="text-sm font-bold text-[#191F28]">{String(v)}</p>
                                     </div>
                                   ))}
                                 </div>
                               )}
+
+                              {overallFit && (
+                                <div className="bg-[#F0FDF4] rounded-xl p-3">
+                                  <p className="text-[11px] font-bold text-[#059669] uppercase tracking-wider mb-1">전체 적합도</p>
+                                  <p className="text-sm text-[#191F28] leading-relaxed">{typeof overallFit === 'string' ? overallFit : renderObjectReadable(overallFit)}</p>
+                                </div>
+                              )}
+
+                              {foreignData && (
+                                <div className="space-y-3 bg-[#FFFBEB] rounded-2xl p-4">
+                                  <p className="text-[11px] font-bold text-[#D97706] uppercase tracking-wider">외국인 유학생 분석</p>
+
+                                  {foreignData.visaWarning && (
+                                    <div className="bg-[#FEF2F2] rounded-xl p-3 flex items-start gap-2">
+                                      <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                                      <div>
+                                        <p className="text-[11px] font-bold text-amber-700 mb-0.5">비자 안내</p>
+                                        <p className="text-xs text-amber-700 leading-relaxed">{foreignData.visaWarning}</p>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {fitData && (
+                                    <div className="bg-white/70 rounded-xl p-3 space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-[11px] font-bold text-[#191F28]">희망 직무 적합도</p>
+                                        {fitData.score !== undefined && (
+                                          <Badge className={`border-0 text-[11px] font-bold px-2 py-0.5 rounded-lg ${fitData.score >= 70 ? 'bg-[#059669]/10 text-[#059669]' : fitData.score >= 40 ? 'bg-[#D97706]/10 text-[#D97706]' : 'bg-red-100 text-red-700'}`}>
+                                            {fitData.score}점
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      {fitData.reasons && Array.isArray(fitData.reasons) && fitData.reasons.length > 0 && (
+                                        <div className="space-y-1">
+                                          {fitData.reasons.map((r: any, i: number) => (
+                                            <div key={i} className={`flex items-start gap-2 p-2 rounded-lg text-xs ${r.impact === 'positive' ? 'bg-green-50' : r.impact === 'negative' ? 'bg-red-50' : 'bg-gray-50'}`}>
+                                              <span>{r.impact === 'positive' ? '✅' : r.impact === 'negative' ? '⚠️' : 'ℹ️'}</span>
+                                              <span className="text-[#4E5968]">{typeof r === 'string' ? r : r.text || r.reason || r.description || ''}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {typeof fitData.reasons === 'string' && <p className="text-xs text-[#4E5968]">{fitData.reasons}</p>}
+                                    </div>
+                                  )}
+
+                                  {readyNow.length > 0 && (
+                                    <div>
+                                      <p className="text-[11px] font-bold text-[#059669] mb-2">바로 가능한 직업</p>
+                                      <div className="space-y-1.5">
+                                        {readyNow.map((j: any, i: number) => (
+                                          <div key={i} className="bg-white/70 rounded-xl p-3">
+                                            <p className="text-sm font-medium text-[#191F28]">{typeof j === 'string' ? j : j.title || j.name || `직업 ${i + 1}`}</p>
+                                            {j.reason && <p className="text-xs text-[#8B95A1] mt-0.5 leading-relaxed">{j.reason}</p>}
+                                            {j.description && <p className="text-xs text-[#8B95A1] mt-0.5 leading-relaxed">{j.description}</p>}
+                                            {j.requirements && <p className="text-xs text-[#D97706] mt-0.5">{Array.isArray(j.requirements) ? j.requirements.join(', ') : j.requirements}</p>}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {afterPrep.length > 0 && (
+                                    <div>
+                                      <p className="text-[11px] font-bold text-[#3182F6] mb-2">준비 후 가능한 직업</p>
+                                      <div className="space-y-1.5">
+                                        {afterPrep.map((j: any, i: number) => (
+                                          <div key={i} className="bg-white/70 rounded-xl p-3">
+                                            <p className="text-sm font-medium text-[#191F28]">{typeof j === 'string' ? j : j.title || j.name || `직업 ${i + 1}`}</p>
+                                            {j.reason && <p className="text-xs text-[#8B95A1] mt-0.5 leading-relaxed">{j.reason}</p>}
+                                            {j.conditions && Array.isArray(j.conditions) && (
+                                              <div className="mt-1 flex flex-wrap gap-1">
+                                                {j.conditions.map((c: string, ci: number) => (
+                                                  <Badge key={ci} className="bg-amber-50 text-amber-700 border-0 text-[10px] px-1.5 py-0 rounded-md">{c}</Badge>
+                                                ))}
+                                              </div>
+                                            )}
+                                            {j.howToFill && Array.isArray(j.howToFill) && (
+                                              <div className="mt-1">
+                                                <p className="text-[10px] text-[#8B95A1] mb-0.5">채우는 방법</p>
+                                                <ul className="text-xs text-[#4E5968] space-y-0.5 list-disc list-inside">
+                                                  {j.howToFill.map((h: string, hi: number) => <li key={hi}>{h}</li>)}
+                                                </ul>
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {actPlan && (
+                                    <div className="bg-white/70 rounded-xl p-3">
+                                      <p className="text-[11px] font-bold text-[#191F28] mb-2">실행 계획</p>
+                                      <div className="space-y-2">
+                                        {(actPlan.shortTerm || actPlan.short) && (
+                                          <div className="flex gap-2">
+                                            <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-[10px] px-2 py-0 shrink-0">단기</Badge>
+                                            <p className="text-xs text-[#4E5968] leading-relaxed">{Array.isArray(actPlan.shortTerm || actPlan.short) ? (actPlan.shortTerm || actPlan.short).join(', ') : (actPlan.shortTerm || actPlan.short)}</p>
+                                          </div>
+                                        )}
+                                        {(actPlan.midTerm || actPlan.mid) && (
+                                          <div className="flex gap-2">
+                                            <Badge className="bg-[#7C3AED]/10 text-[#7C3AED] border-0 text-[10px] px-2 py-0 shrink-0">중기</Badge>
+                                            <p className="text-xs text-[#4E5968] leading-relaxed">{Array.isArray(actPlan.midTerm || actPlan.mid) ? (actPlan.midTerm || actPlan.mid).join(', ') : (actPlan.midTerm || actPlan.mid)}</p>
+                                          </div>
+                                        )}
+                                        {(actPlan.longTerm || actPlan.long) && (
+                                          <div className="flex gap-2">
+                                            <Badge className="bg-[#059669]/10 text-[#059669] border-0 text-[10px] px-2 py-0 shrink-0">장기</Badge>
+                                            <p className="text-xs text-[#4E5968] leading-relaxed">{Array.isArray(actPlan.longTerm || actPlan.long) ? (actPlan.longTerm || actPlan.long).join(', ') : (actPlan.longTerm || actPlan.long)}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {foreignData.dataGaps && (
+                                    <div className="bg-white/70 rounded-xl p-3">
+                                      <p className="text-[11px] font-bold text-[#8B95A1] mb-1">데이터 누락</p>
+                                      <p className="text-xs text-[#4E5968] leading-relaxed">{Array.isArray(foreignData.dataGaps) ? foreignData.dataGaps.join(', ') : foreignData.dataGaps}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {allCareers.length > 0 && (
+                                <div className="space-y-2">
+                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider">AI 추천 직업</p>
+                                  {allCareers.map((career: any, idx: number) => (
+                                    <div key={idx} className="bg-[#F8F9FA] rounded-xl p-4 space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-6 h-6 rounded-full bg-[#3182F6] text-white flex items-center justify-center font-bold text-xs">{idx + 1}</div>
+                                          <p className="text-sm font-bold text-[#191F28]">{career.title || career.name || `직업 ${idx + 1}`}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          {(career.matchPercentage || career.fitScore) && (
+                                            <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-[11px] font-bold px-2 py-0.5 rounded-lg">
+                                              적합도 {career.matchPercentage || career.fitScore}%
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                      {career.description && <p className="text-xs text-[#4E5968] leading-relaxed">{career.description}</p>}
+                                      {career.reason && <p className="text-xs text-[#4E5968] leading-relaxed">{career.reason}</p>}
+                                      {career.fitReasons && (
+                                        <div className="text-xs text-[#8B95A1] leading-relaxed">{Array.isArray(career.fitReasons) ? career.fitReasons.join(' / ') : career.fitReasons}</div>
+                                      )}
+                                      {career.requiredSkills && (
+                                        <div className="flex flex-wrap gap-1">
+                                          {(Array.isArray(career.requiredSkills) ? career.requiredSkills : [career.requiredSkills]).map((skill: string, si: number) => (
+                                            <Badge key={si} className="bg-[#F2F4F6] text-[#4E5968] border-0 text-[10px] px-2 py-0 rounded-md">{skill}</Badge>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {career.growthPath && (
+                                        <div>
+                                          <p className="text-[10px] text-[#8B95A1] mb-0.5">성장 경로</p>
+                                          <p className="text-xs text-[#4E5968] leading-relaxed">{Array.isArray(career.growthPath) ? career.growthPath.join(' → ') : career.growthPath}</p>
+                                        </div>
+                                      )}
+                                      {career.salary && (
+                                        <p className="text-xs text-[#059669]">예상 연봉: {career.salary}</p>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {!summaryStr && !summaryObj && !st && allCareers.length === 0 && !foreignData && ai && Object.keys(ai).length > 0 && (
+                                <div className="bg-[#F8F9FA] rounded-2xl p-4">
+                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">분석 결과</p>
+                                  {renderObjectReadable(ai)}
+                                </div>
+                              )}
                             </div>
-                          )}
+                            );
+                          })()}
                         </div>
                       );
                     })}
