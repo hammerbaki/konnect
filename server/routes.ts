@@ -28,7 +28,7 @@ import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt } from "drizzle-orm";
-import { giftPointLedger, users, referrals } from "@shared/schema";
+import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments } from "@shared/schema";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -5761,6 +5761,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error removing user from group:", error);
       res.status(500).json({ message: "그룹에서 사용자 제거 중 오류가 발생했습니다." });
+    }
+  });
+
+  app.get('/api/admin/users/:userId/detail', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user?.id;
+      if (!currentUserId) return res.status(401).json({ message: "인증이 필요합니다." });
+
+      const currentUser = await storage.getUser(currentUserId);
+      const isStaffOrAdmin = currentUser?.role === 'admin' || currentUser?.role === 'staff';
+
+      if (!isStaffOrAdmin) {
+        const managedMemberIds = await storage.getUserManagedGroupMemberIds(currentUserId);
+        if (!managedMemberIds.includes(req.params.userId)) {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+
+      const targetUserId = req.params.userId;
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+
+      const userProfiles = await storage.getProfilesByUser(targetUserId);
+
+      const allAnalyses: any[] = [];
+      const allEssays: any[] = [];
+      const allKompass: any[] = [];
+      for (const profile of userProfiles) {
+        const analyses = await storage.getAnalysesByProfile(profile.id);
+        allAnalyses.push(...analyses.map(a => ({ ...a, profileName: profile.title, profileType: profile.type })));
+        const essays = await storage.getEssaysByProfile(profile.id);
+        allEssays.push(...essays.map(e => ({ ...e, profileName: profile.title, profileType: profile.type })));
+        const goals = await storage.getKompassByProfile(profile.id);
+        allKompass.push(...goals.map(g => ({ ...g, profileName: profile.title, profileType: profile.type })));
+      }
+
+      const sessions = await db
+        .select()
+        .from(interviewSessions)
+        .where(eq(interviewSessions.userId, targetUserId))
+        .orderBy(desc(interviewSessions.createdAt));
+
+      const assessments = await storage.getKjobsAssessmentsByUser(targetUserId);
+
+      res.json({
+        user: {
+          id: targetUser.id,
+          email: targetUser.email,
+          firstName: targetUser.firstName,
+          lastName: targetUser.lastName,
+          displayName: targetUser.displayName,
+          credits: targetUser.credits,
+          giftPoints: targetUser.giftPoints,
+          role: targetUser.role,
+          createdAt: targetUser.createdAt,
+          gender: targetUser.gender,
+          birthDate: targetUser.birthDate,
+        },
+        profiles: userProfiles,
+        analyses: allAnalyses,
+        essays: allEssays,
+        kompass: allKompass,
+        interviews: sessions,
+        assessments: assessments,
+      });
+    } catch (error: any) {
+      console.error("Error fetching user detail:", error?.message);
+      res.status(500).json({ message: "사용자 상세 정보 조회 중 오류가 발생했습니다." });
     }
   });
 

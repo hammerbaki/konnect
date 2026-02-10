@@ -11,8 +11,9 @@ import {
   RefreshCw, Search, Shield, User, Crown,
   BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
   ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download, Users2, X,
-  Briefcase, GraduationCap
+  Briefcase, GraduationCap, FileText, Target, Mic, ClipboardList, ChevronRight, Calendar, MapPin
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -929,6 +930,8 @@ export default function Admin() {
     credits: 100,
   });
   const [isRegistering, setIsRegistering] = useState(false);
+  const [selectedUserForDetail, setSelectedUserForDetail] = useState<string | null>(null);
+  const [detailTab, setDetailTab] = useState<string>("overview");
 
   const { user: currentUser, isLoading: userLoading, getAccessToken } = useAuth();
 
@@ -976,6 +979,17 @@ export default function Admin() {
   const { data: users = [], isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useQuery<AdminUser[]>({
     queryKey: ['/api/admin/users'],
     enabled: hasAdminAccess,
+    retry: false,
+  });
+
+  const { data: userDetail, isLoading: userDetailLoading, error: userDetailError } = useQuery({
+    queryKey: ['/api/admin/users', selectedUserForDetail, 'detail'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/admin/users/${selectedUserForDetail}/detail`);
+      if (!res.ok) throw new Error('Failed to fetch user detail');
+      return res.json();
+    },
+    enabled: !!selectedUserForDetail,
     retry: false,
   });
 
@@ -1771,7 +1785,11 @@ export default function Admin() {
                   <div className="divide-y divide-[#F2F4F6]">
                     {searchFilteredUsers.map((user) => (
                       <div key={user.id} className="p-4 flex items-center justify-between" data-testid={`row-user-${user.id}`}>
-                        <div className="flex-1">
+                        <div
+                          className="flex-1 cursor-pointer hover:bg-[#F2F4F6] rounded-lg p-2 -m-2 transition-colors"
+                          onClick={() => { setSelectedUserForDetail(user.id); setDetailTab("overview"); }}
+                          data-testid={`btn-user-detail-${user.id}`}
+                        >
                           <p className="font-bold text-[#191F28]">
                             {user.displayName || user.email || 'Unknown'}
                           </p>
@@ -3933,6 +3951,319 @@ export default function Admin() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!selectedUserForDetail} onOpenChange={(open) => { if (!open) { setSelectedUserForDetail(null); setDetailTab("overview"); } }}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col" data-testid="modal-user-detail">
+          <DialogHeader>
+            <DialogTitle className="text-[#191F28]">
+              {userDetail?.user?.displayName || userDetail?.user?.email || '사용자 상세'}
+            </DialogTitle>
+            <DialogDescription className="text-[#8B95A1]">
+              {userDetail?.user?.email || '사용자 정보를 불러오는 중...'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {userDetailLoading ? (
+            <div className="space-y-4 p-4">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-64" />
+              <div className="grid grid-cols-3 gap-4">
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+              </div>
+              <Skeleton className="h-32" />
+            </div>
+          ) : userDetailError ? (
+            <div className="p-8 text-center text-[#8B95A1]">
+              <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-red-400" />
+              <p>사용자 정보를 불러오는 중 오류가 발생했습니다.</p>
+            </div>
+          ) : userDetail ? (
+            <>
+              <div className="flex gap-1 border-b border-[#F2F4F6] overflow-x-auto flex-shrink-0">
+                {[
+                  { key: "overview", label: "개요", icon: <User className="h-3.5 w-3.5" /> },
+                  { key: "profiles", label: "프로필", icon: <Briefcase className="h-3.5 w-3.5" /> },
+                  { key: "analyses", label: "분석", icon: <BarChart3 className="h-3.5 w-3.5" /> },
+                  { key: "essays", label: "자기소개서", icon: <FileText className="h-3.5 w-3.5" /> },
+                  { key: "kompass", label: "목표관리", icon: <Target className="h-3.5 w-3.5" /> },
+                  { key: "interviews", label: "면접", icon: <Mic className="h-3.5 w-3.5" /> },
+                  { key: "assessments", label: "진로진단", icon: <ClipboardList className="h-3.5 w-3.5" /> },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setDetailTab(tab.key)}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                      detailTab === tab.key
+                        ? "border-[#3182F6] text-[#3182F6]"
+                        : "border-transparent text-[#8B95A1] hover:text-[#191F28]"
+                    }`}
+                    data-testid={`tab-detail-${tab.key}`}
+                  >
+                    {tab.icon}
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="overflow-y-auto flex-1" style={{ maxHeight: "calc(85vh - 200px)" }}>
+                {detailTab === "overview" && (
+                  <div className="space-y-6 p-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs text-[#8B95A1]">이름</p>
+                          <p className="font-medium text-[#191F28]">{userDetail.user.displayName || `${userDetail.user.firstName || ''} ${userDetail.user.lastName || ''}`.trim() || '-'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#8B95A1]">이메일</p>
+                          <p className="font-medium text-[#191F28]">{userDetail.user.email || '-'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#8B95A1]">역할</p>
+                          <Badge className={userDetail.user.role === 'admin' ? 'bg-red-100 text-red-700' : userDetail.user.role === 'staff' ? 'bg-purple-100 text-purple-700' : 'bg-[#F2F4F6] text-[#191F28]'}>
+                            {userDetail.user.role === 'admin' ? '관리자' : userDetail.user.role === 'staff' ? '스태프' : '일반'}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#8B95A1]">성별</p>
+                          <p className="font-medium text-[#191F28]">{userDetail.user.gender === 'male' ? '남성' : userDetail.user.gender === 'female' ? '여성' : userDetail.user.gender || '-'}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs text-[#8B95A1]">포인트</p>
+                          <p className="font-bold text-[#3182F6]">{(userDetail.user.credits || 0).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#8B95A1]">기프트 포인트</p>
+                          <p className="font-bold text-[#7C3AED]">{(userDetail.user.giftPoints || 0).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#8B95A1]">생년월일</p>
+                          <p className="font-medium text-[#191F28]">{userDetail.user.birthDate ? new Date(userDetail.user.birthDate).toLocaleDateString('ko-KR') : '-'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#8B95A1]">가입일</p>
+                          <p className="font-medium text-[#191F28]">{userDetail.user.createdAt ? new Date(userDetail.user.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold text-[#191F28] mb-3">활동 요약</p>
+                      <div className="grid grid-cols-3 gap-3">
+                        {[
+                          { key: "profiles", label: "프로필", count: userDetail.profiles?.length || 0, icon: <Briefcase className="h-4 w-4 text-[#3182F6]" /> },
+                          { key: "analyses", label: "분석", count: userDetail.analyses?.length || 0, icon: <BarChart3 className="h-4 w-4 text-[#059669]" /> },
+                          { key: "essays", label: "자기소개서", count: userDetail.essays?.length || 0, icon: <FileText className="h-4 w-4 text-[#D97706]" /> },
+                          { key: "kompass", label: "목표관리", count: userDetail.kompass?.length || 0, icon: <Target className="h-4 w-4 text-[#7C3AED]" /> },
+                          { key: "interviews", label: "면접", count: userDetail.interviews?.length || 0, icon: <Mic className="h-4 w-4 text-[#EC4899]" /> },
+                          { key: "assessments", label: "진로진단", count: userDetail.assessments?.length || 0, icon: <ClipboardList className="h-4 w-4 text-[#6B7280]" /> },
+                        ].map((item) => (
+                          <button
+                            key={item.key}
+                            onClick={() => setDetailTab(item.key)}
+                            className="flex items-center gap-3 p-3 rounded-lg bg-[#F2F4F6] hover:bg-[#E5E8EB] transition-colors text-left"
+                            data-testid={`card-count-${item.key}`}
+                          >
+                            {item.icon}
+                            <div>
+                              <p className="text-lg font-bold text-[#191F28]">{item.count}</p>
+                              <p className="text-xs text-[#8B95A1]">{item.label}</p>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-[#8B95A1] ml-auto" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {detailTab === "profiles" && (
+                  <div className="p-4 space-y-3">
+                    {(!userDetail.profiles || userDetail.profiles.length === 0) ? (
+                      <div className="text-center py-12 text-[#8B95A1]">
+                        <Briefcase className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                        <p>등록된 프로필이 없습니다.</p>
+                      </div>
+                    ) : userDetail.profiles.map((profile: any) => (
+                      <div key={profile.id} className="p-4 rounded-lg border border-[#F2F4F6] hover:border-[#3182F6]/30 transition-colors" data-testid={`profile-item-${profile.id}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-xs">
+                                {profile.type === 'general' ? '구직자' : profile.type === 'university' ? '대학생' : profile.type === 'international_university' ? '외국인유학생' : profile.type === 'high' ? '고등학생' : profile.type === 'middle' ? '중학생' : profile.type === 'elementary' ? '초등학생' : profile.type}
+                              </Badge>
+                              <p className="font-semibold text-[#191F28]">{profile.title || '제목 없음'}</p>
+                            </div>
+                            {profile.desiredJob && <p className="text-sm text-[#8B95A1]">희망 직업: {profile.desiredJob}</p>}
+                            {profile.education && <p className="text-sm text-[#8B95A1]">학력: {profile.education} {profile.major ? `(${profile.major})` : ''}</p>}
+                          </div>
+                          <div className="text-right text-xs text-[#8B95A1]">
+                            {profile.lastAnalyzed && <p>최근 분석: {new Date(profile.lastAnalyzed).toLocaleDateString('ko-KR')}</p>}
+                            <p>생성: {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {detailTab === "analyses" && (
+                  <div className="p-4 space-y-3">
+                    {(!userDetail.analyses || userDetail.analyses.length === 0) ? (
+                      <div className="text-center py-12 text-[#8B95A1]">
+                        <BarChart3 className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                        <p>진행된 분석이 없습니다.</p>
+                      </div>
+                    ) : userDetail.analyses.map((analysis: any) => (
+                      <div key={analysis.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`analysis-item-${analysis.id}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-[#059669]/10 text-[#059669] border-0 text-xs">{analysis.profileName || '프로필'}</Badge>
+                              {analysis.aiResult?.desiredJob && <span className="text-sm text-[#191F28]">{analysis.aiResult.desiredJob}</span>}
+                            </div>
+                            {analysis.aiResult && (
+                              <div className="text-xs text-[#8B95A1] mt-1 space-y-0.5">
+                                {analysis.aiResult.overallFit && <p>적합도: {analysis.aiResult.overallFit}</p>}
+                                {analysis.aiResult.summary && <p className="line-clamp-2">{typeof analysis.aiResult.summary === 'string' ? analysis.aiResult.summary.slice(0, 150) + '...' : ''}</p>}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-xs text-[#8B95A1] whitespace-nowrap ml-4">
+                            <p>{analysis.analysisDate ? new Date(analysis.analysisDate).toLocaleDateString('ko-KR') : analysis.createdAt ? new Date(analysis.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {detailTab === "essays" && (
+                  <div className="p-4 space-y-3">
+                    {(!userDetail.essays || userDetail.essays.length === 0) ? (
+                      <div className="text-center py-12 text-[#8B95A1]">
+                        <FileText className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                        <p>작성된 자기소개서가 없습니다.</p>
+                      </div>
+                    ) : userDetail.essays.map((essay: any) => (
+                      <div key={essay.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`essay-item-${essay.id}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-[#D97706]/10 text-[#D97706] border-0 text-xs">{essay.profileName || '프로필'}</Badge>
+                              {essay.essayType && <Badge variant="outline" className="text-xs">{essay.essayType}</Badge>}
+                            </div>
+                            <p className="text-sm text-[#191F28]">{essay.content ? essay.content.slice(0, 100) + (essay.content.length > 100 ? '...' : '') : '내용 없음'}</p>
+                            {essay.content && <p className="text-xs text-[#8B95A1]">약 {essay.content.length}자</p>}
+                          </div>
+                          <div className="text-xs text-[#8B95A1] whitespace-nowrap ml-4">
+                            <p>{essay.createdAt ? new Date(essay.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {detailTab === "kompass" && (
+                  <div className="p-4 space-y-3">
+                    {(!userDetail.kompass || userDetail.kompass.length === 0) ? (
+                      <div className="text-center py-12 text-[#8B95A1]">
+                        <Target className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                        <p>등록된 목표가 없습니다.</p>
+                      </div>
+                    ) : userDetail.kompass.map((goal: any) => (
+                      <div key={goal.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`kompass-item-${goal.id}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-[#7C3AED]/10 text-[#7C3AED] border-0 text-xs">{goal.profileName || '프로필'}</Badge>
+                              {goal.level && <Badge variant="outline" className="text-xs">{goal.level}</Badge>}
+                            </div>
+                            <p className="font-medium text-[#191F28]">{goal.title || '제목 없음'}</p>
+                            {goal.progress !== undefined && goal.progress !== null && (
+                              <div className="flex items-center gap-2">
+                                <Progress value={goal.progress} className="h-1.5 w-24" />
+                                <span className="text-xs text-[#8B95A1]">{goal.progress}%</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-xs text-[#8B95A1] text-right ml-4 space-y-0.5">
+                            {goal.startDate && <p>시작: {new Date(goal.startDate).toLocaleDateString('ko-KR')}</p>}
+                            {goal.endDate && <p>종료: {new Date(goal.endDate).toLocaleDateString('ko-KR')}</p>}
+                            <p>생성: {goal.createdAt ? new Date(goal.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {detailTab === "interviews" && (
+                  <div className="p-4 space-y-3">
+                    {(!userDetail.interviews || userDetail.interviews.length === 0) ? (
+                      <div className="text-center py-12 text-[#8B95A1]">
+                        <Mic className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                        <p>면접 기록이 없습니다.</p>
+                      </div>
+                    ) : userDetail.interviews.map((interview: any) => (
+                      <div key={interview.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`interview-item-${interview.id}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              {interview.sessionType && <Badge className="bg-[#EC4899]/10 text-[#EC4899] border-0 text-xs">{interview.sessionType}</Badge>}
+                              <Badge variant="outline" className={`text-xs ${interview.status === 'completed' ? 'border-green-300 text-green-700' : interview.status === 'in_progress' ? 'border-blue-300 text-blue-700' : 'border-gray-300 text-gray-700'}`}>
+                                {interview.status === 'completed' ? '완료' : interview.status === 'in_progress' ? '진행 중' : interview.status || '대기'}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-[#8B95A1]">질문 수: {interview.totalQuestions || 0}개</p>
+                          </div>
+                          <div className="text-xs text-[#8B95A1] text-right ml-4 space-y-0.5">
+                            <p>생성: {interview.createdAt ? new Date(interview.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                            {interview.completedAt && <p>완료: {new Date(interview.completedAt).toLocaleDateString('ko-KR')}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {detailTab === "assessments" && (
+                  <div className="p-4 space-y-3">
+                    {(!userDetail.assessments || userDetail.assessments.length === 0) ? (
+                      <div className="text-center py-12 text-[#8B95A1]">
+                        <ClipboardList className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                        <p>진로진단 기록이 없습니다.</p>
+                      </div>
+                    ) : userDetail.assessments.map((assessment: any) => (
+                      <div key={assessment.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`assessment-item-${assessment.id}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={`text-xs ${assessment.status === 'completed' ? 'border-green-300 text-green-700' : assessment.status === 'in_progress' ? 'border-blue-300 text-blue-700' : 'border-gray-300 text-gray-700'}`}>
+                                {assessment.status === 'completed' ? '완료' : assessment.status === 'in_progress' ? '진행 중' : assessment.status || '대기'}
+                              </Badge>
+                              {assessment.profileType && <Badge className="bg-[#6B7280]/10 text-[#6B7280] border-0 text-xs">{assessment.profileType}</Badge>}
+                            </div>
+                          </div>
+                          <div className="text-xs text-[#8B95A1] text-right ml-4 space-y-0.5">
+                            <p>생성: {assessment.createdAt ? new Date(assessment.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                            {assessment.completedAt && <p>완료: {new Date(assessment.completedAt).toLocaleDateString('ko-KR')}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
