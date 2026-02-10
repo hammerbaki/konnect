@@ -3690,19 +3690,27 @@ export class DatabaseStorage implements IStorage {
     // Get all profiles and filter by allowed types
     const allProfiles = await db.select().from(profiles).where(eq(profiles.userId, memberId));
     const filteredProfiles = allProfiles.filter(p => allowedProfileTypes.includes(p.type));
-    const profile = filteredProfiles[0] || null;
     
-    // Get latest analysis for the filtered profile
+    // Search ALL filtered profiles for the latest analysis (not just the first one)
     let analysis = null;
-    if (profile) {
+    let profile = filteredProfiles[0] || null;
+    
+    if (filteredProfiles.length > 0) {
+      const profileIds = filteredProfiles.map(p => p.id);
       const [latestAnalysis] = await db
         .select()
         .from(careerAnalyses)
-        .where(eq(careerAnalyses.profileId, profile.id))
+        .where(inArray(careerAnalyses.profileId, profileIds))
         .orderBy(desc(careerAnalyses.createdAt))
         .limit(1);
       
       if (latestAnalysis) {
+        // Use the profile that has the analysis
+        const analysisProfile = filteredProfiles.find(p => p.id === latestAnalysis.profileId);
+        if (analysisProfile) {
+          profile = analysisProfile;
+        }
+        
         let analysisResult: any = null;
         
         if (latestAnalysis.recommendations && typeof latestAnalysis.recommendations === 'object') {
@@ -3717,6 +3725,10 @@ export class DatabaseStorage implements IStorage {
         
         if (analysisResult && latestAnalysis.summary && !analysisResult.summary) {
           analysisResult.summary = latestAnalysis.summary;
+        }
+        
+        if (analysisResult && latestAnalysis.stats && !analysisResult.stats) {
+          analysisResult.stats = latestAnalysis.stats;
         }
         
         analysis = {
