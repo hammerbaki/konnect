@@ -1,0 +1,172 @@
+2026-01-28 11:20:05.10
+517d6301
+User
+2:20:05 AM [express] PATCH /api/user-identity 200 in 1211ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:20:06.34
+517d6301
+User
+2:20:06 AM [express] GET /api/user-identity 200 in 1034ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:20:15.79
+517d6301
+User
+2:20:15 AM [express] PATCH /api/user-identity 200 in 1237ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:20:17.10
+517d6301
+User
+2:20:17 AM [express] GET /api/user-identity 200 in 1134ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:20:30.80
+517d6301
+User
+2:20:30 AM [express] PATCH /api/user-identity 200 in 1046ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:20:32.00
+517d6301
+User
+2:20:32 AM [express] GET /api/user-identity 200 in 1016ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:20:45.37
+517d6301
+User
+2:20:45 AM [express] PATCH /api/user-identity 200 in 1301ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:20:46.72
+517d6301
+User
+2:20:46 AM [express] GET /api/user-identity 200 in 1162ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:21:15.11
+517d6301
+User
+2:21:15 AM [express] PATCH /api/user-identity 200 in 1083ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:21:16.37
+517d6301
+User
+2:21:16 AM [express] GET /api/user-identity 200 in 1069ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:21:42.01
+517d6301
+User
+2:21:42 AM [express] PATCH /api/user-identity 200 in 1035ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:21:43.22
+517d6301
+User
+2:21:43 AM [express] GET /api/user-identity 200 in 1030ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:22:13.38
+517d6301
+User
+2:22:13 AM [express] PATCH /api/user-identity 200 in 1275ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:22:14.67
+517d6301
+User
+2:22:14 AM [express] GET /api/user-identity 200 in 1096ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:22:26.38
+517d6301
+User
+2:22:26 AM [express] PATCH /api/user-identity 200 in 1037ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:22:27.59
+517d6301
+User
+2:22:27 AM [express] GET /api/user-identity 200 in 1028ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:23:20.70
+517d6301
+User
+2:23:20 AM [express] PATCH /api/user-identity 200 in 1044ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:23:21.96
+517d6301
+User
+2:23:21 AM [express] GET /api/user-identity 200 in 1052ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:23:34.53
+517d6301
+User
+2:23:34 AM [express] PATCH /api/user-identity 200 in 1074ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:23:35.75
+517d6301
+User
+2:23:35 AM [express] GET /api/user-identity 200 in 1034ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:23:43.46
+517d6301
+User
+2:23:43 AM [express] PATCH /api/user-identity 200 in 1045ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:23:44.69
+517d6301
+User
+2:23:44 AM [express] GET /api/user-identity 200 in 1054ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:24:15.59
+517d6301
+User
+2:24:15 AM [express] PATCH /api/user-identity 200 in 1113ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:24:16.80
+517d6301
+User
+2:24:16 AM [express] GET /api/user-identity 200 in 1025ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:25:26.88
+517d6301
+User
+2:25:26 AM [express] PATCH /api/user-identity 200 in 2193ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:25:28.10
+517d6301
+User
+2:25:28 AM [express] GET /api/user-identity 200 in 1017ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:25:44.69
+517d6301
+User
+2:25:44 AM [express] PATCH /api/user-identity 200 in 1020ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:25:45.91
+517d6301
+User
+2:25:45 AM [express] GET /api/user-identity 200 in 1024ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:25:49.39
+517d6301
+User
+2:25:49 AM [express] PATCH /api/user-identity 200 in 1018ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:25:50.59
+517d6301
+User
+2:25:50 AM [express] GET /api/user-identity 200 in 1009ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:25:59.38
+517d6301
+User
+2:25:59 AM [express] PATCH /api/user-identity 200 in 1055ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:26:00.66
+517d6301
+User
+2:26:00 AM [express] GET /api/user-identity 200 in 1090ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:27:05.65
+517d6301
+User
+2:27:05 AM [express] PATCH /api/user-identity 200 in 1014ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:27:06.89
+517d6301
+User
+2:27:06 AM [express] GET /api/user-identity 200 in 1025ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:27:11.89
+517d6301
+User
+2:27:11 AM [express] PATCH /api/user-identity 200 in 1032ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:27:13.10
+517d6301
+User
+2:27:13 AM [express] GET /api/user-identity 200 in 1032ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:27:22.46
+517d6301
+User
+2:27:22 AM [express] PATCH /api/user-identity 200 in 1019ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:27:23.67
+517d6301
+User
+2:27:23 AM [express] GET /api/user-identity 200 in 1033ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:27:34.98
+517d6301
+User
+2:27:34 AM [express] PATCH /api/user-identity 200 in 1033ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:27:36.17
+517d6301
+User
+2:27:36 AM [express] GET /api/user-identity 200 in 1011ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:28:17.65
+517d6301
+User
+2:28:17 AM [express] PATCH /api/user-identity 200 in 1061ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:28:18.86
+517d6301
+User
+2:28:18 AM [express] GET /api/user-identity 200 in 1032ms :: {"id":"f34e7bc4-07b0-4c7f-819a-59c0f5348c81","displayName":"nhanle280602","email":"nhanle280602@gmail.com","gender":"female","birthDate":"2002-06-27T15:00:00.000Z"}
+2026-01-28 11:33:22.49
+517d6301
+User
+[PageVisibility] User nhanle280602@gmail.com (role: user) - /admin access: false
