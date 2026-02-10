@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,7 @@ import {
   Lightbulb,
   Download,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { getAuthHeaders } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -99,6 +100,32 @@ export default function GroupMemberDetail() {
   });
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const rerunAnalysisMutation = useMutation({
+    mutationFn: async () => {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/groups/${groupId}/members/${memberId}/rerun-analysis`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ message: "분석 재실행 실패" }));
+        throw new Error(error.message);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "분석 완료", description: "커리어 분석이 성공적으로 완료되었습니다." });
+      queryClient.invalidateQueries({ queryKey: ["group-member-detail", groupId, memberId] });
+      queryClient.invalidateQueries({ queryKey: ["group-analyses"] });
+      queryClient.invalidateQueries({ queryKey: ["group-members-progress"] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "분석 실패", description: error.message, variant: "destructive" });
+    },
+  });
 
   const { data: member, isLoading } = useQuery<MemberDetail>({
     queryKey: ["group-member-detail", groupId, memberId],
@@ -324,28 +351,52 @@ export default function GroupMemberDetail() {
                     분석 {member.analysis ? "완료" : "미완료"}
                   </Badge>
                 </div>
-                {member.analysis && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownloadPdf}
-                    disabled={isDownloadingPdf}
-                    data-testid="button-download-pdf"
-                    className="gap-2"
-                  >
-                    {isDownloadingPdf ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        다운로드 중...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4" />
-                        PDF 다운로드
-                      </>
-                    )}
-                  </Button>
-                )}
+                <div className="flex gap-2">
+                  {member.profile && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => rerunAnalysisMutation.mutate()}
+                      disabled={rerunAnalysisMutation.isPending}
+                      data-testid="button-rerun-analysis"
+                      className="gap-2"
+                    >
+                      {rerunAnalysisMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          분석 중...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-4 w-4" />
+                          {member.analysis ? "분석 재실행" : "분석 실행"}
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  {member.analysis && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownloadPdf}
+                      disabled={isDownloadingPdf}
+                      data-testid="button-download-pdf"
+                      className="gap-2"
+                    >
+                      {isDownloadingPdf ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          다운로드 중...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4" />
+                          PDF 다운로드
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -443,9 +494,33 @@ export default function GroupMemberDetail() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <XCircle className="h-4 w-4" />
-                      <span>커리어 분석이 아직 진행되지 않았습니다</span>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-gray-500">
+                        <XCircle className="h-4 w-4" />
+                        <span>커리어 분석이 아직 진행되지 않았습니다</span>
+                      </div>
+                      {member.profile && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full gap-2"
+                          onClick={() => rerunAnalysisMutation.mutate()}
+                          disabled={rerunAnalysisMutation.isPending}
+                          data-testid="button-run-analysis-card"
+                        >
+                          {rerunAnalysisMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              AI 분석 진행 중...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="h-4 w-4" />
+                              분석 실행하기
+                            </>
+                          )}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </CardContent>

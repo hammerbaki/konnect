@@ -5594,6 +5594,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin/Group Manager: Re-run analysis for a group member's profile
+  app.post('/api/groups/:groupId/members/:memberId/rerun-analysis', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
+
+      const user = await storage.getUser(userId);
+      const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'staff';
+
+      if (!isStaffOrAdmin) {
+        const memberRole = await storage.getGroupMemberRole(req.params.groupId, userId);
+        if (!memberRole || memberRole === 'member') {
+          return res.status(403).json({ message: "권한이 없습니다." });
+        }
+      }
+
+      const targetUserId = req.params.memberId;
+      const isMember = await storage.isGroupMember(req.params.groupId, targetUserId);
+      if (!isMember) {
+        return res.status(404).json({ message: "그룹 멤버를 찾을 수 없습니다." });
+      }
+
+      const group = await storage.getGroup(req.params.groupId);
+      const allowedProfileTypes = (group?.allowedProfileTypes as string[]) || ['general', 'international_university', 'university', 'high', 'middle', 'elementary'];
+      const expandedTypes = [...allowedProfileTypes];
+      if (allowedProfileTypes.includes('international_university') && !allowedProfileTypes.includes('international')) {
+        expandedTypes.push('international');
+      }
+
+      const userProfiles = await storage.getProfilesByUser(targetUserId);
+      const matchingProfile = userProfiles.find((p: any) => expandedTypes.includes(p.type));
+
+      if (!matchingProfile) {
+        return res.status(404).json({ message: "분석할 프로필을 찾을 수 없습니다." });
+      }
+
+      const targetUser = await storage.getUser(targetUserId);
+      const userIdentity = {
+        displayName: targetUser?.displayName || undefined,
+        gender: targetUser?.gender || undefined,
+        birthDate: targetUser?.birthDate || undefined,
+      };
+
+      let analysis;
+
+      if (matchingProfile.type === 'international_university' || matchingProfile.type === 'international') {
+        const result = await generateForeignStudentAnalysis(matchingProfile, userIdentity);
+
+        analysis = await storage.createAnalysis({
+          profileId: matchingProfile.id,
+          summary: result.summary.oneLine,
+          stats: {
+            label1: "취업 준비도",
+            val1: result.fit.score >= 70 ? "높음" : result.fit.score >= 40 ? "보통" : "준비필요",
+            label2: "TOPIK",
+            val2: result.summary.korean.topik || "미입력",
+            label3: "비자",
+            val3: result.summary.visaType || "미입력",
+          },
+          chartData: null,
+          recommendations: {
+            profileType: 'international_university',
+            foreignStudentData: result,
+          },
+          aiRawResponse: result.rawResponse,
+        });
+      } else {
+        const kjobsAssessment = await storage.getLatestCompletedKjobsAssessment(targetUserId);
+        const kjobsTestResult = kjobsAssessment ? {
+          careerDna: kjobsAssessment.careerDna || undefined,
+          scores: kjobsAssessment.scores as Record<string, number> | undefined,
+          facetScores: kjobsAssessment.facetScores as Record<string, number> | undefined,
+          keywords: kjobsAssessment.keywords as string[] | undefined,
+          recommendedJobs: kjobsAssessment.recommendedJobs as Array<{ title: string; matchPercentage: number; keyCompetencies: string[] }> | undefined,
+        } : null;
+
+        const result = await generateCareerAnalysis(matchingProfile, userIdentity, kjobsTestResult);
+
+        analysis = await storage.createAnalysis({
+          profileId: matchingProfile.id,
+          summary: result.summary,
+          stats: result.stats,
+          chartData: null,
+          recommendations: {
+            careers: result.careerRecommendations,
+          },
+          aiRawResponse: result.rawResponse,
+        });
+      }
+
+      await storage.updateProfile(matchingProfile.id, {
+        lastAnalyzed: new Date(),
+      });
+
+      console.log(`[AdminRerunAnalysis] Admin ${user?.email || userId} re-ran analysis for user ${targetUser?.email} (profile ${matchingProfile.id})`);
+      res.status(201).json(analysis);
+    } catch (error: any) {
+      console.error("Error re-running analysis:", error);
+      res.status(500).json({ message: "분석 재실행 중 오류가 발생했습니다.", details: error?.message });
+    }
+  });
+
   // Admin: Get all users' groups (bulk fetch)
   app.get('/api/admin/users/groups/all', isAuthenticated, requireStaffOrAdmin, async (req, res) => {
     try {
