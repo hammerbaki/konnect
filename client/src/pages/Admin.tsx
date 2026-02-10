@@ -1664,11 +1664,11 @@ export default function Admin() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'admin':
-        return <Badge className="bg-red-500 text-white"><Crown className="h-3 w-3 mr-1" />관리자</Badge>;
+        return <Badge className="bg-[#FF5B5B]/10 text-[#FF5B5B] border-0 text-[11px] font-bold px-2 py-0.5 rounded-lg"><Crown className="h-3 w-3 mr-1" />관리자</Badge>;
       case 'staff':
-        return <Badge className="bg-purple-500 text-white"><Shield className="h-3 w-3 mr-1" />스태프</Badge>;
+        return <Badge className="bg-[#7C3AED]/10 text-[#7C3AED] border-0 text-[11px] font-bold px-2 py-0.5 rounded-lg"><Shield className="h-3 w-3 mr-1" />스태프</Badge>;
       default:
-        return <Badge className="bg-gray-500 text-white"><User className="h-3 w-3 mr-1" />일반</Badge>;
+        return <Badge className="bg-[#E5E8EB] text-[#8B95A1] border-0 text-[11px] font-medium px-2 py-0.5 rounded-lg"><User className="h-3 w-3 mr-1" />일반</Badge>;
     }
   };
 
@@ -1750,57 +1750,95 @@ export default function Admin() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="members" className="space-y-4">
-            <div className="flex items-center gap-4">
+          <TabsContent value="members" className="space-y-5">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#8B95A1]" />
                 <Input
                   placeholder="이메일 또는 이름으로 검색..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-[#F2F4F6] border-none rounded-xl h-12"
+                  className="pl-11 bg-white border border-[#E5E8EB] rounded-2xl h-12 text-[#191F28] placeholder:text-[#C4C9D0] focus:border-[#3182F6] focus:ring-2 focus:ring-[#3182F6]/10 transition-all"
                   data-testid="input-search-users"
                 />
               </div>
-              <Badge className="bg-[#3182F6] text-white px-4 py-2">
-                총 {users.length}명
-              </Badge>
-              {isStaffOrAdmin && (
-                <Button
-                  onClick={() => setShowRegisterDialog(true)}
-                  className="bg-[#3182F6] hover:bg-[#1B64DA] text-white rounded-xl h-12 px-6"
-                  data-testid="button-register-user"
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  회원 등록
-                </Button>
-              )}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-[#F2F4F6] rounded-2xl px-4 py-2.5">
+                  <Users className="h-4 w-4 text-[#3182F6]" />
+                  <span className="text-sm font-bold text-[#191F28]">{users.length}</span>
+                  <span className="text-xs text-[#8B95A1]">명</span>
+                </div>
+                {isStaffOrAdmin && (
+                  <Button
+                    onClick={() => setShowRegisterDialog(true)}
+                    className="bg-[#3182F6] hover:bg-[#1B64DA] text-white rounded-2xl h-11 px-5 shadow-sm shadow-blue-500/20 transition-all hover:shadow-md hover:shadow-blue-500/25"
+                    data-testid="button-register-user"
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    회원 등록
+                  </Button>
+                )}
+              </div>
             </div>
 
-            <Card className="toss-card">
-              <CardContent className="p-0">
-                {usersLoading ? (
-                  <div className="p-8 text-center text-[#8B95A1]">로딩 중...</div>
-                ) : searchFilteredUsers.length === 0 ? (
-                  <div className="p-8 text-center text-[#8B95A1]">사용자가 없습니다.</div>
-                ) : (
-                  <div className="divide-y divide-[#F2F4F6]">
-                    {searchFilteredUsers.map((user) => (
-                      <div key={user.id} className="p-4 flex items-center justify-between" data-testid={`row-user-${user.id}`}>
-                        <div
-                          className="flex-1 cursor-pointer hover:bg-[#F2F4F6] rounded-lg p-2 -m-2 transition-colors"
-                          onClick={() => { setSelectedUserForDetail(user.id); setDetailTab("overview"); }}
-                          data-testid={`btn-user-detail-${user.id}`}
-                        >
-                          <p className="font-bold text-[#191F28]">
-                            {user.displayName || user.email || 'Unknown'}
-                          </p>
-                          <p className="text-sm text-[#8B95A1]">{user.email}</p>
-                          <p className="text-xs text-[#8B95A1]">
-                            가입일: {user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}
+            {usersLoading ? (
+              <div className="space-y-3">
+                {[1,2,3].map(i => (
+                  <div key={i} className="bg-white rounded-2xl p-5 shadow-sm animate-pulse">
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-full bg-[#F2F4F6]" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-32 bg-[#F2F4F6] rounded-lg" />
+                        <div className="h-3 w-48 bg-[#F2F4F6] rounded-lg" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : searchFilteredUsers.length === 0 ? (
+              <div className="bg-white rounded-2xl p-12 shadow-sm text-center">
+                <Users className="h-12 w-12 mx-auto mb-3 text-[#C4C9D0]" />
+                <p className="text-[#8B95A1] font-medium">사용자가 없습니다.</p>
+                <p className="text-sm text-[#C4C9D0] mt-1">검색어를 변경해보세요.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {searchFilteredUsers.map((user) => (
+                  <div key={user.id} className="bg-white rounded-2xl shadow-sm border border-[#F2F4F6] hover:border-[#3182F6]/20 hover:shadow-md transition-all duration-200" data-testid={`row-user-${user.id}`}>
+                    <div className="p-5">
+                      <div className="flex items-start gap-4">
+                        <div className="shrink-0">
+                          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#3182F6] to-[#1B64DA] flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                            {(user.displayName || user.email || '?').charAt(0).toUpperCase()}
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <h3 className="font-bold text-[#191F28] text-base truncate">
+                              {user.displayName || user.email || 'Unknown'}
+                            </h3>
+                            {getRoleBadge(user.role)}
+                            {userGroupsCache[user.id]?.slice(0, 2).map((group) => (
+                              <Badge
+                                key={group.id}
+                                className="text-[10px] px-1.5 py-0 h-5 border-0 font-medium"
+                                style={{ backgroundColor: (group.color || '#E5E8EB') + '20', color: group.color || '#8B95A1' }}
+                              >
+                                {group.iconEmoji || '📁'} {group.name}
+                              </Badge>
+                            ))}
+                            {(userGroupsCache[user.id]?.length || 0) > 2 && (
+                              <span className="text-[10px] text-[#8B95A1]">+{(userGroupsCache[user.id]?.length || 0) - 2}</span>
+                            )}
+                          </div>
+                          <p className="text-sm text-[#8B95A1] truncate">{user.email}</p>
+                          <p className="text-xs text-[#C4C9D0] mt-0.5">
+                            가입일 {user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}
                           </p>
                         </div>
-                        <div className="flex items-center gap-4">
+
+                        <div className="flex items-center gap-3 shrink-0">
                           <div className="text-right">
                             {isStaffOrAdmin && editingCredits?.userId === user.id ? (
                               <div className="flex items-center gap-2">
@@ -1808,11 +1846,12 @@ export default function Admin() {
                                   type="number"
                                   value={editingCredits.credits}
                                   onChange={(e) => setEditingCredits({ userId: user.id, credits: parseInt(e.target.value) || 0 })}
-                                  className="w-24 h-8 text-right"
+                                  className="w-24 h-9 text-right rounded-xl border-[#E5E8EB] focus:border-[#3182F6]"
                                   data-testid={`input-credits-${user.id}`}
                                 />
                                 <Button 
-                                  size="sm" 
+                                  size="sm"
+                                  className="h-9 rounded-xl bg-[#3182F6] hover:bg-[#1B64DA] text-white px-3"
                                   onClick={() => updateCreditsMutation.mutate({ userId: user.id, credits: editingCredits.credits })}
                                   data-testid={`button-save-credits-${user.id}`}
                                 >
@@ -1820,147 +1859,160 @@ export default function Admin() {
                                 </Button>
                                 <Button 
                                   size="sm" 
-                                  variant="outline"
+                                  variant="ghost"
+                                  className="h-9 rounded-xl text-[#8B95A1] hover:bg-[#F2F4F6]"
                                   onClick={() => setEditingCredits(null)}
                                 >
                                   취소
                                 </Button>
                               </div>
                             ) : (
-                              <p 
-                                className={`font-bold text-[#3182F6] ${isStaffOrAdmin ? 'cursor-pointer hover:underline' : ''}`}
+                              <div 
+                                className={`flex items-center gap-1.5 bg-[#3182F6]/5 rounded-xl px-3 py-2 ${isStaffOrAdmin ? 'cursor-pointer hover:bg-[#3182F6]/10 transition-colors' : ''}`}
                                 onClick={() => isStaffOrAdmin && setEditingCredits({ userId: user.id, credits: user.credits })}
                                 data-testid={`text-credits-${user.id}`}
                               >
-                                {user.credits.toLocaleString()} 포인트
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {/* Group badges */}
-                            {isStaffOrAdmin && (
-                              <Popover 
-                                open={editingUserGroups === user.id} 
-                                onOpenChange={(open) => setEditingUserGroups(open ? user.id : null)}
-                              >
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 px-2 gap-1 border-dashed"
-                                    data-testid={`button-user-groups-${user.id}`}
-                                  >
-                                    <Users2 className="h-3.5 w-3.5" />
-                                    <span className="text-xs">
-                                      {userGroupsCache[user.id]?.length 
-                                        ? `${userGroupsCache[user.id].length}개 그룹` 
-                                        : "그룹"}
-                                    </span>
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-72 p-3" align="end">
-                                  <div className="space-y-3">
-                                    <div className="font-medium text-sm">그룹 관리</div>
-                                    
-                                    {/* Current groups */}
-                                    <div className="space-y-2">
-                                      <p className="text-xs text-[#8B95A1]">소속 그룹</p>
-                                      {userGroupsCache[user.id]?.length ? (
-                                        <div className="flex flex-wrap gap-1">
-                                          {userGroupsCache[user.id].map((group) => (
-                                            <Badge
-                                              key={group.id}
-                                              className="pl-2 pr-1 py-0.5 flex items-center gap-1 text-xs"
-                                              style={{ backgroundColor: group.color || '#E5E8EB', color: '#191F28' }}
-                                            >
-                                              {group.iconEmoji || '📁'} {group.name}
-                                              <button
-                                                onClick={() => handleRemoveFromGroup(user.id, group.id)}
-                                                className="ml-1 hover:bg-black/10 rounded p-0.5"
-                                                disabled={loadingGroupActions.has(`remove-${user.id}-${group.id}`)}
-                                              >
-                                                {loadingGroupActions.has(`remove-${user.id}-${group.id}`) ? (
-                                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                                ) : (
-                                                  <X className="h-3 w-3" />
-                                                )}
-                                              </button>
-                                            </Badge>
-                                          ))}
-                                        </div>
-                                      ) : (
-                                        <p className="text-xs text-[#8B95A1] italic">소속된 그룹이 없습니다</p>
-                                      )}
-                                    </div>
-                                    
-                                    {/* Add to group */}
-                                    {allGroups.filter(g => !userGroupsCache[user.id]?.some(ug => ug.id === g.id)).length > 0 && (
-                                      <div className="space-y-2 border-t pt-2">
-                                        <p className="text-xs text-[#8B95A1]">그룹 추가</p>
-                                        <div className="flex flex-wrap gap-1">
-                                          {allGroups
-                                            .filter(g => !userGroupsCache[user.id]?.some(ug => ug.id === g.id))
-                                            .map((group) => {
-                                              const isLoading = loadingGroupActions.has(`add-${user.id}-${group.id}`);
-                                              return (
-                                                <Badge
-                                                  key={group.id}
-                                                  className={`cursor-pointer hover:opacity-80 text-xs flex items-center gap-1 ${isLoading ? 'opacity-70' : ''}`}
-                                                  style={{ backgroundColor: group.color || '#E5E8EB', color: '#191F28' }}
-                                                  onClick={() => !isLoading && handleAddToGroup(user.id, group.id)}
-                                                >
-                                                  {isLoading ? (
-                                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                                  ) : (
-                                                    '+'
-                                                  )}
-                                                  {group.iconEmoji || '📁'} {group.name}
-                                                </Badge>
-                                              );
-                                            })}
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            )}
-                            {getRoleBadge(user.role)}
-                            {(isAdmin || isStaff) ? (
-                              <Select
-                                value={user.role}
-                                onValueChange={(role) => updateRoleMutation.mutate({ userId: user.id, role })}
-                                disabled={!isAdmin && user.role === 'admin'}
-                              >
-                                <SelectTrigger className="w-24 h-8" data-testid={`select-role-${user.id}`}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="user">일반</SelectItem>
-                                  <SelectItem value="staff">스태프</SelectItem>
-                                  {isAdmin && <SelectItem value="admin">관리자</SelectItem>}
-                                </SelectContent>
-                              </Select>
-                            ) : null}
-                            {isAdmin && user.id !== currentUser?.id && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                onClick={() => setUserToDelete(user)}
-                                data-testid={`button-delete-user-${user.id}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                                <Coins className="h-3.5 w-3.5 text-[#3182F6]" />
+                                <span className="font-bold text-[#3182F6] text-sm">{user.credits.toLocaleString()}</span>
+                                <span className="text-xs text-[#3182F6]/60">P</span>
+                              </div>
                             )}
                           </div>
                         </div>
                       </div>
-                    ))}
+
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#F2F4F6]">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {(isAdmin || isStaff) && (
+                            <Select
+                              value={user.role}
+                              onValueChange={(role) => updateRoleMutation.mutate({ userId: user.id, role })}
+                              disabled={!isAdmin && user.role === 'admin'}
+                            >
+                              <SelectTrigger className="w-[110px] h-9 rounded-xl border-[#E5E8EB] text-sm" data-testid={`select-role-${user.id}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="user">일반</SelectItem>
+                                <SelectItem value="staff">스태프</SelectItem>
+                                {isAdmin && <SelectItem value="admin">관리자</SelectItem>}
+                              </SelectContent>
+                            </Select>
+                          )}
+                          {isStaffOrAdmin && (
+                            <Popover 
+                              open={editingUserGroups === user.id} 
+                              onOpenChange={(open) => setEditingUserGroups(open ? user.id : null)}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9 px-3 gap-1.5 rounded-xl border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6] hover:border-[#3182F6]/30 transition-colors"
+                                  data-testid={`button-user-groups-${user.id}`}
+                                >
+                                  <Users2 className="h-3.5 w-3.5" />
+                                  <span className="text-xs font-medium">
+                                    {userGroupsCache[user.id]?.length 
+                                      ? `그룹 ${userGroupsCache[user.id].length}` 
+                                      : "그룹"}
+                                  </span>
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-72 p-4 rounded-2xl shadow-lg border-[#E5E8EB]" align="end">
+                                <div className="space-y-3">
+                                  <div className="font-bold text-sm text-[#191F28]">그룹 관리</div>
+                                  
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-medium text-[#8B95A1]">소속 그룹</p>
+                                    {userGroupsCache[user.id]?.length ? (
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {userGroupsCache[user.id].map((group) => (
+                                          <Badge
+                                            key={group.id}
+                                            className="pl-2 pr-1 py-0.5 flex items-center gap-1 text-xs rounded-lg"
+                                            style={{ backgroundColor: group.color || '#E5E8EB', color: '#191F28' }}
+                                          >
+                                            {group.iconEmoji || '📁'} {group.name}
+                                            <button
+                                              onClick={() => handleRemoveFromGroup(user.id, group.id)}
+                                              className="ml-1 hover:bg-black/10 rounded p-0.5"
+                                              disabled={loadingGroupActions.has(`remove-${user.id}-${group.id}`)}
+                                            >
+                                              {loadingGroupActions.has(`remove-${user.id}-${group.id}`) ? (
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                              ) : (
+                                                <X className="h-3 w-3" />
+                                              )}
+                                            </button>
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p className="text-xs text-[#C4C9D0]">소속된 그룹이 없습니다</p>
+                                    )}
+                                  </div>
+                                  
+                                  {allGroups.filter(g => !userGroupsCache[user.id]?.some(ug => ug.id === g.id)).length > 0 && (
+                                    <div className="space-y-2 border-t border-[#F2F4F6] pt-3">
+                                      <p className="text-xs font-medium text-[#8B95A1]">그룹 추가</p>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {allGroups
+                                          .filter(g => !userGroupsCache[user.id]?.some(ug => ug.id === g.id))
+                                          .map((group) => {
+                                            const isLoading = loadingGroupActions.has(`add-${user.id}-${group.id}`);
+                                            return (
+                                              <Badge
+                                                key={group.id}
+                                                className={`cursor-pointer hover:opacity-80 text-xs flex items-center gap-1 rounded-lg transition-opacity ${isLoading ? 'opacity-70' : ''}`}
+                                                style={{ backgroundColor: group.color || '#E5E8EB', color: '#191F28' }}
+                                                onClick={() => !isLoading && handleAddToGroup(user.id, group.id)}
+                                              >
+                                                {isLoading ? (
+                                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                  '+'
+                                                )}
+                                                {group.iconEmoji || '📁'} {group.name}
+                                              </Badge>
+                                            );
+                                          })}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                          {isAdmin && user.id !== currentUser?.id && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-9 w-9 p-0 rounded-xl text-[#C4C9D0] hover:text-red-500 hover:bg-red-50 transition-colors"
+                              onClick={() => setUserToDelete(user)}
+                              data-testid={`button-delete-user-${user.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 px-4 rounded-xl text-[#3182F6] hover:bg-[#3182F6]/5 font-medium text-sm gap-1.5 transition-colors"
+                          onClick={() => { setSelectedUserForDetail(user.id); setDetailTab("overview"); }}
+                          data-testid={`btn-user-detail-${user.id}`}
+                        >
+                          자세히 보기
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="monitor" className="space-y-6">
