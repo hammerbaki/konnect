@@ -4007,31 +4007,33 @@ export default function Admin() {
       </AlertDialog>
 
       <Dialog open={!!selectedUserForDetail} onOpenChange={(open) => { if (!open) { setSelectedUserForDetail(null); setDetailTab("overview"); } }}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col" data-testid="modal-user-detail">
-          <DialogHeader>
-            <DialogTitle className="text-[#191F28]">
-              {userDetail?.user?.displayName || userDetail?.user?.email || '사용자 상세'}
-            </DialogTitle>
-            <DialogDescription className="text-[#8B95A1]">
-              {userDetail?.user?.email || '사용자 정보를 불러오는 중...'}
-            </DialogDescription>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 rounded-2xl border border-[#F2F4F6] shadow-lg" data-testid="modal-user-detail">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{userDetail?.user?.displayName || '사용자 상세'}</DialogTitle>
+            <DialogDescription>{userDetail?.user?.email || ''}</DialogDescription>
           </DialogHeader>
 
           {userDetailLoading ? (
-            <div className="space-y-4 p-4">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-4 w-64" />
-              <div className="grid grid-cols-3 gap-4">
-                <Skeleton className="h-24" />
-                <Skeleton className="h-24" />
-                <Skeleton className="h-24" />
+            <div className="p-8 space-y-5">
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-[#F2F4F6] animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 w-40 bg-[#F2F4F6] rounded-xl animate-pulse" />
+                  <div className="h-4 w-56 bg-[#F2F4F6] rounded-xl animate-pulse" />
+                </div>
               </div>
-              <Skeleton className="h-32" />
+              <div className="grid grid-cols-4 gap-3">
+                {[1,2,3,4].map(i => <div key={i} className="h-20 bg-[#F2F4F6] rounded-2xl animate-pulse" />)}
+              </div>
+              <div className="h-40 bg-[#F2F4F6] rounded-2xl animate-pulse" />
             </div>
           ) : userDetailError ? (
-            <div className="p-8 text-center text-[#8B95A1]">
-              <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-red-400" />
-              <p>사용자 정보를 불러오는 중 오류가 발생했습니다.</p>
+            <div className="p-12 text-center">
+              <div className="h-16 w-16 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
+                <AlertTriangle className="h-8 w-8 text-red-400" />
+              </div>
+              <p className="text-[#191F28] font-medium mb-1">정보를 불러올 수 없습니다</p>
+              <p className="text-sm text-[#8B95A1]">잠시 후 다시 시도해주세요.</p>
             </div>
           ) : userDetail ? (
             (() => {
@@ -4078,15 +4080,15 @@ export default function Admin() {
               };
               const renderField = (label: string, value: any) => {
                 if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
-                  return (<div><p className="text-xs text-[#8B95A1]">{label}</p><p className="text-sm text-[#C4C9D0]">미입력</p></div>);
+                  return (<div className="py-1"><p className="text-[11px] text-[#8B95A1] font-medium">{label}</p><p className="text-sm text-[#C4C9D0]">미입력</p></div>);
                 }
                 const displayValue = Array.isArray(value) ? value.join(', ') : typeof value === 'boolean' ? (value ? '예' : '아니오') : typeof value === 'object' ? JSON.stringify(value) : String(value);
-                return (<div><p className="text-xs text-[#8B95A1]">{label}</p><p className="text-sm text-[#191F28] break-words">{displayValue}</p></div>);
+                return (<div className="py-1"><p className="text-[11px] text-[#8B95A1] font-medium">{label}</p><p className="text-sm text-[#191F28] break-words leading-relaxed">{displayValue}</p></div>);
               };
               const renderFieldSection = (title: string, fields: Array<{label: string, value: any}>) => (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider">{title}</p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider">{title}</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 bg-[#F8F9FA] rounded-xl p-3">
                     {fields.map((f, i) => <div key={i}>{renderField(f.label, f.value)}</div>)}
                   </div>
                 </div>
@@ -4326,7 +4328,45 @@ export default function Admin() {
                 return sections;
               };
               return (<>
-              <div className="flex gap-1 border-b border-[#F2F4F6] overflow-x-auto flex-shrink-0">
+              <div className="bg-white border-b border-[#F2F4F6] px-6 pt-6 pb-5 flex-shrink-0">
+                <div className="flex items-start gap-4">
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#3182F6] to-[#1B64DA] flex items-center justify-center text-white font-bold text-xl">
+                    {(userDetail.user.displayName || userDetail.user.email || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg font-bold text-[#191F28] truncate">
+                      {userDetail.user.displayName || `${userDetail.user.firstName || ''} ${userDetail.user.lastName || ''}`.trim() || '이름 없음'}
+                    </h2>
+                    <p className="text-[#8B95A1] text-sm truncate">{userDetail.user.email || '-'}</p>
+                    <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                      {getRoleBadge(userDetail.user.role)}
+                      <Badge className="bg-[#F2F4F6] text-[#4E5968] border-0 text-[11px] px-2 py-0.5 rounded-lg">
+                        {userDetail.user.gender === 'male' ? '남성' : userDetail.user.gender === 'female' ? '여성' : '-'}
+                      </Badge>
+                      <Badge className="bg-[#F2F4F6] text-[#4E5968] border-0 text-[11px] px-2 py-0.5 rounded-lg">
+                        가입 {userDetail.user.createdAt ? new Date(userDetail.user.createdAt).toLocaleDateString('ko-KR') : '-'}
+                      </Badge>
+                      {userDetail.user.birthDate && (
+                        <Badge className="bg-[#F2F4F6] text-[#4E5968] border-0 text-[11px] px-2 py-0.5 rounded-lg">
+                          {new Date(userDetail.user.birthDate).toLocaleDateString('ko-KR')}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <div className="bg-[#EFF6FF] rounded-2xl px-4 py-2.5 text-center min-w-[72px]">
+                      <p className="text-lg font-bold text-[#3182F6]">{(userDetail.user.credits || 0).toLocaleString()}</p>
+                      <p className="text-[10px] text-[#8B95A1] font-medium">포인트</p>
+                    </div>
+                    <div className="bg-[#F3EEFF] rounded-2xl px-4 py-2.5 text-center min-w-[72px]">
+                      <p className="text-lg font-bold text-[#7C3AED]">{(userDetail.user.giftPoints || 0).toLocaleString()}</p>
+                      <p className="text-[10px] text-[#8B95A1] font-medium">기프트 P</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-1 px-4 pt-1 bg-white border-b border-[#F2F4F6] overflow-x-auto flex-shrink-0">
                 {[
                   { key: "overview", label: "개요", icon: <User className="h-3.5 w-3.5" /> },
                   { key: "profiles", label: "프로필", icon: <Briefcase className="h-3.5 w-3.5" /> },
@@ -4339,10 +4379,10 @@ export default function Admin() {
                   <button
                     key={tab.key}
                     onClick={() => setDetailTab(tab.key)}
-                    className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                    className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
                       detailTab === tab.key
                         ? "border-[#3182F6] text-[#3182F6]"
-                        : "border-transparent text-[#8B95A1] hover:text-[#191F28]"
+                        : "border-transparent text-[#8B95A1] hover:text-[#4E5968]"
                     }`}
                     data-testid={`tab-detail-${tab.key}`}
                   >
@@ -4352,113 +4392,72 @@ export default function Admin() {
                 ))}
               </div>
 
-              <div className="overflow-y-auto flex-1" style={{ maxHeight: "calc(85vh - 200px)" }}>
+              <div className="overflow-y-auto flex-1 bg-[#F8F9FA]" style={{ maxHeight: "calc(90vh - 280px)" }}>
                 {detailTab === "overview" && (
-                  <div className="space-y-6 p-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs text-[#8B95A1]">이름</p>
-                          <p className="font-medium text-[#191F28]">{userDetail.user.displayName || `${userDetail.user.firstName || ''} ${userDetail.user.lastName || ''}`.trim() || '-'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#8B95A1]">이메일</p>
-                          <p className="font-medium text-[#191F28]">{userDetail.user.email || '-'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#8B95A1]">역할</p>
-                          <Badge className={userDetail.user.role === 'admin' ? 'bg-red-100 text-red-700' : userDetail.user.role === 'staff' ? 'bg-purple-100 text-purple-700' : 'bg-[#F2F4F6] text-[#191F28]'}>
-                            {userDetail.user.role === 'admin' ? '관리자' : userDetail.user.role === 'staff' ? '스태프' : '일반'}
-                          </Badge>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#8B95A1]">성별</p>
-                          <p className="font-medium text-[#191F28]">{userDetail.user.gender === 'male' ? '남성' : userDetail.user.gender === 'female' ? '여성' : userDetail.user.gender || '-'}</p>
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs text-[#8B95A1]">포인트</p>
-                          <p className="font-bold text-[#3182F6]">{(userDetail.user.credits || 0).toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#8B95A1]">기프트 포인트</p>
-                          <p className="font-bold text-[#7C3AED]">{(userDetail.user.giftPoints || 0).toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#8B95A1]">생년월일</p>
-                          <p className="font-medium text-[#191F28]">{userDetail.user.birthDate ? new Date(userDetail.user.birthDate).toLocaleDateString('ko-KR') : '-'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#8B95A1]">가입일</p>
-                          <p className="font-medium text-[#191F28]">{userDetail.user.createdAt ? new Date(userDetail.user.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-semibold text-[#191F28] mb-3">활동 요약</p>
-                      <div className="grid grid-cols-3 gap-3">
-                        {[
-                          { key: "profiles", label: "프로필", count: userDetail.profiles?.length || 0, icon: <Briefcase className="h-4 w-4 text-[#3182F6]" /> },
-                          { key: "analyses", label: "분석", count: userDetail.analyses?.length || 0, icon: <BarChart3 className="h-4 w-4 text-[#059669]" /> },
-                          { key: "essays", label: "자기소개서", count: userDetail.essays?.length || 0, icon: <FileText className="h-4 w-4 text-[#D97706]" /> },
-                          { key: "kompass", label: "목표관리", count: userDetail.kompass?.length || 0, icon: <Target className="h-4 w-4 text-[#7C3AED]" /> },
-                          { key: "interviews", label: "면접", count: userDetail.interviews?.length || 0, icon: <Mic className="h-4 w-4 text-[#EC4899]" /> },
-                          { key: "assessments", label: "진로진단", count: userDetail.assessments?.length || 0, icon: <ClipboardList className="h-4 w-4 text-[#6B7280]" /> },
-                        ].map((item) => (
-                          <button
-                            key={item.key}
-                            onClick={() => setDetailTab(item.key)}
-                            className="flex items-center gap-3 p-3 rounded-lg bg-[#F2F4F6] hover:bg-[#E5E8EB] transition-colors text-left"
-                            data-testid={`card-count-${item.key}`}
-                          >
+                  <div className="p-5 space-y-4">
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                      {[
+                        { key: "profiles", label: "프로필", count: userDetail.profiles?.length || 0, color: "#3182F6", icon: <Briefcase className="h-4 w-4" /> },
+                        { key: "analyses", label: "분석", count: userDetail.analyses?.length || 0, color: "#059669", icon: <BarChart3 className="h-4 w-4" /> },
+                        { key: "essays", label: "자기소개서", count: userDetail.essays?.length || 0, color: "#D97706", icon: <FileText className="h-4 w-4" /> },
+                        { key: "kompass", label: "목표관리", count: userDetail.kompass?.length || 0, color: "#7C3AED", icon: <Target className="h-4 w-4" /> },
+                        { key: "interviews", label: "면접", count: userDetail.interviews?.length || 0, color: "#EC4899", icon: <Mic className="h-4 w-4" /> },
+                        { key: "assessments", label: "진로진단", count: userDetail.assessments?.length || 0, color: "#6B7280", icon: <ClipboardList className="h-4 w-4" /> },
+                      ].map((item) => (
+                        <button
+                          key={item.key}
+                          onClick={() => setDetailTab(item.key)}
+                          className="bg-white rounded-2xl p-3 hover:shadow-md transition-all duration-200 text-center group border border-[#F2F4F6] hover:border-transparent"
+                          data-testid={`card-count-${item.key}`}
+                        >
+                          <div className="mx-auto mb-2 h-8 w-8 rounded-xl flex items-center justify-center transition-colors" style={{ backgroundColor: item.color + '10', color: item.color }}>
                             {item.icon}
-                            <div>
-                              <p className="text-lg font-bold text-[#191F28]">{item.count}</p>
-                              <p className="text-xs text-[#8B95A1]">{item.label}</p>
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-[#8B95A1] ml-auto" />
-                          </button>
-                        ))}
-                      </div>
+                          </div>
+                          <p className="text-xl font-bold text-[#191F28]">{item.count}</p>
+                          <p className="text-[10px] text-[#8B95A1] font-medium">{item.label}</p>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
 
                 {detailTab === "profiles" && (
-                  <div className="p-4 space-y-3">
+                  <div className="p-5 space-y-3">
                     {(!userDetail.profiles || userDetail.profiles.length === 0) ? (
-                      <div className="text-center py-12 text-[#8B95A1]">
-                        <Briefcase className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                        <p>등록된 프로필이 없습니다.</p>
+                      <div className="text-center py-16">
+                        <div className="h-14 w-14 mx-auto mb-3 rounded-2xl bg-[#3182F6]/5 flex items-center justify-center">
+                          <Briefcase className="h-7 w-7 text-[#3182F6]/30" />
+                        </div>
+                        <p className="text-[#8B95A1] font-medium">등록된 프로필이 없습니다.</p>
                       </div>
                     ) : userDetail.profiles.map((profile: any) => {
                       const isExpanded = expandedItems.has(`profile-${profile.id}`);
                       const sections = renderProfileFields(profile);
                       return (
-                        <div key={profile.id} className="rounded-lg border border-[#F2F4F6] hover:border-[#3182F6]/30 transition-colors" data-testid={`profile-item-${profile.id}`}>
+                        <div key={profile.id} className="bg-white rounded-2xl border border-[#F2F4F6] hover:border-[#3182F6]/20 hover:shadow-md transition-all duration-200" data-testid={`profile-item-${profile.id}`}>
                           <button
-                            className="w-full p-4 flex items-center justify-between text-left"
+                            className="w-full px-5 py-4 flex items-center justify-between text-left"
                             onClick={() => toggleExpanded(`profile-${profile.id}`)}
                             data-testid={`button-expand-profile-${profile.id}`}
                           >
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-xs">
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                              <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-[11px] font-bold px-2.5 py-0.5 rounded-lg">
                                 {getProfileTypeBadge(profile.type)}
                               </Badge>
-                              <p className="font-semibold text-[#191F28]">{profile.title || '제목 없음'}</p>
+                              <p className="font-bold text-[#191F28]">{profile.title || '제목 없음'}</p>
                             </div>
                             <div className="flex items-center gap-3">
-                              <div className="text-right text-xs text-[#8B95A1]">
-                                {profile.lastAnalyzed && <p>최근 분석: {new Date(profile.lastAnalyzed).toLocaleDateString('ko-KR')}</p>}
-                                <p>생성: {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                              <div className="text-right text-xs text-[#C4C9D0] space-y-0.5">
+                                {profile.lastAnalyzed && <p>분석 {new Date(profile.lastAnalyzed).toLocaleDateString('ko-KR')}</p>}
+                                <p>생성 {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
                               </div>
-                              {isExpanded ? <ChevronUp className="h-4 w-4 text-[#8B95A1]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                              <div className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors ${isExpanded ? 'bg-[#3182F6]/10' : 'bg-[#F2F4F6]'}`}>
+                                {isExpanded ? <ChevronUp className="h-4 w-4 text-[#3182F6]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                              </div>
                             </div>
                           </button>
                           {isExpanded && (
-                            <div className="px-4 pb-4 space-y-4 border-t border-[#F2F4F6] pt-3" data-testid={`profile-detail-${profile.id}`}>
+                            <div className="px-5 pb-5 space-y-4 border-t border-[#F2F4F6] pt-4" data-testid={`profile-detail-${profile.id}`}>
                               {sections.map((section, idx) => (
                                 <div key={idx}>{renderFieldSection(section.title, section.fields)}</div>
                               ))}
@@ -4474,11 +4473,13 @@ export default function Admin() {
                 )}
 
                 {detailTab === "analyses" && (
-                  <div className="p-4 space-y-3">
+                  <div className="p-5 space-y-3">
                     {(!userDetail.analyses || userDetail.analyses.length === 0) ? (
-                      <div className="text-center py-12 text-[#8B95A1]">
-                        <BarChart3 className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                        <p>진행된 분석이 없습니다.</p>
+                      <div className="text-center py-16">
+                        <div className="h-14 w-14 mx-auto mb-3 rounded-2xl bg-[#059669]/5 flex items-center justify-center">
+                          <BarChart3 className="h-7 w-7 text-[#059669]/30" />
+                        </div>
+                        <p className="text-[#8B95A1] font-medium">진행된 분석이 없습니다.</p>
                       </div>
                     ) : userDetail.analyses.map((analysis: any) => {
                       const isExpanded = expandedItems.has(`analysis-${analysis.id}`);
@@ -4487,41 +4488,43 @@ export default function Admin() {
                       const foreignData = rec.foreignStudentData;
                       const careers = rec.careers;
                       return (
-                        <div key={analysis.id} className="rounded-lg border border-[#F2F4F6]" data-testid={`analysis-item-${analysis.id}`}>
+                        <div key={analysis.id} className="bg-white rounded-2xl border border-[#F2F4F6] hover:border-[#059669]/20 hover:shadow-md transition-all duration-200" data-testid={`analysis-item-${analysis.id}`}>
                           <button
-                            className="w-full p-4 flex items-center justify-between text-left"
+                            className="w-full px-5 py-4 flex items-center justify-between text-left"
                             onClick={() => toggleExpanded(`analysis-${analysis.id}`)}
                             data-testid={`button-expand-analysis-${analysis.id}`}
                           >
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <Badge className="bg-[#059669]/10 text-[#059669] border-0 text-xs">{analysis.profileName || '프로필'}</Badge>
-                                {ai.desiredJob && <span className="text-sm text-[#191F28]">{ai.desiredJob}</span>}
+                            <div className="space-y-1 min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge className="bg-[#059669]/10 text-[#059669] border-0 text-[11px] font-bold px-2.5 py-0.5 rounded-lg">{analysis.profileName || '프로필'}</Badge>
+                                {ai.desiredJob && <span className="text-sm font-medium text-[#191F28]">{ai.desiredJob}</span>}
                               </div>
                               {ai.summary && <p className="text-xs text-[#8B95A1] line-clamp-1">{typeof ai.summary === 'string' ? ai.summary.slice(0, 100) + '...' : ''}</p>}
                             </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs text-[#8B95A1] whitespace-nowrap">
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className="text-xs text-[#C4C9D0] whitespace-nowrap">
                                 {analysis.analysisDate ? new Date(analysis.analysisDate).toLocaleDateString('ko-KR') : analysis.createdAt ? new Date(analysis.createdAt).toLocaleDateString('ko-KR') : '-'}
                               </span>
-                              {isExpanded ? <ChevronUp className="h-4 w-4 text-[#8B95A1]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                              <div className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors ${isExpanded ? 'bg-[#059669]/10' : 'bg-[#F2F4F6]'}`}>
+                                {isExpanded ? <ChevronUp className="h-4 w-4 text-[#059669]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                              </div>
                             </div>
                           </button>
                           {isExpanded && (
-                            <div className="px-4 pb-4 space-y-4 border-t border-[#F2F4F6] pt-3" data-testid={`analysis-detail-${analysis.id}`}>
+                            <div className="px-5 pb-5 space-y-4 border-t border-[#F2F4F6] pt-4" data-testid={`analysis-detail-${analysis.id}`}>
                               {ai.summary && (
-                                <div>
-                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">요약</p>
-                                  <p className="text-sm text-[#191F28] whitespace-pre-wrap">{typeof ai.summary === 'string' ? ai.summary : JSON.stringify(ai.summary, null, 2)}</p>
+                                <div className="bg-[#F8F9FA] rounded-2xl p-4">
+                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">요약</p>
+                                  <p className="text-sm text-[#191F28] whitespace-pre-wrap leading-relaxed">{typeof ai.summary === 'string' ? ai.summary : JSON.stringify(ai.summary, null, 2)}</p>
                                 </div>
                               )}
                               {analysis.stats && (
                                 <div>
-                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">통계</p>
+                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">통계</p>
                                   <div className="grid grid-cols-3 gap-2">
                                     {Object.entries(analysis.stats as Record<string, any>).map(([k, v]) => (
-                                      <div key={k} className="bg-[#F2F4F6] rounded-lg p-2 text-center">
-                                        <p className="text-xs text-[#8B95A1]">{k}</p>
+                                      <div key={k} className="bg-[#F8F9FA] rounded-xl p-3 text-center">
+                                        <p className="text-[10px] text-[#8B95A1] font-medium">{k}</p>
                                         <p className="text-sm font-bold text-[#191F28]">{String(v)}</p>
                                       </div>
                                     ))}
@@ -4530,8 +4533,8 @@ export default function Admin() {
                               )}
                               {ai.overallFit && renderFieldSection('적합도', [{ label: '전체 적합도', value: ai.overallFit }])}
                               {foreignData && (
-                                <div className="space-y-3">
-                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider">외국인 유학생 분석</p>
+                                <div className="space-y-3 bg-[#FFFBEB] rounded-2xl p-4">
+                                  <p className="text-[11px] font-bold text-[#D97706] uppercase tracking-wider">외국인 유학생 분석</p>
                                   {renderFieldSection('적합도', [
                                     { label: '적합 점수', value: foreignData.fitScore },
                                     { label: '적합 이유', value: foreignData.fitReasons },
@@ -4547,27 +4550,29 @@ export default function Admin() {
                                     { label: '중기', value: foreignData.actionPlan.midTerm || foreignData.actionPlan.mid },
                                     { label: '장기', value: foreignData.actionPlan.longTerm || foreignData.actionPlan.long },
                                   ])}
-                                  {foreignData.visaWarning && renderField('비자 경고', foreignData.visaWarning)}
+                                  {foreignData.visaWarning && (
+                                    <div className="bg-[#FEF2F2] rounded-xl p-3">{renderField('비자 경고', foreignData.visaWarning)}</div>
+                                  )}
                                   {foreignData.dataGaps && renderField('데이터 누락', foreignData.dataGaps)}
                                 </div>
                               )}
                               {careers?.length > 0 && (
                                 <div className="space-y-2">
-                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider">추천 직업</p>
+                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider">추천 직업</p>
                                   {careers.map((career: any, idx: number) => (
-                                    <div key={idx} className="bg-[#F2F4F6] rounded-lg p-3 space-y-1">
-                                      <p className="text-sm font-semibold text-[#191F28]">{career.title || career.name || `직업 ${idx + 1}`}</p>
-                                      {career.fitScore && <p className="text-xs text-[#059669]">적합도: {career.fitScore}</p>}
-                                      {career.reason && <p className="text-xs text-[#8B95A1]">{career.reason}</p>}
-                                      {career.description && <p className="text-xs text-[#8B95A1]">{career.description}</p>}
+                                    <div key={idx} className="bg-[#F8F9FA] rounded-xl p-3.5 space-y-1">
+                                      <p className="text-sm font-bold text-[#191F28]">{career.title || career.name || `직업 ${idx + 1}`}</p>
+                                      {career.fitScore && <p className="text-xs font-medium text-[#059669]">적합도: {career.fitScore}</p>}
+                                      {career.reason && <p className="text-xs text-[#8B95A1] leading-relaxed">{career.reason}</p>}
+                                      {career.description && <p className="text-xs text-[#8B95A1] leading-relaxed">{career.description}</p>}
                                     </div>
                                   ))}
                                 </div>
                               )}
                               {analysis.aiRawResponse && typeof analysis.aiRawResponse === 'string' && (
                                 <div>
-                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">AI 원문 (발췌)</p>
-                                  <div className="bg-[#F8F9FA] rounded-lg p-3 max-h-32 overflow-y-auto">
+                                  <p className="text-[11px] font-bold text-[#C4C9D0] uppercase tracking-wider mb-2">AI 원문 (발췌)</p>
+                                  <div className="bg-[#F8F9FA] rounded-xl p-3 max-h-32 overflow-y-auto">
                                     <p className="text-xs text-[#8B95A1] whitespace-pre-wrap font-mono">{analysis.aiRawResponse.slice(0, 500)}{analysis.aiRawResponse.length > 500 ? '...' : ''}</p>
                                   </div>
                                 </div>
@@ -4581,35 +4586,37 @@ export default function Admin() {
                 )}
 
                 {detailTab === "essays" && (
-                  <div className="p-4 space-y-3">
+                  <div className="p-5 space-y-3">
                     {(!userDetail.essays || userDetail.essays.length === 0) ? (
-                      <div className="text-center py-12 text-[#8B95A1]">
-                        <FileText className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                        <p>작성된 자기소개서가 없습니다.</p>
+                      <div className="text-center py-16">
+                        <div className="h-14 w-14 mx-auto mb-3 rounded-2xl bg-[#D97706]/5 flex items-center justify-center">
+                          <FileText className="h-7 w-7 text-[#D97706]/30" />
+                        </div>
+                        <p className="text-[#8B95A1] font-medium">작성된 자기소개서가 없습니다.</p>
                       </div>
                     ) : userDetail.essays.map((essay: any) => (
-                      <div key={essay.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`essay-item-${essay.id}`}>
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <Badge className="bg-[#D97706]/10 text-[#D97706] border-0 text-xs">{essay.profileName || '프로필'}</Badge>
-                          {essay.essayType && <Badge variant="outline" className="text-xs">{essay.essayType}</Badge>}
-                          {essay.category && <Badge variant="outline" className="text-xs">{essay.category}</Badge>}
-                          {essay.topic && <Badge variant="outline" className="text-xs bg-[#F2F4F6]">{essay.topic}</Badge>}
-                          {essay.content && <span className="text-xs text-[#8B95A1] ml-auto">{essay.content.length}자</span>}
+                      <div key={essay.id} className="bg-white rounded-2xl border border-[#F2F4F6] p-5" data-testid={`essay-item-${essay.id}`}>
+                        <div className="flex items-center gap-2 mb-3 flex-wrap">
+                          <Badge className="bg-[#D97706]/10 text-[#D97706] border-0 text-[11px] font-bold px-2.5 py-0.5 rounded-lg">{essay.profileName || '프로필'}</Badge>
+                          {essay.essayType && <Badge className="bg-[#F2F4F6] text-[#4E5968] border-0 text-[11px] px-2 py-0.5 rounded-lg">{essay.essayType}</Badge>}
+                          {essay.category && <Badge className="bg-[#F2F4F6] text-[#4E5968] border-0 text-[11px] px-2 py-0.5 rounded-lg">{essay.category}</Badge>}
+                          {essay.topic && <Badge className="bg-[#F2F4F6] text-[#4E5968] border-0 text-[11px] px-2 py-0.5 rounded-lg">{essay.topic}</Badge>}
+                          {essay.content && <span className="text-[11px] text-[#C4C9D0] ml-auto font-medium">{essay.content.length}자</span>}
                         </div>
-                        {essay.title && <p className="text-sm font-semibold text-[#191F28] mb-1">{essay.title}</p>}
-                        <div className="bg-[#F8F9FA] rounded-lg p-3 max-h-48 overflow-y-auto mb-2" data-testid={`essay-content-${essay.id}`}>
-                          <p className="text-sm text-[#191F28] whitespace-pre-wrap">{essay.content || '내용 없음'}</p>
+                        {essay.title && <p className="text-sm font-bold text-[#191F28] mb-2">{essay.title}</p>}
+                        <div className="bg-[#F8F9FA] rounded-xl p-4 max-h-48 overflow-y-auto mb-3" data-testid={`essay-content-${essay.id}`}>
+                          <p className="text-sm text-[#4E5968] whitespace-pre-wrap leading-relaxed">{essay.content || '내용 없음'}</p>
                         </div>
                         {essay.aiResult && (
-                          <div className="bg-[#EFF6FF] rounded-lg p-3 max-h-32 overflow-y-auto mb-2">
-                            <p className="text-xs font-semibold text-[#3182F6] mb-1">AI 결과</p>
-                            <p className="text-xs text-[#191F28] whitespace-pre-wrap">{typeof essay.aiResult === 'string' ? essay.aiResult : JSON.stringify(essay.aiResult, null, 2)}</p>
+                          <div className="bg-[#EFF6FF] rounded-xl p-4 max-h-32 overflow-y-auto mb-3">
+                            <p className="text-[11px] font-bold text-[#3182F6] mb-1.5">AI 결과</p>
+                            <p className="text-xs text-[#191F28] whitespace-pre-wrap leading-relaxed">{typeof essay.aiResult === 'string' ? essay.aiResult : JSON.stringify(essay.aiResult, null, 2)}</p>
                           </div>
                         )}
-                        <div className="flex items-center gap-4 text-xs text-[#8B95A1]">
-                          {essay.draftVersion && <span>버전 {essay.draftVersion}</span>}
-                          <span>생성: {essay.createdAt ? new Date(essay.createdAt).toLocaleDateString('ko-KR') : '-'}</span>
-                          {essay.updatedAt && <span>수정: {new Date(essay.updatedAt).toLocaleDateString('ko-KR')}</span>}
+                        <div className="flex items-center gap-3 text-[11px] text-[#C4C9D0] pt-2 border-t border-[#F2F4F6]">
+                          {essay.draftVersion && <span className="bg-[#F2F4F6] px-2 py-0.5 rounded-md">v{essay.draftVersion}</span>}
+                          <span>생성 {essay.createdAt ? new Date(essay.createdAt).toLocaleDateString('ko-KR') : '-'}</span>
+                          {essay.updatedAt && <span>수정 {new Date(essay.updatedAt).toLocaleDateString('ko-KR')}</span>}
                         </div>
                       </div>
                     ))}
@@ -4617,59 +4624,64 @@ export default function Admin() {
                 )}
 
                 {detailTab === "kompass" && (
-                  <div className="p-4 space-y-3">
+                  <div className="p-5 space-y-3">
                     {(!userDetail.kompass || userDetail.kompass.length === 0) ? (
-                      <div className="text-center py-12 text-[#8B95A1]">
-                        <Target className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                        <p>등록된 목표가 없습니다.</p>
+                      <div className="text-center py-16">
+                        <div className="h-14 w-14 mx-auto mb-3 rounded-2xl bg-[#7C3AED]/5 flex items-center justify-center">
+                          <Target className="h-7 w-7 text-[#7C3AED]/30" />
+                        </div>
+                        <p className="text-[#8B95A1] font-medium">등록된 목표가 없습니다.</p>
                       </div>
                     ) : userDetail.kompass.map((goal: any) => {
                       const isExpanded = expandedItems.has(`kompass-${goal.id}`);
                       return (
-                        <div key={goal.id} className="rounded-lg border border-[#F2F4F6]" data-testid={`kompass-item-${goal.id}`}>
+                        <div key={goal.id} className="bg-white rounded-2xl border border-[#F2F4F6] hover:border-[#7C3AED]/20 hover:shadow-md transition-all duration-200" data-testid={`kompass-item-${goal.id}`}>
                           <button
-                            className="w-full p-4 flex items-center justify-between text-left"
+                            className="w-full px-5 py-4 flex items-center justify-between text-left"
                             onClick={() => toggleExpanded(`kompass-${goal.id}`)}
                             data-testid={`button-expand-kompass-${goal.id}`}
                           >
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <Badge className="bg-[#7C3AED]/10 text-[#7C3AED] border-0 text-xs">{goal.profileName || '프로필'}</Badge>
-                                {goal.level && <Badge variant="outline" className="text-xs">{goal.level}</Badge>}
-                                {goal.targetYear && <Badge variant="outline" className="text-xs">{goal.targetYear}년</Badge>}
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge className="bg-[#7C3AED]/10 text-[#7C3AED] border-0 text-[11px] font-bold px-2.5 py-0.5 rounded-lg">{goal.profileName || '프로필'}</Badge>
+                                {goal.level && <Badge className="bg-[#F2F4F6] text-[#4E5968] border-0 text-[11px] px-2 py-0.5 rounded-lg">{goal.level}</Badge>}
+                                {goal.targetYear && <Badge className="bg-[#F2F4F6] text-[#4E5968] border-0 text-[11px] px-2 py-0.5 rounded-lg">{goal.targetYear}년</Badge>}
                               </div>
-                              <p className="font-medium text-[#191F28]">{goal.title || '제목 없음'}</p>
+                              <p className="font-bold text-[#191F28]">{goal.title || '제목 없음'}</p>
                               {goal.progress !== undefined && goal.progress !== null && (
                                 <div className="flex items-center gap-2">
-                                  <Progress value={goal.progress} className="h-1.5 w-24" />
-                                  <span className="text-xs text-[#8B95A1]">{goal.progress}%</span>
+                                  <div className="w-24 h-1.5 bg-[#F2F4F6] rounded-full overflow-hidden">
+                                    <div className="h-full bg-[#7C3AED] rounded-full transition-all" style={{ width: `${goal.progress}%` }} />
+                                  </div>
+                                  <span className="text-[11px] font-medium text-[#7C3AED]">{goal.progress}%</span>
                                 </div>
                               )}
                             </div>
-                            <div className="flex items-center gap-3">
-                              <div className="text-xs text-[#8B95A1] text-right space-y-0.5">
-                                {goal.startDate && <p>시작: {new Date(goal.startDate).toLocaleDateString('ko-KR')}</p>}
-                                {goal.endDate && <p>종료: {new Date(goal.endDate).toLocaleDateString('ko-KR')}</p>}
-                                <p>생성: {goal.createdAt ? new Date(goal.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <div className="text-xs text-[#C4C9D0] text-right space-y-0.5">
+                                {goal.startDate && <p>시작 {new Date(goal.startDate).toLocaleDateString('ko-KR')}</p>}
+                                {goal.endDate && <p>종료 {new Date(goal.endDate).toLocaleDateString('ko-KR')}</p>}
                               </div>
-                              {isExpanded ? <ChevronUp className="h-4 w-4 text-[#8B95A1]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                              <div className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors ${isExpanded ? 'bg-[#7C3AED]/10' : 'bg-[#F2F4F6]'}`}>
+                                {isExpanded ? <ChevronUp className="h-4 w-4 text-[#7C3AED]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                              </div>
                             </div>
                           </button>
                           {isExpanded && (
-                            <div className="px-4 pb-4 space-y-3 border-t border-[#F2F4F6] pt-3" data-testid={`kompass-detail-${goal.id}`}>
+                            <div className="px-5 pb-5 space-y-3 border-t border-[#F2F4F6] pt-4" data-testid={`kompass-detail-${goal.id}`}>
                               {goal.visionData && (
                                 <div>
-                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">비전 데이터</p>
-                                  <div className="bg-[#F8F9FA] rounded-lg p-3 max-h-48 overflow-y-auto">
-                                    <pre className="text-xs text-[#191F28] whitespace-pre-wrap font-mono">{typeof goal.visionData === 'string' ? goal.visionData : JSON.stringify(goal.visionData, null, 2)}</pre>
+                                  <p className="text-[11px] font-bold text-[#7C3AED] uppercase tracking-wider mb-2">비전 데이터</p>
+                                  <div className="bg-[#F8F9FA] rounded-xl p-4 max-h-48 overflow-y-auto">
+                                    <pre className="text-xs text-[#191F28] whitespace-pre-wrap font-mono leading-relaxed">{typeof goal.visionData === 'string' ? goal.visionData : JSON.stringify(goal.visionData, null, 2)}</pre>
                                   </div>
                                 </div>
                               )}
                               {goal.aiResult && (
                                 <div>
-                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">AI 결과</p>
-                                  <div className="bg-[#EFF6FF] rounded-lg p-3 max-h-32 overflow-y-auto">
-                                    <p className="text-xs text-[#191F28] whitespace-pre-wrap">{typeof goal.aiResult === 'string' ? goal.aiResult : JSON.stringify(goal.aiResult, null, 2)}</p>
+                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">AI 결과</p>
+                                  <div className="bg-[#EFF6FF] rounded-xl p-4 max-h-32 overflow-y-auto">
+                                    <p className="text-xs text-[#191F28] whitespace-pre-wrap leading-relaxed">{typeof goal.aiResult === 'string' ? goal.aiResult : JSON.stringify(goal.aiResult, null, 2)}</p>
                                   </div>
                                 </div>
                               )}
@@ -4682,29 +4694,40 @@ export default function Admin() {
                 )}
 
                 {detailTab === "interviews" && (
-                  <div className="p-4 space-y-3">
+                  <div className="p-5 space-y-3">
                     {(!userDetail.interviews || userDetail.interviews.length === 0) ? (
-                      <div className="text-center py-12 text-[#8B95A1]">
-                        <Mic className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                        <p>면접 기록이 없습니다.</p>
+                      <div className="text-center py-16">
+                        <div className="h-14 w-14 mx-auto mb-3 rounded-2xl bg-[#EC4899]/5 flex items-center justify-center">
+                          <Mic className="h-7 w-7 text-[#EC4899]/30" />
+                        </div>
+                        <p className="text-[#8B95A1] font-medium">면접 기록이 없습니다.</p>
                       </div>
                     ) : userDetail.interviews.map((interview: any) => (
-                      <div key={interview.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`interview-item-${interview.id}`}>
+                      <div key={interview.id} className="bg-white rounded-2xl border border-[#F2F4F6] p-5" data-testid={`interview-item-${interview.id}`}>
                         <div className="flex items-start justify-between">
-                          <div className="space-y-1">
+                          <div className="space-y-2">
                             <div className="flex items-center gap-2 flex-wrap">
-                              {interview.sessionType && <Badge className="bg-[#EC4899]/10 text-[#EC4899] border-0 text-xs">{interview.sessionType}</Badge>}
-                              <Badge variant="outline" className={`text-xs ${interview.status === 'completed' ? 'border-green-300 text-green-700' : interview.status === 'in_progress' ? 'border-blue-300 text-blue-700' : 'border-gray-300 text-gray-700'}`}>
+                              {interview.sessionType && <Badge className="bg-[#EC4899]/10 text-[#EC4899] border-0 text-[11px] font-bold px-2.5 py-0.5 rounded-lg">{interview.sessionType}</Badge>}
+                              <Badge className={`border-0 text-[11px] font-bold px-2.5 py-0.5 rounded-lg ${interview.status === 'completed' ? 'bg-[#059669]/10 text-[#059669]' : interview.status === 'in_progress' ? 'bg-[#3182F6]/10 text-[#3182F6]' : 'bg-[#F2F4F6] text-[#8B95A1]'}`}>
                                 {interview.status === 'completed' ? '완료' : interview.status === 'in_progress' ? '진행 중' : interview.status || '대기'}
                               </Badge>
                             </div>
-                            {interview.jobTitle && <p className="text-sm text-[#191F28] font-medium">{interview.jobTitle}</p>}
-                            {interview.companyName && <p className="text-xs text-[#8B95A1]">회사: {interview.companyName}</p>}
-                            <p className="text-sm text-[#8B95A1]">질문 수: {interview.totalQuestions || 0}개{interview.completedQuestions ? ` (완료: ${interview.completedQuestions}개)` : ''}</p>
+                            {interview.jobTitle && <p className="text-sm font-bold text-[#191F28]">{interview.jobTitle}</p>}
+                            {interview.companyName && <p className="text-xs text-[#8B95A1]">{interview.companyName}</p>}
+                            <div className="flex items-center gap-2">
+                              <div className="bg-[#F2F4F6] rounded-lg px-2.5 py-1">
+                                <span className="text-[11px] font-medium text-[#4E5968]">질문 {interview.totalQuestions || 0}개</span>
+                              </div>
+                              {interview.completedQuestions && (
+                                <div className="bg-[#059669]/10 rounded-lg px-2.5 py-1">
+                                  <span className="text-[11px] font-medium text-[#059669]">완료 {interview.completedQuestions}개</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-xs text-[#8B95A1] text-right ml-4 space-y-0.5">
-                            <p>생성: {interview.createdAt ? new Date(interview.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
-                            {interview.completedAt && <p>완료: {new Date(interview.completedAt).toLocaleDateString('ko-KR')}</p>}
+                          <div className="text-[11px] text-[#C4C9D0] text-right ml-4 space-y-0.5">
+                            <p>생성 {interview.createdAt ? new Date(interview.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                            {interview.completedAt && <p>완료 {new Date(interview.completedAt).toLocaleDateString('ko-KR')}</p>}
                           </div>
                         </div>
                       </div>
@@ -4713,48 +4736,52 @@ export default function Admin() {
                 )}
 
                 {detailTab === "assessments" && (
-                  <div className="p-4 space-y-3">
+                  <div className="p-5 space-y-3">
                     {(!userDetail.assessments || userDetail.assessments.length === 0) ? (
-                      <div className="text-center py-12 text-[#8B95A1]">
-                        <ClipboardList className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                        <p>진로진단 기록이 없습니다.</p>
+                      <div className="text-center py-16">
+                        <div className="h-14 w-14 mx-auto mb-3 rounded-2xl bg-[#6B7280]/5 flex items-center justify-center">
+                          <ClipboardList className="h-7 w-7 text-[#6B7280]/30" />
+                        </div>
+                        <p className="text-[#8B95A1] font-medium">진로진단 기록이 없습니다.</p>
                       </div>
                     ) : userDetail.assessments.map((assessment: any) => {
                       const isExpanded = expandedItems.has(`assessment-${assessment.id}`);
                       return (
-                        <div key={assessment.id} className="rounded-lg border border-[#F2F4F6]" data-testid={`assessment-item-${assessment.id}`}>
+                        <div key={assessment.id} className="bg-white rounded-2xl border border-[#F2F4F6] hover:border-[#6B7280]/20 hover:shadow-md transition-all duration-200" data-testid={`assessment-item-${assessment.id}`}>
                           <button
-                            className="w-full p-4 flex items-center justify-between text-left"
+                            className="w-full px-5 py-4 flex items-center justify-between text-left"
                             onClick={() => toggleExpanded(`assessment-${assessment.id}`)}
                             data-testid={`button-expand-assessment-${assessment.id}`}
                           >
                             <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className={`text-xs ${assessment.status === 'completed' ? 'border-green-300 text-green-700' : assessment.status === 'in_progress' ? 'border-blue-300 text-blue-700' : 'border-gray-300 text-gray-700'}`}>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge className={`border-0 text-[11px] font-bold px-2.5 py-0.5 rounded-lg ${assessment.status === 'completed' ? 'bg-[#059669]/10 text-[#059669]' : assessment.status === 'in_progress' ? 'bg-[#3182F6]/10 text-[#3182F6]' : 'bg-[#F2F4F6] text-[#8B95A1]'}`}>
                                   {assessment.status === 'completed' ? '완료' : assessment.status === 'in_progress' ? '진행 중' : assessment.status || '대기'}
                                 </Badge>
-                                {assessment.profileType && <Badge className="bg-[#6B7280]/10 text-[#6B7280] border-0 text-xs">{assessment.profileType}</Badge>}
+                                {assessment.profileType && <Badge className="bg-[#6B7280]/10 text-[#6B7280] border-0 text-[11px] font-bold px-2.5 py-0.5 rounded-lg">{assessment.profileType}</Badge>}
                               </div>
-                              {assessment.careerDna && <p className="text-sm font-medium text-[#191F28]">Career DNA: {assessment.careerDna}</p>}
+                              {assessment.careerDna && <p className="text-sm font-bold text-[#191F28]">Career DNA: {assessment.careerDna}</p>}
                             </div>
-                            <div className="flex items-center gap-3">
-                              <div className="text-xs text-[#8B95A1] text-right space-y-0.5">
-                                <p>생성: {assessment.createdAt ? new Date(assessment.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
-                                {assessment.completedAt && <p>완료: {new Date(assessment.completedAt).toLocaleDateString('ko-KR')}</p>}
+                            <div className="flex items-center gap-3 shrink-0">
+                              <div className="text-[11px] text-[#C4C9D0] text-right space-y-0.5">
+                                <p>생성 {assessment.createdAt ? new Date(assessment.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                                {assessment.completedAt && <p>완료 {new Date(assessment.completedAt).toLocaleDateString('ko-KR')}</p>}
                               </div>
-                              {isExpanded ? <ChevronUp className="h-4 w-4 text-[#8B95A1]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                              <div className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors ${isExpanded ? 'bg-[#6B7280]/10' : 'bg-[#F2F4F6]'}`}>
+                                {isExpanded ? <ChevronUp className="h-4 w-4 text-[#6B7280]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                              </div>
                             </div>
                           </button>
                           {isExpanded && (
-                            <div className="px-4 pb-4 space-y-3 border-t border-[#F2F4F6] pt-3" data-testid={`assessment-detail-${assessment.id}`}>
+                            <div className="px-5 pb-5 space-y-4 border-t border-[#F2F4F6] pt-4" data-testid={`assessment-detail-${assessment.id}`}>
                               {assessment.careerDna && renderFieldSection('Career DNA', [{ label: '유형', value: assessment.careerDna }])}
                               {assessment.scores && (
                                 <div>
-                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">점수</p>
+                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">점수</p>
                                   <div className="grid grid-cols-3 gap-2">
                                     {Object.entries(assessment.scores as Record<string, any>).map(([k, v]) => (
-                                      <div key={k} className="bg-[#F2F4F6] rounded-lg p-2 text-center">
-                                        <p className="text-xs text-[#8B95A1]">{k}</p>
+                                      <div key={k} className="bg-[#F8F9FA] rounded-xl p-3 text-center">
+                                        <p className="text-[10px] text-[#8B95A1] font-medium">{k}</p>
                                         <p className="text-sm font-bold text-[#191F28]">{String(v)}</p>
                                       </div>
                                     ))}
@@ -4763,22 +4790,22 @@ export default function Admin() {
                               )}
                               {assessment.keywords && (
                                 <div>
-                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">키워드</p>
-                                  <div className="flex flex-wrap gap-1">
+                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">키워드</p>
+                                  <div className="flex flex-wrap gap-1.5">
                                     {(Array.isArray(assessment.keywords) ? assessment.keywords : []).map((kw: string, i: number) => (
-                                      <Badge key={i} variant="outline" className="text-xs">{kw}</Badge>
+                                      <Badge key={i} className="bg-[#F2F4F6] text-[#4E5968] border-0 text-[11px] px-2.5 py-0.5 rounded-lg">{kw}</Badge>
                                     ))}
                                   </div>
                                 </div>
                               )}
                               {assessment.recommendedJobs && (
                                 <div>
-                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">추천 직업</p>
-                                  <div className="space-y-1">
+                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">추천 직업</p>
+                                  <div className="space-y-1.5">
                                     {(Array.isArray(assessment.recommendedJobs) ? assessment.recommendedJobs : []).map((job: any, i: number) => (
-                                      <div key={i} className="bg-[#F2F4F6] rounded-lg p-2">
-                                        <p className="text-sm text-[#191F28]">{typeof job === 'string' ? job : job.title || job.name || JSON.stringify(job)}</p>
-                                        {job.matchScore && <p className="text-xs text-[#059669]">매칭: {job.matchScore}</p>}
+                                      <div key={i} className="bg-[#F8F9FA] rounded-xl p-3">
+                                        <p className="text-sm font-medium text-[#191F28]">{typeof job === 'string' ? job : job.title || job.name || JSON.stringify(job)}</p>
+                                        {job.matchScore && <p className="text-xs font-medium text-[#059669] mt-0.5">매칭: {job.matchScore}</p>}
                                       </div>
                                     ))}
                                   </div>
@@ -4786,9 +4813,9 @@ export default function Admin() {
                               )}
                               {assessment.growthPlan && (
                                 <div>
-                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">성장 계획</p>
-                                  <div className="bg-[#F8F9FA] rounded-lg p-3 max-h-32 overflow-y-auto">
-                                    <pre className="text-xs text-[#191F28] whitespace-pre-wrap font-mono">{typeof assessment.growthPlan === 'string' ? assessment.growthPlan : JSON.stringify(assessment.growthPlan, null, 2)}</pre>
+                                  <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">성장 계획</p>
+                                  <div className="bg-[#F8F9FA] rounded-xl p-4 max-h-32 overflow-y-auto">
+                                    <pre className="text-xs text-[#191F28] whitespace-pre-wrap font-mono leading-relaxed">{typeof assessment.growthPlan === 'string' ? assessment.growthPlan : JSON.stringify(assessment.growthPlan, null, 2)}</pre>
                                   </div>
                                 </div>
                               )}
