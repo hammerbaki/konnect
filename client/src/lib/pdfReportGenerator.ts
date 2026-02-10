@@ -368,12 +368,12 @@ function createGroupMemberReportHTML(data: GroupMemberReportData): string {
   const reportId = `GMR-${Date.now().toString(36).toUpperCase().slice(-8)}`;
   
   const visaSection = data.visaWarning ? `
-    <div class="avoid-break" style="margin-bottom: 25px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); padding: 20px; border-radius: 12px; border-left: 4px solid #F59E0B;">
+    <div class="avoid-break" style="margin-bottom: 25px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); padding: 20px; border-radius: 12px; border-left: 4px solid #F59E0B; overflow: hidden;">
       <div style="display: flex; align-items: flex-start; gap: 12px;">
-        <span style="font-size: 20px;">⚠️</span>
-        <div>
+        <span style="font-size: 20px; flex-shrink: 0;">⚠️</span>
+        <div style="min-width: 0; flex: 1;">
           <div style="font-size: 14px; font-weight: 700; color: #92400E; margin-bottom: 8px;">비자 관련 안내</div>
-          <div style="font-size: 13px; color: #78350F; line-height: 1.6;">${data.visaWarning}</div>
+          <div style="font-size: 13px; color: #78350F; line-height: 1.6; word-break: keep-all; overflow-wrap: break-word;">${data.visaWarning}</div>
         </div>
       </div>
     </div>
@@ -386,7 +386,7 @@ function createGroupMemberReportHTML(data: GroupMemberReportData): string {
       </h3>
       <div style="background: #F8FAFC; padding: 20px; border-radius: 12px;">
         ${data.fitReasons.map((reason, i) => `
-          <div style="margin-bottom: ${i < data.fitReasons!.length - 1 ? '12px' : '0'}; padding-left: 20px; position: relative;">
+          <div style="margin-bottom: ${i < data.fitReasons!.length - 1 ? '12px' : '0'}; padding-left: 20px; position: relative; overflow-wrap: break-word;">
             <span style="position: absolute; left: 0; color: #3182F6;">•</span>
             <span style="font-size: 13px; color: #4A5568; line-height: 1.6;">${reason}</span>
           </div>
@@ -468,18 +468,18 @@ function createGroupMemberReportHTML(data: GroupMemberReportData): string {
         break-inside: avoid !important;
       }
     </style>
-    <div id="pdf-member-report-container" style="width: 794px; padding: 40px; font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif; background: white; color: #191F28;">
+    <div id="pdf-member-report-container" style="width: 794px; padding: 40px; font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif; background: white; color: #191F28; box-sizing: border-box; overflow: hidden; word-break: keep-all; overflow-wrap: break-word;">
       <div class="pdf-page">
         <!-- Header -->
-        <div style="background: linear-gradient(135deg, #0F1E3D 0%, #1a2d5c 100%); padding: 30px; margin: -40px -40px 30px -40px; border-radius: 0;">
+        <div style="background: linear-gradient(135deg, #0F1E3D 0%, #1a2d5c 100%); padding: 30px; margin: -40px -40px 30px -40px; border-radius: 0; overflow: hidden;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
+            <div style="flex-shrink: 0;">
               <div style="font-size: 28px; font-weight: 800; color: white; margin-bottom: 8px;">
                 <span style="color: #3182F6;">K</span><span style="color: #FFD700;">o</span><span style="color: #FF6B6B;">n</span><span style="color: #4ECDC4;">n</span><span style="color: #FFD700;">e</span><span style="color: #3182F6;">c</span><span style="color: #FF6B6B;">t</span>
               </div>
               <div style="font-size: 12px; color: #A0AEC0;">Your AI Career Solution</div>
             </div>
-            <div style="text-align: right;">
+            <div style="text-align: right; flex-shrink: 0;">
               <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 8px;">커리어 분석 리포트</div>
               <div style="font-size: 11px; color: #A0AEC0; margin-bottom: 4px;">Report ID: ${reportId}</div>
               <div style="font-size: 11px; color: #A0AEC0;">Date: ${data.analysisDate}</div>
@@ -491,16 +491,16 @@ function createGroupMemberReportHTML(data: GroupMemberReportData): string {
         </div>
 
         <!-- User Info Banner -->
-        <div style="background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%); padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+        <div style="background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%); padding: 20px; border-radius: 12px; margin-bottom: 25px; overflow: hidden;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div>
-              <div style="font-size: 18px; font-weight: 700; color: #0369A1; margin-bottom: 4px;">${data.userName}</div>
-              <div style="font-size: 12px; color: #0284C7;">${data.email}</div>
+            <div style="min-width: 0; flex: 1;">
+              <div style="font-size: 18px; font-weight: 700; color: #0369A1; margin-bottom: 4px; overflow-wrap: break-word;">${data.userName}</div>
+              <div style="font-size: 12px; color: #0284C7; overflow-wrap: break-word;">${data.email}</div>
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <span style="background: #0EA5E9; color: white; padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-align: center;">${getProfileTypeKorean(data.profileType)}</span>
+            <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+              <span style="background: #0EA5E9; color: white; padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-align: center; white-space: nowrap;">${getProfileTypeKorean(data.profileType)}</span>
               ${data.fitScore !== undefined ? `
-                <span style="background: linear-gradient(135deg, #3182F6, #1565C0); color: white; padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-align: center;">적합도 ${data.fitScore}점</span>
+                <span style="background: linear-gradient(135deg, #3182F6, #1565C0); color: white; padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-align: center; white-space: nowrap;">적합도 ${data.fitScore}점</span>
               ` : ''}
             </div>
           </div>
