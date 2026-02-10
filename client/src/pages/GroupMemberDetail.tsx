@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +35,15 @@ import { ko } from "date-fns/locale";
 import { generateGroupMemberReportPDF, type GroupMemberReportData } from "@/lib/pdfReportGenerator";
 import { useToast } from "@/hooks/use-toast";
 
+interface AnalysisEntry {
+  id: string;
+  status: string;
+  createdAt: string;
+  analysisResult: any;
+  profileType: string;
+  profileName: string | null;
+}
+
 interface MemberDetail {
   user: {
     id: string;
@@ -56,6 +65,7 @@ interface MemberDetail {
     createdAt: string;
     analysisResult: any;
   } | null;
+  analyses?: AnalysisEntry[];
   goals: Array<{
     id: string;
     title: string;
@@ -93,6 +103,7 @@ export default function GroupMemberDetail() {
   const params = useParams<{ groupId: string; memberId: string }>();
   const { groupId, memberId } = params;
   const [activeTab, setActiveTab] = useState("overview");
+  const [selectedAnalysisIndex, setSelectedAnalysisIndex] = useState(0);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     strengths: true,
     weaknesses: true,
@@ -101,6 +112,10 @@ export default function GroupMemberDetail() {
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setSelectedAnalysisIndex(0);
+  }, [memberId]);
 
   const rerunAnalysisMutation = useMutation({
     mutationFn: async () => {
@@ -145,11 +160,12 @@ export default function GroupMemberDetail() {
   };
 
   const handleDownloadPdf = async () => {
-    if (!member || !member.analysis) return;
+    const pdfAnalysis = currentAnalysis || member?.analysis;
+    if (!member || !pdfAnalysis) return;
     
     setIsDownloadingPdf(true);
     try {
-      const analysisResult = member.analysis.analysisResult;
+      const analysisResult = pdfAnalysis.analysisResult;
       const foreignStudentData = analysisResult?.foreignStudentData;
       const isForeignStudent = !!foreignStudentData;
       
@@ -208,8 +224,8 @@ export default function GroupMemberDetail() {
       const reportData: GroupMemberReportData = {
         userName: member.user.displayName || member.user.email.split("@")[0],
         email: member.user.email,
-        profileType: member.profile?.profileType || "general",
-        analysisDate: format(new Date(member.analysis.createdAt), "yyyy.MM.dd", { locale: ko }),
+        profileType: (currentAnalysis as AnalysisEntry)?.profileType || member.profile?.profileType || "general",
+        analysisDate: format(new Date(pdfAnalysis.createdAt), "yyyy.MM.dd", { locale: ko }),
         summary: summary,
         fitScore: foreignStudentData?.fit?.score,
         visaWarning: foreignStudentData?.visaWarning,
@@ -264,8 +280,11 @@ export default function GroupMemberDetail() {
     ? profileTypeIcons[member.profile.profileType] || User
     : User;
 
-  // Parse analysis result
-  const analysisResult = member.analysis?.analysisResult;
+  const allAnalyses = member.analyses || [];
+  const hasMultipleAnalyses = allAnalyses.length > 1;
+  const currentAnalysis = allAnalyses.length > 0 ? allAnalyses[selectedAnalysisIndex] || allAnalyses[0] : null;
+
+  const analysisResult = currentAnalysis?.analysisResult || member.analysis?.analysisResult;
   const hasDetailedAnalysis = analysisResult && typeof analysisResult === "object";
 
   // Handle foreignStudentData structure (international profile type)
@@ -348,7 +367,7 @@ export default function GroupMemberDetail() {
                     프로필 {member.profile ? "완료" : "미작성"}
                   </Badge>
                   <Badge variant={member.analysis ? "default" : "outline"} className="justify-center">
-                    분석 {member.analysis ? "완료" : "미완료"}
+                    분석 {member.analysis ? (allAnalyses.length > 1 ? `${allAnalyses.length}건` : "완료") : "미완료"}
                   </Badge>
                 </div>
                 <div className="flex gap-2">
@@ -374,7 +393,7 @@ export default function GroupMemberDetail() {
                       )}
                     </Button>
                   )}
-                  {member.analysis && (
+                  {(member.analysis || allAnalyses.length > 0) && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -405,8 +424,8 @@ export default function GroupMemberDetail() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-3">
             <TabsTrigger value="overview" data-testid="tab-overview">개요</TabsTrigger>
-            <TabsTrigger value="analysis" data-testid="tab-analysis" disabled={!member.analysis}>
-              분석 결과
+            <TabsTrigger value="analysis" data-testid="tab-analysis" disabled={!member.analysis && allAnalyses.length === 0}>
+              분석 결과 {allAnalyses.length > 1 ? `(${allAnalyses.length})` : ""}
             </TabsTrigger>
             <TabsTrigger value="activity" data-testid="tab-activity">활동</TabsTrigger>
           </TabsList>
@@ -460,6 +479,9 @@ export default function GroupMemberDetail() {
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <FileText className="h-5 w-5" />
                     커리어 분석
+                    {allAnalyses.length > 1 && (
+                      <Badge variant="secondary" className="text-xs">{allAnalyses.length}건</Badge>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -472,7 +494,7 @@ export default function GroupMemberDetail() {
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-500">분석일</span>
+                        <span className="text-gray-500">{allAnalyses.length > 1 ? "최근 분석일" : "분석일"}</span>
                         <span className="text-sm flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {format(new Date(member.analysis.createdAt), "yyyy.M.d HH:mm", { locale: ko })}
@@ -600,7 +622,36 @@ export default function GroupMemberDetail() {
           </TabsContent>
 
           <TabsContent value="analysis" className="mt-6 space-y-6">
-            {member.analysis && hasDetailedAnalysis ? (
+            {hasMultipleAnalyses && (
+              <Card data-testid="card-analysis-selector">
+                <CardContent className="py-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <FileText className="h-5 w-5 text-blue-500" />
+                    <span className="font-medium text-gray-700">분석 이력 ({allAnalyses.length}건)</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {allAnalyses.map((a, index) => (
+                      <Button
+                        key={a.id}
+                        variant={selectedAnalysisIndex === index ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedAnalysisIndex(index)}
+                        data-testid={`button-select-analysis-${index}`}
+                        className="gap-1.5"
+                      >
+                        <span>{profileTypeLabels[a.profileType] || a.profileType}</span>
+                        <span className="text-xs opacity-75">
+                          {format(new Date(a.createdAt), "M.d HH:mm", { locale: ko })}
+                        </span>
+                        {index === 0 && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 ml-1">최신</Badge>}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {(currentAnalysis || member.analysis) && hasDetailedAnalysis ? (
               <>
                 {summary && (
                   <Card data-testid="card-analysis-summary">
@@ -608,6 +659,11 @@ export default function GroupMemberDetail() {
                       <CardTitle className="flex items-center gap-2">
                         <TrendingUp className="h-5 w-5 text-blue-500" />
                         분석 요약
+                        {currentAnalysis && (
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            {format(new Date(currentAnalysis.createdAt), "yyyy.M.d HH:mm", { locale: ko })}
+                          </Badge>
+                        )}
                         {fitScore !== undefined && (
                           <Badge variant="secondary" className="ml-2">
                             적합도 {fitScore}점
@@ -1072,7 +1128,26 @@ export default function GroupMemberDetail() {
                       </div>
                     </div>
                   )}
-                  {member.analysis?.createdAt && (
+                  {allAnalyses.length > 0 ? allAnalyses.map((a, idx) => (
+                    <div key={a.id} className="flex items-start gap-3">
+                      <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+                        <FileText className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">
+                          커리어 분석 완료
+                          {allAnalyses.length > 1 && (
+                            <Badge variant="outline" className="ml-2 text-xs">
+                              {profileTypeLabels[a.profileType] || a.profileType}
+                            </Badge>
+                          )}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {format(new Date(a.createdAt), "yyyy년 M월 d일", { locale: ko })}
+                        </p>
+                      </div>
+                    </div>
+                  )) : member.analysis?.createdAt && (
                     <div className="flex items-start gap-3">
                       <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
                         <FileText className="h-4 w-4 text-purple-600" />

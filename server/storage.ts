@@ -433,6 +433,14 @@ export interface IStorage {
       createdAt: string;
       analysisResult: any;
     } | null;
+    analyses: Array<{
+      id: string;
+      status: string;
+      createdAt: string;
+      analysisResult: any;
+      profileType: string;
+      profileName: string | null;
+    }>;
     goals: Array<{
       id: string;
       title: string;
@@ -3691,51 +3699,67 @@ export class DatabaseStorage implements IStorage {
     const allProfiles = await db.select().from(profiles).where(eq(profiles.userId, memberId));
     const filteredProfiles = allProfiles.filter(p => allowedProfileTypes.includes(p.type));
     
-    // Search ALL filtered profiles for the latest analysis (not just the first one)
     let analysis = null;
+    let allAnalyses: Array<{
+      id: string;
+      status: string;
+      createdAt: string;
+      analysisResult: any;
+      profileType: string;
+      profileName: string | null;
+    }> = [];
     let profile = filteredProfiles[0] || null;
     
     if (filteredProfiles.length > 0) {
       const profileIds = filteredProfiles.map(p => p.id);
-      const [latestAnalysis] = await db
+      const allAnalysisRows = await db
         .select()
         .from(careerAnalyses)
         .where(inArray(careerAnalyses.profileId, profileIds))
-        .orderBy(desc(careerAnalyses.createdAt))
-        .limit(1);
+        .orderBy(desc(careerAnalyses.createdAt));
       
-      if (latestAnalysis) {
-        // Use the profile that has the analysis
-        const analysisProfile = filteredProfiles.find(p => p.id === latestAnalysis.profileId);
+      const buildAnalysisResult = (row: typeof allAnalysisRows[0]) => {
+        let analysisResult: any = null;
+        if (row.recommendations && typeof row.recommendations === 'object') {
+          analysisResult = row.recommendations;
+        } else if (row.stats && typeof row.stats === 'object') {
+          analysisResult = row.stats;
+        }
+        if (!analysisResult && row.summary) {
+          analysisResult = { summary: row.summary };
+        }
+        if (analysisResult && row.summary && !analysisResult.summary) {
+          analysisResult.summary = row.summary;
+        }
+        if (analysisResult && row.stats && !analysisResult.stats) {
+          analysisResult.stats = row.stats;
+        }
+        return analysisResult;
+      };
+      
+      allAnalyses = allAnalysisRows.map(row => {
+        const rowProfile = filteredProfiles.find(p => p.id === row.profileId);
+        return {
+          id: row.id.toString(),
+          status: 'completed',
+          createdAt: row.createdAt?.toISOString() || '',
+          analysisResult: buildAnalysisResult(row),
+          profileType: rowProfile?.type || 'general',
+          profileName: rowProfile?.title || null,
+        };
+      });
+      
+      if (allAnalysisRows.length > 0) {
+        const latestRow = allAnalysisRows[0];
+        const analysisProfile = filteredProfiles.find(p => p.id === latestRow.profileId);
         if (analysisProfile) {
           profile = analysisProfile;
         }
-        
-        let analysisResult: any = null;
-        
-        if (latestAnalysis.recommendations && typeof latestAnalysis.recommendations === 'object') {
-          analysisResult = latestAnalysis.recommendations;
-        } else if (latestAnalysis.stats && typeof latestAnalysis.stats === 'object') {
-          analysisResult = latestAnalysis.stats;
-        }
-        
-        if (!analysisResult && latestAnalysis.summary) {
-          analysisResult = { summary: latestAnalysis.summary };
-        }
-        
-        if (analysisResult && latestAnalysis.summary && !analysisResult.summary) {
-          analysisResult.summary = latestAnalysis.summary;
-        }
-        
-        if (analysisResult && latestAnalysis.stats && !analysisResult.stats) {
-          analysisResult.stats = latestAnalysis.stats;
-        }
-        
         analysis = {
-          id: latestAnalysis.id.toString(),
+          id: latestRow.id.toString(),
           status: 'completed',
-          createdAt: latestAnalysis.createdAt?.toISOString() || '',
-          analysisResult,
+          createdAt: latestRow.createdAt?.toISOString() || '',
+          analysisResult: buildAnalysisResult(latestRow),
         };
       }
     }
@@ -3784,6 +3808,7 @@ export class DatabaseStorage implements IStorage {
         updatedAt: profile.updatedAt?.toISOString() || null,
       } : null,
       analysis,
+      analyses: allAnalyses,
       goals: goalRows.map(g => ({
         id: g.id.toString(),
         title: `${g.targetYear}년 목표`,
