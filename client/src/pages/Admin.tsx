@@ -932,6 +932,8 @@ export default function Admin() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [selectedUserForDetail, setSelectedUserForDetail] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState<string>("overview");
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const toggleExpanded = (id: string) => setExpandedItems(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
 
   const { user: currentUser, isLoading: userLoading, getAccessToken } = useAuth();
 
@@ -3980,7 +3982,298 @@ export default function Admin() {
               <p>사용자 정보를 불러오는 중 오류가 발생했습니다.</p>
             </div>
           ) : userDetail ? (
-            <>
+            (() => {
+              const FIELD_LABELS: Record<string, string> = {
+                basic_name: '이름', basic_email: '이메일', basic_location: '위치', basic_bio: '자기소개',
+                basic_gender: '성별', basic_birthDate: '생년월일',
+                intl_nationality: '국적', intl_phone: '전화번호', intl_address: '주소',
+                intl_currentVisaType: '비자 유형', intl_visaExpiryDate: '비자 만료일',
+                intl_availableWorkType: '근무 가능 형태', intl_partTimeHoursPerWeek: '주당 근무 가능 시간',
+                intl_desiredPosition: '희망 직무', intl_preferredLocation: '희망 근무지',
+                intl_expectedSalary: '희망 연봉', intl_availableStartDate: '근무 가능 시작일',
+                intl_nativeLanguage: '모국어', intl_koreanLevel: '한국어 수준', intl_topikLevel: 'TOPIK 급수',
+                intl_englishLevel: '영어 수준', intl_englishTestName: '영어시험명', intl_englishTestScore: '영어 시험 점수',
+                intl_otherLanguages: '기타 언어', intl_computerItSkills: 'IT 기술', intl_experienceStatus: '경력 상태',
+                intl_reasonForComingToKorea: '한국 방문 이유', intl_reasonForKoreaEmployment: '한국 취업 이유',
+                intl_strengthsAndPersonality: '강점 및 성격', intl_bestThingInKorea: '한국에서 가장 좋은 점',
+                gen_currentStatus: '현재 상태', gen_prevJobSatisfaction: '이전 직장 만족도',
+                gen_reasonForChange: '이직/취업 사유', gen_desiredIndustry: '희망 산업', gen_desiredRole: '희망 직무',
+                gen_workStyle: '근무 형태', gen_salary: '희망 연봉', gen_concerns: '고민/걱정',
+                gen_salaryNoPreference: '연봉 무관', gen_environmentNoPreference: '환경 무관',
+                univ_schoolName: '학교명', univ_majorCategory: '전공 계열', univ_majorName: '전공명',
+                univ_grade: '학년', univ_semester: '학기', univ_gpa: '학점', univ_certificates: '자격증',
+                univ_concerns: '고민', univ_desiredIndustry: '희망 산업', univ_internshipStatus: '인턴 경험',
+                univ_careerReadiness: '취업 준비도', univ_careerGoalClear: '진로 목표 명확도',
+                univ_academicStress: '학업 스트레스', univ_financialStress: '경제적 스트레스',
+                univ_sleepHours: '수면 시간', univ_mentalWellbeing: '정신 건강',
+                univ_workloadWorkHours: '근무 시간', univ_workloadStudyHours: '학습 시간',
+                univ_belongingScore: '소속감 점수', univ_hasSupportPerson: '지지자 여부',
+                univ_facultyRespect: '교수 존중', univ_classComfort: '수업 편안함',
+                univ_serviceBarriers: '서비스 장벽',
+                high_schoolName: '학교명', high_grade: '학년', high_class: '반',
+                high_academicScore: '성적', high_majorTrack: '계열', high_hopeUniversity: '희망 대학',
+                high_careerHope: '희망 직업', high_mbti: 'MBTI', high_hobbies: '취미',
+                high_activityStatus: '활동 상태', high_concerns: '고민',
+                high_favoriteSubject: '좋아하는 과목', high_dislikedSubject: '싫어하는 과목',
+                high_studyAbroad: '해외 유학 희망', high_stressLevel: '스트레스 수준', high_sleepPattern: '수면 패턴',
+                mid_schoolName: '학교명', mid_grade: '학년', mid_class: '반',
+                mid_academicScore: '성적', mid_interests: '관심사', mid_hobbies: '취미',
+                mid_favoriteSubject: '좋아하는 과목', mid_dislikedSubject: '싫어하는 과목',
+                mid_dreamJob: '장래 희망', mid_highSchoolPlan: '고등학교 계획', mid_concerns: '고민', mid_strengths: '장점',
+                elem_schoolName: '학교명', elem_grade: '학년', elem_dreamJob: '장래 희망',
+                elem_strengths: '장점', elem_interests: '관심사', elem_hobbies: '취미', elem_concerns: '고민',
+                elem_favoriteSubject: '좋아하는 과목', elem_dislikedSubject: '싫어하는 과목', elem_parentsHope: '부모님 희망',
+              };
+              const renderField = (label: string, value: any) => {
+                if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+                  return (<div><p className="text-xs text-[#8B95A1]">{label}</p><p className="text-sm text-[#C4C9D0]">미입력</p></div>);
+                }
+                const displayValue = Array.isArray(value) ? value.join(', ') : typeof value === 'boolean' ? (value ? '예' : '아니오') : typeof value === 'object' ? JSON.stringify(value) : String(value);
+                return (<div><p className="text-xs text-[#8B95A1]">{label}</p><p className="text-sm text-[#191F28] break-words">{displayValue}</p></div>);
+              };
+              const renderFieldSection = (title: string, fields: Array<{label: string, value: any}>) => (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider">{title}</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    {fields.map((f, i) => <div key={i}>{renderField(f.label, f.value)}</div>)}
+                  </div>
+                </div>
+              );
+              const getProfileTypeBadge = (type: string) => {
+                const map: Record<string, string> = { general: '구직자', university: '대학생', international_university: '외국인유학생', high: '고등학생', middle: '중학생', elementary: '초등학생' };
+                return map[type] || type;
+              };
+              const renderProfileFields = (profile: any) => {
+                const pd = profile.profileData || {};
+                const type = pd.type || profile.type;
+                const sections: Array<{title: string, fields: Array<{label: string, value: any}>}> = [];
+                sections.push({ title: '기본 정보', fields: [
+                  { label: FIELD_LABELS.basic_name, value: pd.basic_name },
+                  { label: FIELD_LABELS.basic_email, value: pd.basic_email },
+                  { label: FIELD_LABELS.basic_location, value: pd.basic_location },
+                  { label: FIELD_LABELS.basic_gender, value: pd.basic_gender === 'male' ? '남성' : pd.basic_gender === 'female' ? '여성' : pd.basic_gender },
+                  { label: FIELD_LABELS.basic_birthDate, value: pd.basic_birthDate ? new Date(pd.basic_birthDate).toLocaleDateString('ko-KR') : null },
+                  { label: FIELD_LABELS.basic_bio, value: pd.basic_bio },
+                ]});
+                if (type === 'international_university') {
+                  sections.push({ title: '개인 정보', fields: [
+                    { label: FIELD_LABELS.intl_nationality, value: pd.intl_nationality },
+                    { label: FIELD_LABELS.intl_phone, value: pd.intl_phone },
+                    { label: FIELD_LABELS.intl_address, value: pd.intl_address },
+                  ]});
+                  sections.push({ title: '비자 정보', fields: [
+                    { label: FIELD_LABELS.intl_currentVisaType, value: pd.intl_currentVisaType },
+                    { label: FIELD_LABELS.intl_visaExpiryDate, value: pd.intl_visaExpiryDate },
+                    { label: FIELD_LABELS.intl_availableWorkType, value: pd.intl_availableWorkType },
+                    { label: FIELD_LABELS.intl_partTimeHoursPerWeek, value: pd.intl_partTimeHoursPerWeek },
+                  ]});
+                  sections.push({ title: '취업 희망', fields: [
+                    { label: FIELD_LABELS.intl_desiredPosition, value: pd.intl_desiredPosition },
+                    { label: FIELD_LABELS.intl_preferredLocation, value: pd.intl_preferredLocation },
+                    { label: FIELD_LABELS.intl_expectedSalary, value: pd.intl_expectedSalary },
+                    { label: FIELD_LABELS.intl_availableStartDate, value: pd.intl_availableStartDate },
+                  ]});
+                  if (pd.intl_educations?.length > 0) {
+                    sections.push({ title: '학력', fields: pd.intl_educations.map((edu: any, idx: number) => ({
+                      label: `학력 ${idx + 1}`,
+                      value: [edu.schoolName, edu.schoolCountry, edu.major, edu.degree, edu.periodStart && edu.periodEnd ? `${edu.periodStart}~${edu.periodEnd}` : null, edu.isEnrolled ? '재학중' : null].filter(Boolean).join(' / '),
+                    }))});
+                  }
+                  if (pd.intl_workExperiences?.length > 0) {
+                    sections.push({ title: '경력', fields: pd.intl_workExperiences.map((exp: any, idx: number) => ({
+                      label: `경력 ${idx + 1}`,
+                      value: [exp.companyName, exp.companyCountry, exp.positionAndRole, exp.periodStart && exp.periodEnd ? `${exp.periodStart}~${exp.periodEnd}` : null, exp.mainTasksAndAchievements].filter(Boolean).join(' / '),
+                    }))});
+                  }
+                  sections.push({ title: '언어 능력', fields: [
+                    { label: FIELD_LABELS.intl_nativeLanguage, value: pd.intl_nativeLanguage },
+                    { label: FIELD_LABELS.intl_koreanLevel, value: pd.intl_koreanLevel },
+                    { label: FIELD_LABELS.intl_topikLevel, value: pd.intl_topikLevel },
+                    { label: FIELD_LABELS.intl_englishLevel, value: pd.intl_englishLevel },
+                    { label: FIELD_LABELS.intl_englishTestName, value: pd.intl_englishTestName },
+                    { label: FIELD_LABELS.intl_englishTestScore, value: pd.intl_englishTestScore },
+                    { label: FIELD_LABELS.intl_otherLanguages, value: pd.intl_otherLanguages },
+                  ]});
+                  sections.push({ title: '기술 및 자격', fields: [
+                    { label: '스킬', value: pd.intl_skills },
+                    { label: FIELD_LABELS.intl_computerItSkills, value: pd.intl_computerItSkills },
+                    { label: '자격증', value: pd.intl_certificates?.map((c: any) => `${c.name}(${c.issuer})`).join(', ') },
+                    { label: FIELD_LABELS.intl_experienceStatus, value: pd.intl_experienceStatus },
+                  ]});
+                  sections.push({ title: '자기 소개', fields: [
+                    { label: FIELD_LABELS.intl_reasonForComingToKorea, value: pd.intl_reasonForComingToKorea },
+                    { label: FIELD_LABELS.intl_reasonForKoreaEmployment, value: pd.intl_reasonForKoreaEmployment },
+                    { label: FIELD_LABELS.intl_strengthsAndPersonality, value: pd.intl_strengthsAndPersonality },
+                    { label: FIELD_LABELS.intl_bestThingInKorea, value: pd.intl_bestThingInKorea },
+                  ]});
+                } else if (type === 'general') {
+                  sections.push({ title: '현재 상태', fields: [
+                    { label: FIELD_LABELS.gen_currentStatus, value: pd.gen_currentStatus },
+                    { label: FIELD_LABELS.gen_prevJobSatisfaction, value: pd.gen_prevJobSatisfaction },
+                    { label: FIELD_LABELS.gen_reasonForChange, value: pd.gen_reasonForChange },
+                    { label: FIELD_LABELS.gen_concerns, value: pd.gen_concerns },
+                  ]});
+                  sections.push({ title: '희망 직무', fields: [
+                    { label: FIELD_LABELS.gen_desiredIndustry, value: pd.gen_desiredIndustry },
+                    { label: FIELD_LABELS.gen_desiredRole, value: pd.gen_desiredRole },
+                    { label: FIELD_LABELS.gen_workStyle, value: pd.gen_workStyle },
+                    { label: FIELD_LABELS.gen_salary, value: pd.gen_salaryNoPreference ? '무관' : pd.gen_salary ? `${pd.gen_salary}만원` : null },
+                    { label: '근무 가치관', value: pd.gen_workValues },
+                    { label: '환경 선호', value: pd.gen_environmentNoPreference ? '무관' : pd.gen_environmentPreferences },
+                  ]});
+                  sections.push({ title: '스킬', fields: [
+                    { label: '보유 기술', value: pd.gen_skills },
+                  ]});
+                  if (pd.gen_workExperience?.length > 0) {
+                    sections.push({ title: '경력', fields: pd.gen_workExperience.map((exp: any, idx: number) => ({
+                      label: `경력 ${idx + 1}`,
+                      value: [exp.company, exp.role, exp.description].filter(Boolean).join(' / '),
+                    }))});
+                  }
+                  if (pd.gen_languageTests?.length > 0) {
+                    sections.push({ title: '어학 시험', fields: pd.gen_languageTests.map((lt: any, idx: number) => ({
+                      label: `시험 ${idx + 1}`,
+                      value: [lt.examName, lt.scoreType === 'grade' ? `급수: ${lt.scoreValue}` : `점수: ${lt.scoreValue}`, lt.acquiredDate].filter(Boolean).join(' / '),
+                    }))});
+                  }
+                  if (pd.gen_licenses?.length > 0) {
+                    sections.push({ title: '자격증/면허', fields: pd.gen_licenses.map((lic: any, idx: number) => ({
+                      label: `자격 ${idx + 1}`,
+                      value: [lic.title, lic.issuer, lic.status === 'acquired' ? '취득' : lic.status === 'preparing' ? '준비중' : '만료', lic.acquiredDate].filter(Boolean).join(' / '),
+                    }))});
+                  }
+                  if (pd.gen_awards?.length > 0) {
+                    sections.push({ title: '수상 경력', fields: pd.gen_awards.map((aw: any, idx: number) => ({
+                      label: `수상 ${idx + 1}`,
+                      value: [aw.titleAndHost, aw.rank, aw.awardDate].filter(Boolean).join(' / '),
+                    }))});
+                  }
+                  if (pd.gen_references?.length > 0) {
+                    sections.push({ title: '추천인', fields: pd.gen_references.map((ref: any, idx: number) => ({
+                      label: `추천인 ${idx + 1}`,
+                      value: [ref.name, ref.organization, ref.relation].filter(Boolean).join(' / '),
+                    }))});
+                  }
+                  if (pd.gen_educations?.length > 0) {
+                    sections.push({ title: '학력', fields: pd.gen_educations.map((edu: any, idx: number) => ({
+                      label: `학력 ${idx + 1}`,
+                      value: [edu.schoolName, edu.educationLevel, edu.major, edu.graduationStatus === 'graduated' ? '졸업' : edu.graduationStatus === 'enrolled' ? '재학' : edu.graduationStatus, edu.gpa ? `GPA ${edu.gpa}` : null].filter(Boolean).join(' / '),
+                    }))});
+                  }
+                } else if (type === 'university') {
+                  sections.push({ title: '학교 정보', fields: [
+                    { label: FIELD_LABELS.univ_schoolName, value: pd.univ_schoolName },
+                    { label: FIELD_LABELS.univ_majorCategory, value: pd.univ_majorCategory },
+                    { label: FIELD_LABELS.univ_majorName, value: pd.univ_majorName },
+                    { label: FIELD_LABELS.univ_grade, value: pd.univ_grade },
+                    { label: FIELD_LABELS.univ_semester, value: pd.univ_semester },
+                    { label: FIELD_LABELS.univ_gpa, value: pd.univ_gpa },
+                  ]});
+                  sections.push({ title: '진로 준비', fields: [
+                    { label: FIELD_LABELS.univ_careerReadiness, value: pd.univ_careerReadiness },
+                    { label: FIELD_LABELS.univ_careerGoalClear, value: pd.univ_careerGoalClear },
+                    { label: FIELD_LABELS.univ_desiredIndustry, value: pd.univ_desiredIndustry },
+                    { label: FIELD_LABELS.univ_internshipStatus, value: pd.univ_internshipStatus },
+                    { label: '개발할 기술', value: pd.univ_skillsToDevelop },
+                  ]});
+                  if (pd.univ_languageTests?.length > 0) {
+                    sections.push({ title: '어학 시험', fields: pd.univ_languageTests.map((lt: any, idx: number) => ({
+                      label: `시험 ${idx + 1}`,
+                      value: [lt.type, lt.score].filter(Boolean).join(': '),
+                    }))});
+                  }
+                  sections.push({ title: '자격 및 기타', fields: [
+                    { label: FIELD_LABELS.univ_certificates, value: pd.univ_certificates },
+                    { label: FIELD_LABELS.univ_concerns, value: pd.univ_concerns },
+                    { label: '이용 서비스', value: pd.univ_servicesUsed },
+                    { label: FIELD_LABELS.univ_serviceBarriers, value: pd.univ_serviceBarriers },
+                  ]});
+                  sections.push({ title: '웰빙 지표', fields: [
+                    { label: FIELD_LABELS.univ_academicStress, value: pd.univ_academicStress },
+                    { label: FIELD_LABELS.univ_financialStress, value: pd.univ_financialStress },
+                    { label: FIELD_LABELS.univ_sleepHours, value: pd.univ_sleepHours },
+                    { label: FIELD_LABELS.univ_mentalWellbeing, value: pd.univ_mentalWellbeing },
+                    { label: FIELD_LABELS.univ_workloadWorkHours, value: pd.univ_workloadWorkHours },
+                    { label: FIELD_LABELS.univ_workloadStudyHours, value: pd.univ_workloadStudyHours },
+                    { label: FIELD_LABELS.univ_belongingScore, value: pd.univ_belongingScore },
+                    { label: FIELD_LABELS.univ_hasSupportPerson, value: pd.univ_hasSupportPerson },
+                    { label: FIELD_LABELS.univ_facultyRespect, value: pd.univ_facultyRespect },
+                    { label: FIELD_LABELS.univ_classComfort, value: pd.univ_classComfort },
+                  ]});
+                } else if (type === 'high') {
+                  sections.push({ title: '학교 정보', fields: [
+                    { label: FIELD_LABELS.high_schoolName, value: pd.high_schoolName },
+                    { label: FIELD_LABELS.high_grade, value: pd.high_grade },
+                    { label: FIELD_LABELS.high_class, value: pd.high_class },
+                    { label: FIELD_LABELS.high_majorTrack, value: pd.high_majorTrack },
+                    { label: FIELD_LABELS.high_academicScore, value: pd.high_academicScore },
+                  ]});
+                  if (pd.high_subject_scores) {
+                    const ss = pd.high_subject_scores;
+                    sections.push({ title: '과목별 성적', fields: [
+                      { label: '국어', value: ss.korean }, { label: '수학', value: ss.math },
+                      { label: '영어', value: ss.english }, { label: '사회', value: ss.social },
+                      { label: '과학', value: ss.science }, { label: '한국사', value: ss.history },
+                      { label: '제2외국어', value: ss.second_lang },
+                    ]});
+                  }
+                  if (pd.high_balance) {
+                    const bl = pd.high_balance;
+                    sections.push({ title: '균형 지표', fields: [
+                      { label: '학업', value: bl.academic }, { label: '활동', value: bl.activity },
+                      { label: '독서', value: bl.reading }, { label: '봉사', value: bl.volunteer },
+                      { label: '진로', value: bl.career },
+                    ]});
+                  }
+                  sections.push({ title: '진로 및 관심사', fields: [
+                    { label: FIELD_LABELS.high_hopeUniversity, value: pd.high_hopeUniversity },
+                    { label: FIELD_LABELS.high_careerHope, value: pd.high_careerHope },
+                    { label: FIELD_LABELS.high_activityStatus, value: pd.high_activityStatus },
+                    { label: FIELD_LABELS.high_favoriteSubject, value: pd.high_favoriteSubject },
+                    { label: FIELD_LABELS.high_dislikedSubject, value: pd.high_dislikedSubject },
+                    { label: FIELD_LABELS.high_mbti, value: pd.high_mbti },
+                    { label: FIELD_LABELS.high_hobbies, value: pd.high_hobbies },
+                    { label: FIELD_LABELS.high_studyAbroad, value: pd.high_studyAbroad },
+                    { label: FIELD_LABELS.high_concerns, value: pd.high_concerns },
+                    { label: FIELD_LABELS.high_stressLevel, value: pd.high_stressLevel },
+                    { label: FIELD_LABELS.high_sleepPattern, value: pd.high_sleepPattern },
+                  ]});
+                } else if (type === 'middle') {
+                  sections.push({ title: '학교 정보', fields: [
+                    { label: FIELD_LABELS.mid_schoolName, value: pd.mid_schoolName },
+                    { label: FIELD_LABELS.mid_grade, value: pd.mid_grade },
+                    { label: FIELD_LABELS.mid_class, value: pd.mid_class },
+                    { label: FIELD_LABELS.mid_academicScore, value: pd.mid_academicScore },
+                  ]});
+                  sections.push({ title: '관심사 및 진로', fields: [
+                    { label: FIELD_LABELS.mid_favoriteSubject, value: pd.mid_favoriteSubject },
+                    { label: FIELD_LABELS.mid_dislikedSubject, value: pd.mid_dislikedSubject },
+                    { label: FIELD_LABELS.mid_interests, value: pd.mid_interests },
+                    { label: FIELD_LABELS.mid_hobbies, value: pd.mid_hobbies },
+                    { label: FIELD_LABELS.mid_dreamJob, value: pd.mid_dreamJob },
+                    { label: FIELD_LABELS.mid_strengths, value: pd.mid_strengths },
+                    { label: FIELD_LABELS.mid_highSchoolPlan, value: pd.mid_highSchoolPlan },
+                    { label: FIELD_LABELS.mid_concerns, value: pd.mid_concerns },
+                  ]});
+                } else if (type === 'elementary') {
+                  sections.push({ title: '학교 정보', fields: [
+                    { label: FIELD_LABELS.elem_schoolName, value: pd.elem_schoolName },
+                    { label: FIELD_LABELS.elem_grade, value: pd.elem_grade },
+                  ]});
+                  sections.push({ title: '관심사 및 꿈', fields: [
+                    { label: FIELD_LABELS.elem_favoriteSubject, value: pd.elem_favoriteSubject },
+                    { label: FIELD_LABELS.elem_dislikedSubject, value: pd.elem_dislikedSubject },
+                    { label: FIELD_LABELS.elem_dreamJob, value: pd.elem_dreamJob },
+                    { label: FIELD_LABELS.elem_strengths, value: pd.elem_strengths },
+                    { label: FIELD_LABELS.elem_interests, value: pd.elem_interests },
+                    { label: FIELD_LABELS.elem_hobbies, value: pd.elem_hobbies },
+                    { label: FIELD_LABELS.elem_concerns, value: pd.elem_concerns },
+                    { label: FIELD_LABELS.elem_parentsHope, value: pd.elem_parentsHope },
+                  ]});
+                }
+                return sections;
+              };
+              return (<>
               <div className="flex gap-1 border-b border-[#F2F4F6] overflow-x-auto flex-shrink-0">
                 {[
                   { key: "overview", label: "개요", icon: <User className="h-3.5 w-3.5" /> },
@@ -4088,26 +4381,43 @@ export default function Admin() {
                         <Briefcase className="h-10 w-10 mx-auto mb-2 opacity-40" />
                         <p>등록된 프로필이 없습니다.</p>
                       </div>
-                    ) : userDetail.profiles.map((profile: any) => (
-                      <div key={profile.id} className="p-4 rounded-lg border border-[#F2F4F6] hover:border-[#3182F6]/30 transition-colors" data-testid={`profile-item-${profile.id}`}>
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
+                    ) : userDetail.profiles.map((profile: any) => {
+                      const isExpanded = expandedItems.has(`profile-${profile.id}`);
+                      const sections = renderProfileFields(profile);
+                      return (
+                        <div key={profile.id} className="rounded-lg border border-[#F2F4F6] hover:border-[#3182F6]/30 transition-colors" data-testid={`profile-item-${profile.id}`}>
+                          <button
+                            className="w-full p-4 flex items-center justify-between text-left"
+                            onClick={() => toggleExpanded(`profile-${profile.id}`)}
+                            data-testid={`button-expand-profile-${profile.id}`}
+                          >
+                            <div className="flex items-center gap-2 flex-wrap">
                               <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-xs">
-                                {profile.type === 'general' ? '구직자' : profile.type === 'university' ? '대학생' : profile.type === 'international_university' ? '외국인유학생' : profile.type === 'high' ? '고등학생' : profile.type === 'middle' ? '중학생' : profile.type === 'elementary' ? '초등학생' : profile.type}
+                                {getProfileTypeBadge(profile.type)}
                               </Badge>
                               <p className="font-semibold text-[#191F28]">{profile.title || '제목 없음'}</p>
                             </div>
-                            {profile.desiredJob && <p className="text-sm text-[#8B95A1]">희망 직업: {profile.desiredJob}</p>}
-                            {profile.education && <p className="text-sm text-[#8B95A1]">학력: {profile.education} {profile.major ? `(${profile.major})` : ''}</p>}
-                          </div>
-                          <div className="text-right text-xs text-[#8B95A1]">
-                            {profile.lastAnalyzed && <p>최근 분석: {new Date(profile.lastAnalyzed).toLocaleDateString('ko-KR')}</p>}
-                            <p>생성: {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
-                          </div>
+                            <div className="flex items-center gap-3">
+                              <div className="text-right text-xs text-[#8B95A1]">
+                                {profile.lastAnalyzed && <p>최근 분석: {new Date(profile.lastAnalyzed).toLocaleDateString('ko-KR')}</p>}
+                                <p>생성: {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                              </div>
+                              {isExpanded ? <ChevronUp className="h-4 w-4 text-[#8B95A1]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="px-4 pb-4 space-y-4 border-t border-[#F2F4F6] pt-3" data-testid={`profile-detail-${profile.id}`}>
+                              {sections.map((section, idx) => (
+                                <div key={idx}>{renderFieldSection(section.title, section.fields)}</div>
+                              ))}
+                              {sections.length === 0 && (
+                                <p className="text-sm text-[#C4C9D0]">프로필 데이터가 없습니다.</p>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
@@ -4118,27 +4428,103 @@ export default function Admin() {
                         <BarChart3 className="h-10 w-10 mx-auto mb-2 opacity-40" />
                         <p>진행된 분석이 없습니다.</p>
                       </div>
-                    ) : userDetail.analyses.map((analysis: any) => (
-                      <div key={analysis.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`analysis-item-${analysis.id}`}>
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Badge className="bg-[#059669]/10 text-[#059669] border-0 text-xs">{analysis.profileName || '프로필'}</Badge>
-                              {analysis.aiResult?.desiredJob && <span className="text-sm text-[#191F28]">{analysis.aiResult.desiredJob}</span>}
-                            </div>
-                            {analysis.aiResult && (
-                              <div className="text-xs text-[#8B95A1] mt-1 space-y-0.5">
-                                {analysis.aiResult.overallFit && <p>적합도: {analysis.aiResult.overallFit}</p>}
-                                {analysis.aiResult.summary && <p className="line-clamp-2">{typeof analysis.aiResult.summary === 'string' ? analysis.aiResult.summary.slice(0, 150) + '...' : ''}</p>}
+                    ) : userDetail.analyses.map((analysis: any) => {
+                      const isExpanded = expandedItems.has(`analysis-${analysis.id}`);
+                      const ai = analysis.aiResult || {};
+                      const rec = ai.recommendations || {};
+                      const foreignData = rec.foreignStudentData;
+                      const careers = rec.careers;
+                      return (
+                        <div key={analysis.id} className="rounded-lg border border-[#F2F4F6]" data-testid={`analysis-item-${analysis.id}`}>
+                          <button
+                            className="w-full p-4 flex items-center justify-between text-left"
+                            onClick={() => toggleExpanded(`analysis-${analysis.id}`)}
+                            data-testid={`button-expand-analysis-${analysis.id}`}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-[#059669]/10 text-[#059669] border-0 text-xs">{analysis.profileName || '프로필'}</Badge>
+                                {ai.desiredJob && <span className="text-sm text-[#191F28]">{ai.desiredJob}</span>}
                               </div>
-                            )}
-                          </div>
-                          <div className="text-xs text-[#8B95A1] whitespace-nowrap ml-4">
-                            <p>{analysis.analysisDate ? new Date(analysis.analysisDate).toLocaleDateString('ko-KR') : analysis.createdAt ? new Date(analysis.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
-                          </div>
+                              {ai.summary && <p className="text-xs text-[#8B95A1] line-clamp-1">{typeof ai.summary === 'string' ? ai.summary.slice(0, 100) + '...' : ''}</p>}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs text-[#8B95A1] whitespace-nowrap">
+                                {analysis.analysisDate ? new Date(analysis.analysisDate).toLocaleDateString('ko-KR') : analysis.createdAt ? new Date(analysis.createdAt).toLocaleDateString('ko-KR') : '-'}
+                              </span>
+                              {isExpanded ? <ChevronUp className="h-4 w-4 text-[#8B95A1]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="px-4 pb-4 space-y-4 border-t border-[#F2F4F6] pt-3" data-testid={`analysis-detail-${analysis.id}`}>
+                              {ai.summary && (
+                                <div>
+                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">요약</p>
+                                  <p className="text-sm text-[#191F28] whitespace-pre-wrap">{typeof ai.summary === 'string' ? ai.summary : JSON.stringify(ai.summary, null, 2)}</p>
+                                </div>
+                              )}
+                              {analysis.stats && (
+                                <div>
+                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">통계</p>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {Object.entries(analysis.stats as Record<string, any>).map(([k, v]) => (
+                                      <div key={k} className="bg-[#F2F4F6] rounded-lg p-2 text-center">
+                                        <p className="text-xs text-[#8B95A1]">{k}</p>
+                                        <p className="text-sm font-bold text-[#191F28]">{String(v)}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {ai.overallFit && renderFieldSection('적합도', [{ label: '전체 적합도', value: ai.overallFit }])}
+                              {foreignData && (
+                                <div className="space-y-3">
+                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider">외국인 유학생 분석</p>
+                                  {renderFieldSection('적합도', [
+                                    { label: '적합 점수', value: foreignData.fitScore },
+                                    { label: '적합 이유', value: foreignData.fitReasons },
+                                  ])}
+                                  {foreignData.readyJobs?.length > 0 && renderFieldSection('바로 가능한 직업', foreignData.readyJobs.map((j: any, i: number) => ({
+                                    label: `직업 ${i + 1}`, value: typeof j === 'string' ? j : `${j.title || j.name || ''} - ${j.reason || ''}`,
+                                  })))}
+                                  {foreignData.afterPrepJobs?.length > 0 && renderFieldSection('준비 후 가능한 직업', foreignData.afterPrepJobs.map((j: any, i: number) => ({
+                                    label: `직업 ${i + 1}`, value: typeof j === 'string' ? j : `${j.title || j.name || ''} - ${j.reason || ''}`,
+                                  })))}
+                                  {foreignData.actionPlan && renderFieldSection('실행 계획', [
+                                    { label: '단기', value: foreignData.actionPlan.shortTerm || foreignData.actionPlan.short },
+                                    { label: '중기', value: foreignData.actionPlan.midTerm || foreignData.actionPlan.mid },
+                                    { label: '장기', value: foreignData.actionPlan.longTerm || foreignData.actionPlan.long },
+                                  ])}
+                                  {foreignData.visaWarning && renderField('비자 경고', foreignData.visaWarning)}
+                                  {foreignData.dataGaps && renderField('데이터 누락', foreignData.dataGaps)}
+                                </div>
+                              )}
+                              {careers?.length > 0 && (
+                                <div className="space-y-2">
+                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider">추천 직업</p>
+                                  {careers.map((career: any, idx: number) => (
+                                    <div key={idx} className="bg-[#F2F4F6] rounded-lg p-3 space-y-1">
+                                      <p className="text-sm font-semibold text-[#191F28]">{career.title || career.name || `직업 ${idx + 1}`}</p>
+                                      {career.fitScore && <p className="text-xs text-[#059669]">적합도: {career.fitScore}</p>}
+                                      {career.reason && <p className="text-xs text-[#8B95A1]">{career.reason}</p>}
+                                      {career.description && <p className="text-xs text-[#8B95A1]">{career.description}</p>}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {analysis.aiRawResponse && typeof analysis.aiRawResponse === 'string' && (
+                                <div>
+                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">AI 원문 (발췌)</p>
+                                  <div className="bg-[#F8F9FA] rounded-lg p-3 max-h-32 overflow-y-auto">
+                                    <p className="text-xs text-[#8B95A1] whitespace-pre-wrap font-mono">{analysis.aiRawResponse.slice(0, 500)}{analysis.aiRawResponse.length > 500 ? '...' : ''}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
@@ -4151,18 +4537,27 @@ export default function Admin() {
                       </div>
                     ) : userDetail.essays.map((essay: any) => (
                       <div key={essay.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`essay-item-${essay.id}`}>
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Badge className="bg-[#D97706]/10 text-[#D97706] border-0 text-xs">{essay.profileName || '프로필'}</Badge>
-                              {essay.essayType && <Badge variant="outline" className="text-xs">{essay.essayType}</Badge>}
-                            </div>
-                            <p className="text-sm text-[#191F28]">{essay.content ? essay.content.slice(0, 100) + (essay.content.length > 100 ? '...' : '') : '내용 없음'}</p>
-                            {essay.content && <p className="text-xs text-[#8B95A1]">약 {essay.content.length}자</p>}
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <Badge className="bg-[#D97706]/10 text-[#D97706] border-0 text-xs">{essay.profileName || '프로필'}</Badge>
+                          {essay.essayType && <Badge variant="outline" className="text-xs">{essay.essayType}</Badge>}
+                          {essay.category && <Badge variant="outline" className="text-xs">{essay.category}</Badge>}
+                          {essay.topic && <Badge variant="outline" className="text-xs bg-[#F2F4F6]">{essay.topic}</Badge>}
+                          {essay.content && <span className="text-xs text-[#8B95A1] ml-auto">{essay.content.length}자</span>}
+                        </div>
+                        {essay.title && <p className="text-sm font-semibold text-[#191F28] mb-1">{essay.title}</p>}
+                        <div className="bg-[#F8F9FA] rounded-lg p-3 max-h-48 overflow-y-auto mb-2" data-testid={`essay-content-${essay.id}`}>
+                          <p className="text-sm text-[#191F28] whitespace-pre-wrap">{essay.content || '내용 없음'}</p>
+                        </div>
+                        {essay.aiResult && (
+                          <div className="bg-[#EFF6FF] rounded-lg p-3 max-h-32 overflow-y-auto mb-2">
+                            <p className="text-xs font-semibold text-[#3182F6] mb-1">AI 결과</p>
+                            <p className="text-xs text-[#191F28] whitespace-pre-wrap">{typeof essay.aiResult === 'string' ? essay.aiResult : JSON.stringify(essay.aiResult, null, 2)}</p>
                           </div>
-                          <div className="text-xs text-[#8B95A1] whitespace-nowrap ml-4">
-                            <p>{essay.createdAt ? new Date(essay.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
-                          </div>
+                        )}
+                        <div className="flex items-center gap-4 text-xs text-[#8B95A1]">
+                          {essay.draftVersion && <span>버전 {essay.draftVersion}</span>}
+                          <span>생성: {essay.createdAt ? new Date(essay.createdAt).toLocaleDateString('ko-KR') : '-'}</span>
+                          {essay.updatedAt && <span>수정: {new Date(essay.updatedAt).toLocaleDateString('ko-KR')}</span>}
                         </div>
                       </div>
                     ))}
@@ -4176,30 +4571,61 @@ export default function Admin() {
                         <Target className="h-10 w-10 mx-auto mb-2 opacity-40" />
                         <p>등록된 목표가 없습니다.</p>
                       </div>
-                    ) : userDetail.kompass.map((goal: any) => (
-                      <div key={goal.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`kompass-item-${goal.id}`}>
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Badge className="bg-[#7C3AED]/10 text-[#7C3AED] border-0 text-xs">{goal.profileName || '프로필'}</Badge>
-                              {goal.level && <Badge variant="outline" className="text-xs">{goal.level}</Badge>}
-                            </div>
-                            <p className="font-medium text-[#191F28]">{goal.title || '제목 없음'}</p>
-                            {goal.progress !== undefined && goal.progress !== null && (
+                    ) : userDetail.kompass.map((goal: any) => {
+                      const isExpanded = expandedItems.has(`kompass-${goal.id}`);
+                      return (
+                        <div key={goal.id} className="rounded-lg border border-[#F2F4F6]" data-testid={`kompass-item-${goal.id}`}>
+                          <button
+                            className="w-full p-4 flex items-center justify-between text-left"
+                            onClick={() => toggleExpanded(`kompass-${goal.id}`)}
+                            data-testid={`button-expand-kompass-${goal.id}`}
+                          >
+                            <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <Progress value={goal.progress} className="h-1.5 w-24" />
-                                <span className="text-xs text-[#8B95A1]">{goal.progress}%</span>
+                                <Badge className="bg-[#7C3AED]/10 text-[#7C3AED] border-0 text-xs">{goal.profileName || '프로필'}</Badge>
+                                {goal.level && <Badge variant="outline" className="text-xs">{goal.level}</Badge>}
+                                {goal.targetYear && <Badge variant="outline" className="text-xs">{goal.targetYear}년</Badge>}
                               </div>
-                            )}
-                          </div>
-                          <div className="text-xs text-[#8B95A1] text-right ml-4 space-y-0.5">
-                            {goal.startDate && <p>시작: {new Date(goal.startDate).toLocaleDateString('ko-KR')}</p>}
-                            {goal.endDate && <p>종료: {new Date(goal.endDate).toLocaleDateString('ko-KR')}</p>}
-                            <p>생성: {goal.createdAt ? new Date(goal.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
-                          </div>
+                              <p className="font-medium text-[#191F28]">{goal.title || '제목 없음'}</p>
+                              {goal.progress !== undefined && goal.progress !== null && (
+                                <div className="flex items-center gap-2">
+                                  <Progress value={goal.progress} className="h-1.5 w-24" />
+                                  <span className="text-xs text-[#8B95A1]">{goal.progress}%</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="text-xs text-[#8B95A1] text-right space-y-0.5">
+                                {goal.startDate && <p>시작: {new Date(goal.startDate).toLocaleDateString('ko-KR')}</p>}
+                                {goal.endDate && <p>종료: {new Date(goal.endDate).toLocaleDateString('ko-KR')}</p>}
+                                <p>생성: {goal.createdAt ? new Date(goal.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                              </div>
+                              {isExpanded ? <ChevronUp className="h-4 w-4 text-[#8B95A1]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="px-4 pb-4 space-y-3 border-t border-[#F2F4F6] pt-3" data-testid={`kompass-detail-${goal.id}`}>
+                              {goal.visionData && (
+                                <div>
+                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">비전 데이터</p>
+                                  <div className="bg-[#F8F9FA] rounded-lg p-3 max-h-48 overflow-y-auto">
+                                    <pre className="text-xs text-[#191F28] whitespace-pre-wrap font-mono">{typeof goal.visionData === 'string' ? goal.visionData : JSON.stringify(goal.visionData, null, 2)}</pre>
+                                  </div>
+                                </div>
+                              )}
+                              {goal.aiResult && (
+                                <div>
+                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">AI 결과</p>
+                                  <div className="bg-[#EFF6FF] rounded-lg p-3 max-h-32 overflow-y-auto">
+                                    <p className="text-xs text-[#191F28] whitespace-pre-wrap">{typeof goal.aiResult === 'string' ? goal.aiResult : JSON.stringify(goal.aiResult, null, 2)}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
@@ -4214,13 +4640,15 @@ export default function Admin() {
                       <div key={interview.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`interview-item-${interview.id}`}>
                         <div className="flex items-start justify-between">
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               {interview.sessionType && <Badge className="bg-[#EC4899]/10 text-[#EC4899] border-0 text-xs">{interview.sessionType}</Badge>}
                               <Badge variant="outline" className={`text-xs ${interview.status === 'completed' ? 'border-green-300 text-green-700' : interview.status === 'in_progress' ? 'border-blue-300 text-blue-700' : 'border-gray-300 text-gray-700'}`}>
                                 {interview.status === 'completed' ? '완료' : interview.status === 'in_progress' ? '진행 중' : interview.status || '대기'}
                               </Badge>
                             </div>
-                            <p className="text-sm text-[#8B95A1]">질문 수: {interview.totalQuestions || 0}개</p>
+                            {interview.jobTitle && <p className="text-sm text-[#191F28] font-medium">{interview.jobTitle}</p>}
+                            {interview.companyName && <p className="text-xs text-[#8B95A1]">회사: {interview.companyName}</p>}
+                            <p className="text-sm text-[#8B95A1]">질문 수: {interview.totalQuestions || 0}개{interview.completedQuestions ? ` (완료: ${interview.completedQuestions}개)` : ''}</p>
                           </div>
                           <div className="text-xs text-[#8B95A1] text-right ml-4 space-y-0.5">
                             <p>생성: {interview.createdAt ? new Date(interview.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
@@ -4239,28 +4667,89 @@ export default function Admin() {
                         <ClipboardList className="h-10 w-10 mx-auto mb-2 opacity-40" />
                         <p>진로진단 기록이 없습니다.</p>
                       </div>
-                    ) : userDetail.assessments.map((assessment: any) => (
-                      <div key={assessment.id} className="p-4 rounded-lg border border-[#F2F4F6]" data-testid={`assessment-item-${assessment.id}`}>
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className={`text-xs ${assessment.status === 'completed' ? 'border-green-300 text-green-700' : assessment.status === 'in_progress' ? 'border-blue-300 text-blue-700' : 'border-gray-300 text-gray-700'}`}>
-                                {assessment.status === 'completed' ? '완료' : assessment.status === 'in_progress' ? '진행 중' : assessment.status || '대기'}
-                              </Badge>
-                              {assessment.profileType && <Badge className="bg-[#6B7280]/10 text-[#6B7280] border-0 text-xs">{assessment.profileType}</Badge>}
+                    ) : userDetail.assessments.map((assessment: any) => {
+                      const isExpanded = expandedItems.has(`assessment-${assessment.id}`);
+                      return (
+                        <div key={assessment.id} className="rounded-lg border border-[#F2F4F6]" data-testid={`assessment-item-${assessment.id}`}>
+                          <button
+                            className="w-full p-4 flex items-center justify-between text-left"
+                            onClick={() => toggleExpanded(`assessment-${assessment.id}`)}
+                            data-testid={`button-expand-assessment-${assessment.id}`}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className={`text-xs ${assessment.status === 'completed' ? 'border-green-300 text-green-700' : assessment.status === 'in_progress' ? 'border-blue-300 text-blue-700' : 'border-gray-300 text-gray-700'}`}>
+                                  {assessment.status === 'completed' ? '완료' : assessment.status === 'in_progress' ? '진행 중' : assessment.status || '대기'}
+                                </Badge>
+                                {assessment.profileType && <Badge className="bg-[#6B7280]/10 text-[#6B7280] border-0 text-xs">{assessment.profileType}</Badge>}
+                              </div>
+                              {assessment.careerDna && <p className="text-sm font-medium text-[#191F28]">Career DNA: {assessment.careerDna}</p>}
                             </div>
-                          </div>
-                          <div className="text-xs text-[#8B95A1] text-right ml-4 space-y-0.5">
-                            <p>생성: {assessment.createdAt ? new Date(assessment.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
-                            {assessment.completedAt && <p>완료: {new Date(assessment.completedAt).toLocaleDateString('ko-KR')}</p>}
-                          </div>
+                            <div className="flex items-center gap-3">
+                              <div className="text-xs text-[#8B95A1] text-right space-y-0.5">
+                                <p>생성: {assessment.createdAt ? new Date(assessment.createdAt).toLocaleDateString('ko-KR') : '-'}</p>
+                                {assessment.completedAt && <p>완료: {new Date(assessment.completedAt).toLocaleDateString('ko-KR')}</p>}
+                              </div>
+                              {isExpanded ? <ChevronUp className="h-4 w-4 text-[#8B95A1]" /> : <ChevronDown className="h-4 w-4 text-[#8B95A1]" />}
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="px-4 pb-4 space-y-3 border-t border-[#F2F4F6] pt-3" data-testid={`assessment-detail-${assessment.id}`}>
+                              {assessment.careerDna && renderFieldSection('Career DNA', [{ label: '유형', value: assessment.careerDna }])}
+                              {assessment.scores && (
+                                <div>
+                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">점수</p>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {Object.entries(assessment.scores as Record<string, any>).map(([k, v]) => (
+                                      <div key={k} className="bg-[#F2F4F6] rounded-lg p-2 text-center">
+                                        <p className="text-xs text-[#8B95A1]">{k}</p>
+                                        <p className="text-sm font-bold text-[#191F28]">{String(v)}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {assessment.keywords && (
+                                <div>
+                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">키워드</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {(Array.isArray(assessment.keywords) ? assessment.keywords : []).map((kw: string, i: number) => (
+                                      <Badge key={i} variant="outline" className="text-xs">{kw}</Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {assessment.recommendedJobs && (
+                                <div>
+                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">추천 직업</p>
+                                  <div className="space-y-1">
+                                    {(Array.isArray(assessment.recommendedJobs) ? assessment.recommendedJobs : []).map((job: any, i: number) => (
+                                      <div key={i} className="bg-[#F2F4F6] rounded-lg p-2">
+                                        <p className="text-sm text-[#191F28]">{typeof job === 'string' ? job : job.title || job.name || JSON.stringify(job)}</p>
+                                        {job.matchScore && <p className="text-xs text-[#059669]">매칭: {job.matchScore}</p>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {assessment.growthPlan && (
+                                <div>
+                                  <p className="text-xs font-semibold text-[#3182F6] uppercase tracking-wider mb-1">성장 계획</p>
+                                  <div className="bg-[#F8F9FA] rounded-lg p-3 max-h-32 overflow-y-auto">
+                                    <pre className="text-xs text-[#191F28] whitespace-pre-wrap font-mono">{typeof assessment.growthPlan === 'string' ? assessment.growthPlan : JSON.stringify(assessment.growthPlan, null, 2)}</pre>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
-            </>
+            </>);
+            })()
           ) : null}
         </DialogContent>
       </Dialog>

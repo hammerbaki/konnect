@@ -5611,8 +5611,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const targetUserId = req.params.memberId;
+      console.log(`[AdminRerunAnalysis] Starting: admin=${userId}, target=${targetUserId}, group=${req.params.groupId}`);
       const isMember = await storage.isGroupMember(req.params.groupId, targetUserId);
       if (!isMember) {
+        console.log(`[AdminRerunAnalysis] Target user ${targetUserId} is not a member of group ${req.params.groupId}`);
         return res.status(404).json({ message: "그룹 멤버를 찾을 수 없습니다." });
       }
 
