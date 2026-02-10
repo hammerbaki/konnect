@@ -4078,11 +4078,59 @@ export default function Admin() {
                 elem_strengths: '장점', elem_interests: '관심사', elem_hobbies: '취미', elem_concerns: '고민',
                 elem_favoriteSubject: '좋아하는 과목', elem_dislikedSubject: '싫어하는 과목', elem_parentsHope: '부모님 희망',
               };
+              const renderObjectReadable = (obj: any, depth = 0): React.ReactNode => {
+                if (obj === null || obj === undefined) return <span className="text-[#C4C9D0]">-</span>;
+                if (typeof obj === 'string') return <p className="text-sm text-[#191F28] leading-relaxed whitespace-pre-wrap">{obj}</p>;
+                if (typeof obj === 'number' || typeof obj === 'boolean') return <span className="text-sm text-[#191F28]">{String(obj)}</span>;
+                if (Array.isArray(obj)) {
+                  if (obj.length === 0) return <span className="text-[#C4C9D0] text-sm">없음</span>;
+                  if (obj.every((item: any) => typeof item === 'string' || typeof item === 'number')) {
+                    return <p className="text-sm text-[#191F28]">{obj.join(', ')}</p>;
+                  }
+                  return (
+                    <div className="space-y-2">
+                      {obj.map((item: any, i: number) => (
+                        <div key={i} className={depth === 0 ? "bg-[#F8F9FA] rounded-xl p-3" : ""}>
+                          {typeof item === 'string' || typeof item === 'number' ? (
+                            <p className="text-sm text-[#191F28]">{String(item)}</p>
+                          ) : typeof item === 'object' ? (
+                            renderObjectReadable(item, depth + 1)
+                          ) : <p className="text-sm text-[#191F28]">{String(item)}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+                if (typeof obj === 'object') {
+                  const entries = Object.entries(obj).filter(([, v]) => v !== null && v !== undefined && v !== '');
+                  if (entries.length === 0) return <span className="text-[#C4C9D0] text-sm">없음</span>;
+                  return (
+                    <div className={`space-y-2 ${depth === 0 ? '' : ''}`}>
+                      {entries.map(([key, val]) => {
+                        const label = key.replace(/([A-Z])/g, ' $1').replace(/[_-]/g, ' ').trim();
+                        const isComplex = typeof val === 'object' && val !== null;
+                        return (
+                          <div key={key}>
+                            <p className="text-[11px] text-[#8B95A1] font-medium mb-0.5">{label}</p>
+                            {isComplex ? renderObjectReadable(val, depth + 1) : (
+                              <p className="text-sm text-[#191F28] leading-relaxed whitespace-pre-wrap">{String(val)}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+                return <span className="text-sm text-[#191F28]">{String(obj)}</span>;
+              };
               const renderField = (label: string, value: any) => {
                 if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
                   return (<div className="py-1"><p className="text-[11px] text-[#8B95A1] font-medium">{label}</p><p className="text-sm text-[#C4C9D0]">미입력</p></div>);
                 }
-                const displayValue = Array.isArray(value) ? value.join(', ') : typeof value === 'boolean' ? (value ? '예' : '아니오') : typeof value === 'object' ? JSON.stringify(value) : String(value);
+                if (typeof value === 'object' && !Array.isArray(value)) {
+                  return (<div className="py-1"><p className="text-[11px] text-[#8B95A1] font-medium mb-1">{label}</p>{renderObjectReadable(value)}</div>);
+                }
+                const displayValue = Array.isArray(value) ? value.join(', ') : typeof value === 'boolean' ? (value ? '예' : '아니오') : String(value);
                 return (<div className="py-1"><p className="text-[11px] text-[#8B95A1] font-medium">{label}</p><p className="text-sm text-[#191F28] break-words leading-relaxed">{displayValue}</p></div>);
               };
               const renderFieldSection = (title: string, fields: Array<{label: string, value: any}>) => (
@@ -4483,7 +4531,8 @@ export default function Admin() {
                       </div>
                     ) : userDetail.analyses.map((analysis: any) => {
                       const isExpanded = expandedItems.has(`analysis-${analysis.id}`);
-                      const ai = analysis.aiResult || {};
+                      let ai = analysis.aiResult || {};
+                      if (typeof ai === 'string') { try { ai = JSON.parse(ai); } catch { ai = { summary: ai }; } }
                       const rec = ai.recommendations || {};
                       const foreignData = rec.foreignStudentData;
                       const careers = rec.careers;
@@ -4499,7 +4548,7 @@ export default function Admin() {
                                 <Badge className="bg-[#059669]/10 text-[#059669] border-0 text-[11px] font-bold px-2.5 py-0.5 rounded-lg">{analysis.profileName || '프로필'}</Badge>
                                 {ai.desiredJob && <span className="text-sm font-medium text-[#191F28]">{ai.desiredJob}</span>}
                               </div>
-                              {ai.summary && <p className="text-xs text-[#8B95A1] line-clamp-1">{typeof ai.summary === 'string' ? ai.summary.slice(0, 100) + '...' : ''}</p>}
+                              {ai.summary && <p className="text-xs text-[#8B95A1] line-clamp-1">{typeof ai.summary === 'string' ? ai.summary.slice(0, 100) + '...' : typeof ai.summary === 'object' && ai.summary.desiredRole ? ai.summary.desiredRole : ''}</p>}
                             </div>
                             <div className="flex items-center gap-3 shrink-0">
                               <span className="text-xs text-[#C4C9D0] whitespace-nowrap">
@@ -4515,7 +4564,9 @@ export default function Admin() {
                               {ai.summary && (
                                 <div className="bg-[#F8F9FA] rounded-2xl p-4">
                                   <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">요약</p>
-                                  <p className="text-sm text-[#191F28] whitespace-pre-wrap leading-relaxed">{typeof ai.summary === 'string' ? ai.summary : JSON.stringify(ai.summary, null, 2)}</p>
+                                  {typeof ai.summary === 'string' ? (
+                                    <p className="text-sm text-[#191F28] whitespace-pre-wrap leading-relaxed">{ai.summary}</p>
+                                  ) : renderObjectReadable(ai.summary)}
                                 </div>
                               )}
                               {analysis.stats && (
@@ -4569,14 +4620,6 @@ export default function Admin() {
                                   ))}
                                 </div>
                               )}
-                              {analysis.aiRawResponse && typeof analysis.aiRawResponse === 'string' && (
-                                <div>
-                                  <p className="text-[11px] font-bold text-[#C4C9D0] uppercase tracking-wider mb-2">AI 원문 (발췌)</p>
-                                  <div className="bg-[#F8F9FA] rounded-xl p-3 max-h-32 overflow-y-auto">
-                                    <p className="text-xs text-[#8B95A1] whitespace-pre-wrap font-mono">{analysis.aiRawResponse.slice(0, 500)}{analysis.aiRawResponse.length > 500 ? '...' : ''}</p>
-                                  </div>
-                                </div>
-                              )}
                             </div>
                           )}
                         </div>
@@ -4610,7 +4653,9 @@ export default function Admin() {
                         {essay.aiResult && (
                           <div className="bg-[#EFF6FF] rounded-xl p-4 max-h-32 overflow-y-auto mb-3">
                             <p className="text-[11px] font-bold text-[#3182F6] mb-1.5">AI 결과</p>
-                            <p className="text-xs text-[#191F28] whitespace-pre-wrap leading-relaxed">{typeof essay.aiResult === 'string' ? essay.aiResult : JSON.stringify(essay.aiResult, null, 2)}</p>
+                            {typeof essay.aiResult === 'string' ? (
+                              <p className="text-xs text-[#191F28] whitespace-pre-wrap leading-relaxed">{essay.aiResult}</p>
+                            ) : renderObjectReadable(essay.aiResult)}
                           </div>
                         )}
                         <div className="flex items-center gap-3 text-[11px] text-[#C4C9D0] pt-2 border-t border-[#F2F4F6]">
@@ -4673,7 +4718,9 @@ export default function Admin() {
                                 <div>
                                   <p className="text-[11px] font-bold text-[#7C3AED] uppercase tracking-wider mb-2">비전 데이터</p>
                                   <div className="bg-[#F8F9FA] rounded-xl p-4 max-h-48 overflow-y-auto">
-                                    <pre className="text-xs text-[#191F28] whitespace-pre-wrap font-mono leading-relaxed">{typeof goal.visionData === 'string' ? goal.visionData : JSON.stringify(goal.visionData, null, 2)}</pre>
+                                    {typeof goal.visionData === 'string' ? (
+                                      <p className="text-xs text-[#191F28] whitespace-pre-wrap leading-relaxed">{goal.visionData}</p>
+                                    ) : renderObjectReadable(goal.visionData)}
                                   </div>
                                 </div>
                               )}
@@ -4681,7 +4728,9 @@ export default function Admin() {
                                 <div>
                                   <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">AI 결과</p>
                                   <div className="bg-[#EFF6FF] rounded-xl p-4 max-h-32 overflow-y-auto">
-                                    <p className="text-xs text-[#191F28] whitespace-pre-wrap leading-relaxed">{typeof goal.aiResult === 'string' ? goal.aiResult : JSON.stringify(goal.aiResult, null, 2)}</p>
+                                    {typeof goal.aiResult === 'string' ? (
+                                      <p className="text-xs text-[#191F28] whitespace-pre-wrap leading-relaxed">{goal.aiResult}</p>
+                                    ) : renderObjectReadable(goal.aiResult)}
                                   </div>
                                 </div>
                               )}
@@ -4804,7 +4853,7 @@ export default function Admin() {
                                   <div className="space-y-1.5">
                                     {(Array.isArray(assessment.recommendedJobs) ? assessment.recommendedJobs : []).map((job: any, i: number) => (
                                       <div key={i} className="bg-[#F8F9FA] rounded-xl p-3">
-                                        <p className="text-sm font-medium text-[#191F28]">{typeof job === 'string' ? job : job.title || job.name || JSON.stringify(job)}</p>
+                                        <p className="text-sm font-medium text-[#191F28]">{typeof job === 'string' ? job : job.title || job.name || Object.values(job).filter(v => typeof v === 'string').join(', ') || '-'}</p>
                                         {job.matchScore && <p className="text-xs font-medium text-[#059669] mt-0.5">매칭: {job.matchScore}</p>}
                                       </div>
                                     ))}
@@ -4815,7 +4864,9 @@ export default function Admin() {
                                 <div>
                                   <p className="text-[11px] font-bold text-[#3182F6] uppercase tracking-wider mb-2">성장 계획</p>
                                   <div className="bg-[#F8F9FA] rounded-xl p-4 max-h-32 overflow-y-auto">
-                                    <pre className="text-xs text-[#191F28] whitespace-pre-wrap font-mono leading-relaxed">{typeof assessment.growthPlan === 'string' ? assessment.growthPlan : JSON.stringify(assessment.growthPlan, null, 2)}</pre>
+                                    {typeof assessment.growthPlan === 'string' ? (
+                                      <p className="text-xs text-[#191F28] whitespace-pre-wrap leading-relaxed">{assessment.growthPlan}</p>
+                                    ) : renderObjectReadable(assessment.growthPlan)}
                                   </div>
                                 </div>
                               )}
