@@ -4670,12 +4670,21 @@ export default function Admin() {
                                       </div>
                                       {fitData.reasons && Array.isArray(fitData.reasons) && fitData.reasons.length > 0 && (
                                         <div className="space-y-1">
-                                          {fitData.reasons.map((r: any, i: number) => (
-                                            <div key={i} className={`flex items-start gap-2 p-2 rounded-lg text-xs ${r.impact === 'positive' ? 'bg-green-50' : r.impact === 'negative' ? 'bg-red-50' : 'bg-gray-50'}`}>
-                                              <span>{r.impact === 'positive' ? '✅' : r.impact === 'negative' ? '⚠️' : 'ℹ️'}</span>
-                                              <span className="text-[#4E5968]">{typeof r === 'string' ? r : r.text || r.reason || r.description || ''}</span>
-                                            </div>
-                                          ))}
+                                          {fitData.reasons.map((r: any, i: number) => {
+                                            const reasonText = typeof r === 'string' ? r : (r.note || r.text || r.reason || r.description || '');
+                                            const fieldLabel = typeof r === 'object' && r.field ? r.field : '';
+                                            const fieldValue = typeof r === 'object' && r.value ? r.value : '';
+                                            if (!reasonText && !fieldLabel) return null;
+                                            return (
+                                              <div key={i} className={`flex items-start gap-2 p-2 rounded-lg text-xs ${r.impact === 'positive' ? 'bg-green-50' : r.impact === 'negative' ? 'bg-red-50' : 'bg-gray-50'}`}>
+                                                <span className="shrink-0">{r.impact === 'positive' ? '✅' : r.impact === 'negative' ? '⚠️' : 'ℹ️'}</span>
+                                                <span className="text-[#4E5968]">
+                                                  {fieldLabel && <strong className="text-[#191F28]">{fieldLabel}{fieldValue ? `: ${fieldValue}` : ''}</strong>}
+                                                  {fieldLabel && reasonText ? ' — ' : ''}{reasonText}
+                                                </span>
+                                              </div>
+                                            );
+                                          })}
                                         </div>
                                       )}
                                       {typeof fitData.reasons === 'string' && <p className="text-xs text-[#4E5968]">{fitData.reasons}</p>}
@@ -4688,9 +4697,17 @@ export default function Admin() {
                                       <div className="space-y-1.5">
                                         {readyNow.map((j: any, i: number) => (
                                           <div key={i} className="bg-white/70 rounded-xl p-3">
-                                            <p className="text-sm font-medium text-[#191F28]">{typeof j === 'string' ? j : j.title || j.name || `직업 ${i + 1}`}</p>
-                                            {j.reason && <p className="text-xs text-[#8B95A1] mt-0.5 leading-relaxed">{j.reason}</p>}
+                                            <p className="text-sm font-medium text-[#191F28]">{typeof j === 'string' ? j : j.role || j.title || j.name || `직업 ${i + 1}`}</p>
+                                            {j.reasons && Array.isArray(j.reasons) && <p className="text-xs text-[#8B95A1] mt-0.5 leading-relaxed">{j.reasons.join(', ')}</p>}
+                                            {j.reason && typeof j.reason === 'string' && <p className="text-xs text-[#8B95A1] mt-0.5 leading-relaxed">{j.reason}</p>}
                                             {j.description && <p className="text-xs text-[#8B95A1] mt-0.5 leading-relaxed">{j.description}</p>}
+                                            {j.requiredNext && Array.isArray(j.requiredNext) && j.requiredNext.length > 0 && (
+                                              <div className="mt-1 flex flex-wrap gap-1">
+                                                {j.requiredNext.map((r: string, ri: number) => (
+                                                  <Badge key={ri} className="bg-blue-50 text-blue-700 border-0 text-[10px] px-1.5 py-0 rounded-md">{r}</Badge>
+                                                ))}
+                                              </div>
+                                            )}
                                             {j.requirements && <p className="text-xs text-[#D97706] mt-0.5">{Array.isArray(j.requirements) ? j.requirements.join(', ') : j.requirements}</p>}
                                           </div>
                                         ))}
@@ -4704,8 +4721,15 @@ export default function Admin() {
                                       <div className="space-y-1.5">
                                         {afterPrep.map((j: any, i: number) => (
                                           <div key={i} className="bg-white/70 rounded-xl p-3">
-                                            <p className="text-sm font-medium text-[#191F28]">{typeof j === 'string' ? j : j.title || j.name || `직업 ${i + 1}`}</p>
-                                            {j.reason && <p className="text-xs text-[#8B95A1] mt-0.5 leading-relaxed">{j.reason}</p>}
+                                            <p className="text-sm font-medium text-[#191F28]">{typeof j === 'string' ? j : j.role || j.title || j.name || `직업 ${i + 1}`}</p>
+                                            {j.reason && typeof j.reason === 'string' && <p className="text-xs text-[#8B95A1] mt-0.5 leading-relaxed">{j.reason}</p>}
+                                            {j.missingConditions && Array.isArray(j.missingConditions) && j.missingConditions.length > 0 && (
+                                              <div className="mt-1 flex flex-wrap gap-1">
+                                                {j.missingConditions.map((c: string, ci: number) => (
+                                                  <Badge key={ci} className="bg-amber-50 text-amber-700 border-0 text-[10px] px-1.5 py-0 rounded-md">{c}</Badge>
+                                                ))}
+                                              </div>
+                                            )}
                                             {j.conditions && Array.isArray(j.conditions) && (
                                               <div className="mt-1 flex flex-wrap gap-1">
                                                 {j.conditions.map((c: string, ci: number) => (
