@@ -4007,7 +4007,7 @@ export default function Admin() {
       </AlertDialog>
 
       <Dialog open={!!selectedUserForDetail} onOpenChange={(open) => { if (!open) { setSelectedUserForDetail(null); setDetailTab("overview"); } }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 rounded-2xl border border-[#F2F4F6] shadow-lg" data-testid="modal-user-detail">
+        <DialogContent className="max-w-4xl h-[85vh] overflow-hidden flex flex-col p-0 rounded-2xl border border-[#F2F4F6] shadow-lg" data-testid="modal-user-detail">
           <DialogHeader className="sr-only">
             <DialogTitle>{userDetail?.user?.displayName || '사용자 상세'}</DialogTitle>
             <DialogDescription>{userDetail?.user?.email || ''}</DialogDescription>
@@ -4440,7 +4440,7 @@ export default function Admin() {
                 ))}
               </div>
 
-              <div className="overflow-y-auto flex-1 bg-[#F8F9FA]" style={{ maxHeight: "calc(90vh - 280px)" }}>
+              <div className="overflow-y-auto flex-1 min-h-0 bg-[#F8F9FA]">
                 {detailTab === "overview" && (
                   <div className="p-5 space-y-4">
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
