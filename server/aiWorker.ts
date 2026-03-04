@@ -135,7 +135,7 @@ export async function cleanupStaleProcessingJobs(): Promise<number> {
             isStale = true;
             reason = `job processing for ${Math.round((now - startTime) / 1000)}s (timeout: ${STALE_JOB_TIMEOUT / 1000}s)`;
             // Mark the job as failed in the database
-            await storage.updateAiJobError(jobId, "작업 시간이 초과되었습니다. 포인트가 환불되었습니다.");
+            await storage.updateAiJobError(jobId, "작업 시간이 초과되었습니다. 학습권이 환불되었습니다.");
             
             // Auto-refund points for timed out jobs
             try {

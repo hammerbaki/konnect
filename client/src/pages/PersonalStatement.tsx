@@ -404,7 +404,7 @@ export default function PersonalStatement() {
                         ]);
                     }
                     
-                    toast({ description: "자기소개서가 수정되었습니다! (30 포인트 사용)" });
+                    toast({ description: "자기소개서가 수정되었습니다! (30 학습권 사용)" });
                 }
             } catch (error) {
                 console.error("Failed to save revised essay:", error);
@@ -652,7 +652,7 @@ export default function PersonalStatement() {
         // Optimistically deduct credits immediately (100 credits for essay)
         const deducted = deductCredit(ESSAY_CREDIT_COST);
         if (!deducted) {
-            toast({ variant: "destructive", description: "포인트이 부족합니다. 자소서 생성에 100 포인트이 필요합니다." });
+            toast({ variant: "destructive", description: "학습권이 부족합니다. 자소서 생성에 100 학습권이 필요합니다." });
             return;
         }
         essayCreditsDeductedRef.current = true; // Track deduction for safe restoration
@@ -716,7 +716,7 @@ export default function PersonalStatement() {
         // Optimistically deduct credits immediately (30 credits for revision)
         const deducted = deductCredit(REVISION_CREDIT_COST);
         if (!deducted) {
-            toast({ variant: "destructive", description: "포인트이 부족합니다. 수정을 위해 30 포인트이 필요합니다." });
+            toast({ variant: "destructive", description: "학습권이 부족합니다. 수정을 위해 30 학습권이 필요합니다." });
             return;
         }
         revisionCreditsDeductedRef.current = true; // Track deduction for safe restoration

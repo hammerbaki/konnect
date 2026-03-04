@@ -435,7 +435,7 @@ export default function Analysis() {
         const deducted = deductCredit(ANALYSIS_CREDIT_COST);
         if (!deducted) {
             setIsSubmitting(false);
-            toast({ variant: "destructive", description: "포인트가 부족합니다. 분석에 100 포인트가 필요합니다." });
+            toast({ variant: "destructive", description: "학습권이 부족합니다. 분석에 100 학습권이 필요합니다." });
             return;
         }
         analysisCreditsDeductedRef.current = true; // Track deduction for safe restoration
@@ -618,7 +618,7 @@ export default function Analysis() {
                             </>
                         ) : (
                             <>
-                                <Sparkles className="h-5 w-5 mr-2" /> AI 분석 시작 (100 포인트)
+                                <Sparkles className="h-5 w-5 mr-2" /> AI 분석 시작 (100 학습권)
                             </>
                         )}
                     </Button>
@@ -1730,7 +1730,7 @@ export default function Analysis() {
                                         if (result.success) {
                                             toast({
                                                 title: "분석이 취소되었습니다",
-                                                description: result.refundedAmount ? `${result.refundedAmount} 포인트가 환불되었습니다.` : undefined,
+                                                description: result.refundedAmount ? `${result.refundedAmount} 학습권이 환불되었습니다.` : undefined,
                                             });
                                         }
                                     }}

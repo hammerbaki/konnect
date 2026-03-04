@@ -84,8 +84,8 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
   const addCredits = useCallback((amount: number) => {
     setCredits(prev => prev + amount);
     toast({
-      title: "포인트 충전 완료",
-      description: `${amount} 포인트가 성공적으로 충전되었습니다.`,
+      title: "학습권 충전 완료",
+      description: `${amount} 학습권이 성공적으로 충전되었습니다.`,
     });
   }, [toast]);
 

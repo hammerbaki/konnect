@@ -46,7 +46,7 @@ export default function Privacy() {
               <ul className="list-disc pl-6 mt-3 space-y-2">
                 <li>회원 정보: 회원 탈퇴 시까지 (단, 관계 법령에 따라 보존이 필요한 경우 해당 기간까지)</li>
                 <li>서비스 이용 기록: 3년</li>
-                <li>결제 및 포인트 이용 기록: 5년</li>
+                <li>결제 및 학습권 이용 기록: 5년</li>
               </ul>
             </section>
 

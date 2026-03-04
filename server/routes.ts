@@ -1163,13 +1163,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!deductResult.success) {
         if (deductResult.errorCode === 'insufficient_balance') {
           return res.status(402).json({ 
-            message: `포인트가 부족합니다. 분석을 생성하려면 최소 ${analysisCost} 포인트가 필요합니다.`,
+            message: `학습권이 부족합니다. 분석을 생성하려면 최소 ${analysisCost} 학습권이 필요합니다.`,
             requiredCredits: deductResult.totalRequired,
             currentCredits: deductResult.creditBalance,
             giftPoints: deductResult.gpBalance,
           });
         }
-        return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
+        return res.status(402).json({ message: "학습권 차감 중 오류가 발생했습니다." });
       }
 
       // Get user for profile data
@@ -1278,13 +1278,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!deductResult.success) {
         if (deductResult.errorCode === 'insufficient_balance') {
           return res.status(402).json({ 
-            message: `포인트가 부족합니다. 자기소개서 생성을 위해 최소 ${essayCost} 포인트가 필요합니다.`,
+            message: `학습권이 부족합니다. 자기소개서 생성을 위해 최소 ${essayCost} 학습권이 필요합니다.`,
             requiredCredits: deductResult.totalRequired,
             currentCredits: deductResult.creditBalance,
             giftPoints: deductResult.gpBalance,
           });
         }
-        return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
+        return res.status(402).json({ message: "학습권 차감 중 오류가 발생했습니다." });
       }
 
       // Submit job to queue for background processing
@@ -1486,13 +1486,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!deductResult.success) {
           if (deductResult.errorCode === 'insufficient_balance') {
             return res.status(402).json({ 
-              message: `포인트가 부족합니다. 연도/반기 목표 생성을 위해 최소 ${goalCost} 포인트가 필요합니다.`,
+              message: `학습권이 부족합니다. 연도/반기 목표 생성을 위해 최소 ${goalCost} 학습권이 필요합니다.`,
               requiredCredits: deductResult.totalRequired,
               currentCredits: deductResult.creditBalance,
               giftPoints: deductResult.gpBalance,
             });
           }
-          return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
+          return res.status(402).json({ message: "학습권 차감 중 오류가 발생했습니다." });
         }
       }
 
@@ -1573,13 +1573,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!deductResult.success) {
         if (deductResult.errorCode === 'insufficient_balance') {
           return res.status(402).json({ 
-            message: `포인트가 부족합니다. 전체 액션 플랜 생성을 위해 ${planCost} 포인트가 필요합니다.`,
+            message: `학습권이 부족합니다. 전체 액션 플랜 생성을 위해 ${planCost} 학습권이 필요합니다.`,
             requiredCredits: deductResult.totalRequired,
             currentCredits: deductResult.creditBalance,
             giftPoints: deductResult.gpBalance,
           });
         }
-        return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
+        return res.status(402).json({ message: "학습권 차감 중 오류가 발생했습니다." });
       }
 
       // Create AI job record
@@ -1675,13 +1675,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!deductResult.success) {
           if (deductResult.errorCode === 'insufficient_balance') {
             return res.status(402).json({ 
-              message: `포인트가 부족합니다. ${requiredCredits} 포인트가 필요합니다.`,
+              message: `학습권이 부족합니다. ${requiredCredits} 학습권이 필요합니다.`,
               requiredCredits: deductResult.totalRequired,
               currentCredits: deductResult.creditBalance,
               giftPoints: deductResult.gpBalance,
             });
           }
-          return res.status(402).json({ message: "포인트 차감 중 오류가 발생했습니다." });
+          return res.status(402).json({ message: "학습권 차감 중 오류가 발생했습니다." });
         }
       }
       
@@ -2035,14 +2035,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const parsed = updateCreditsSchema.safeParse(req.body);
       
       if (!parsed.success) {
-        return res.status(400).json({ message: "유효하지 않은 포인트 값입니다.", errors: parsed.error.errors });
+        return res.status(400).json({ message: "유효하지 않은 학습권 값입니다.", errors: parsed.error.errors });
       }
       
       const user = await storage.updateUserCreditsAdmin(targetUserId, parsed.data.credits);
       res.json(user);
     } catch (error: any) {
       console.error("Error updating user credits:", error);
-      res.status(500).json({ message: "포인트 변경 중 오류가 발생했습니다." });
+      res.status(500).json({ message: "학습권 변경 중 오류가 발생했습니다." });
     }
   });
 
@@ -2721,7 +2721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         packageId: packageId || null,
         orderId,
-        orderName: orderName || '포인트 충전',
+        orderName: orderName || '학습권 충전',
         amount,
         pointsToAdd,
         status: 'pending',
@@ -2890,7 +2890,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(transactions);
     } catch (error: any) {
       console.error("Error fetching point history:", error);
-      res.status(500).json({ message: "포인트 내역 조회 중 오류가 발생했습니다." });
+      res.status(500).json({ message: "학습권 내역 조회 중 오류가 발생했습니다." });
     }
   });
 
@@ -3097,7 +3097,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.upsertSystemSetting(
         'gp_default_expiration_days',
         String(defaultExpirationDays),
-        '기프트 포인트 기본 만료 기간 (일)',
+        '기프트 학습권 기본 만료 기간 (일)',
         adminId
       );
       

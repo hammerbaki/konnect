@@ -168,7 +168,7 @@ export default function TokenRecharge() {
     onSuccess: (data) => {
       toast({
         title: "결제 완료",
-        description: `${data.payment.pointsAdded.toLocaleString()} 포인트가 충전되었습니다.`,
+        description: `${data.payment.pointsAdded.toLocaleString()} 학습권이 충전되었습니다.`,
       });
       refreshCredits();
       queryClient.invalidateQueries({ queryKey: ["/api/points/history"] });
@@ -205,7 +205,7 @@ export default function TokenRecharge() {
         packageId: pkg.id,
         amount: pkg.price,
         pointsToAdd: pkg.points + pkg.bonusPoints,
-        orderName: `${pkg.name} - ${pkg.points + pkg.bonusPoints} 포인트`,
+        orderName: `${pkg.name} - ${pkg.points + pkg.bonusPoints} 학습권`,
       });
       if (!res.ok) {
         throw new Error("결제 초기화 실패");
@@ -275,8 +275,8 @@ export default function TokenRecharge() {
 
   const getTransactionLabel = (type: string) => {
     const labels: Record<string, string> = {
-      purchase: "포인트 충전",
-      usage: "포인트 사용",
+      purchase: "학습권 충전",
+      usage: "학습권 사용",
       admin_add: "관리자 지급",
       admin_deduct: "관리자 차감",
       refund: "환불",
@@ -292,7 +292,7 @@ export default function TokenRecharge() {
           className="text-[28px] font-bold text-[#191F28] mb-6"
           data-testid="text-page-title"
         >
-          포인트 충전
+          진로분석 학습권
         </h2>
 
         {/* Processing overlay */}
@@ -315,7 +315,7 @@ export default function TokenRecharge() {
           <CardContent className="p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-blue-100 font-medium mb-1">총 보유 포인트</p>
+                <p className="text-blue-100 font-medium mb-1">총 보유 진로분석 학습권</p>
                 <div className="flex items-baseline gap-2">
                   <span
                     className="text-4xl font-bold"
@@ -332,7 +332,7 @@ export default function TokenRecharge() {
             </div>
             <div className="flex gap-6 pt-3 border-t border-white/20">
               <div>
-                <p className="text-xs text-blue-100 mb-0.5">기프트 포인트</p>
+                <p className="text-xs text-blue-100 mb-0.5">기프트 학습권</p>
                 <span
                   className="text-lg font-bold text-emerald-300"
                   data-testid="text-gift-points"
@@ -341,7 +341,7 @@ export default function TokenRecharge() {
                 </span>
               </div>
               <div>
-                <p className="text-xs text-blue-100 mb-0.5">유료 포인트</p>
+                <p className="text-xs text-blue-100 mb-0.5">유료 학습권</p>
                 <span
                   className="text-lg font-bold text-amber-300"
                   data-testid="text-paid-credits"
@@ -377,7 +377,7 @@ export default function TokenRecharge() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xl font-bold text-[#191F28]">
-                          {pkg.points.toLocaleString()} 포인트
+                          {pkg.points.toLocaleString()} 학습권
                         </span>
                         {pkg.bonusPoints > 0 && (
                           <Badge className="bg-green-100 text-green-600 border-none hover:bg-green-100">
@@ -453,12 +453,12 @@ export default function TokenRecharge() {
                 <li>
                   환불 가능 금액은 고객이 실제 결제한{" "}
                   <span className="font-bold text-[#333D4B]">
-                    유상 포인트(구매 포인트) 잔액 범위
+                    유상 학습권(구매 학습권) 잔액 범위
                   </span>
                   에 한합니다.
                 </li>
                 <li>
-                  보너스 포인트(이벤트/프로모션 등 무상 제공 포인트)는
+                  보너스 학습권(이벤트/프로모션 등 무상 제공 학습권)은
                   환불(환급) 대상이 아닙니다.
                 </li>
                 <li>환불규정은 소비자보호법에 따릅니다.</li>
@@ -467,12 +467,12 @@ export default function TokenRecharge() {
             <div className="border-t border-[#E5E8EB] pt-4">
               <h4 className="font-bold text-[#333D4B] mb-2 flex items-center gap-2">
                 <Coins className="h-4 w-4 text-[#8B95A1]" />
-                포인트 유효기간 안내
+                학습권 유효기간 안내
               </h4>
               <ul className="text-sm text-[#6B7684] space-y-2 ml-6 list-disc">
                 <li>
                   <span className="font-bold text-[#333D4B]">
-                    유상 포인트(구매 포인트)
+                    유상 학습권(구매 학습권)
                   </span>
                   : 구매일(충전일)로부터{" "}
                   <span className="font-bold text-[#3182F6]">1년간</span> 사용
@@ -482,7 +482,7 @@ export default function TokenRecharge() {
                 </li>
                 <li>
                   <span className="font-bold text-[#333D4B]">
-                    무상 포인트(보너스/이벤트 포인트)
+                    무상 학습권(보너스/이벤트 학습권)
                   </span>
                   : 지급일로부터{" "}
                   <span className="font-bold text-[#FF6B6B]">90일간</span> 사용
@@ -495,7 +495,7 @@ export default function TokenRecharge() {
 
         {/* Transaction History */}
         <h3 className="text-lg font-bold text-[#191F28] mb-4 flex items-center gap-2">
-          <History className="h-5 w-5 text-[#8B95A1]" /> 포인트 내역
+          <History className="h-5 w-5 text-[#8B95A1]" /> 학습권 내역
         </h3>
         <Card className="toss-card divide-y divide-[#F2F4F6]">
           <CardContent className="p-0">
@@ -506,7 +506,7 @@ export default function TokenRecharge() {
             ) : transactions.length === 0 ? (
               <div className="py-12 text-center text-[#8B95A1]">
                 <Coins className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>포인트 내역이 없습니다</p>
+                <p>학습권 내역이 없습니다</p>
               </div>
             ) : (
               transactions.map((tx: PointTransaction) => (

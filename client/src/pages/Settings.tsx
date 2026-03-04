@@ -655,7 +655,7 @@ export default function Settings() {
                                     <li>저장된 분석 결과</li>
                                     <li>작성한 자기소개서</li>
                                     <li>목표 관리 데이터</li>
-                                    <li>보유 포인트 및 GP</li>
+                                    <li>보유 학습권 및 GP</li>
                                 </ul>
                             </div>
                         </DialogDescription>

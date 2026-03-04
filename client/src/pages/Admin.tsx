@@ -1250,7 +1250,7 @@ export default function Admin() {
     mutationFn: async (amount: number) => {
       const res = await apiRequest('PATCH', '/api/admin/system-settings/signup_bonus', { 
         value: amount.toString(), 
-        description: '신규 가입 시 지급되는 포인트' 
+        description: '신규 가입 시 지급되는 학습권' 
       });
       return res.json();
     },
@@ -1268,7 +1268,7 @@ export default function Admin() {
     mutationFn: async (days: number) => {
       const res = await apiRequest('PATCH', '/api/admin/system-settings/gp_default_expiration_days', { 
         value: days.toString(), 
-        description: '기프트 포인트 기본 만료 기간 (일)' 
+        description: '기프트 학습권 기본 만료 기간 (일)' 
       });
       return res.json();
     },
@@ -1352,7 +1352,7 @@ export default function Admin() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.message || '기프트 포인트 지급에 실패했습니다.');
+        throw new Error(error.message || '기프트 학습권 지급에 실패했습니다.');
       }
       return res.json();
     },
@@ -1364,7 +1364,7 @@ export default function Admin() {
       setGpReason("");
       setGpExpiresAt("");
       toast({ 
-        title: "기프트 포인트 지급 완료", 
+        title: "기프트 학습권 지급 완료", 
         description: `${variables.amount.toLocaleString()}GP가 지급되었습니다. 새 GP 잔액: ${data.newGiftPoints.toLocaleString()}GP` 
       });
     },
@@ -1525,10 +1525,10 @@ export default function Admin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       setEditingCredits(null);
-      toast({ title: "포인트 변경 완료", description: "사용자 포인트가 변경되었습니다." });
+      toast({ title: "학습권 변경 완료", description: "사용자 학습권이 변경되었습니다." });
     },
     onError: () => {
-      toast({ title: "오류", description: "포인트 변경에 실패했습니다.", variant: "destructive" });
+      toast({ title: "오류", description: "학습권 변경에 실패했습니다.", variant: "destructive" });
     },
   });
 
@@ -1594,7 +1594,7 @@ export default function Admin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/packages'] });
       setNewPackage(null);
-      toast({ title: "패키지 생성 완료", description: "새 포인트 패키지가 생성되었습니다." });
+      toast({ title: "패키지 생성 완료", description: "새 학습권 패키지가 생성되었습니다." });
     },
     onError: () => {
       toast({ title: "오류", description: "패키지 생성에 실패했습니다.", variant: "destructive" });
@@ -1610,7 +1610,7 @@ export default function Admin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/packages'] });
       setEditingPackage(null);
-      toast({ title: "패키지 수정 완료", description: "포인트 패키지가 수정되었습니다." });
+      toast({ title: "패키지 수정 완료", description: "학습권 패키지가 수정되었습니다." });
     },
     onError: () => {
       toast({ title: "오류", description: "패키지 수정에 실패했습니다.", variant: "destructive" });
@@ -1625,7 +1625,7 @@ export default function Admin() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/packages'] });
-      toast({ title: "패키지 비활성화", description: "포인트 패키지가 비활성화되었습니다." });
+      toast({ title: "패키지 비활성화", description: "학습권 패키지가 비활성화되었습니다." });
     },
     onError: () => {
       toast({ title: "오류", description: "패키지 삭제에 실패했습니다.", variant: "destructive" });
@@ -1730,7 +1730,7 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger value="tokens" className="rounded-lg px-4" data-testid="tab-tokens">
               <Coins className="h-4 w-4 mr-2" />
-              포인트 시스템
+              학습권 시스템
             </TabsTrigger>
             <TabsTrigger value="traffic" className="rounded-lg px-4" data-testid="tab-traffic">
               <TrendingUp className="h-4 w-4 mr-2" />
@@ -1742,7 +1742,7 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger value="giftpoints" className="rounded-lg px-4" data-testid="tab-giftpoints">
               <Gift className="h-4 w-4 mr-2" />
-              기프트 포인트
+              기프트 학습권
             </TabsTrigger>
             <TabsTrigger value="groups" className="rounded-lg px-4" data-testid="tab-groups">
               <Users2 className="h-4 w-4 mr-2" />
@@ -2056,7 +2056,7 @@ export default function Admin() {
                 <CardContent className="p-4 text-center">
                   <Coins className="h-6 w-6 mx-auto mb-2 text-[#6B7280]" />
                   <p className="text-2xl font-bold text-[#191F28]">{aiStats?.avgTokensPerJob?.toLocaleString() || 0}</p>
-                  <p className="text-xs text-[#8B95A1]">평균 포인트</p>
+                  <p className="text-xs text-[#8B95A1]">평균 학습권</p>
                 </CardContent>
               </Card>
             </div>
@@ -2416,7 +2416,7 @@ export default function Admin() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Coins className="h-5 w-5 text-[#3182F6]" />
-                  포인트 가격 정책
+                  학습권 가격 정책
                 </CardTitle>
                 {servicePricingData.length === 0 && (
                   <Button
@@ -2463,7 +2463,7 @@ export default function Admin() {
                                 min={0}
                                 data-testid={`input-pricing-${pricing.id}`}
                               />
-                              <span className="text-[#191F28] font-bold">포인트</span>
+                              <span className="text-[#191F28] font-bold">학습권</span>
                             </div>
                             <div className="flex gap-2">
                               <Button
@@ -2488,7 +2488,7 @@ export default function Admin() {
                         ) : (
                           <>
                             <p className={`text-2xl font-bold ${pricing.id === 'essay_revision' ? 'text-[#7C3AED]' : 'text-[#3182F6]'}`}>
-                              {pricing.pointCost.toLocaleString()} 포인트
+                              {pricing.pointCost.toLocaleString()} 학습권
                             </p>
                             <p className="text-sm text-[#8B95A1]">{pricing.description}</p>
                           </>
@@ -2502,24 +2502,24 @@ export default function Admin() {
 
             <Card className="toss-card">
               <CardHeader>
-                <CardTitle className="text-lg">포인트 통계</CardTitle>
+                <CardTitle className="text-lg">학습권 통계</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="p-4 bg-[#F2F4F6] rounded-xl text-center">
-                    <p className="text-sm text-[#8B95A1]">전체 발행 포인트</p>
+                    <p className="text-sm text-[#8B95A1]">전체 발행 학습권</p>
                     <p className="text-2xl font-bold text-[#191F28]">
                       {users.reduce((sum, u) => sum + u.credits, 0).toLocaleString()}
                     </p>
                   </div>
                   <div className="p-4 bg-[#F2F4F6] rounded-xl text-center">
-                    <p className="text-sm text-[#8B95A1]">평균 보유 포인트</p>
+                    <p className="text-sm text-[#8B95A1]">평균 보유 학습권</p>
                     <p className="text-2xl font-bold text-[#191F28]">
                       {users.length > 0 ? Math.round(users.reduce((sum, u) => sum + u.credits, 0) / users.length).toLocaleString() : 0}
                     </p>
                   </div>
                   <div className="p-4 bg-[#F2F4F6] rounded-xl text-center">
-                    <p className="text-sm text-[#8B95A1]">소진된 포인트 (추정)</p>
+                    <p className="text-sm text-[#8B95A1]">소진된 학습권 (추정)</p>
                     <p className="text-2xl font-bold text-[#191F28]">
                       {((aiStats?.completedJobs || 0) * 100).toLocaleString()}
                     </p>
@@ -2562,7 +2562,7 @@ export default function Admin() {
                             />
                           </div>
                           <div>
-                            <label className="text-sm text-[#8B95A1]">포인트</label>
+                            <label className="text-sm text-[#8B95A1]">학습권</label>
                             <Input
                               type="number"
                               value={newPackage.points || 0}
@@ -2582,7 +2582,7 @@ export default function Admin() {
                             />
                           </div>
                           <div>
-                            <label className="text-sm text-[#8B95A1]">보너스 포인트</label>
+                            <label className="text-sm text-[#8B95A1]">보너스 학습권</label>
                             <Input
                               type="number"
                               value={newPackage.bonusPoints || 0}
@@ -2641,7 +2641,7 @@ export default function Admin() {
                                     />
                                   </div>
                                   <div>
-                                    <label className="text-sm text-[#8B95A1]">포인트</label>
+                                    <label className="text-sm text-[#8B95A1]">학습권</label>
                                     <Input
                                       type="number"
                                       value={editingPackage.points}
@@ -2661,7 +2661,7 @@ export default function Admin() {
                                     />
                                   </div>
                                   <div>
-                                    <label className="text-sm text-[#8B95A1]">보너스 포인트</label>
+                                    <label className="text-sm text-[#8B95A1]">보너스 학습권</label>
                                     <Input
                                       type="number"
                                       value={editingPackage.bonusPoints}
@@ -2747,7 +2747,7 @@ export default function Admin() {
                                       )}
                                     </div>
                                     <div className="flex items-center gap-4 mt-1 text-sm text-[#8B95A1]">
-                                      <span className="text-[#3182F6] font-bold">{pkg.points.toLocaleString()} 포인트</span>
+                                      <span className="text-[#3182F6] font-bold">{pkg.points.toLocaleString()} 학습권</span>
                                       <span>₩{pkg.price.toLocaleString()}</span>
                                       {pkg.bonusPoints > 0 && (
                                         <span className="text-[#059669]">+{pkg.bonusPoints} 보너스</span>
@@ -3175,7 +3175,7 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Gift className="h-5 w-5 text-[#10B981]" />
-                  기프트 포인트 지급
+                  기프트 학습권 지급
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -3925,7 +3925,7 @@ export default function Admin() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#191F28]">초기 포인트</label>
+                <label className="text-sm font-medium text-[#191F28]">초기 학습권</label>
                 <Input
                   type="number"
                   min={0}
@@ -3981,7 +3981,7 @@ export default function Admin() {
                   <li>저장된 분석 결과</li>
                   <li>작성한 자기소개서</li>
                   <li>목표 관리 데이터</li>
-                  <li>보유 포인트 및 GP</li>
+                  <li>보유 학습권 및 GP</li>
                 </ul>
               </div>
             </AlertDialogDescription>
@@ -4404,7 +4404,7 @@ export default function Admin() {
                   <div className="flex gap-2 shrink-0">
                     <div className="bg-[#EFF6FF] rounded-2xl px-4 py-2.5 text-center min-w-[72px]">
                       <p className="text-lg font-bold text-[#3182F6]">{(userDetail.user.credits || 0).toLocaleString()}</p>
-                      <p className="text-[10px] text-[#8B95A1] font-medium">포인트</p>
+                      <p className="text-[10px] text-[#8B95A1] font-medium">학습권</p>
                     </div>
                     <div className="bg-[#F3EEFF] rounded-2xl px-4 py-2.5 text-center min-w-[72px]">
                       <p className="text-lg font-bold text-[#7C3AED]">{(userDetail.user.giftPoints || 0).toLocaleString()}</p>

@@ -447,7 +447,7 @@ export const DEFAULT_PAGE_CONFIGS: Record<string, { title: string; defaultRoles:
   '/interview': { title: '면접 준비', defaultRoles: ['user', 'staff', 'admin'] },
   '/explorer': { title: '직업 탐색', defaultRoles: ['user', 'staff', 'admin'] },
   '/settings': { title: '설정', defaultRoles: ['user', 'staff', 'admin'] },
-  '/recharge': { title: '포인트 충전', defaultRoles: ['user', 'staff', 'admin'] },
+  '/recharge': { title: '진로분석 학습권', defaultRoles: ['user', 'staff', 'admin'] },
   '/admin': { title: '관리자', defaultRoles: ['staff', 'admin'], isLocked: true },
 };
 
@@ -476,7 +476,7 @@ export const insertPointPackageSchema = createInsertSchema(pointPackages).omit({
 
 export const createPointPackageSchema = z.object({
   name: z.string().min(1, "이름은 필수입니다"),
-  points: z.coerce.number().int().positive("포인트는 양수여야 합니다"),
+  points: z.coerce.number().int().positive("학습권은 양수여야 합니다"),
   price: z.coerce.number().int().positive("가격은 양수여야 합니다"),
   bonusPoints: z.coerce.number().int().min(0).default(0),
   description: z.string().nullable().optional(),
@@ -649,8 +649,8 @@ export type SystemSettings = typeof systemSettings.$inferSelect;
 
 // Default system settings
 export const DEFAULT_SYSTEM_SETTINGS: Record<string, { value: string; description: string }> = {
-  signup_bonus: { value: '1000', description: '신규 가입 시 지급되는 포인트' },
-  gp_default_expiration_days: { value: '90', description: '기프트 포인트 기본 만료 기간 (일)' },
+  signup_bonus: { value: '1000', description: '신규 가입 시 지급되는 학습권' },
+  gp_default_expiration_days: { value: '90', description: '기프트 학습권 기본 만료 기간 (일)' },
   referral_inviter_gp: { value: '500', description: '추천인에게 지급되는 GP' },
   referral_invitee_gp: { value: '500', description: '피추천인에게 지급되는 GP' },
 };
@@ -821,7 +821,7 @@ export const insertRedemptionCodeSchema = createInsertSchema(redemptionCodes).om
 
 export const createRedemptionCodeSchema = z.object({
   code: z.string().min(1, "코드는 필수입니다").max(50),
-  pointAmount: z.coerce.number().int().positive("포인트는 양수여야 합니다"),
+  pointAmount: z.coerce.number().int().positive("학습권은 양수여야 합니다"),
   maxUses: z.coerce.number().int().positive().nullable().optional(),
   isActive: z.coerce.number().int().min(0).max(1).default(1),
   expiresAt: z.preprocess(
@@ -955,10 +955,10 @@ export type VerifyIapRequest = z.infer<typeof verifyIapSchema>;
 
 // IAP Product configurations (map store product IDs to points)
 export const IAP_PRODUCTS: Record<string, { points: number; bonusPoints: number; displayName: string }> = {
-  'com.konnect.points.1000': { points: 1000, bonusPoints: 0, displayName: '1,000 포인트' },
-  'com.konnect.points.3000': { points: 3000, bonusPoints: 300, displayName: '3,000 + 300 포인트' },
-  'com.konnect.points.5000': { points: 5000, bonusPoints: 700, displayName: '5,000 + 700 포인트' },
-  'com.konnect.points.10000': { points: 10000, bonusPoints: 2000, displayName: '10,000 + 2,000 포인트' },
+  'com.konnect.points.1000': { points: 1000, bonusPoints: 0, displayName: '1,000 학습권' },
+  'com.konnect.points.3000': { points: 3000, bonusPoints: 300, displayName: '3,000 + 300 학습권' },
+  'com.konnect.points.5000': { points: 5000, bonusPoints: 700, displayName: '5,000 + 700 학습권' },
+  'com.konnect.points.10000': { points: 10000, bonusPoints: 2000, displayName: '10,000 + 2,000 학습권' },
 };
 
 // ===== JOB DEMAND CACHE (워크넷 구인수요지표) =====

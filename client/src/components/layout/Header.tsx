@@ -82,9 +82,9 @@ export function Header() {
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
         {/* Desktop Points Display */}
         <div className="hidden md:flex items-center mr-2 bg-white px-4 py-2 rounded-full shadow-sm" data-testid="header-points-display">
-          <span className="text-sm font-bold text-[#10B981]" title="기프트 포인트 (무료)">{giftPoints.toLocaleString()}GP</span>
+          <span className="text-sm font-bold text-[#10B981]" title="기프트 학습권 (무료)">{giftPoints.toLocaleString()}GP</span>
           <span className="mx-2 text-gray-300">|</span>
-          <span className="text-sm font-bold text-[#191F28]" title="유료 포인트">{credits.toLocaleString()}P</span>
+          <span className="text-sm font-bold text-[#191F28]" title="유료 학습권">{credits.toLocaleString()}P</span>
         </div>
         {/* Mobile Token Display Compact */}
         <div className="md:hidden flex items-center bg-white px-2.5 py-1.5 rounded-full shadow-sm" data-testid="header-points-display-mobile">
@@ -120,7 +120,7 @@ export function Header() {
             <div className="md:hidden">
                 <RedeemDialog>
                   <button className="w-full text-left rounded-lg px-3 py-2.5 font-medium cursor-pointer text-[#4E5968] hover:bg-[#F2F4F6] hover:text-[#191F28] text-sm">
-                      포인트 충전
+                      학습권 충전
                   </button>
                 </RedeemDialog>
                  <DropdownMenuSeparator className="bg-[#F2F4F6]" />
@@ -138,7 +138,7 @@ export function Header() {
             </DropdownMenuItem>
             <RedeemDialog>
               <button className="w-full text-left rounded-lg px-3 py-2.5 text-[#4E5968] hover:bg-[#F2F4F6] hover:text-[#191F28] font-medium cursor-pointer text-sm">
-                포인트 충전
+                학습권 충전
               </button>
             </RedeemDialog>
             <DropdownMenuSeparator className="bg-[#F2F4F6]" />

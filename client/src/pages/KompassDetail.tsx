@@ -658,7 +658,7 @@ export default function KompassDetail() {
                 ) : (
                   <Sparkles className="h-3 w-3" />
                 )}
-                {isGenerating ? '생성 중...' : (isStrategic ? 'AI로 세부 내용 자동 생성 (100 포인트)' : 'AI 생성')}
+                {isGenerating ? '생성 중...' : (isStrategic ? 'AI로 세부 내용 자동 생성 (100 학습권)' : 'AI 생성')}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="max-w-xs">
@@ -1079,7 +1079,7 @@ export default function KompassDetail() {
               ) : (
                 <Sparkles className="h-5 w-5" />
               )}
-              {isGeneratingFullPlan ? '액션 플랜 생성 중...' : 'AI 전체 액션 플랜 생성 (100 포인트)'}
+              {isGeneratingFullPlan ? '액션 플랜 생성 중...' : 'AI 전체 액션 플랜 생성 (100 학습권)'}
             </Button>
           )}
         </div>
