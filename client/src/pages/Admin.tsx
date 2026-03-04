@@ -1268,14 +1268,14 @@ export default function Admin() {
     mutationFn: async (days: number) => {
       const res = await apiRequest('PATCH', '/api/admin/system-settings/gp_default_expiration_days', { 
         value: days.toString(), 
-        description: '기프트 학습권 기본 만료 기간 (일)' 
+        description: '선물 학습권 기본 만료 기간 (일)' 
       });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/system-settings'] });
       setEditingGpExpirationDays(null);
-      toast({ title: "업데이트 완료", description: "GP 기본 만료 기간이 변경되었습니다." });
+      toast({ title: "업데이트 완료", description: "선물 학습권 기본 만료 기간이 변경되었습니다." });
     },
     onError: () => {
       toast({ title: "오류", description: "만료 기간 업데이트에 실패했습니다.", variant: "destructive" });
@@ -1352,7 +1352,7 @@ export default function Admin() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.message || '기프트 학습권 지급에 실패했습니다.');
+        throw new Error(error.message || '선물 학습권 지급에 실패했습니다.');
       }
       return res.json();
     },
@@ -1364,8 +1364,8 @@ export default function Admin() {
       setGpReason("");
       setGpExpiresAt("");
       toast({ 
-        title: "기프트 학습권 지급 완료", 
-        description: `${variables.amount.toLocaleString()}GP가 지급되었습니다. 새 GP 잔액: ${data.newGiftPoints.toLocaleString()}GP` 
+        title: "선물 학습권 지급 완료", 
+        description: `${variables.amount.toLocaleString()}번이 지급되었습니다. 새 선물 학습권 잔액: ${data.newGiftPoints.toLocaleString()}번` 
       });
     },
     onError: (error: Error) => {
@@ -1742,7 +1742,7 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger value="giftpoints" className="rounded-lg px-4" data-testid="tab-giftpoints">
               <Gift className="h-4 w-4 mr-2" />
-              기프트 학습권
+              선물 학습권
             </TabsTrigger>
             <TabsTrigger value="groups" className="rounded-lg px-4" data-testid="tab-groups">
               <Users2 className="h-4 w-4 mr-2" />
@@ -3146,20 +3146,20 @@ export default function Admin() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="toss-card">
                 <CardContent className="p-4">
-                  <p className="text-sm text-[#8B95A1] mb-1">총 GP 잔액</p>
-                  <p className="text-2xl font-bold text-[#10B981]">{(gpStats?.totalGiftPoints || 0).toLocaleString()}GP</p>
+                  <p className="text-sm text-[#8B95A1] mb-1">총 선물 학습권 잔액</p>
+                  <p className="text-2xl font-bold text-[#10B981]">{(gpStats?.totalGiftPoints || 0).toLocaleString()}번</p>
                 </CardContent>
               </Card>
               <Card className="toss-card">
                 <CardContent className="p-4">
-                  <p className="text-sm text-[#8B95A1] mb-1">GP 보유 회원</p>
+                  <p className="text-sm text-[#8B95A1] mb-1">선물 학습권 보유 회원</p>
                   <p className="text-2xl font-bold text-[#191F28]">{gpStats?.totalUsersWithGP || 0}명</p>
                 </CardContent>
               </Card>
               <Card className="toss-card">
                 <CardContent className="p-4">
-                  <p className="text-sm text-[#8B95A1] mb-1">30일 내 만료 GP</p>
-                  <p className="text-2xl font-bold text-amber-500">{(gpStats?.expiringIn30Days || 0).toLocaleString()}GP</p>
+                  <p className="text-sm text-[#8B95A1] mb-1">30일 내 만료 선물 학습권</p>
+                  <p className="text-2xl font-bold text-amber-500">{(gpStats?.expiringIn30Days || 0).toLocaleString()}번</p>
                 </CardContent>
               </Card>
               <Card className="toss-card">
@@ -3175,7 +3175,7 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Gift className="h-5 w-5 text-[#10B981]" />
-                  기프트 학습권 지급
+                  선물 학습권 지급
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -3220,8 +3220,8 @@ export default function Admin() {
                               <p className="text-sm text-[#8B95A1]">{u.email}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-bold text-[#10B981]">{(u.giftPoints || 0).toLocaleString()}GP</p>
-                              <p className="text-xs text-[#8B95A1]">{u.credits.toLocaleString()}P</p>
+                              <p className="text-sm font-bold text-[#10B981]">{(u.giftPoints || 0).toLocaleString()}번</p>
+                              <p className="text-xs text-[#8B95A1]">{u.credits.toLocaleString()}번</p>
                             </div>
                           </div>
                         ))}
@@ -3236,7 +3236,7 @@ export default function Admin() {
                           <div>
                             <p className="font-bold text-[#191F28]">{selectedUserForGP.displayName || selectedUserForGP.email}</p>
                             <p className="text-sm text-[#8B95A1]">{selectedUserForGP.email}</p>
-                            <p className="text-sm text-[#10B981] mt-1">현재 GP: {(selectedUserForGP.giftPoints || 0).toLocaleString()}GP</p>
+                            <p className="text-sm text-[#10B981] mt-1">현재 선물 학습권: {(selectedUserForGP.giftPoints || 0).toLocaleString()}번</p>
                           </div>
                           <Button
                             variant="ghost"
@@ -3249,7 +3249,7 @@ export default function Admin() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                           <div>
-                            <label className="text-sm font-medium text-[#4E5968] mb-1 block">지급할 GP</label>
+                            <label className="text-sm font-medium text-[#4E5968] mb-1 block">지급할 선물 학습권</label>
                             <Input
                               type="number"
                               value={gpAmount}
@@ -3298,7 +3298,7 @@ export default function Admin() {
                             {addGPMutation.isPending ? '처리 중...' : (
                               <>
                                 <Plus className="h-4 w-4 mr-1" />
-                                {gpAmount.toLocaleString()}GP 지급
+                                {gpAmount.toLocaleString()}번 지급
                               </>
                             )}
                           </Button>
@@ -3343,7 +3343,7 @@ export default function Admin() {
                           min={0}
                           data-testid="input-signup-bonus"
                         />
-                        <span className="text-[#191F28] font-bold">GP</span>
+                        <span className="text-[#191F28] font-bold">번</span>
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -3367,7 +3367,7 @@ export default function Admin() {
                     </div>
                   ) : (
                     <>
-                      <p className="text-2xl font-bold text-[#10B981]">{signupBonus.toLocaleString()}GP</p>
+                      <p className="text-2xl font-bold text-[#10B981]">{signupBonus.toLocaleString()}번</p>
                       <p className="text-sm text-[#8B95A1]">신규 가입 시 무료 제공</p>
                     </>
                   )}
@@ -3380,7 +3380,7 @@ export default function Admin() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Clock className="h-5 w-5 text-amber-600" />
-                      <p className="font-bold text-[#191F28]">GP 기본 유효기간</p>
+                      <p className="font-bold text-[#191F28]">선물 학습권 기본 유효기간</p>
                     </div>
                     {editingGpExpirationDays === null && (
                       <Button
@@ -3430,7 +3430,7 @@ export default function Admin() {
                   ) : (
                     <>
                       <p className="text-2xl font-bold text-amber-600">{gpExpirationDays.toLocaleString()}일</p>
-                      <p className="text-sm text-[#8B95A1]">신규 GP 지급 후 만료까지</p>
+                      <p className="text-sm text-[#8B95A1]">신규 선물 학습권 지급 후 만료까지</p>
                     </>
                   )}
                 </CardContent>
@@ -3454,8 +3454,8 @@ export default function Admin() {
                       <p className="text-2xl font-bold text-[#191F28]">{referralStats?.totalReferrals || 0}건</p>
                     </div>
                     <div className="bg-[#10B981]/10 rounded-xl p-4">
-                      <p className="text-sm text-[#10B981] mb-1">지급된 GP</p>
-                      <p className="text-2xl font-bold text-[#10B981]">{(referralStats?.totalGpAwarded || 0).toLocaleString()}GP</p>
+                      <p className="text-sm text-[#10B981] mb-1">지급된 선물 학습권</p>
+                      <p className="text-2xl font-bold text-[#10B981]">{(referralStats?.totalGpAwarded || 0).toLocaleString()}번</p>
                     </div>
                     <div className="bg-[#3182F6]/10 rounded-xl p-4 md:col-span-1 col-span-2">
                       <p className="text-sm text-[#3182F6] mb-1">활성 추천인</p>
@@ -3498,13 +3498,13 @@ export default function Admin() {
                               min={0}
                               data-testid="input-referral-inviter"
                             />
-                            <span className="text-[#191F28] font-bold">GP</span>
+                            <span className="text-[#191F28] font-bold">번</span>
                           </div>
                         </div>
                       ) : (
                         <>
-                          <p className="text-2xl font-bold text-[#10B981]">{(referralStats?.currentSettings?.inviterGp || 500).toLocaleString()}GP</p>
-                          <p className="text-sm text-[#8B95A1]">친구 초대 시 받는 GP</p>
+                          <p className="text-2xl font-bold text-[#10B981]">{(referralStats?.currentSettings?.inviterGp || 500).toLocaleString()}번</p>
+                          <p className="text-sm text-[#8B95A1]">친구 초대 시 받는 선물 학습권</p>
                         </>
                       )}
                     </div>
@@ -3528,13 +3528,13 @@ export default function Admin() {
                               min={0}
                               data-testid="input-referral-invitee"
                             />
-                            <span className="text-[#191F28] font-bold">GP</span>
+                            <span className="text-[#191F28] font-bold">번</span>
                           </div>
                         </div>
                       ) : (
                         <>
-                          <p className="text-2xl font-bold text-[#3182F6]">{(referralStats?.currentSettings?.inviteeGp || 500).toLocaleString()}GP</p>
-                          <p className="text-sm text-[#8B95A1]">초대받아 가입 시 받는 GP</p>
+                          <p className="text-2xl font-bold text-[#3182F6]">{(referralStats?.currentSettings?.inviteeGp || 500).toLocaleString()}번</p>
+                          <p className="text-sm text-[#8B95A1]">초대받아 가입 시 받는 선물 학습권</p>
                         </>
                       )}
                     </div>
@@ -3577,7 +3577,7 @@ export default function Admin() {
                             <tr>
                               <th className="p-3 text-left text-sm font-medium text-[#4E5968]">사용자</th>
                               <th className="p-3 text-center text-sm font-medium text-[#4E5968]">추천 수</th>
-                              <th className="p-3 text-right text-sm font-medium text-[#4E5968]">받은 GP</th>
+                              <th className="p-3 text-right text-sm font-medium text-[#4E5968]">받은 선물 학습권</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y">
@@ -3593,7 +3593,7 @@ export default function Admin() {
                                   </div>
                                 </td>
                                 <td className="p-3 text-center font-bold text-[#191F28]">{inviter.referralCount}명</td>
-                                <td className="p-3 text-right font-bold text-[#10B981]">{inviter.totalGpEarned.toLocaleString()}GP</td>
+                                <td className="p-3 text-right font-bold text-[#10B981]">{inviter.totalGpEarned.toLocaleString()}번</td>
                               </tr>
                             ))}
                           </tbody>
@@ -3637,7 +3637,7 @@ export default function Admin() {
                           />
                         </div>
                         <div>
-                          <label className="text-sm text-[#8B95A1]">GP</label>
+                          <label className="text-sm text-[#8B95A1]">선물 학습권</label>
                           <Input
                             type="number"
                             value={newCoupon.pointAmount}
@@ -3713,7 +3713,7 @@ export default function Admin() {
                                   />
                                 </div>
                                 <div>
-                                  <label className="text-sm text-[#8B95A1]">GP</label>
+                                  <label className="text-sm text-[#8B95A1]">선물 학습권</label>
                                   <Input
                                     type="number"
                                     value={editingCoupon.pointAmount}
@@ -3777,7 +3777,7 @@ export default function Admin() {
                                   )}
                                 </div>
                                 <div className="flex items-center gap-4 mt-1 text-sm text-[#8B95A1]">
-                                  <span className="text-[#10B981] font-bold">{coupon.pointAmount.toLocaleString()}GP</span>
+                                  <span className="text-[#10B981] font-bold">{coupon.pointAmount.toLocaleString()}번</span>
                                   <span>사용: {coupon.currentUses}{coupon.maxUses ? `/${coupon.maxUses}` : ''}</span>
                                   {coupon.expiresAt && (
                                     <span>만료: {new Date(coupon.expiresAt).toLocaleDateString('ko-KR')}</span>
@@ -3823,7 +3823,7 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Users className="h-5 w-5 text-[#3182F6]" />
-                  GP 보유 회원 목록
+                  선물 학습권 보유 회원 목록
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -3839,14 +3839,14 @@ export default function Admin() {
                           <p className="text-sm text-[#8B95A1]">{u.email}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-bold text-[#10B981]">{(u.giftPoints || 0).toLocaleString()}GP</p>
-                          <p className="text-sm text-[#8B95A1]">{u.credits.toLocaleString()}P</p>
+                          <p className="text-lg font-bold text-[#10B981]">{(u.giftPoints || 0).toLocaleString()}번</p>
+                          <p className="text-sm text-[#8B95A1]">{u.credits.toLocaleString()}번</p>
                         </div>
                       </div>
                     ))}
                   {users.filter(u => (u.giftPoints || 0) > 0).length === 0 && (
                     <div className="p-8 text-center text-[#8B95A1]">
-                      GP를 보유한 회원이 없습니다.
+                      선물 학습권을 보유한 회원이 없습니다.
                     </div>
                   )}
                 </div>
@@ -3981,7 +3981,7 @@ export default function Admin() {
                   <li>저장된 분석 결과</li>
                   <li>작성한 자기소개서</li>
                   <li>목표 관리 데이터</li>
-                  <li>보유 학습권 및 GP</li>
+                  <li>보유 학습권 및 선물 학습권</li>
                 </ul>
               </div>
             </AlertDialogDescription>
@@ -4408,7 +4408,7 @@ export default function Admin() {
                     </div>
                     <div className="bg-[#F3EEFF] rounded-2xl px-4 py-2.5 text-center min-w-[72px]">
                       <p className="text-lg font-bold text-[#7C3AED]">{(userDetail.user.giftPoints || 0).toLocaleString()}</p>
-                      <p className="text-[10px] text-[#8B95A1] font-medium">기프트 P</p>
+                      <p className="text-[10px] text-[#8B95A1] font-medium">선물 학습권</p>
                     </div>
                   </div>
                 </div>

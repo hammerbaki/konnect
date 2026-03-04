@@ -650,9 +650,9 @@ export type SystemSettings = typeof systemSettings.$inferSelect;
 // Default system settings
 export const DEFAULT_SYSTEM_SETTINGS: Record<string, { value: string; description: string }> = {
   signup_bonus: { value: '1000', description: '신규 가입 시 지급되는 학습권' },
-  gp_default_expiration_days: { value: '90', description: '기프트 학습권 기본 만료 기간 (일)' },
-  referral_inviter_gp: { value: '500', description: '추천인에게 지급되는 GP' },
-  referral_invitee_gp: { value: '500', description: '피추천인에게 지급되는 GP' },
+  gp_default_expiration_days: { value: '90', description: '선물 학습권 기본 만료 기간 (일)' },
+  referral_inviter_gp: { value: '500', description: '추천인에게 지급되는 선물 학습권' },
+  referral_invitee_gp: { value: '500', description: '피추천인에게 지급되는 선물 학습권' },
 };
 
 // ===== REFERRALS TABLE (Tracking who referred whom) =====

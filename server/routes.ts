@@ -3097,7 +3097,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.upsertSystemSetting(
         'gp_default_expiration_days',
         String(defaultExpirationDays),
-        '기프트 학습권 기본 만료 기간 (일)',
+        '선물 학습권 기본 만료 기간 (일)',
         adminId
       );
       

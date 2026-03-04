@@ -438,8 +438,8 @@ export default function Settings() {
                                     <div className="space-y-4">
                                         <div className="bg-gradient-to-r from-[#10B981]/10 to-[#3182F6]/10 rounded-xl p-4 border border-[#10B981]/20">
                                             <p className="text-sm text-[#4E5968] mb-2">
-                                                친구를 초대하면 <span className="font-bold text-[#10B981]">{referralInfo.inviterReward}GP</span>를 받고,
-                                                친구도 <span className="font-bold text-[#3182F6]">{referralInfo.inviteeReward}GP</span>를 받습니다!
+                                                친구를 초대하면 <span className="font-bold text-[#10B981]">{referralInfo.inviterReward}번</span>을 받고,
+                                                친구도 <span className="font-bold text-[#3182F6]">{referralInfo.inviteeReward}번</span>을 받습니다!
                                             </p>
                                         </div>
                                         
@@ -480,10 +480,10 @@ export default function Settings() {
                                             <div className="bg-[#10B981]/10 rounded-xl p-4 text-center">
                                                 <div className="flex items-center justify-center gap-1 mb-1">
                                                     <Gift className="h-4 w-4 text-[#10B981]" />
-                                                    <span className="text-sm text-[#10B981]">받은 GP</span>
+                                                    <span className="text-sm text-[#10B981]">받은 선물 학습권</span>
                                                 </div>
                                                 <p className="text-xl sm:text-2xl font-bold text-[#10B981]" data-testid="text-total-gp-earned">
-                                                    {referralInfo.totalGpEarned}GP
+                                                    {referralInfo.totalGpEarned}번
                                                 </p>
                                             </div>
                                         </div>
@@ -655,7 +655,7 @@ export default function Settings() {
                                     <li>저장된 분석 결과</li>
                                     <li>작성한 자기소개서</li>
                                     <li>목표 관리 데이터</li>
-                                    <li>보유 학습권 및 GP</li>
+                                    <li>보유 학습권 및 선물 학습권</li>
                                 </ul>
                             </div>
                         </DialogDescription>

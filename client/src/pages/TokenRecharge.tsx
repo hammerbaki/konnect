@@ -323,7 +323,7 @@ export default function TokenRecharge() {
                   >
                     {totalBalance.toLocaleString()}
                   </span>
-                  <span className="text-xl font-medium text-blue-100">P</span>
+                  <span className="text-xl font-medium text-blue-100">번</span>
                 </div>
               </div>
               <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
@@ -332,12 +332,12 @@ export default function TokenRecharge() {
             </div>
             <div className="flex gap-6 pt-3 border-t border-white/20">
               <div>
-                <p className="text-xs text-blue-100 mb-0.5">기프트 학습권</p>
+                <p className="text-xs text-blue-100 mb-0.5">선물 학습권</p>
                 <span
                   className="text-lg font-bold text-emerald-300"
                   data-testid="text-gift-points"
                 >
-                  {giftPoints.toLocaleString()}GP
+                  {giftPoints.toLocaleString()}번
                 </span>
               </div>
               <div>
@@ -346,7 +346,7 @@ export default function TokenRecharge() {
                   className="text-lg font-bold text-amber-300"
                   data-testid="text-paid-credits"
                 >
-                  {credits.toLocaleString()}P
+                  {credits.toLocaleString()}번
                 </span>
               </div>
             </div>

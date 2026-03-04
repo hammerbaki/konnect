@@ -1774,7 +1774,7 @@ export class DatabaseStorage implements IStorage {
     
     return { 
       success: true, 
-      message: `${redemption.pointAmount.toLocaleString()} GP(기프트 학습권)가 지급되었습니다!`,
+      message: `${redemption.pointAmount.toLocaleString()} 선물 학습권이 지급되었습니다!`,
       pointsAwarded: redemption.pointAmount,
       isGiftPoints: true
     };
@@ -1908,7 +1908,7 @@ export class DatabaseStorage implements IStorage {
       amount,
       balanceAfter: newBalance,
       type: 'award',
-      description: options?.description || `${source} GP 지급`,
+      description: options?.description || `${source} 선물 학습권 지급`,
       createdBy: options?.createdBy || null,
     });
 
@@ -2017,7 +2017,7 @@ export class DatabaseStorage implements IStorage {
           amount: -expiredAmount,
           balanceAfter: newBalance,
           type: 'expire',
-          description: '기프트 학습권 만료',
+          description: '선물 학습권 만료',
         });
       }
     }
