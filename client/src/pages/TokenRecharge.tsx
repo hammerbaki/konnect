@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
-  AlertCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { useTokens } from "@/lib/TokenContext";
 import { useToast } from "@/hooks/use-toast";
@@ -50,8 +50,13 @@ export default function TokenRecharge() {
   const searchString = useSearch();
   const [isProcessing, setIsProcessing] = useState(false);
   const [tossLoaded, setTossLoaded] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<PointPackage | null>(null);
+  const [widgetReady, setWidgetReady] = useState(false);
+  const [widgetLoading, setWidgetLoading] = useState(false);
+  const widgetsRef = useRef<any>(null);
+  const paymentMethodWidgetRef = useRef<any>(null);
+  const agreementWidgetRef = useRef<any>(null);
 
-  // Load Toss SDK
   useEffect(() => {
     if (window.TossPayments) {
       setTossLoaded(true);
@@ -65,7 +70,6 @@ export default function TokenRecharge() {
     document.head.appendChild(script);
   }, []);
 
-  // Fetch Toss config
   const { data: tossConfig } = useQuery({
     queryKey: ["/api/payments/config"],
     queryFn: async () => {
@@ -198,7 +202,6 @@ export default function TokenRecharge() {
     }
   };
 
-  // Initialize payment
   const initPayment = useMutation({
     mutationFn: async (pkg: PointPackage) => {
       const res = await apiRequest("POST", "/api/payments/init", {
@@ -214,7 +217,31 @@ export default function TokenRecharge() {
     },
   });
 
-  const handleRecharge = async (pkg: PointPackage) => {
+  useEffect(() => {
+    return () => {
+      if (paymentMethodWidgetRef.current) {
+        try { paymentMethodWidgetRef.current.destroy(); } catch (e) {}
+      }
+      if (agreementWidgetRef.current) {
+        try { agreementWidgetRef.current.destroy(); } catch (e) {}
+      }
+    };
+  }, []);
+
+  const destroyWidgets = useCallback(() => {
+    if (paymentMethodWidgetRef.current) {
+      try { paymentMethodWidgetRef.current.destroy(); } catch (e) {}
+      paymentMethodWidgetRef.current = null;
+    }
+    if (agreementWidgetRef.current) {
+      try { agreementWidgetRef.current.destroy(); } catch (e) {}
+      agreementWidgetRef.current = null;
+    }
+    widgetsRef.current = null;
+    setWidgetReady(false);
+  }, []);
+
+  const handleSelectPackage = async (pkg: PointPackage) => {
     if (!tossLoaded || !tossConfig?.clientKey) {
       toast({
         title: "결제 모듈 로딩 중",
@@ -224,25 +251,57 @@ export default function TokenRecharge() {
       return;
     }
 
-    setIsProcessing(true);
+    destroyWidgets();
+    setSelectedPackage(pkg);
+    setWidgetLoading(true);
 
     try {
-      // 1. Create order in backend
-      const orderData = await initPayment.mutateAsync(pkg);
-
-      // 2. Initialize Toss Payment
       const tossPayments = window.TossPayments(tossConfig.clientKey);
-      const payment = tossPayments.payment({
+      const widgets = tossPayments.widgets({
         customerKey: `customer_${Date.now()}`,
       });
+      widgetsRef.current = widgets;
 
-      // 3. Request payment
-      await payment.requestPayment({
-        method: "CARD",
-        amount: {
-          value: orderData.amount,
-          currency: "KRW",
-        },
+      await widgets.setAmount({ currency: "KRW", value: pkg.price });
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const paymentMethodWidget = await widgets.renderPaymentMethods({
+        selector: "#payment-method",
+      });
+      paymentMethodWidgetRef.current = paymentMethodWidget;
+
+      await widgets.renderAgreement({
+        selector: "#agreement",
+      });
+
+      setWidgetReady(true);
+    } catch (error: any) {
+      console.error("Widget render error:", error);
+      toast({
+        title: "결제 위젯 로딩 실패",
+        description: error.message || "결제 모듈을 불러올 수 없습니다.",
+        variant: "destructive",
+      });
+      setSelectedPackage(null);
+    } finally {
+      setWidgetLoading(false);
+    }
+  };
+
+  const handleCancelSelection = () => {
+    destroyWidgets();
+    setSelectedPackage(null);
+  };
+
+  const handleRequestPayment = async () => {
+    if (!widgetsRef.current || !selectedPackage) return;
+
+    setIsProcessing(true);
+    try {
+      const orderData = await initPayment.mutateAsync(selectedPackage);
+
+      await widgetsRef.current.requestPayment({
         orderId: orderData.orderId,
         orderName: orderData.orderName,
         successUrl: `${window.location.origin}/recharge`,
@@ -354,70 +413,131 @@ export default function TokenRecharge() {
         </Card>
 
         {/* Recharge Packages */}
-        <h3 className="text-lg font-bold text-[#191F28] mb-4 flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-[#3182F6]" /> 충전 패키지
-        </h3>
-        <div className="grid gap-4 mb-8">
-          {packagesLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
+        {!selectedPackage ? (
+          <>
+            <h3 className="text-lg font-bold text-[#191F28] mb-4 flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-[#3182F6]" /> 충전 패키지
+            </h3>
+            <div className="grid gap-4 mb-8">
+              {packagesLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
+                </div>
+              ) : (
+                displayPackages.map((pkg) => {
+                  const hasBadge = pkg.description && pkg.description.trim() !== "";
+                  const isHighlighted = hasBadge || pkg.bonusPoints > 0;
+                  return (
+                    <Card
+                      key={pkg.id}
+                      className={`toss-card cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isHighlighted ? "border-[#3182F6] ring-1 ring-[#3182F6]" : ""}`}
+                      onClick={() => handleSelectPackage(pkg)}
+                      data-testid={`card-package-${pkg.id}`}
+                    >
+                      <CardContent className="p-5 flex justify-between items-center">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xl font-bold text-[#191F28]">
+                              {pkg.points.toLocaleString()} 학습권
+                            </span>
+                            {pkg.bonusPoints > 0 && (
+                              <Badge className="bg-green-100 text-green-600 border-none hover:bg-green-100">
+                                +{pkg.bonusPoints.toLocaleString()} 보너스
+                              </Badge>
+                            )}
+                            {hasBadge && (
+                              <Badge className="bg-[#3182F6] text-white border-none hover:bg-[#3182F6]">
+                                {pkg.description}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-[#8B95A1] text-sm">
+                            AI 커리어 분석{" "}
+                            {Math.floor((pkg.points + pkg.bonusPoints) / 100)}회
+                            가능
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-lg font-bold text-[#333D4B]">
+                            {formatPrice(pkg.price)}
+                          </span>
+                          <Button
+                            className={`rounded-full h-10 px-5 font-bold ${isHighlighted ? "bg-[#3182F6] hover:bg-[#2b72d7]" : "bg-[#F2F4F6] text-[#3182F6] hover:bg-[#E5E8EB]"}`}
+                            disabled={isProcessing}
+                            data-testid={`button-buy-${pkg.id}`}
+                          >
+                            구매
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
             </div>
-          ) : (
-            displayPackages.map((pkg) => {
-              const hasBadge = pkg.description && pkg.description.trim() !== "";
-              const isHighlighted = hasBadge || pkg.bonusPoints > 0;
-              return (
-                <Card
-                  key={pkg.id}
-                  className={`toss-card cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isHighlighted ? "border-[#3182F6] ring-1 ring-[#3182F6]" : ""}`}
-                  onClick={() => handleRecharge(pkg)}
-                  data-testid={`card-package-${pkg.id}`}
-                >
-                  <CardContent className="p-5 flex justify-between items-center">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xl font-bold text-[#191F28]">
-                          {pkg.points.toLocaleString()} 학습권
-                        </span>
-                        {pkg.bonusPoints > 0 && (
-                          <Badge className="bg-green-100 text-green-600 border-none hover:bg-green-100">
-                            +{pkg.bonusPoints.toLocaleString()} 보너스
-                          </Badge>
-                        )}
-                        {hasBadge && (
-                          <Badge className="bg-[#3182F6] text-white border-none hover:bg-[#3182F6]">
-                            {pkg.description}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-[#8B95A1] text-sm">
-                        AI 커리어 분석{" "}
-                        {Math.floor((pkg.points + pkg.bonusPoints) / 100)}회
-                        가능
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-lg font-bold text-[#333D4B]">
-                        {formatPrice(pkg.price)}
+          </>
+        ) : (
+          <div className="mb-8" data-testid="payment-widget-section">
+            <div className="flex items-center gap-3 mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancelSelection}
+                className="rounded-full h-9 w-9 p-0"
+                data-testid="button-back-to-packages"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h3 className="text-lg font-bold text-[#191F28]">결제하기</h3>
+            </div>
+
+            <Card className="toss-card mb-4">
+              <CardContent className="p-5">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-[#8B95A1] mb-1">선택한 패키지</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-bold text-[#191F28]">
+                        {selectedPackage.points.toLocaleString()} 학습권
                       </span>
-                      <Button
-                        className={`rounded-full h-10 px-5 font-bold ${isHighlighted ? "bg-[#3182F6] hover:bg-[#2b72d7]" : "bg-[#F2F4F6] text-[#3182F6] hover:bg-[#E5E8EB]"}`}
-                        disabled={isProcessing}
-                        data-testid={`button-buy-${pkg.id}`}
-                      >
-                        {isProcessing ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          "구매"
-                        )}
-                      </Button>
+                      {selectedPackage.bonusPoints > 0 && (
+                        <Badge className="bg-green-100 text-green-600 border-none hover:bg-green-100">
+                          +{selectedPackage.bonusPoints.toLocaleString()} 보너스
+                        </Badge>
+                      )}
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
+                  </div>
+                  <span className="text-2xl font-bold text-[#3182F6]">
+                    {formatPrice(selectedPackage.price)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {widgetLoading && (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
+              </div>
+            )}
+
+            <div id="payment-method" className="mb-4" />
+            <div id="agreement" className="mb-6" />
+
+            {widgetReady && (
+              <Button
+                onClick={handleRequestPayment}
+                disabled={isProcessing}
+                className="w-full h-14 text-lg font-bold bg-[#3182F6] hover:bg-[#2b72d7] text-white rounded-2xl"
+                data-testid="button-confirm-payment"
+              >
+                {isProcessing ? (
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                ) : null}
+                {isProcessing ? "결제 처리 중..." : `${formatPrice(selectedPackage.price)} 결제하기`}
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Policy & Terms */}
         <Card className="bg-[#F9FAFB] border-[#E5E8EB] mb-8">
@@ -523,7 +643,7 @@ export default function TokenRecharge() {
                       className={`font-bold ${tx.amount > 0 ? "text-green-600" : "text-red-500"}`}
                     >
                       {tx.amount > 0 ? "+" : ""}
-                      {tx.amount.toLocaleString()} P
+                      {tx.amount.toLocaleString()} 번
                     </p>
                     <p className="text-sm text-[#8B95A1]">
                       잔액 {tx.balanceAfter.toLocaleString()}
