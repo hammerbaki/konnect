@@ -2692,7 +2692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get Toss client key for frontend
   app.get('/api/payments/config', isAuthenticated, async (req: any, res) => {
     res.json({
-      clientKey: process.env.TOSS_TEST_CLIENT_KEY,
+      clientKey: process.env.TOSS_LIVE_CLIENT_KEY,
     });
   });
 
@@ -2765,7 +2765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Call Toss Payments confirm API
-      const secretKey = process.env.TOSS_TEST_SECRET_KEY;
+      const secretKey = process.env.TOSS_LIVE_SECRET_KEY;
       const authorization = Buffer.from(`${secretKey}:`).toString('base64');
       
       const tossResponse = await fetch('https://api.tosspayments.com/v1/payments/confirm', {

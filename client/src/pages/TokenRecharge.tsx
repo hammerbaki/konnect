@@ -419,20 +419,6 @@ export default function TokenRecharge() {
           )}
         </div>
 
-        {/* Test Mode Notice */}
-        <Card className="bg-amber-50 border-amber-200 mb-8">
-          <CardContent className="p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-amber-800">테스트 모드</p>
-              <p className="text-sm text-amber-700">
-                현재 Toss Payments 테스트 환경에서 실행 중입니다. 실제 결제가
-                이루어지지 않습니다. 테스트 카드번호: 1111-2222-3333-4444
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Policy & Terms */}
         <Card className="bg-[#F9FAFB] border-[#E5E8EB] mb-8">
           <CardContent className="p-5 space-y-4">
