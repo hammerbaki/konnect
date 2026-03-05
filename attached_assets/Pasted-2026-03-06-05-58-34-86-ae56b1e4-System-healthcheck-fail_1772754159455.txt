@@ -1,0 +1,168 @@
+2026-03-06 05:58:34.86
+ae56b1e4
+System
+healthcheck failed error=healthcheck / returned status 500
+2026-03-06 05:58:36.37
+ae56b1e4
+User
+✓ Environment variables validated
+2026-03-06 05:58:36.38
+ae56b1e4
+User
+✓ CORS configured for mobile apps and web clients
+2026-03-06 05:58:36.38
+ae56b1e4
+User
+Starting server initialization...
+2026-03-06 05:58:36.38
+ae56b1e4
+User
+✓ Supabase Auth configured
+2026-03-06 05:58:36.38
+ae56b1e4
+User
+Setting up Supabase Auth...
+2026-03-06 05:58:36.68
+ae56b1e4
+User
+✓ Redis connected - global rate limiting enabled
+2026-03-06 05:58:36.68
+ae56b1e4
+User
+✓ AI job worker started
+2026-03-06 05:58:57.63
+ae56b1e4
+User
+8:58:57 PM [express] GET /apikeys.php 200 in 2ms
+2026-03-06 05:59:11.02
+ae56b1e4
+User
+8:59:11 PM [express] GET /api.php 200 in 2ms
+2026-03-06 05:59:39.50
+ae56b1e4
+User
+Connecting to database...
+2026-03-06 05:59:39.50
+ae56b1e4
+User
+✓ Database pool created
+2026-03-06 05:59:40.60
+ae56b1e4
+User
+✓ Database connection configured
+2026-03-06 05:59:57.00
+ae56b1e4
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-03-06 05:59:57.00
+ae56b1e4
+User
+at async Timeout.p [as _onTimeout] (/home/runner/workspace/dist/index.cjs:795:95920)
+2026-03-06 05:59:57.00
+ae56b1e4
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2026-03-06 05:59:57.00
+ae56b1e4
+User
+Failed to flush metrics for 2026-03-05:19 Error: Connection terminated due to connection timeout
+2026-03-06 05:59:57.00
+ae56b1e4
+User
+at async gu.setDailyUniqueVisitors (/home/runner/workspace/dist/index.cjs:702:72385)
+2026-03-06 05:59:57.00
+ae56b1e4
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2026-03-06 06:00:15.80
+ae56b1e4
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-03-06 06:00:15.80
+ae56b1e4
+User
+at async gu.upsertVisitorMetrics (/home/runner/workspace/dist/index.cjs:702:72040)
+2026-03-06 06:00:15.80
+ae56b1e4
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2026-03-06 06:00:15.80
+ae56b1e4
+User
+at async Timeout.p [as _onTimeout] (/home/runner/workspace/dist/index.cjs:795:95832)
+2026-03-06 06:00:15.80
+ae56b1e4
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2026-03-06 06:00:15.80
+ae56b1e4
+User
+Failed to flush metrics for 2026-03-05:17 Error: Connection terminated due to connection timeout
+2026-03-06 06:00:40.00
+ae56b1e4
+User
+✓ Visitor metrics flushed to database at 2026-03-05T20:59:36.691Z
+2026-03-06 06:58:53.59
+ae56b1e4
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2026-03-06 06:58:53.59
+ae56b1e4
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2026-03-06 06:58:53.59
+ae56b1e4
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-03-06 06:58:53.59
+ae56b1e4
+User
+Failed to flush metrics for 2026-03-05:20 Error: Connection terminated due to connection timeout
+2026-03-06 06:58:53.59
+ae56b1e4
+User
+at async gu.setDailyUniqueVisitors (/home/runner/workspace/dist/index.cjs:702:72385)
+2026-03-06 06:58:53.59
+ae56b1e4
+User
+at async Timeout.p [as _onTimeout] (/home/runner/workspace/dist/index.cjs:795:95920)
+2026-03-06 06:59:13.30
+ae56b1e4
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-03-06 06:59:13.30
+ae56b1e4
+User
+Failed to flush metrics for 2026-03-05:17 Error: Connection terminated due to connection timeout
+2026-03-06 06:59:13.30
+ae56b1e4
+User
+at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/drizzle-orm/neon-serverless/session.cjs:98:20)
+2026-03-06 06:59:13.30
+ae56b1e4
+User
+at async Timeout.p [as _onTimeout] (/home/runner/workspace/dist/index.cjs:795:95832)
+2026-03-06 06:59:13.30
+ae56b1e4
+User
+at async gu.upsertVisitorMetrics (/home/runner/workspace/dist/index.cjs:702:72040)
+2026-03-06 06:59:13.30
+ae56b1e4
+User
+at /home/runner/workspace/node_modules/@neondatabase/serverless/index.js:1345:74
+2026-03-06 06:59:24.79
+ae56b1e4
+User
+✓ Visitor metrics flushed to database at 2026-03-05T21:58:36.688Z
+2026-03-06 07:15:54.33
+ae56b1e4
+System
+system: received signal terminated
+2026-03-06 07:20:01.98
+ae56b1e4
+System
+starting up user application
+2026-03-06 07:20:01.98
+ae56b1e4
+System
+metasidecar: loaded enterprise status from environment is_enterprise=false
