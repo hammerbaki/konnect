@@ -204,8 +204,9 @@ export default function TokenRecharge() {
 
   const initPayment = useMutation({
     mutationFn: async (pkg: PointPackage) => {
+      const isDbPackage = packages.length > 0 && packages.some((p: PointPackage) => p.id === pkg.id);
       const res = await apiRequest("POST", "/api/payments/init", {
-        packageId: pkg.id,
+        packageId: isDbPackage ? pkg.id : null,
         amount: pkg.price,
         pointsToAdd: pkg.points + pkg.bonusPoints,
         orderName: `${pkg.name} - ${pkg.points + pkg.bonusPoints} 학습권`,
