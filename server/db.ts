@@ -1,17 +1,14 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool as NeonPool, neonConfig } from '@neondatabase/serverless';
+import { drizzle as drizzleNeon } from 'drizzle-orm/neon-serverless';
+import pg from 'pg';
+import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from 'ws';
 import * as schema from "@shared/schema";
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Log which database we're using
-// Production uses PROD_DATABASE_URL (Supabase), Development uses DATABASE_URL (Replit)
-console.log(`Using ${isProduction ? 'production (Supabase)' : 'development (Replit)'} database`);
+console.log(`Using ${isProduction ? 'production (Supabase)' : 'development (Replit/Neon)'} database`);
 
-// Get database URL safely
-// Production: PROD_DATABASE_URL (Supabase)
-// Development: DATABASE_URL (Replit-managed)
 function getDatabaseUrl(): string {
   try {
     const url = isProduction 
@@ -27,29 +24,27 @@ function getDatabaseUrl(): string {
   }
 }
 
-// Configure WebSocket - handle both ESM and CJS imports
-try {
-  // ws might be imported as default or as a named export depending on bundler
-  const WebSocketImpl = (ws as any).WebSocket || (ws as any).default || ws;
-  if (WebSocketImpl && typeof WebSocketImpl === 'function') {
-    neonConfig.webSocketConstructor = WebSocketImpl;
-    neonConfig.useSecureWebSocket = true;
-    neonConfig.pipelineTLS = false;
-    neonConfig.pipelineConnect = false;
-    console.log('✓ WebSocket configured for database');
-  } else {
-    console.warn('WebSocket constructor not found, using default Neon config');
+if (!isProduction) {
+  try {
+    const WebSocketImpl = (ws as any).WebSocket || (ws as any).default || ws;
+    if (WebSocketImpl && typeof WebSocketImpl === 'function') {
+      neonConfig.webSocketConstructor = WebSocketImpl;
+      neonConfig.useSecureWebSocket = true;
+      neonConfig.pipelineTLS = false;
+      neonConfig.pipelineConnect = false;
+      console.log('✓ WebSocket configured for database');
+    } else {
+      console.warn('WebSocket constructor not found, using default Neon config');
+    }
+  } catch (err) {
+    console.warn('WebSocket configuration skipped:', (err as Error).message);
   }
-} catch (err) {
-  console.warn('WebSocket configuration skipped:', (err as Error).message);
 }
 
-// Lazy pool creation - only create when first accessed
-let _pool: Pool | null = null;
-let _poolError: Error | null = null;
+let _pool: NeonPool | pg.Pool | null = null;
 let _poolInitialized = false;
 
-function getPool(): Pool | null {
+function getPool(): NeonPool | pg.Pool | null {
   if (_poolInitialized) return _pool;
   _poolInitialized = true;
   
@@ -57,22 +52,31 @@ function getPool(): Pool | null {
     const databaseUrl = getDatabaseUrl();
     if (!databaseUrl) {
       console.warn('WARNING: No database URL configured');
-      _poolError = new Error('No database URL');
       return null;
     }
     
     console.log('Connecting to database...');
     
-    _pool = new Pool({ 
-      connectionString: databaseUrl,
-      connectionTimeoutMillis: 15000,
-      idleTimeoutMillis: 30000,
-      max: 5,
-      ssl: isProduction ? { rejectUnauthorized: false } : undefined,
-    });
+    if (isProduction) {
+      _pool = new pg.Pool({ 
+        connectionString: databaseUrl,
+        connectionTimeoutMillis: 15000,
+        idleTimeoutMillis: 30000,
+        max: 10,
+        ssl: { rejectUnauthorized: false },
+      });
+      console.log('✓ Using standard pg driver for Supabase');
+    } else {
+      _pool = new NeonPool({ 
+        connectionString: databaseUrl,
+        connectionTimeoutMillis: 15000,
+        idleTimeoutMillis: 30000,
+        max: 5,
+      });
+      console.log('✓ Using Neon serverless driver for development');
+    }
 
-    // Add error handler to prevent crashes
-    _pool.on('error', (err) => {
+    _pool.on('error', (err: Error) => {
       console.warn('Database pool error (non-fatal):', err.message);
     });
 
@@ -84,35 +88,30 @@ function getPool(): Pool | null {
     return _pool;
   } catch (err) {
     console.error('Error creating database pool (non-fatal):', err);
-    _poolError = err as Error;
     return null;
   }
 }
 
-// Export pool - lazy initialization
-export function getPoolInstance(): Pool | null {
+export function getPoolInstance(): NeonPool | pg.Pool | null {
   return getPool();
 }
 
-// For backwards compatibility
 export const pool = {
   get instance() {
     return getPool();
   }
 };
 
-// Create a proxy that lazily initializes drizzle
-let _db: ReturnType<typeof drizzle> | null = null;
+let _db: ReturnType<typeof drizzleNeon> | ReturnType<typeof drizzlePg> | null = null;
 let _dbInitialized = false;
 
-function getDb(): ReturnType<typeof drizzle> {
+function getDb() {
   if (_dbInitialized && _db) return _db;
   _dbInitialized = true;
   
   const p = getPool();
   if (!p) {
-    // Return a proxy that throws on access if no pool
-    return new Proxy({} as ReturnType<typeof drizzle>, {
+    return new Proxy({} as ReturnType<typeof drizzleNeon>, {
       get(target, prop) {
         throw new Error('Database not configured - check DATABASE_URL');
       }
@@ -120,13 +119,17 @@ function getDb(): ReturnType<typeof drizzle> {
   }
   
   try {
-    _db = drizzle({ client: p, schema });
-    console.log('✓ Database connection configured');
+    if (isProduction) {
+      _db = drizzlePg({ client: p as pg.Pool, schema });
+      console.log('✓ Drizzle ORM configured (node-postgres)');
+    } else {
+      _db = drizzleNeon({ client: p as NeonPool, schema });
+      console.log('✓ Drizzle ORM configured (neon-serverless)');
+    }
     return _db;
   } catch (err) {
     console.error('Error initializing Drizzle ORM:', err);
-    // Return proxy that throws
-    return new Proxy({} as ReturnType<typeof drizzle>, {
+    return new Proxy({} as ReturnType<typeof drizzleNeon>, {
       get(target, prop) {
         throw new Error('Drizzle ORM initialization failed');
       }
@@ -134,8 +137,7 @@ function getDb(): ReturnType<typeof drizzle> {
   }
 }
 
-// Export db as a getter to enable lazy initialization
-export const db = new Proxy({} as ReturnType<typeof drizzle>, {
+export const db = new Proxy({} as ReturnType<typeof drizzleNeon>, {
   get(target, prop) {
     const realDb = getDb();
     return (realDb as any)[prop];

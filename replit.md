@@ -14,6 +14,13 @@ The frontend uses React 18, TypeScript, and Vite. It incorporates Radix UI and s
 ### Backend
 The backend is an Express.js application built with Node.js and TypeScript. It uses Supabase Auth for user authentication and PostgreSQL with Drizzle ORM for data persistence. AI integration is managed via the Anthropic Claude API, incorporating custom rate limiting and retry logic. The API is RESTful, with Zod for request validation and comprehensive error handling. Additional features include a credit-based AI usage system, configurable service pricing, and a redemption code system.
 
+### Database Configuration
+- **Development**: Replit's built-in PostgreSQL (Neon-backed) via `DATABASE_URL`, using `@neondatabase/serverless` + `drizzle-orm/neon-serverless`
+- **Production**: Supabase PostgreSQL via `PROD_DATABASE_URL`, using standard `pg` driver + `drizzle-orm/node-postgres`
+- **Schema Push (dev)**: `npx drizzle-kit push`
+- **Schema Push (prod)**: `DRIZZLE_TARGET=prod npx drizzle-kit push` (auto-switches to direct connection port 5432 with SSL)
+- The `drizzle.config.ts` supports both targets via the `DRIZZLE_TARGET` env var
+
 ### Data Architecture
 The database schema includes tables for `users`, `profiles`, `career_analyses`, `personal_essays`, `kompass_goals`, `visitor_metrics`, `service_pricing`, `system_settings`, `redemption_codes`, `redemption_history`, and `iap_transactions`. A multi-profile system allows users to manage different career personas, utilizing JSONB fields for flexible data storage.
 
