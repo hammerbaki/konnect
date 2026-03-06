@@ -61,7 +61,7 @@ export function RedeemDialog({ children }: RedeemDialogProps) {
         {children || (
           <Button size="sm" className="bg-[#FFB300] hover:bg-[#FFCA28] text-white border-none shadow-sm gap-2 rounded-lg font-bold">
             <Ticket className="h-4 w-4" />
-            학습권 충전
+            학습권 구매
           </Button>
         )}
       </DialogTrigger>
