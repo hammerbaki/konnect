@@ -1287,21 +1287,21 @@ export default function ExploreDB() {
             className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-dream data-[state=active]:text-white"
             data-testid="tab-universities"
           >
-            <Building2 className="w-4 h-4" /> 대학 정보
+            <Building2 className="w-4 h-4" /> 대학 정보 <span className="text-xs opacity-70">({univTotal})</span>
           </TabsTrigger>
           <TabsTrigger
             value="majors"
             className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-dream data-[state=active]:text-white"
             data-testid="tab-majors"
           >
-            <GraduationCap className="w-4 h-4" /> 전공 <span className="text-xs opacity-70">({majorTotal})</span>
+            <GraduationCap className="w-4 h-4" /> 전공 정보 <span className="text-xs opacity-70">({majorTotal})</span>
           </TabsTrigger>
           <TabsTrigger
             value="jobs"
             className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-coral data-[state=active]:text-white"
             data-testid="tab-jobs"
           >
-            <Briefcase className="w-4 h-4" /> 직업 <span className="text-xs opacity-70">({jobTotal})</span>
+            <Briefcase className="w-4 h-4" /> 직업 정보 <span className="text-xs opacity-70">({jobTotal})</span>
           </TabsTrigger>
         </TabsList>
 
