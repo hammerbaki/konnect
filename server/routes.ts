@@ -27,8 +27,8 @@ import { startWorker, submitQueuedJob } from "./aiWorker";
 import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
-import { desc, count, sum, and, eq, gte, lte, gt } from "drizzle-orm";
-import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments } from "@shared/schema";
+import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, sql as sqlExpr } from "drizzle-orm";
+import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses } from "@shared/schema";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -5831,6 +5831,270 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching user detail:", error?.message);
       res.status(500).json({ message: "사용자 상세 정보 조회 중 오류가 발생했습니다." });
+    }
+  });
+
+  // ===========================
+  // EXPLORE API (탐색)
+  // ===========================
+
+  // GET /api/explore/categories - 카테고리 목록
+  app.get('/api/explore/categories', async (req, res) => {
+    try {
+      const majCats = await db.selectDistinct({ category: cachedMajors.category })
+        .from(cachedMajors).orderBy(asc(cachedMajors.category));
+      const jobFields = await db.selectDistinct({ field: cachedJobs.field })
+        .from(cachedJobs).orderBy(asc(cachedJobs.field));
+      const regions = await db.selectDistinct({ region: universityInfo.region })
+        .from(universityInfo).orderBy(asc(universityInfo.region));
+      res.json({
+        majorCategories: majCats.map(r => r.category).filter(Boolean),
+        jobFields: jobFields.map(r => r.field).filter(Boolean),
+        regions: regions.map(r => r.region).filter(Boolean),
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // GET /api/explore/majors
+  app.get('/api/explore/majors', async (req, res) => {
+    try {
+      const { search = '', category = '', page = '1', limit = '20' } = req.query as Record<string, string>;
+      const pageNum = Math.max(1, parseInt(page));
+      const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+      const offset = (pageNum - 1) * limitNum;
+
+      const conditions = [];
+      if (search) conditions.push(ilike(cachedMajors.majorName, `%${search}%`));
+      if (category) conditions.push(eq(cachedMajors.category, category));
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const [rows, totalRows] = await Promise.all([
+        db.select().from(cachedMajors)
+          .where(whereClause)
+          .orderBy(asc(cachedMajors.majorName))
+          .limit(limitNum).offset(offset),
+        db.select({ cnt: count() }).from(cachedMajors).where(whereClause),
+      ]);
+
+      res.json({ data: rows, total: totalRows[0]?.cnt ?? 0, page: pageNum, limit: limitNum });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // GET /api/explore/jobs
+  app.get('/api/explore/jobs', async (req, res) => {
+    try {
+      const { search = '', field = '', page = '1', limit = '20' } = req.query as Record<string, string>;
+      const pageNum = Math.max(1, parseInt(page));
+      const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+      const offset = (pageNum - 1) * limitNum;
+
+      const conditions = [];
+      if (search) conditions.push(ilike(cachedJobs.jobName, `%${search}%`));
+      if (field) conditions.push(eq(cachedJobs.field, field));
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const [rows, totalRows] = await Promise.all([
+        db.select().from(cachedJobs)
+          .where(whereClause)
+          .orderBy(asc(cachedJobs.jobName))
+          .limit(limitNum).offset(offset),
+        db.select({ cnt: count() }).from(cachedJobs).where(whereClause),
+      ]);
+
+      res.json({ data: rows, total: totalRows[0]?.cnt ?? 0, page: pageNum, limit: limitNum });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // GET /api/explore/universities
+  app.get('/api/explore/universities', async (req, res) => {
+    try {
+      const { search = '', region = '', page = '1', limit = '20' } = req.query as Record<string, string>;
+      const pageNum = Math.max(1, parseInt(page));
+      const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+      const offset = (pageNum - 1) * limitNum;
+
+      const conditions = [];
+      if (search) conditions.push(ilike(universityInfo.univName, `%${search}%`));
+      if (region) conditions.push(eq(universityInfo.region, region));
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const [rows, totalRows] = await Promise.all([
+        db.select().from(universityInfo)
+          .where(whereClause)
+          .orderBy(asc(universityInfo.univName))
+          .limit(limitNum).offset(offset),
+        db.select({ cnt: count() }).from(universityInfo).where(whereClause),
+      ]);
+
+      res.json({ data: rows, total: totalRows[0]?.cnt ?? 0, page: pageNum, limit: limitNum });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ===========================
+  // APTITUDE API (전공 적성 분석)
+  // ===========================
+
+  const APTITUDE_QUESTIONS = [
+    // 흥미 문항 (1~18) - SCI/ENG/MED/BIZ/LAW/EDU/ART/IT/SOC 각 2개
+    { id: 1, text: "자연현상이나 과학적 원리에 호기심이 많다", category: "interest", key: "SCI" },
+    { id: 2, text: "실험이나 탐구 활동을 즐긴다", category: "interest", key: "SCI" },
+    { id: 3, text: "기계나 장치가 어떻게 작동하는지 알고 싶다", category: "interest", key: "ENG" },
+    { id: 4, text: "수학·물리를 활용한 문제 해결에 흥미가 있다", category: "interest", key: "ENG" },
+    { id: 5, text: "사람들의 건강과 질병에 관심이 많다", category: "interest", key: "MED" },
+    { id: 6, text: "아픈 사람을 돌보거나 치료하는 일에 보람을 느낀다", category: "interest", key: "MED" },
+    { id: 7, text: "경제나 경영 분야 뉴스에 관심이 있다", category: "interest", key: "BIZ" },
+    { id: 8, text: "어떤 일을 효율적으로 기획하고 조직하는 걸 좋아한다", category: "interest", key: "BIZ" },
+    { id: 9, text: "규칙·제도·법에 관심이 있고 공정함을 중시한다", category: "interest", key: "LAW" },
+    { id: 10, text: "토론이나 논쟁에서 내 주장을 논리적으로 펼치는 걸 좋아한다", category: "interest", key: "LAW" },
+    { id: 11, text: "지식을 전달하거나 가르치는 것이 즐겁다", category: "interest", key: "EDU" },
+    { id: 12, text: "어린이나 청소년의 성장과 발달에 관심이 많다", category: "interest", key: "EDU" },
+    { id: 13, text: "그림·음악·글쓰기 등 예술적 표현 활동을 즐긴다", category: "interest", key: "ART" },
+    { id: 14, text: "새로운 디자인이나 아이디어를 만들어내는 것이 좋다", category: "interest", key: "ART" },
+    { id: 15, text: "프로그래밍이나 디지털 기술에 흥미가 있다", category: "interest", key: "IT" },
+    { id: 16, text: "데이터나 알고리즘으로 문제를 해결하는 게 재미있다", category: "interest", key: "IT" },
+    { id: 17, text: "사회 문제나 불평등에 관심이 많고 변화를 만들고 싶다", category: "interest", key: "SOC" },
+    { id: 18, text: "봉사·복지·상담 등 사람을 돕는 활동에 보람을 느낀다", category: "interest", key: "SOC" },
+    // 적성 문항 (19~30) - VERBAL/MATH/SPATIAL/CREATIVE/SOCIAL/SELF 각 2개
+    { id: 19, text: "글쓰기나 말하기로 내 생각을 잘 표현할 수 있다", category: "aptitude", key: "VERBAL" },
+    { id: 20, text: "책이나 글에서 핵심 내용을 빠르게 파악한다", category: "aptitude", key: "VERBAL" },
+    { id: 21, text: "수학 계산이나 논리적 추론이 어렵지 않다", category: "aptitude", key: "MATH" },
+    { id: 22, text: "통계나 숫자 데이터를 분석하는 게 잘 맞는다", category: "aptitude", key: "MATH" },
+    { id: 23, text: "지도나 도면을 보고 공간 구조를 머릿속에 그릴 수 있다", category: "aptitude", key: "SPATIAL" },
+    { id: 24, text: "복잡한 도형이나 입체적 구조를 잘 이해한다", category: "aptitude", key: "SPATIAL" },
+    { id: 25, text: "새로운 아이디어나 해결책을 자주 떠올린다", category: "aptitude", key: "CREATIVE" },
+    { id: 26, text: "틀에 박히지 않은 방식으로 생각하는 걸 즐긴다", category: "aptitude", key: "CREATIVE" },
+    { id: 27, text: "다른 사람의 말을 잘 듣고 감정을 이해한다", category: "aptitude", key: "SOCIAL" },
+    { id: 28, text: "여러 사람과 협력하거나 갈등을 조율하는 데 자신 있다", category: "aptitude", key: "SOCIAL" },
+    { id: 29, text: "목표를 세우고 스스로 계획적으로 실행할 수 있다", category: "aptitude", key: "SELF" },
+    { id: 30, text: "어려운 상황에서도 침착하게 자기 관리를 잘 한다", category: "aptitude", key: "SELF" },
+  ];
+
+  // GET /api/aptitude/questions
+  app.get('/api/aptitude/questions', (req, res) => {
+    res.json(APTITUDE_QUESTIONS);
+  });
+
+  // GET /api/aptitude/latest
+  app.get('/api/aptitude/latest', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const rows = await db.select().from(aptitudeAnalyses)
+        .where(eq(aptitudeAnalyses.userId, userId))
+        .orderBy(desc(aptitudeAnalyses.createdAt))
+        .limit(1);
+      res.json(rows[0] || null);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/aptitude/analyze
+  app.post('/api/aptitude/analyze', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const { answers } = req.body as { answers: { questionId: number; score: number }[] };
+
+      if (!answers || answers.length !== 30) {
+        return res.status(400).json({ message: "30개 문항 답변이 필요합니다." });
+      }
+
+      // 흥미 점수 계산
+      const interestKeys = ["SCI", "ENG", "MED", "BIZ", "LAW", "EDU", "ART", "IT", "SOC"];
+      const aptitudeKeys = ["VERBAL", "MATH", "SPATIAL", "CREATIVE", "SOCIAL", "SELF"];
+      const interestScores: Record<string, number> = {};
+      const aptitudeScores: Record<string, number> = {};
+
+      for (const key of interestKeys) interestScores[key] = 0;
+      for (const key of aptitudeKeys) aptitudeScores[key] = 0;
+
+      for (const answer of answers) {
+        const question = APTITUDE_QUESTIONS.find(q => q.id === answer.questionId);
+        if (!question) continue;
+        const score = Math.min(5, Math.max(1, answer.score));
+        if (question.category === "interest") {
+          interestScores[question.key] = (interestScores[question.key] || 0) + score;
+        } else {
+          aptitudeScores[question.key] = (aptitudeScores[question.key] || 0) + score;
+        }
+      }
+      // 각 항목 2문항이므로 최대 10점 → 100점으로 정규화
+      for (const k of interestKeys) interestScores[k] = Math.round((interestScores[k] / 10) * 100);
+      for (const k of aptitudeKeys) aptitudeScores[k] = Math.round((aptitudeScores[k] / 10) * 100);
+
+      // RAG: 상위 직업/학과 20개 조회
+      const topJobsRaw = await db.select({ jobName: cachedJobs.jobName, field: cachedJobs.field, salary: cachedJobs.salary, growth: cachedJobs.growth })
+        .from(cachedJobs).limit(20);
+      const topMajorsRaw = await db.select({ majorName: cachedMajors.majorName, category: cachedMajors.category })
+        .from(cachedMajors).limit(20);
+
+      const jobContext = topJobsRaw.map(j => `${j.jobName}(${j.field}, 연봉${j.salary ? Math.round(j.salary/10000)+'만원' : '미상'})`).join(', ');
+      const majorContext = topMajorsRaw.map(m => `${m.majorName}(${m.category})`).join(', ');
+
+      const interestDesc = Object.entries(interestScores).sort((a,b) => b[1]-a[1]).slice(0,3)
+        .map(([k,v]) => `${k}:${v}`).join(', ');
+      const aptitudeDesc = Object.entries(aptitudeScores).sort((a,b) => b[1]-a[1]).slice(0,3)
+        .map(([k,v]) => `${k}:${v}`).join(', ');
+
+      // GPT-4o-mini 호출
+      const { default: OpenAI } = await import('openai');
+      const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+      const prompt = `당신은 한국 고등학생을 위한 전공 적성 진로 상담사입니다.
+
+학생의 흥미 점수 (상위 3): ${interestDesc}
+학생의 적성 점수 (상위 3): ${aptitudeDesc}
+
+참고 가능한 직업 목록: ${jobContext}
+참고 가능한 학과 목록: ${majorContext}
+
+위 목록에서 이 학생에게 가장 적합한 직업 3개와 학과 3개를 추천해주세요.
+반드시 아래 JSON 형식으로만 응답하세요:
+{
+  "summary": "학생의 흥미와 적성에 대한 2-3문장 요약",
+  "recommendedJobs": [
+    {"name": "직업명", "reason": "추천 이유 (1문장)", "salaryRange": "예상 연봉 범위", "outlook": "전망"},
+    ...
+  ],
+  "recommendedMajors": [
+    {"name": "학과명", "category": "계열", "reason": "추천 이유 (1문장)"},
+    ...
+  ]
+}`;
+
+      const completion = await openaiClient.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+        temperature: 0.7,
+      });
+
+      const aiResult = JSON.parse(completion.choices[0].message.content || '{}');
+
+      // DB 저장
+      const inserted = await db.insert(aptitudeAnalyses).values({
+        userId,
+        interestScores,
+        aptitudeScores,
+        recommendedJobs: aiResult.recommendedJobs || [],
+        recommendedMajors: aiResult.recommendedMajors || [],
+        summary: aiResult.summary || '',
+      }).returning();
+
+      res.json(inserted[0]);
+    } catch (error: any) {
+      console.error("Aptitude analyze error:", error?.message);
+      res.status(500).json({ message: "분석 중 오류가 발생했습니다: " + error.message });
     }
   });
 

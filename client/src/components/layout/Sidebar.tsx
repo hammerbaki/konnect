@@ -89,6 +89,8 @@ export function Sidebar() {
       "/personal-statement": ["/api/profiles"],
       "/interview": ["/api/profiles"],
       "/explorer": [],
+      "/explore": ["/api/explore/categories"],
+      "/aptitude": ["/api/aptitude/questions", "/api/aptitude/latest"],
       "/recharge": ["/api/point-packages", "/api/credit-history"],
       "/settings": ["/api/user-settings"],
       "/admin": ["/api/admin/users", "/api/admin/groups"],
@@ -119,6 +121,7 @@ export function Sidebar() {
 
   const aiNavItems = [
     { href: "/mytest", slug: "/mytest", icon: Brain, label: "진로진단" },
+    { href: "/aptitude", slug: "/aptitude", icon: GraduationCap, label: "전공 적성 분석" },
     { href: "/analysis", slug: "/analysis", icon: PieChart, label: "커리어 분석" },
     { href: "/goals", slug: "/goals", icon: Target, label: "목표 관리" },
     { href: "/personal-statement", slug: "/essays", icon: FileText, label: "자기소개서" },
@@ -126,7 +129,8 @@ export function Sidebar() {
   ];
 
   const exploreNavItems = [
-    { href: "/explorer", slug: "/explorer", icon: Search, label: "직업 탐색" },
+    { href: "/explore", slug: "/explore", icon: BookOpen, label: "학과·직업·대학 탐색" },
+    { href: "/explorer", slug: "/explorer", icon: Search, label: "직업 탐색 (구)" },
   ];
 
   const allBottomItems = [

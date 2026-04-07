@@ -25,6 +25,8 @@ const Profile = lazy(() => import("./pages/ProfileOptimized"));
 const PersonalStatement = lazy(() => import("./pages/PersonalStatement"));
 const Report = lazy(() => import("./pages/Report"));
 const Explorer = lazy(() => import("./pages/Explorer"));
+const ExploreDB = lazy(() => import("./pages/ExploreDB"));
+const Aptitude = lazy(() => import("./pages/Aptitude"));
 const Settings = lazy(() => import("./pages/Settings"));
 const TokenRecharge = lazy(() => import("./pages/TokenRecharge"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -143,6 +145,12 @@ function AuthenticatedRoutes() {
               <Explorer {...params} />
             </RoleProtectedRoute>
           )}
+        </Route>
+        <Route path="/explore">
+          {(params) => <ProtectedRoute component={ExploreDB} params={params} />}
+        </Route>
+        <Route path="/aptitude">
+          {(params) => <ProtectedRoute component={Aptitude} params={params} />}
         </Route>
         <Route path="/settings">
           {(params) => (

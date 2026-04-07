@@ -8,6 +8,7 @@ import {
   jsonb,
   index,
   integer,
+  serial,
   real,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -446,6 +447,8 @@ export const DEFAULT_PAGE_CONFIGS: Record<string, { title: string; defaultRoles:
   '/essays': { title: '자기소개서', defaultRoles: ['user', 'staff', 'admin'] },
   '/interview': { title: '면접 준비', defaultRoles: ['user', 'staff', 'admin'] },
   '/explorer': { title: '직업 탐색', defaultRoles: ['user', 'staff', 'admin'] },
+  '/explore': { title: '학과·직업·대학 탐색', defaultRoles: ['user', 'staff', 'admin'] },
+  '/aptitude': { title: '전공 적성 분석', defaultRoles: ['user', 'staff', 'admin'] },
   '/settings': { title: '설정', defaultRoles: ['user', 'staff', 'admin'] },
   '/recharge': { title: '진로분석 학습권', defaultRoles: ['user', 'staff', 'admin'] },
   '/admin': { title: '관리자', defaultRoles: ['staff', 'admin'], isLocked: true },
@@ -1279,3 +1282,22 @@ export const universityInfo = pgTable("university_info", {
 export const insertUniversityInfoSchema = createInsertSchema(universityInfo).omit({ id: true });
 export type InsertUniversityInfo = z.infer<typeof insertUniversityInfoSchema>;
 export type UniversityInfo = typeof universityInfo.$inferSelect;
+
+// ===== APTITUDE ANALYSES TABLE (전공 적성 분석 결과) =====
+export const aptitudeAnalyses = pgTable("aptitude_analyses", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  interestScores: jsonb("interest_scores").notNull().default({}),
+  aptitudeScores: jsonb("aptitude_scores").notNull().default({}),
+  recommendedJobs: jsonb("recommended_jobs").default([]),
+  recommendedMajors: jsonb("recommended_majors").default([]),
+  summary: text("summary"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAptitudeAnalysisSchema = createInsertSchema(aptitudeAnalyses).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertAptitudeAnalysis = z.infer<typeof insertAptitudeAnalysisSchema>;
+export type AptitudeAnalysis = typeof aptitudeAnalyses.$inferSelect;
