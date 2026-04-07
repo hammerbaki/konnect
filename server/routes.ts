@@ -29,6 +29,7 @@ import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, sql as sqlExpr } from "drizzle-orm";
 import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses } from "@shared/schema";
+import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport } from "./dataSync";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -5932,11 +5933,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const whereClause = and(...conditions);
 
       let orderByClause;
-      if (sort === 'employment') orderByClause = desc(universityInfo.employmentRate);
-      else if (sort === 'tuition_asc') orderByClause = asc(universityInfo.avgTuition);
-      else if (sort === 'tuition_desc') orderByClause = desc(universityInfo.avgTuition);
+      if (sort === 'employment') orderByClause = sqlExpr`${universityInfo.employmentRate} DESC NULLS LAST`;
+      else if (sort === 'tuition_asc') orderByClause = sqlExpr`${universityInfo.avgTuition} ASC NULLS LAST`;
+      else if (sort === 'tuition_desc') orderByClause = sqlExpr`${universityInfo.avgTuition} DESC NULLS LAST`;
       else if (sort === 'name') orderByClause = asc(universityInfo.univName);
-      else orderByClause = desc(universityInfo.competitionRate); // default: 경쟁률 높은 순
+      else orderByClause = sqlExpr`${universityInfo.competitionRate} DESC NULLS LAST`; // default: 경쟁률 높은 순
 
       const [rows, totalRows] = await Promise.all([
         db.select({
@@ -5962,6 +5963,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ data: rows, total: totalRows[0]?.cnt ?? 0, page: pageNum, limit: limitNum });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ===========================
+  // ADMIN DATA SYNC ROUTES
+  // ===========================
+
+  // GET /api/admin/data-quality — 데이터 품질 리포트
+  app.get('/api/admin/data-quality', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
+      const report = await getDataQualityReport();
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/admin/sync-majors — GPT-4o-mini로 누락된 학과 설명 생성
+  app.post('/api/admin/sync-majors', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
+      const logs: string[] = [];
+      const result = await generateMajorDescriptions((msg) => logs.push(msg));
+      res.json({ ...result, logs });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/admin/sync-jobs — CareerNet + GPT-4o-mini 직업 설명 생성
+  app.post('/api/admin/sync-jobs', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
+      const logs: string[] = [];
+      // Try CareerNet first, then GPT fallback
+      const cnResult = await syncJobDescriptionsFromCareerNet((msg) => logs.push(msg));
+      const gptResult = await generateJobDescriptions((msg) => logs.push(msg));
+      res.json({ careernet: cnResult, gpt: gptResult, logs });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/admin/clean-duplicates — 중복 직업 제거
+  app.post('/api/admin/clean-duplicates', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
+      const result = await removeDuplicateJobs();
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/admin/sync-all — 전체 동기화 (중복제거 → 학과 → 직업)
+  app.post('/api/admin/sync-all', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
+      const logs: string[] = [];
+      const dupResult = await removeDuplicateJobs();
+      logs.push(`중복 직업 제거: ${dupResult.removed}개`);
+      const majorResult = await generateMajorDescriptions((msg) => logs.push(msg));
+      const cnJobResult = await syncJobDescriptionsFromCareerNet((msg) => logs.push(msg));
+      const gptJobResult = await generateJobDescriptions((msg) => logs.push(msg));
+      const qualityReport = await getDataQualityReport();
+      res.json({
+        duplicatesRemoved: dupResult.removed,
+        majors: majorResult,
+        jobs: { careernet: cnJobResult, gpt: gptJobResult },
+        qualityReport,
+        logs,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message, logs: [error.message] });
     }
   });
 

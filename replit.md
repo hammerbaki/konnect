@@ -22,7 +22,14 @@ The backend is an Express.js application built with Node.js and TypeScript. It u
 - The `drizzle.config.ts` supports both targets via the `DRIZZLE_TARGET` env var
 
 ### Data Architecture
-The database schema includes tables for `users`, `profiles`, `career_analyses`, `personal_essays`, `kompass_goals`, `visitor_metrics`, `service_pricing`, `system_settings`, `redemption_codes`, `redemption_history`, and `iap_transactions`. A multi-profile system allows users to manage different career personas, utilizing JSONB fields for flexible data storage.
+The database schema includes tables for `users`, `profiles`, `career_analyses`, `personal_essays`, `kompass_goals`, `visitor_metrics`, `service_pricing`, `system_settings`, `redemption_codes`, `redemption_history`, `iap_transactions`, `cached_majors` (235 학과, 100% with descriptions), `cached_jobs` (443 직업, 100% with descriptions), `university_info` (489 대학), and `aptitude_analyses` (전공 적성 분석). A multi-profile system allows users to manage different career personas, utilizing JSONB fields for flexible data storage.
+
+### Explore DB & Aptitude Features
+- **전공/진로 탐색** (`/explore`): 3-tab explorer (대학 정보/전공/직업) backed by PostgreSQL. University cards show competition rate, employment rate, tuition, dormitory rate. AI recommendation banner reads latest aptitude result.
+- **전공 적성 분석** (`/aptitude`): 30-question test with GPT-4o-mini analysis producing top jobs/majors with match explanations.
+- **Description Generation**: GPT-4o-mini auto-generates missing major/job descriptions at server startup (idempotent). All 235 majors and 443 jobs now have complete descriptions.
+- **Admin Sync Routes**: `POST /api/admin/sync-majors`, `POST /api/admin/sync-jobs`, `POST /api/admin/clean-duplicates`, `GET /api/admin/data-quality` (admin role required).
+- **Data Sync Module**: `server/dataSync.ts` handles GPT batch generation and CareerNet API sync.
 
 ### Key Architectural Decisions
 - **Multi-Profile System**: Supports distinct career profiles per user.

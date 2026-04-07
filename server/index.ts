@@ -4,6 +4,9 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import helmet from "helmet";
 import compression from "compression";
+import { generateMajorDescriptions, generateJobDescriptions } from "./dataSync";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
 
 // CORS configuration for mobile apps and web clients
 function configureCORS(app: express.Express) {
@@ -237,6 +240,39 @@ app.use((req, res, next) => {
       () => {
         log(`serving on port ${port} (host: ${host})`);
         console.log('✓ Server ready');
+
+        // Background: generate missing descriptions via GPT-4o-mini (runs once if needed)
+        setTimeout(async () => {
+          try {
+            const check = await db.execute(sql`
+              SELECT COUNT(*) as missing FROM cached_majors
+              WHERE description IS NULL OR description = ''
+            `);
+            const missing = parseInt((check as any).rows?.[0]?.missing ?? '0');
+            if (missing > 0) {
+              console.log(`[DataSync] ${missing} majors missing descriptions — starting GPT generation...`);
+              const majorResult = await generateMajorDescriptions((m) => console.log('[DataSync Major]', m));
+              console.log('[DataSync] Major result:', majorResult);
+            } else {
+              console.log('[DataSync] All major descriptions present — skipping.');
+            }
+
+            const jobCheck = await db.execute(sql`
+              SELECT COUNT(*) as missing FROM cached_jobs
+              WHERE description IS NULL OR description = ''
+            `);
+            const jobMissing = parseInt((jobCheck as any).rows?.[0]?.missing ?? '0');
+            if (jobMissing > 0) {
+              console.log(`[DataSync] ${jobMissing} jobs missing descriptions — generating via GPT...`);
+              const jobResult = await generateJobDescriptions((m) => console.log('[DataSync Job]', m));
+              console.log('[DataSync] Job result:', jobResult);
+            } else {
+              console.log('[DataSync] All job descriptions present — skipping.');
+            }
+          } catch (e) {
+            console.error('[DataSync] Background sync error:', e);
+          }
+        }, 5000); // Wait 5s after server starts
       },
     );
 
