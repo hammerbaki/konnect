@@ -932,7 +932,11 @@ export default function ExploreDB() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">계열 전체</SelectItem>
-                {categories?.majorCategories.map(c => (
+                {[...(categories?.majorCategories ?? [])].sort((a, b) => {
+                  if (a === "기타") return 1;
+                  if (b === "기타") return -1;
+                  return a.localeCompare(b, "ko");
+                }).map(c => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
               </SelectContent>
