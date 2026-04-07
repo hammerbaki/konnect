@@ -565,8 +565,8 @@ function InterviewContent() {
     return (
       <div className="space-y-6" data-testid="interview-list-view">
         <div className="text-center py-8">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#3182F6]/20 to-[#7C3AED]/20 flex items-center justify-center mx-auto mb-4">
-            <Mic className="w-8 h-8 text-[#3182F6]" />
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#320e9d]/20 to-[#7C3AED]/20 flex items-center justify-center mx-auto mb-4">
+            <Mic className="w-8 h-8 text-[#320e9d]" />
           </div>
           <h1 className="text-2xl font-bold text-[#191F28] mb-2">면접 준비</h1>
           <p className="text-[#8B95A1] text-sm max-w-md mx-auto">
@@ -575,12 +575,12 @@ function InterviewContent() {
         </div>
         
         {/* 희망직무 표시 */}
-        <Card className="border-[#3182F6]/30 bg-gradient-to-r from-[#E8F3FF] to-white">
+        <Card className="border-[#320e9d]/30 bg-gradient-to-r from-[#E8F3FF] to-white">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#3182F6]/10 flex items-center justify-center">
-                  <Target className="w-5 h-5 text-[#3182F6]" />
+                <div className="w-10 h-10 rounded-full bg-[#320e9d]/10 flex items-center justify-center">
+                  <Target className="w-5 h-5 text-[#320e9d]" />
                 </div>
                 <div>
                   <p className="text-xs text-[#8B95A1]">현재 희망직무</p>
@@ -604,19 +604,19 @@ function InterviewContent() {
         </Card>
         
         {/* 새 세션 시작 */}
-        <Card className="border-dashed border-2 border-[#E5E8EB] hover:border-[#3182F6] transition-colors cursor-pointer"
+        <Card className="border-dashed border-2 border-[#E5E8EB] hover:border-[#320e9d] transition-colors cursor-pointer"
               onClick={handleStartSession}
               data-testid="btn-start-new-session">
           <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-[#3182F6]/10 flex items-center justify-center mx-auto mb-3">
-              <Plus className="w-6 h-6 text-[#3182F6]" />
+            <div className="w-12 h-12 rounded-full bg-[#320e9d]/10 flex items-center justify-center mx-auto mb-3">
+              <Plus className="w-6 h-6 text-[#320e9d]" />
             </div>
             <h3 className="font-bold text-[#191F28] mb-1">새 면접 준비 시작</h3>
             <p className="text-sm text-[#8B95A1]">
               AI가 희망직무에 맞는 면접 질문을 생성합니다
             </p>
             {createSessionMutation.isPending && (
-              <div className="flex items-center justify-center gap-2 mt-4 text-[#3182F6]">
+              <div className="flex items-center justify-center gap-2 mt-4 text-[#320e9d]">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span className="text-sm">질문 생성 중...</span>
               </div>
@@ -717,7 +717,7 @@ function InterviewContent() {
         
         {/* Mode Toggle */}
         <div className="flex justify-center">
-          <div className="flex bg-[#F2F4F6] rounded-lg p-1 gap-1">
+          <div className="flex bg-background rounded-lg p-1 gap-1">
             <Button
               variant={!isVoiceMode ? 'default' : 'ghost'}
               size="sm"
@@ -743,7 +743,7 @@ function InterviewContent() {
         
         {/* Question Card */}
         {currentQuestion && (
-          <Card className="border-t-4" style={{ borderTopColor: categoryInfo[currentQuestion.category]?.color.includes('blue') ? '#3182F6' : categoryInfo[currentQuestion.category]?.color.includes('purple') ? '#7C3AED' : categoryInfo[currentQuestion.category]?.color.includes('green') ? '#059669' : '#D97706' }}>
+          <Card className="border-t-4" style={{ borderTopColor: categoryInfo[currentQuestion.category]?.color.includes('blue') ? '#320e9d' : categoryInfo[currentQuestion.category]?.color.includes('purple') ? '#7C3AED' : categoryInfo[currentQuestion.category]?.color.includes('green') ? '#059669' : '#D97706' }}>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <Badge className={categoryInfo[currentQuestion.category]?.color}>
@@ -778,9 +778,9 @@ function InterviewContent() {
               {/* Guide Text (for self_intro) */}
               {currentQuestion.guideText && (
                 <div className="flex items-start gap-2 p-3 bg-[#E8F3FF] rounded-lg">
-                  <BookOpen className="w-4 h-4 text-[#3182F6] mt-0.5" />
+                  <BookOpen className="w-4 h-4 text-[#320e9d] mt-0.5" />
                   <div>
-                    <p className="text-xs font-medium text-[#3182F6]">답변 가이드</p>
+                    <p className="text-xs font-medium text-[#320e9d]">답변 가이드</p>
                     <p className="text-xs text-[#4B5563]">{currentQuestion.guideText}</p>
                   </div>
                 </div>
@@ -819,7 +819,7 @@ function InterviewContent() {
                       저장만
                     </Button>
                     <Button
-                      className="flex-1 bg-[#3182F6]"
+                      className="flex-1 bg-[#320e9d]"
                       onClick={handleSubmitAnswer}
                       disabled={!answerText.trim() || submitAnswerMutation.isPending}
                       data-testid="btn-submit-answer"
@@ -844,7 +844,7 @@ function InterviewContent() {
                       <>
                         <button
                           onClick={handleStartVoiceRecording}
-                          className="w-20 h-20 rounded-full bg-[#3182F6] hover:bg-[#2563EB] flex items-center justify-center shadow-lg transition-all hover:scale-105"
+                          className="w-20 h-20 rounded-full bg-[#320e9d] hover:bg-[#2563EB] flex items-center justify-center shadow-lg transition-all hover:scale-105"
                           data-testid="btn-start-voice-recording"
                         >
                           <Mic className="w-8 h-8 text-white" />
@@ -872,8 +872,8 @@ function InterviewContent() {
                     
                     {(isProcessingVoice || submitVoiceRecordingMutation.isPending) && (
                       <>
-                        <div className="w-20 h-20 rounded-full bg-[#3182F6]/20 flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 text-[#3182F6] animate-spin" />
+                        <div className="w-20 h-20 rounded-full bg-[#320e9d]/20 flex items-center justify-center">
+                          <Loader2 className="w-8 h-8 text-[#320e9d] animate-spin" />
                         </div>
                         <p className="mt-4 text-sm text-[#8B95A1]">음성을 텍스트로 변환 중...</p>
                       </>
@@ -885,7 +885,7 @@ function InterviewContent() {
                     <div className="space-y-3">
                       <div className="p-4 bg-white border rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
-                          <Volume2 className="w-4 h-4 text-[#3182F6]" />
+                          <Volume2 className="w-4 h-4 text-[#320e9d]" />
                           <span className="text-sm font-medium text-[#191F28]">음성 인식 결과</span>
                           {currentQuestionRecording.durationSeconds && (
                             <Badge variant="outline" className="text-xs">
@@ -913,7 +913,7 @@ function InterviewContent() {
                           다시 녹음
                         </Button>
                         <Button
-                          className="flex-1 bg-[#3182F6]"
+                          className="flex-1 bg-[#320e9d]"
                           onClick={handleGetVoiceFeedback}
                           disabled={!currentQuestionRecording?.sttText || getVoiceFeedbackMutation.isPending}
                           data-testid="btn-voice-feedback"
@@ -934,7 +934,7 @@ function InterviewContent() {
                     <div className="space-y-4 pt-4 border-t">
                       <div className="flex items-center justify-between">
                         <h4 className="font-bold text-[#191F28] flex items-center gap-2">
-                          <Brain className="w-5 h-5 text-[#3182F6]" />
+                          <Brain className="w-5 h-5 text-[#320e9d]" />
                           AI 피드백 (음성)
                         </h4>
                       </div>
@@ -953,7 +953,7 @@ function InterviewContent() {
                               {[1, 2, 3, 4, 5].map(n => (
                                 <div
                                   key={n}
-                                  className={`w-2 h-2 rounded-full ${n <= (item.score || 0) ? 'bg-[#3182F6]' : 'bg-[#E5E8EB]'}`}
+                                  className={`w-2 h-2 rounded-full ${n <= (item.score || 0) ? 'bg-[#320e9d]' : 'bg-[#E5E8EB]'}`}
                                 />
                               ))}
                             </div>
@@ -962,9 +962,9 @@ function InterviewContent() {
                       </div>
                       
                       {/* Overall Score */}
-                      <div className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-[#3182F6]/10 to-[#7C3AED]/10 rounded-lg">
+                      <div className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-[#320e9d]/10 to-[#7C3AED]/10 rounded-lg">
                         <span className="text-sm text-[#8B95A1]">종합 점수</span>
-                        <span className="text-2xl font-bold text-[#3182F6]">
+                        <span className="text-2xl font-bold text-[#320e9d]">
                           {currentQuestionRecording.overallScore}/5
                         </span>
                       </div>
@@ -980,7 +980,7 @@ function InterviewContent() {
                       {/* Improved Answer */}
                       {currentQuestionRecording.improvedAnswer && (
                         <div className="p-3 bg-[#E8F3FF] rounded-lg">
-                          <p className="text-xs font-medium text-[#3182F6] mb-1">AI 첨삭 답변</p>
+                          <p className="text-xs font-medium text-[#320e9d] mb-1">AI 첨삭 답변</p>
                           <p className="text-sm text-[#4B5563] whitespace-pre-wrap">{currentQuestionRecording.improvedAnswer}</p>
                         </div>
                       )}
@@ -994,7 +994,7 @@ function InterviewContent() {
                 <div className="space-y-4 pt-4 border-t">
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-[#191F28] flex items-center gap-2">
-                      <Brain className="w-5 h-5 text-[#3182F6]" />
+                      <Brain className="w-5 h-5 text-[#320e9d]" />
                       AI 피드백
                     </h4>
                     <Button
@@ -1004,7 +1004,7 @@ function InterviewContent() {
                       data-testid="btn-toggle-bookmark"
                     >
                       {currentQuestion.answer.isBookmarked ? (
-                        <BookmarkCheck className="w-4 h-4 text-[#3182F6]" />
+                        <BookmarkCheck className="w-4 h-4 text-[#320e9d]" />
                       ) : (
                         <Bookmark className="w-4 h-4" />
                       )}
@@ -1025,7 +1025,7 @@ function InterviewContent() {
                           {[1, 2, 3, 4, 5].map(n => (
                             <div
                               key={n}
-                              className={`w-2 h-2 rounded-full ${n <= (item.score || 0) ? 'bg-[#3182F6]' : 'bg-[#E5E8EB]'}`}
+                              className={`w-2 h-2 rounded-full ${n <= (item.score || 0) ? 'bg-[#320e9d]' : 'bg-[#E5E8EB]'}`}
                             />
                           ))}
                         </div>
@@ -1034,9 +1034,9 @@ function InterviewContent() {
                   </div>
                   
                   {/* Overall Score */}
-                  <div className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-[#3182F6]/10 to-[#7C3AED]/10 rounded-lg">
+                  <div className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-[#320e9d]/10 to-[#7C3AED]/10 rounded-lg">
                     <span className="text-sm text-[#8B95A1]">종합 점수</span>
-                    <span className="text-2xl font-bold text-[#3182F6]">
+                    <span className="text-2xl font-bold text-[#320e9d]">
                       {currentQuestion.answer.overallScore}/5
                     </span>
                   </div>
@@ -1052,7 +1052,7 @@ function InterviewContent() {
                   {/* Improved Answer */}
                   {currentQuestion.answer.improvedAnswer && (
                     <div className="p-3 bg-[#E8F3FF] rounded-lg">
-                      <p className="text-xs font-medium text-[#3182F6] mb-1">AI 첨삭 답변</p>
+                      <p className="text-xs font-medium text-[#320e9d] mb-1">AI 첨삭 답변</p>
                       <p className="text-sm text-[#4B5563] whitespace-pre-wrap">{currentQuestion.answer.improvedAnswer}</p>
                     </div>
                   )}

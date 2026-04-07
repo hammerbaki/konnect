@@ -207,7 +207,7 @@ const CATEGORIES: Category[] = [
         subLabel: "인턴, 신입 채용 맞춤형 자소서",
         icon: GraduationCap,
         colorClass:
-            "text-blue-500 bg-blue-50 border-blue-100 hover:border-blue-300 hover:bg-blue-100",
+            "text-blue-500 bg-dream/10 border-blue-100 hover:border-blue-300 hover:bg-blue-100",
         agents: [
             {
                 id: "univ_growth",
@@ -748,7 +748,7 @@ export default function PersonalStatement() {
             <div className="p-4 border-b border-[#E5E8EB]">
                 <Button
                     onClick={handleNewChat}
-                    className="w-full justify-start gap-2 bg-[#3182F6] hover:bg-[#2b72d7] text-white"
+                    className="w-full justify-start gap-2 bg-[#320e9d] hover:bg-[#2d0c8e] text-white"
                 >
                     <Plus className="h-4 w-4" />새 자소서 작성
                 </Button>
@@ -764,9 +764,9 @@ export default function PersonalStatement() {
                             key={session.id}
                             onClick={() => handleLoadSession(session)}
                             className={cn(
-                                "group flex items-center justify-between p-3 rounded-xl text-left transition-all cursor-pointer hover:bg-[#F2F4F6]",
+                                "group flex items-center justify-between p-3 rounded-xl text-left transition-all cursor-pointer hover:bg-background",
                                 currentSessionId === session.id
-                                    ? "bg-[#E8F3FF] text-[#3182F6]"
+                                    ? "bg-[#E8F3FF] text-[#320e9d]"
                                     : "text-[#4E5968]",
                             )}
                         >
@@ -775,7 +775,7 @@ export default function PersonalStatement() {
                                     className={cn(
                                         "h-4 w-4 shrink-0",
                                         currentSessionId === session.id
-                                            ? "text-[#3182F6]"
+                                            ? "text-[#320e9d]"
                                             : "text-[#B0B8C1]",
                                     )}
                                 />
@@ -858,7 +858,7 @@ export default function PersonalStatement() {
                         고등학생, 대학생, 또는 일반 구직자 프로필을 먼저 만들어주세요.
                     </p>
                     <Link href="/profile">
-                        <Button className="bg-[#3182F6]">
+                        <Button className="bg-[#320e9d]">
                             <Plus className="h-4 w-4 mr-2" /> 프로필 만들기
                         </Button>
                     </Link>
@@ -911,7 +911,7 @@ export default function PersonalStatement() {
                             </Sheet>
                             <div>
                                 <h2 className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                                    <Sparkles className="h-5 w-5 text-[#3182F6]" />
+                                    <Sparkles className="h-5 w-5 text-[#320e9d]" />
                                     AI 자소서 코치
                                 </h2>
                                 {selectedCategory && (
@@ -926,7 +926,7 @@ export default function PersonalStatement() {
                         {selectedAgent && (
                             <Badge
                                 variant="outline"
-                                className="text-[#3182F6] bg-blue-50 border-blue-100 hidden md:flex"
+                                className="text-[#320e9d] bg-dream/10 border-blue-100 hidden md:flex"
                             >
                                 {selectedAgent.label} 작성 중
                             </Badge>
@@ -1023,10 +1023,10 @@ export default function PersonalStatement() {
                                 })()}
 
                                 {/* Target Company/School Info Section - MANDATORY */}
-                                <Card className="bg-gradient-to-br from-blue-50 to-white border-2 border-[#3182F6] overflow-hidden shadow-sm">
+                                <Card className="bg-gradient-to-br from-blue-50 to-white border-2 border-[#320e9d] overflow-hidden shadow-sm">
                                     <div className="p-4">
                                         <div className="flex items-center gap-3 mb-4">
-                                            <div className="p-2 rounded-lg bg-[#3182F6]">
+                                            <div className="p-2 rounded-lg bg-[#320e9d]">
                                                 <Building2 className="h-5 w-5 text-white" />
                                             </div>
                                             <div>
@@ -1053,7 +1053,7 @@ export default function PersonalStatement() {
                                                         value={targetName}
                                                         onChange={(e) => setTargetName(e.target.value)}
                                                         className={cn(
-                                                            "border-[#E5E8EB] focus:border-[#3182F6]",
+                                                            "border-[#E5E8EB] focus:border-[#320e9d]",
                                                             !targetName.trim() && "border-red-200 bg-red-50/30"
                                                         )}
                                                         data-testid="input-target-name"
@@ -1068,7 +1068,7 @@ export default function PersonalStatement() {
                                                         placeholder="예: 소프트웨어 개발, 경영학과"
                                                         value={targetPosition}
                                                         onChange={(e) => setTargetPosition(e.target.value)}
-                                                        className="border-[#E5E8EB] focus:border-[#3182F6]"
+                                                        className="border-[#E5E8EB] focus:border-[#320e9d]"
                                                         data-testid="input-target-position"
                                                     />
                                                 </div>
@@ -1089,7 +1089,7 @@ export default function PersonalStatement() {
                                                                 setTargetUrl(e.target.value);
                                                                 setCompanyFetchError(null);
                                                             }}
-                                                            className="pl-9 border-[#E5E8EB] focus:border-[#3182F6] bg-gray-50/50"
+                                                            className="pl-9 border-[#E5E8EB] focus:border-[#320e9d] bg-gray-50/50"
                                                             data-testid="input-target-url"
                                                         />
                                                     </div>
@@ -1149,7 +1149,7 @@ export default function PersonalStatement() {
                                                     {companyInfo.industryKeywords && companyInfo.industryKeywords.length > 0 && (
                                                         <div className="flex flex-wrap gap-1 mt-1">
                                                             {companyInfo.industryKeywords.slice(0, 6).map((kw: string, i: number) => (
-                                                                <span key={i} className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded">
+                                                                <span key={i} className="text-xs px-2 py-0.5 bg-dream/10 text-dream rounded">
                                                                     #{kw}
                                                                 </span>
                                                             ))}
@@ -1168,14 +1168,14 @@ export default function PersonalStatement() {
                                             onClick={() =>
                                                 handleAgentSelect(agent)
                                             }
-                                            className="group bg-white p-5 rounded-2xl border border-[#E5E8EB] hover:border-[#3182F6] hover:shadow-md transition-all cursor-pointer flex items-center justify-between"
+                                            className="group bg-white p-5 rounded-2xl border border-[#E5E8EB] hover:border-[#320e9d] hover:shadow-md transition-all cursor-pointer flex items-center justify-between"
                                         >
                                             <div className="flex items-start gap-4">
-                                                <div className="p-3 rounded-xl bg-[#F2F4F6] group-hover:bg-blue-50 transition-colors">
-                                                    <Bot className="h-6 w-6 text-[#8B95A1] group-hover:text-[#3182F6]" />
+                                                <div className="p-3 rounded-xl bg-background group-hover:bg-dream/10 transition-colors">
+                                                    <Bot className="h-6 w-6 text-[#8B95A1] group-hover:text-[#320e9d]" />
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-bold text-[#191F28] text-lg group-hover:text-[#3182F6] transition-colors">
+                                                    <h4 className="font-bold text-[#191F28] text-lg group-hover:text-[#320e9d] transition-colors">
                                                         {agent.label}
                                                     </h4>
                                                     <p className="text-[#8B95A1] text-sm mt-1">
@@ -1198,12 +1198,12 @@ export default function PersonalStatement() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <ArrowRight className="h-5 w-5 text-[#E5E8EB] group-hover:text-[#3182F6] transition-colors" />
+                                            <ArrowRight className="h-5 w-5 text-[#E5E8EB] group-hover:text-[#320e9d] transition-colors" />
                                         </div>
                                     ))}
                                 </div>
 
-                                <Alert className="bg-blue-50 border-blue-100 text-[#3182F6]">
+                                <Alert className="bg-dream/10 border-blue-100 text-[#320e9d]">
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertTitle>Tip</AlertTitle>
                                     <AlertDescription>
@@ -1232,7 +1232,7 @@ export default function PersonalStatement() {
                                     >
                                         {msg.sender === "ai" && (
                                             <Avatar className="h-8 w-8 mt-1 shadow-sm border border-white shrink-0">
-                                                <div className="bg-gradient-to-br from-[#3182F6] to-[#1B64DA] w-full h-full flex items-center justify-center">
+                                                <div className="bg-gradient-to-br from-[#320e9d] to-[#1B64DA] w-full h-full flex items-center justify-center">
                                                     <Bot className="h-5 w-5 text-white" />
                                                 </div>
                                             </Avatar>
@@ -1250,7 +1250,7 @@ export default function PersonalStatement() {
                                                     className={cn(
                                                         "px-4 py-3 rounded-2xl text-[15px] leading-relaxed whitespace-pre-wrap shadow-sm",
                                                         msg.sender === "user"
-                                                            ? "bg-[#3182F6] text-white rounded-tr-none"
+                                                            ? "bg-[#320e9d] text-white rounded-tr-none"
                                                             : "bg-white text-[#333D4B] border border-[#E5E8EB] rounded-tl-none",
                                                     )}
                                                 >
@@ -1259,7 +1259,7 @@ export default function PersonalStatement() {
                                             ) : (
                                                 <div className="w-full min-w-[280px] md:min-w-[500px]">
                                                     <div className="flex items-center justify-between mb-2 px-1">
-                                                        <span className="text-xs font-bold text-[#3182F6] flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-md">
+                                                        <span className="text-xs font-bold text-[#320e9d] flex items-center gap-1 bg-dream/10 px-2 py-1 rounded-md">
                                                             <FileText className="h-3 w-3" />
                                                             {msg.topic} Ver.
                                                             {msg.version}
@@ -1287,7 +1287,7 @@ export default function PersonalStatement() {
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="h-8 text-xs text-[#4E5968] hover:bg-white hover:text-[#3182F6]"
+                                                                className="h-8 text-xs text-[#4E5968] hover:bg-white hover:text-[#320e9d]"
                                                                 onClick={() => {
                                                                     navigator.clipboard.writeText(
                                                                         msg.content,
@@ -1313,7 +1313,7 @@ export default function PersonalStatement() {
                                 {isGenerating && (
                                     <div className="flex w-full gap-3 justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
                                         <Avatar className="h-9 w-9 mt-0.5 shadow-sm ring-2 ring-white">
-                                            <div className="bg-gradient-to-br from-[#3182F6] to-[#1e6cd6] w-full h-full flex items-center justify-center">
+                                            <div className="bg-gradient-to-br from-[#320e9d] to-[#1e6cd6] w-full h-full flex items-center justify-center">
                                                 <Bot className="h-5 w-5 text-white" />
                                             </div>
                                         </Avatar>
@@ -1323,21 +1323,21 @@ export default function PersonalStatement() {
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex items-center gap-1">
                                                         <span 
-                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
+                                                            className="w-2 h-2 bg-[#320e9d] rounded-full"
                                                             style={{
                                                                 animation: 'thinking-pulse 1.4s ease-in-out infinite',
                                                                 animationDelay: '0s'
                                                             }}
                                                         />
                                                         <span 
-                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
+                                                            className="w-2 h-2 bg-[#320e9d] rounded-full"
                                                             style={{
                                                                 animation: 'thinking-pulse 1.4s ease-in-out infinite',
                                                                 animationDelay: '0.2s'
                                                             }}
                                                         />
                                                         <span 
-                                                            className="w-2 h-2 bg-[#3182F6] rounded-full"
+                                                            className="w-2 h-2 bg-[#320e9d] rounded-full"
                                                             style={{
                                                                 animation: 'thinking-pulse 1.4s ease-in-out infinite',
                                                                 animationDelay: '0.4s'
@@ -1366,7 +1366,7 @@ export default function PersonalStatement() {
                     {step === "chat" && (
                         <div className="bg-white border-t border-[#E5E8EB] p-4 pb-6 shadow-[0_-4px_20px_rgba(0,0,0,0.02)] z-20">
                             <div className="max-w-4xl mx-auto relative flex items-end gap-2">
-                                <div className="relative flex-1 bg-[#F2F4F6] rounded-[24px] px-4 py-3 focus-within:bg-white transition-all border border-transparent focus-within:border-[#3182F6] focus-within:shadow-[0_0_0_2px_rgba(49,130,246,0.1)]">
+                                <div className="relative flex-1 bg-background rounded-[24px] px-4 py-3 focus-within:bg-white transition-all border border-transparent focus-within:border-[#320e9d] focus-within:shadow-[0_0_0_2px_rgba(49,130,246,0.1)]">
                                     <Textarea
                                         value={input}
                                         onChange={(e) =>
@@ -1392,8 +1392,8 @@ export default function PersonalStatement() {
                                     className={cn(
                                         "h-12 w-12 rounded-full flex-shrink-0 shadow-sm transition-all duration-200",
                                         input.trim()
-                                            ? "bg-[#3182F6] hover:bg-[#2b72d7] text-white"
-                                            : "bg-[#F2F4F6] text-[#B0B8C1] hover:bg-[#E5E8EB]",
+                                            ? "bg-[#320e9d] hover:bg-[#2d0c8e] text-white"
+                                            : "bg-background text-[#B0B8C1] hover:bg-[#E5E8EB]",
                                     )}
                                 >
                                     <Send className="h-5 w-5 ml-0.5" />

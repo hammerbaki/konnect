@@ -232,8 +232,8 @@ export default function Dashboard() {
       title: "프로필",
       description: "내 정보 관리",
       icon: User,
-      color: "#3182F6",
-      bgColor: "bg-blue-50",
+      color: "#320e9d",
+      bgColor: "bg-dream/10",
       href: "/profile",
       stat: profileCount > 0 ? `${profileCount}개 프로필` : "작성하기",
     },
@@ -312,7 +312,7 @@ export default function Dashboard() {
                       <span className="text-xs sm:text-sm font-semibold" style={{ color: action.color }}>
                         {action.stat}
                       </span>
-                      <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
+                      <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-[#B0B8C1] group-hover:text-[#320e9d] transition-colors" />
                     </div>
                   </div>
                 </Card>
@@ -328,10 +328,10 @@ export default function Dashboard() {
             <CardHeader className="px-0 pt-0">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                  <Target className="h-5 w-5 text-[#3182F6]" /> Kompass 목표
+                  <Target className="h-5 w-5 text-[#320e9d]" /> Kompass 목표
                 </CardTitle>
                 <Link href="/goals">
-                  <Button variant="ghost" size="sm" className="text-[#3182F6] font-bold">
+                  <Button variant="ghost" size="sm" className="text-[#320e9d] font-bold">
                     전체보기 <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </Link>
@@ -354,7 +354,7 @@ export default function Dashboard() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="w-full rounded-lg border-[#3182F6] text-[#3182F6] font-semibold hover:bg-[#3182F6]/10"
+                          className="w-full rounded-lg border-[#320e9d] text-[#320e9d] font-semibold hover:bg-[#320e9d]/10"
                           data-testid={`button-today-goal-${goal.id}`}
                         >
                           <Calendar className="h-4 w-4 mr-2" />
@@ -374,14 +374,14 @@ export default function Dashboard() {
               ) : (
                 <div className="p-4 bg-[#F9FAFB] rounded-xl">
                   <div className="flex items-center gap-3 mb-3">
-                    <Calendar className="h-5 w-5 text-[#3182F6]" />
+                    <Calendar className="h-5 w-5 text-[#320e9d]" />
                     <span className="font-bold text-[#191F28]">목표 설정하기</span>
                   </div>
                   <p className="text-sm text-[#8B95A1]">
                     프로필과 커리어 분석을 바탕으로 장기·중기·단기 목표를 체계적으로 관리하세요.
                   </p>
                   <Link href="/goals">
-                    <Button className="w-full mt-4 rounded-xl h-11 bg-[#3182F6] font-bold" data-testid="button-go-to-kompass">
+                    <Button className="w-full mt-4 rounded-xl h-11 bg-[#320e9d] font-bold" data-testid="button-go-to-kompass">
                       새 목표 만들기
                     </Button>
                   </Link>
@@ -464,10 +464,10 @@ export default function Dashboard() {
             <CardHeader className="px-0 pt-0">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                  <User className="h-5 w-5 text-[#3182F6]" /> 프로필 현황
+                  <User className="h-5 w-5 text-[#320e9d]" /> 프로필 현황
                 </CardTitle>
                 <Link href="/profile">
-                  <Button variant="ghost" size="sm" className="text-[#3182F6] font-bold">
+                  <Button variant="ghost" size="sm" className="text-[#320e9d] font-bold">
                     수정하기 <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </Link>
@@ -477,7 +477,7 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-[#4E5968] font-medium">프로필 완성도</span>
-                  <span className="text-[#3182F6] font-bold">
+                  <span className="text-[#320e9d] font-bold">
                     {profileCount > 0 
                       ? `${profileCompleteness.percentage}%` 
                       : '미작성'}
@@ -486,7 +486,7 @@ export default function Dashboard() {
                 <Progress 
                   value={profileCompleteness.percentage} 
                   className="h-3 bg-[#F2F4F6]" 
-                  indicatorClassName="bg-[#3182F6]" 
+                  indicatorClassName="bg-[#320e9d]" 
                 />
                 <p className="text-sm text-[#8B95A1]">
                   {profileCount === 0 

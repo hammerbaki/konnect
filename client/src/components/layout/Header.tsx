@@ -37,17 +37,17 @@ export function Header() {
   const initials = user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U";
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 sm:h-[72px] items-center gap-2 sm:gap-4 bg-[#F2F4F6] px-3 sm:px-4 md:px-10">
+    <header className="sticky top-0 z-30 flex h-14 sm:h-[60px] items-center gap-2 sm:gap-4 bg-background/95 backdrop-blur-sm border-b border-border px-3 sm:px-4 md:px-8">
       
       {/* Mobile Menu Trigger */}
       <div className="md:hidden">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-lg h-9 w-9 sm:h-10 sm:w-10">
-              <Menu className="h-5 w-5 sm:h-6 sm:w-6 text-[#191F28]" />
+            <Button variant="ghost" size="icon" className="rounded-lg h-9 w-9 sm:h-10 sm:w-10 hover:bg-secondary">
+              <Menu className="h-5 w-5 sm:h-6 sm:w-6 text-foreground" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 bg-[#F2F4F6] border-none w-[280px]" aria-describedby={undefined}>
+          <SheetContent side="left" className="p-0 bg-sidebar border-none w-[260px]" aria-describedby={undefined}>
             <VisuallyHidden.Root>
               <SheetTitle>메뉴</SheetTitle>
             </VisuallyHidden.Root>
@@ -67,30 +67,29 @@ export function Header() {
       <div className="hidden flex-1">
         <form>
           <div className="relative max-w-[480px]">
-            <Search className="absolute left-4 top-3.5 h-5 w-5 text-[#B0B8C1]" />
+            <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
             <Input
               type="search"
               placeholder="분석 결과, 목표, 트렌드 검색..."
-              className="w-full h-12 bg-white border-none pl-12 rounded-xl shadow-sm text-base placeholder:text-[#B0B8C1] focus-visible:ring-[#3182F6]"
+              className="w-full h-12 bg-card border-none pl-12 rounded-xl shadow-sm text-base placeholder:text-muted-foreground"
             />
           </div>
         </form>
       </div>
-      {/* Spacer for flex layout */}
       <div className="hidden md:block flex-1" />
 
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
         {/* Desktop Points Display */}
-        <div className="hidden md:flex items-center mr-2 bg-white px-4 py-2 rounded-full shadow-sm" data-testid="header-points-display">
-          <span className="text-sm font-bold text-[#10B981]" title="선물 학습권 (무료)">{giftPoints.toLocaleString()}번</span>
-          <span className="mx-2 text-gray-300">|</span>
-          <span className="text-sm font-bold text-[#191F28]" title="유료 학습권">{credits.toLocaleString()}번</span>
+        <div className="hidden md:flex items-center mr-2 bg-card px-4 py-1.5 rounded-full border border-border shadow-sm" data-testid="header-points-display">
+          <span className="text-xs font-bold text-emerald-600" title="선물 학습권 (무료)">{giftPoints.toLocaleString()}번</span>
+          <span className="mx-2 text-border">|</span>
+          <span className="text-xs font-bold text-dream" title="유료 학습권">{credits.toLocaleString()}번</span>
         </div>
         {/* Mobile Token Display Compact */}
-        <div className="md:hidden flex items-center bg-white px-2.5 py-1.5 rounded-full shadow-sm" data-testid="header-points-display-mobile">
-          <span className="text-xs font-bold text-[#10B981]">{giftPoints.toLocaleString()}번</span>
-          <span className="mx-1.5 text-gray-300">|</span>
-          <span className="text-xs font-bold text-[#191F28]">{credits.toLocaleString()}번</span>
+        <div className="md:hidden flex items-center bg-card px-2.5 py-1.5 rounded-full border border-border shadow-sm" data-testid="header-points-display-mobile">
+          <span className="text-xs font-bold text-emerald-600">{giftPoints.toLocaleString()}번</span>
+          <span className="mx-1.5 text-border">|</span>
+          <span className="text-xs font-bold text-dream">{credits.toLocaleString()}번</span>
         </div>
 
         <div className="hidden md:block">
@@ -101,50 +100,50 @@ export function Header() {
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 ml-1 p-0 overflow-hidden border-2 border-white shadow-sm">
+            <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 ml-1 p-0 overflow-hidden border-2 border-border shadow-sm">
               {user?.profileImageUrl ? (
                 <img src={user.profileImageUrl} alt="Profile" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-[#3182F6]/10 text-[#3182F6] font-bold text-sm">
+                <div className="flex h-full w-full items-center justify-center bg-dream/10 text-dream font-bold text-sm">
                   {initials}
                 </div>
               )}
               <span className="sr-only">메뉴 열기</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 rounded-xl p-2 border-none shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-            <DropdownMenuLabel className="px-3 py-2 text-sm font-bold text-[#191F28]">내 계정</DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-[#F2F4F6]" />
+          <DropdownMenuContent align="end" className="w-56 rounded-xl p-2 border border-border shadow-[0_8px_30px_rgba(50,14,157,0.1)]">
+            <DropdownMenuLabel className="px-3 py-2 text-sm font-bold text-foreground">내 계정</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-border" />
             
             {/* Mobile Only Items */}
             <div className="md:hidden">
                 <RedeemDialog>
-                  <button className="w-full text-left rounded-lg px-3 py-2.5 font-medium cursor-pointer text-[#4E5968] hover:bg-[#F2F4F6] hover:text-[#191F28] text-sm">
+                  <button className="w-full text-left rounded-lg px-3 py-2.5 font-medium cursor-pointer text-muted-foreground hover:bg-secondary hover:text-foreground text-sm">
                       학습권 충전
                   </button>
                 </RedeemDialog>
-                 <DropdownMenuSeparator className="bg-[#F2F4F6]" />
+                 <DropdownMenuSeparator className="bg-border" />
             </div>
 
-            <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 text-[#4E5968] focus:bg-[#F2F4F6] focus:text-[#191F28] font-medium cursor-pointer">
+            <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 text-muted-foreground focus:bg-secondary focus:text-foreground font-medium cursor-pointer">
               <Link href="/profile">
                 프로필 설정
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 text-[#4E5968] focus:bg-[#F2F4F6] focus:text-[#191F28] font-medium cursor-pointer">
+            <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 text-muted-foreground focus:bg-secondary focus:text-foreground font-medium cursor-pointer">
               <Link href="/settings">
                 환경설정
               </Link>
             </DropdownMenuItem>
             <RedeemDialog>
-              <button className="w-full text-left rounded-lg px-3 py-2.5 text-[#4E5968] hover:bg-[#F2F4F6] hover:text-[#191F28] font-medium cursor-pointer text-sm">
+              <button className="w-full text-left rounded-lg px-3 py-2.5 text-muted-foreground hover:bg-secondary hover:text-foreground font-medium cursor-pointer text-sm">
                 학습권 충전
               </button>
             </RedeemDialog>
-            <DropdownMenuSeparator className="bg-[#F2F4F6]" />
+            <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem 
               onClick={handleLogout}
-              className="rounded-lg px-3 py-2.5 text-[#E44E48] focus:bg-red-50 focus:text-[#E44E48] font-medium cursor-pointer"
+              className="rounded-lg px-3 py-2.5 text-destructive focus:bg-red-50 focus:text-destructive font-medium cursor-pointer"
             >
               로그아웃
             </DropdownMenuItem>

@@ -26,7 +26,7 @@ export function MobileNav() {
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50">
-      <div className="absolute inset-0 bg-white/90 backdrop-blur-xl border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] rounded-t-[24px]" />
+      <div className="absolute inset-0 bg-white/90 backdrop-blur-xl border-t border-border shadow-[0_-4px_24px_rgba(50,14,157,0.08)] rounded-t-[20px]" />
       
       <div className="relative min-h-[64px] px-4 sm:px-6 pt-2 pb-1 flex items-start justify-around safe-area-bottom-compact">
         {navItems.map((item, index) => {
@@ -40,10 +40,10 @@ export function MobileNav() {
                   onClick={handleActionClick}
                   className={cn(
                     "h-16 w-16 rounded-full flex items-center justify-center transition-all duration-300 active:scale-95",
-                    "bg-gradient-to-br from-[#3182F6] to-[#1B64DA]",
-                    "shadow-[0_8px_24px_rgba(49,130,246,0.4)]",
+                    "shadow-[0_8px_24px_rgba(50,14,157,0.35)]",
                     "border-[4px] border-white/50 backdrop-blur-sm"
                   )}
+                  style={{ background: "linear-gradient(135deg, #320e9d, #4a16e0)" }}
                 >
                   {action?.icon ? (
                     <action.icon className="h-7 w-7 text-white" />
@@ -52,7 +52,7 @@ export function MobileNav() {
                   )}
                 </Button>
                 {action && (
-                  <div className="absolute inset-0 rounded-full bg-[#3182F6] opacity-20 animate-ping -z-10" />
+                  <div className="absolute inset-0 rounded-full opacity-20 animate-ping -z-10" style={{ backgroundColor: "#320e9d" }} />
                 )}
               </div>,
               <Link
@@ -62,19 +62,19 @@ export function MobileNav() {
               >
                 <div className={cn(
                   "p-1.5 rounded-xl transition-all duration-300",
-                  isActive ? "bg-blue-50" : "bg-transparent"
+                  isActive ? "bg-dream/10" : "bg-transparent"
                 )}>
                   <Icon 
                     className={cn(
                       "h-6 w-6 transition-colors duration-300",
-                      isActive ? "text-[#3182F6]" : "text-[#B0B8C1] group-hover:text-[#8B95A1]"
+                      isActive ? "text-dream" : "text-muted-foreground group-hover:text-foreground"
                     )} 
                   />
                 </div>
                 <span 
                   className={cn(
                     "text-[11px] font-bold transition-colors duration-300",
-                    isActive ? "text-[#3182F6]" : "text-[#B0B8C1]"
+                    isActive ? "text-dream" : "text-muted-foreground"
                   )}
                 >
                   {item.label}
@@ -91,19 +91,19 @@ export function MobileNav() {
             >
               <div className={cn(
                 "p-1.5 rounded-xl transition-all duration-300",
-                isActive ? "bg-blue-50" : "bg-transparent"
+                isActive ? "bg-dream/10" : "bg-transparent"
               )}>
                 <Icon 
                   className={cn(
                     "h-6 w-6 transition-colors duration-300",
-                    isActive ? "text-[#3182F6]" : "text-[#B0B8C1] group-hover:text-[#8B95A1]"
+                    isActive ? "text-dream" : "text-muted-foreground group-hover:text-foreground"
                   )} 
                 />
               </div>
               <span 
                 className={cn(
                   "text-[11px] font-bold transition-colors duration-300",
-                  isActive ? "text-[#3182F6]" : "text-[#B0B8C1]"
+                  isActive ? "text-dream" : "text-muted-foreground"
                 )}
               >
                 {item.label}

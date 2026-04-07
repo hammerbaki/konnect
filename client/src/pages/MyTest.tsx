@@ -277,7 +277,7 @@ export default function MyTest() {
     return (
       <>
         <div className="max-w-2xl mx-auto p-4 space-y-6">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-[#3182F6] to-[#1E5FD3]">
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-[#320e9d] to-[#1E5FD3]">
             <CardContent className="p-6 text-white">
               <div className="text-center space-y-4">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20">
@@ -303,7 +303,7 @@ export default function MyTest() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Target className="w-5 h-5 text-[#3182F6]" />
+                <Target className="w-5 h-5 text-[#320e9d]" />
                 7축 진단 점수
               </CardTitle>
             </CardHeader>
@@ -331,7 +331,7 @@ export default function MyTest() {
               {latestResult.recommendedJobs && latestResult.recommendedJobs.map((job, i) => (
                 <div key={job.jobId || i} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#3182F6] text-white flex items-center justify-center font-bold text-sm">
+                    <div className="w-8 h-8 rounded-full bg-[#320e9d] text-white flex items-center justify-center font-bold text-sm">
                       {i + 1}
                     </div>
                     <div>
@@ -341,7 +341,7 @@ export default function MyTest() {
                       </p>
                     </div>
                   </div>
-                  <span className="text-[#3182F6] font-bold">{job.matchPercentage}%</span>
+                  <span className="text-[#320e9d] font-bold">{job.matchPercentage}%</span>
                 </div>
               ))}
             </CardContent>
@@ -381,7 +381,7 @@ export default function MyTest() {
 
           <div className="flex gap-3">
             <Button
-              className="flex-1 bg-[#3182F6] hover:bg-[#1E5FD3]"
+              className="flex-1 bg-[#320e9d] hover:bg-[#1E5FD3]"
               onClick={() => setLocation("/analysis")}
               data-testid="button-go-analysis"
             >
@@ -455,7 +455,7 @@ export default function MyTest() {
             <span className="text-sm text-[#8B95A1]">
               {currentQuestionIndex + 1} / {questions.length}
             </span>
-            <span className="text-sm font-medium text-[#3182F6]">{progress}%</span>
+            <span className="text-sm font-medium text-[#320e9d]">{progress}%</span>
           </div>
           <Progress value={progress} className="h-2" />
           
@@ -521,14 +521,14 @@ export default function MyTest() {
                       className={cn(
                         "w-full p-4 text-left rounded-xl border-2 transition-all",
                         answers[currentQuestion.id] === opt.value
-                          ? "border-[#3182F6] bg-[#E8F3FF]"
+                          ? "border-[#320e9d] bg-[#E8F3FF]"
                           : "border-[#E5E8EB] hover:border-[#B0B8C1]"
                       )}
                       data-testid={`button-likert-${opt.value}`}
                     >
                       <span className={cn(
                         "font-medium",
-                        answers[currentQuestion.id] === opt.value ? "text-[#3182F6]" : "text-[#4E5968]"
+                        answers[currentQuestion.id] === opt.value ? "text-[#320e9d]" : "text-[#4E5968]"
                       )}>
                         {opt.label}
                       </span>
@@ -542,14 +542,14 @@ export default function MyTest() {
                     className={cn(
                       "p-4 text-left rounded-xl border-2 transition-all",
                       answers[currentQuestion.id] === "A"
-                        ? "border-[#3182F6] bg-[#E8F3FF]"
+                        ? "border-[#320e9d] bg-[#E8F3FF]"
                         : "border-[#E5E8EB] hover:border-[#B0B8C1]"
                     )}
                     data-testid="button-choice-a"
                   >
-                    <span className="font-medium text-[#3182F6]">A. </span>
+                    <span className="font-medium text-[#320e9d]">A. </span>
                     <span className={cn(
-                      answers[currentQuestion.id] === "A" ? "text-[#3182F6]" : "text-[#4E5968]"
+                      answers[currentQuestion.id] === "A" ? "text-[#320e9d]" : "text-[#4E5968]"
                     )}>
                       {currentQuestion.optionA}
                     </span>
@@ -559,14 +559,14 @@ export default function MyTest() {
                     className={cn(
                       "p-4 text-left rounded-xl border-2 transition-all",
                       answers[currentQuestion.id] === "B"
-                        ? "border-[#3182F6] bg-[#E8F3FF]"
+                        ? "border-[#320e9d] bg-[#E8F3FF]"
                         : "border-[#E5E8EB] hover:border-[#B0B8C1]"
                     )}
                     data-testid="button-choice-b"
                   >
-                    <span className="font-medium text-[#3182F6]">B. </span>
+                    <span className="font-medium text-[#320e9d]">B. </span>
                     <span className={cn(
-                      answers[currentQuestion.id] === "B" ? "text-[#3182F6]" : "text-[#4E5968]"
+                      answers[currentQuestion.id] === "B" ? "text-[#320e9d]" : "text-[#4E5968]"
                     )}>
                       {currentQuestion.optionB}
                     </span>
@@ -593,7 +593,7 @@ export default function MyTest() {
             <Button
               onClick={handleSubmit}
               disabled={!isCurrentAnswered || submitMutation.isPending}
-              className="flex-1 bg-[#3182F6] hover:bg-[#1E5FD3]"
+              className="flex-1 bg-[#320e9d] hover:bg-[#1E5FD3]"
               data-testid="button-submit"
             >
               {submitMutation.isPending ? (
@@ -607,7 +607,7 @@ export default function MyTest() {
             <Button
               onClick={handleNext}
               disabled={!isCurrentAnswered}
-              className="flex-1 bg-[#3182F6] hover:bg-[#1E5FD3]"
+              className="flex-1 bg-[#320e9d] hover:bg-[#1E5FD3]"
               data-testid="button-next"
             >
               다음

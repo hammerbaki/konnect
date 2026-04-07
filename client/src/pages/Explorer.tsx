@@ -90,16 +90,16 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
             <Tabs defaultValue="overview" className="w-full">
                 <div className="sticky top-0 z-10 bg-white border-b border-[#F2F4F6] px-5 pt-2">
                     <TabsList className="w-full justify-start h-12 p-0 bg-transparent space-x-6">
-                        <TabsTrigger value="overview" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#3182F6] data-[state=active]:text-[#3182F6] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
+                        <TabsTrigger value="overview" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#320e9d] data-[state=active]:text-[#320e9d] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
                             개요
                         </TabsTrigger>
-                        <TabsTrigger value="duties" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#3182F6] data-[state=active]:text-[#3182F6] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
+                        <TabsTrigger value="duties" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#320e9d] data-[state=active]:text-[#320e9d] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
                             하는 일
                         </TabsTrigger>
-                        <TabsTrigger value="preparation" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#3182F6] data-[state=active]:text-[#3182F6] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
+                        <TabsTrigger value="preparation" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#320e9d] data-[state=active]:text-[#320e9d] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
                             준비 방법
                         </TabsTrigger>
-                        <TabsTrigger value="fit" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#3182F6] data-[state=active]:text-[#3182F6] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
+                        <TabsTrigger value="fit" className="h-full rounded-none border-b-2 border-transparent px-0 data-[state=active]:border-[#320e9d] data-[state=active]:text-[#320e9d] data-[state=active]:bg-transparent data-[state=active]:shadow-none font-bold text-[#8B95A1]">
                             적성 및 흥미
                         </TabsTrigger>
                     </TabsList>
@@ -136,7 +136,7 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                                 <Badge variant="outline" className="bg-[#F9FAFB] text-[#4E5968] border-[#E5E8EB] font-normal">
                                     {career.largeClass}
                                 </Badge>
-                                <Badge variant="secondary" className="bg-blue-50 text-[#3182F6] hover:bg-blue-50 border-none">
+                                <Badge variant="secondary" className="bg-dream/10 text-[#320e9d] hover:bg-dream/10 border-none">
                                     {career.mediumClass}
                                 </Badge>
                                 <Badge variant="outline" className="text-[#8B95A1] border-[#E5E8EB] font-normal text-xs">
@@ -166,7 +166,7 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                                 <div className="flex items-end gap-1">
                                     <p className="text-lg font-bold text-[#191F28]">{career.satisfaction || 0}%</p>
                                     {career.satisfaction && career.satisfaction > 70 && (
-                                        <span className="text-xs font-medium text-[#3182F6] mb-1">높음</span>
+                                        <span className="text-xs font-medium text-[#320e9d] mb-1">높음</span>
                                     )}
                                 </div>
                             </div>
@@ -174,8 +174,8 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
 
                         {/* Prospect */}
                         {career.prospect && (
-                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
-                                <h4 className="text-[#3182F6] text-sm font-bold flex items-center gap-2 mb-2">
+                            <div className="bg-dream/10 border border-blue-100 rounded-xl p-5">
+                                <h4 className="text-[#320e9d] text-sm font-bold flex items-center gap-2 mb-2">
                                     <TrendingUp className="h-4 w-4" /> 향후 전망
                                 </h4>
                                 <p className="text-[#4E5968] text-sm leading-relaxed">
@@ -188,12 +188,12 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                     <TabsContent value="duties" className="mt-0">
                         <div className="space-y-4">
                             <h3 className="font-bold text-[#191F28] text-lg flex items-center gap-2">
-                                <Activity className="h-5 w-5 text-[#3182F6]" /> 주요 업무
+                                <Activity className="h-5 w-5 text-[#320e9d]" /> 주요 업무
                             </h3>
                             <div className="space-y-3">
                                 {formattedDuties.map((duty, i) => (
                                     <div key={i} className="flex items-start gap-3 p-4 bg-white rounded-xl border border-[#E5E8EB] shadow-sm">
-                                        <div className="h-1.5 w-1.5 rounded-full bg-[#3182F6] shrink-0 mt-2" />
+                                        <div className="h-1.5 w-1.5 rounded-full bg-[#320e9d] shrink-0 mt-2" />
                                         <p className="font-medium text-[#333D4B] text-base leading-snug">{duty}</p>
                                     </div>
                                 ))}
@@ -205,7 +205,7 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                         <div className="space-y-6">
                             <div>
                                 <h3 className="font-bold text-[#191F28] text-lg flex items-center gap-2 mb-4">
-                                    <GraduationCap className="h-5 w-5 text-[#3182F6]" /> 교육 및 자격
+                                    <GraduationCap className="h-5 w-5 text-[#320e9d]" /> 교육 및 자격
                                 </h3>
                                 <div className="prose prose-sm text-[#4E5968] bg-[#F9FAFB] p-5 rounded-xl border border-[#F2F4F6] leading-relaxed whitespace-pre-line">
                                     {career.education || "관련 정보가 없습니다."}
@@ -217,7 +217,7 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                                     <h4 className="font-bold text-[#191F28] mb-3">관련 키워드</h4>
                                     <div className="flex flex-wrap gap-2">
                                         {career.tags.map((tag) => (
-                                            <span key={tag} className="px-3 py-1.5 rounded-lg bg-[#F2F4F6] text-[#4E5968] text-sm font-medium">
+                                            <span key={tag} className="px-3 py-1.5 rounded-lg bg-background text-[#4E5968] text-sm font-medium">
                                                 #{tag}
                                             </span>
                                         ))}
@@ -231,7 +231,7 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                         {career.abilities && career.abilities.length > 0 && (
                             <div>
                                 <h3 className="font-bold text-[#191F28] text-lg flex items-center gap-2 mb-4">
-                                    <Star className="h-5 w-5 text-[#3182F6]" /> 핵심 역량
+                                    <Star className="h-5 w-5 text-[#320e9d]" /> 핵심 역량
                                 </h3>
                                 <div className="space-y-4">
                                     {career.abilities.map((abil, i) => (
@@ -240,7 +240,7 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                                                 <span className="text-sm font-bold text-[#333D4B]">{abil.name}</span>
                                                 <span className="text-xs font-medium text-[#8B95A1]">{abil.score}점</span>
                                             </div>
-                                            <Progress value={(abil.score / 5) * 100} className="h-2 bg-[#F2F4F6]" />
+                                            <Progress value={(abil.score / 5) * 100} className="h-2 bg-background" />
                                             <p className="text-xs text-[#6B7684]">{abil.desc}</p>
                                         </div>
                                     ))}
@@ -251,14 +251,14 @@ function CareerDetailContent({ career }: { career: ProcessedCareer }) {
                         {career.personality && career.personality.length > 0 && (
                             <div>
                                 <h3 className="font-bold text-[#191F28] text-lg flex items-center gap-2 mb-4">
-                                    <Smile className="h-5 w-5 text-[#3182F6]" /> 성격 및 가치관
+                                    <Smile className="h-5 w-5 text-[#320e9d]" /> 성격 및 가치관
                                 </h3>
                                 <div className="grid gap-3">
                                     {career.personality.map((pers, i) => (
                                         <div key={i} className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F2F4F6]">
                                             <div className="flex justify-between items-center mb-1">
                                                 <span className="font-bold text-[#333D4B]">{pers.name}</span>
-                                                <span className="text-xs font-bold text-[#3182F6] bg-blue-50 px-2 py-0.5 rounded-full">{pers.score}점</span>
+                                                <span className="text-xs font-bold text-[#320e9d] bg-dream/10 px-2 py-0.5 rounded-full">{pers.score}점</span>
                                             </div>
                                             <p className="text-sm text-[#6B7684] leading-snug">{pers.desc}</p>
                                         </div>
@@ -287,7 +287,7 @@ function ResponsiveCareerDetail({ career, open, onOpenChange }: { career: Proces
                     <div className="flex justify-between items-center px-5 py-3 border-b border-[#F2F4F6]">
                         <DrawerTitle className="text-[18px] font-bold text-[#191F28]">직업 상세 정보</DrawerTitle>
                         <DrawerClose asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-[#F2F4F6] hover:bg-[#E5E8EB]">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-background hover:bg-[#E5E8EB]">
                                 <X className="h-4 w-4 text-[#333D4B]" />
                             </Button>
                         </DrawerClose>
@@ -304,7 +304,7 @@ function ResponsiveCareerDetail({ career, open, onOpenChange }: { career: Proces
                 <DialogHeader className="p-6 pb-4 border-b border-[#F2F4F6] flex-shrink-0 flex flex-row justify-between items-center space-y-0">
                     <DialogTitle className="text-[24px] font-bold text-[#191F28]">직업 상세 정보</DialogTitle>
                     <DialogClose asChild>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-[#F2F4F6]">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-background">
                             <X className="h-5 w-5 text-[#333D4B]" />
                         </Button>
                     </DialogClose>
@@ -541,7 +541,7 @@ export default function Explorer() {
     // Use hierarchy from server stats (fallback to computed if not available)
     const displayHierarchy = serverStats?.hierarchy || hierarchy;
 
-    const CHART_COLORS = ['#3182F6', '#00BFA5', '#9852F8', '#FFB300', '#E44E48', '#8B95A1'];
+    const CHART_COLORS = ['#320e9d', '#00BFA5', '#9852F8', '#FFB300', '#E44E48', '#8B95A1'];
 
     // Filter logic
     const filteredCareers = useMemo(() => {
@@ -601,8 +601,8 @@ export default function Explorer() {
                 <div className="max-w-6xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-6 px-4">
                     {/* Header */}
                     <div className="mb-8 text-center space-y-3">
-                        <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-blue-50 mb-2">
-                            <Building2 className="h-7 w-7 text-[#3182F6]" />
+                        <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-dream/10 mb-2">
+                            <Building2 className="h-7 w-7 text-[#320e9d]" />
                         </div>
                         <h2 className="text-[28px] font-bold text-[#191F28] leading-tight">
                             직업 정보 탐색
@@ -629,8 +629,8 @@ export default function Explorer() {
                         <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-3">
                             <Card className="border-[#E5E8EB] shadow-sm">
                                 <CardContent className="p-4 text-center">
-                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 mb-2">
-                                        <Briefcase className="h-5 w-5 text-[#3182F6]" />
+                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-dream/10 mb-2">
+                                        <Briefcase className="h-5 w-5 text-[#320e9d]" />
                                     </div>
                                     <div className="text-2xl font-bold text-[#191F28]">{stats.totalCareers}</div>
                                     <div className="text-xs text-[#8B95A1]">총 직업 수</div>
@@ -711,8 +711,8 @@ export default function Explorer() {
                 
                 {/* Header */}
                 <div className="mb-8 text-center space-y-3">
-                    <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-blue-50 mb-2">
-                        <Building2 className="h-7 w-7 text-[#3182F6]" />
+                    <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-dream/10 mb-2">
+                        <Building2 className="h-7 w-7 text-[#320e9d]" />
                     </div>
                     <h2 className="text-[28px] font-bold text-[#191F28] leading-tight">
                         직업 정보 탐색
@@ -729,8 +729,8 @@ export default function Explorer() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <Card className="border-[#E5E8EB] shadow-sm">
                                 <CardContent className="p-4 text-center">
-                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 mb-2">
-                                        <Briefcase className="h-5 w-5 text-[#3182F6]" />
+                                    <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-dream/10 mb-2">
+                                        <Briefcase className="h-5 w-5 text-[#320e9d]" />
                                     </div>
                                     <div className="text-2xl font-bold text-[#191F28]">{stats.totalCareers}</div>
                                     <div className="text-xs text-[#8B95A1]">총 직업 수</div>
@@ -777,7 +777,7 @@ export default function Explorer() {
                             <Card className="border-[#E5E8EB] shadow-sm">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-base font-semibold flex items-center gap-2">
-                                        <span className="text-[#3182F6] font-bold text-sm">₩</span>
+                                        <span className="text-[#320e9d] font-bold text-sm">₩</span>
                                         연봉 TOP 5
                                     </CardTitle>
                                 </CardHeader>
@@ -787,7 +787,7 @@ export default function Explorer() {
                                             <XAxis type="number" hide />
                                             <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11 }} />
                                             <Tooltip formatter={(v: number) => v >= 10000 ? `${(v/10000).toFixed(1)}억원` : `${v.toLocaleString()}만원`} />
-                                            <Bar dataKey="salary" fill="#3182F6" radius={[0, 4, 4, 0]} />
+                                            <Bar dataKey="salary" fill="#320e9d" radius={[0, 4, 4, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -837,7 +837,7 @@ export default function Explorer() {
                                 <Search className="h-4 w-4 text-[#8B95A1]" />
                             </div>
                             <Input 
-                                className="pl-10 h-11 text-base rounded-xl border-[#E5E8EB] bg-[#F9FAFB] focus-visible:ring-[#3182F6] focus-visible:bg-white transition-all"
+                                className="pl-10 h-11 text-base rounded-xl border-[#E5E8EB] bg-[#F9FAFB] focus-visible:ring-[#320e9d] focus-visible:bg-white transition-all"
                                 placeholder="직업명, 키워드로 검색..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -885,7 +885,7 @@ export default function Explorer() {
                             <span className="text-xs font-bold text-[#8B95A1] mr-1">적용된 필터:</span>
                             
                             {selectedLargeClass !== "all" && (
-                                <Badge variant="secondary" className="bg-blue-50 text-[#3182F6] hover:bg-blue-100 gap-1 pr-1.5">
+                                <Badge variant="secondary" className="bg-dream/10 text-[#320e9d] hover:bg-blue-100 gap-1 pr-1.5">
                                     {selectedLargeClass}
                                     <X 
                                         className="h-3 w-3 cursor-pointer hover:text-blue-700" 
@@ -895,7 +895,7 @@ export default function Explorer() {
                             )}
                             
                             {selectedMediumClass !== "all" && (
-                                <Badge variant="secondary" className="bg-blue-50 text-[#3182F6] hover:bg-blue-100 gap-1 pr-1.5">
+                                <Badge variant="secondary" className="bg-dream/10 text-[#320e9d] hover:bg-blue-100 gap-1 pr-1.5">
                                     {selectedMediumClass}
                                     <X 
                                         className="h-3 w-3 cursor-pointer hover:text-blue-700" 
@@ -905,7 +905,7 @@ export default function Explorer() {
                             )}
 
                             {searchQuery && (
-                                <Badge variant="secondary" className="bg-[#F2F4F6] text-[#4E5968] hover:bg-[#E5E8EB] gap-1 pr-1.5">
+                                <Badge variant="secondary" className="bg-background text-[#4E5968] hover:bg-[#E5E8EB] gap-1 pr-1.5">
                                     "{searchQuery}" 검색
                                     <X 
                                         className="h-3 w-3 cursor-pointer hover:text-gray-700" 
@@ -932,7 +932,7 @@ export default function Explorer() {
                 {/* Results Grid */}
                 <div className="flex items-center justify-between mb-4 px-1">
                     <h3 className="font-bold text-[#191F28] text-lg">
-                        검색 결과 <span className="text-[#3182F6]">{filteredCareers.length}</span>건
+                        검색 결과 <span className="text-[#320e9d]">{filteredCareers.length}</span>건
                     </h3>
                 </div>
 
@@ -941,18 +941,18 @@ export default function Explorer() {
                         <Card 
                             key={career.id} 
                             onClick={() => handleCardClick(career)}
-                            className="border-[#E5E8EB] shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-[#3182F6] group bg-white flex flex-col"
+                            className="border-[#E5E8EB] shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-[#320e9d] group bg-white flex flex-col"
                         >
                             <CardHeader className="pb-3 flex-1">
                                 <div className="flex flex-wrap gap-2 mb-3">
                                     <Badge variant="outline" className="bg-[#F9FAFB] text-[#4E5968] border-[#E5E8EB] font-normal">
                                         {career.largeClass}
                                     </Badge>
-                                    <Badge variant="secondary" className="bg-blue-50 text-[#3182F6] hover:bg-blue-50 border-none">
+                                    <Badge variant="secondary" className="bg-dream/10 text-[#320e9d] hover:bg-dream/10 border-none">
                                         {career.mediumClass}
                                     </Badge>
                                 </div>
-                                <CardTitle className="text-lg font-bold text-[#191F28] mb-1 group-hover:text-[#3182F6] transition-colors flex items-center justify-between">
+                                <CardTitle className="text-lg font-bold text-[#191F28] mb-1 group-hover:text-[#320e9d] transition-colors flex items-center justify-between">
                                     {career.title}
                                     <ArrowRight className="h-4 w-4 text-[#B0B8C1] opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
                                 </CardTitle>
@@ -964,7 +964,7 @@ export default function Explorer() {
                                 <div className="flex flex-wrap gap-1.5 pt-3 border-t border-[#F2F4F6]">
                                     {career.tags.length > 0 ? (
                                         career.tags.map((tag) => (
-                                            <span key={tag} className="text-[11px] font-medium text-[#8B95A1] bg-[#F2F4F6] px-2 py-1 rounded-md">
+                                            <span key={tag} className="text-[11px] font-medium text-[#8B95A1] bg-background px-2 py-1 rounded-md">
                                                 #{tag}
                                             </span>
                                         ))
@@ -986,7 +986,7 @@ export default function Explorer() {
                 {/* Empty State */}
                 {filteredCareers.length === 0 && (
                     <div className="bg-white border border-[#E5E8EB] rounded-2xl p-12 text-center">
-                        <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-[#F2F4F6] mb-4">
+                        <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-background mb-4">
                             <Filter className="h-8 w-8 text-[#B0B8C1]" />
                         </div>
                         <h3 className="text-lg font-bold text-[#191F28] mb-1">검색 결과가 없습니다</h3>
@@ -1010,7 +1010,7 @@ export default function Explorer() {
                         <Button 
                             variant="outline" 
                             onClick={handleLoadMore}
-                            className="h-12 px-8 rounded-xl font-bold border-[#E5E8EB] text-[#4E5968] hover:bg-[#F2F4F6]"
+                            className="h-12 px-8 rounded-xl font-bold border-[#E5E8EB] text-[#4E5968] hover:bg-background"
                         >
                             더 보기 ({Math.min(visibleCount, filteredCareers.length)} / {filteredCareers.length})
                         </Button>

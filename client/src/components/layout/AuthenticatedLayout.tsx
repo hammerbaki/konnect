@@ -10,14 +10,14 @@ interface AuthenticatedLayoutProps {
 
 export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   return (
-    <div className="flex h-screen-dvh w-full overflow-hidden bg-[#F2F4F6]">
-      <div className="hidden md:flex h-full w-[280px] flex-col border-r border-transparent">
+    <div className="flex h-screen-dvh w-full overflow-hidden bg-background">
+      <div className="hidden md:flex h-full w-[240px] flex-col border-r border-border flex-shrink-0">
         <Sidebar />
       </div>
       
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-5 md:p-10 pb-[100px] md:pb-10 scroll-smooth">
+        <main className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-5 md:px-8 md:py-8 pb-[100px] md:pb-10 scroll-smooth">
           <Suspense fallback={<ContentSkeleton />}>
             {children}
           </Suspense>

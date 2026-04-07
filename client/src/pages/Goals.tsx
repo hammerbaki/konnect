@@ -316,9 +316,9 @@ export default function Goals() {
               >
                   <div className="p-6 text-center">
                       <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                          <Plus className="w-6 h-6 text-[#B0B8C1] group-hover:text-[#3182F6]" />
+                          <Plus className="w-6 h-6 text-[#B0B8C1] group-hover:text-[#320e9d]" />
                       </div>
-                      <h3 className="text-lg font-bold text-[#8B95A1] group-hover:text-[#3182F6]">새 Kompass 만들기</h3>
+                      <h3 className="text-lg font-bold text-[#8B95A1] group-hover:text-[#320e9d]">새 Kompass 만들기</h3>
                   </div>
               </Card>
 
@@ -327,18 +327,18 @@ export default function Goals() {
                 return (
                   <Card 
                       key={kompass.id} 
-                      className="toss-card hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-[#3182F6] group relative overflow-hidden"
+                      className="toss-card hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-[#320e9d] group relative overflow-hidden"
                       onClick={() => setLocation(`/goals/${kompass.id}`)}
                       data-testid={`card-kompass-${kompass.id}`}
                   >
                       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                          <Compass className="w-24 h-24 text-[#3182F6]" />
+                          <Compass className="w-24 h-24 text-[#320e9d]" />
                       </div>
                       
                       <CardContent className="p-6 flex flex-col h-full justify-between relative z-10">
                           <div>
                               <div className="flex items-center justify-between mb-4">
-                                  <div className="bg-[#E8F3FF] text-[#3182F6] px-3 py-1 rounded-full text-xs font-bold">
+                                  <div className="bg-[#E8F3FF] text-[#320e9d] px-3 py-1 rounded-full text-xs font-bold">
                                       Target {kompass.targetYear}
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -354,7 +354,7 @@ export default function Goals() {
                                         <Trash2 className="w-4 h-4" />
                                       )}
                                     </button>
-                                    <ChevronRight className="w-5 h-5 text-[#B0B8C1] group-hover:text-[#3182F6] transition-colors" />
+                                    <ChevronRight className="w-5 h-5 text-[#B0B8C1] group-hover:text-[#320e9d] transition-colors" />
                                   </div>
                               </div>
                               
@@ -374,9 +374,9 @@ export default function Goals() {
                           <div>
                               <div className="flex justify-between items-end mb-2">
                                   <span className="text-sm text-[#8B95A1]">전체 달성률</span>
-                                  <span className="text-lg font-bold text-[#3182F6]">{kompass.progress}%</span>
+                                  <span className="text-lg font-bold text-[#320e9d]">{kompass.progress}%</span>
                               </div>
-                              <Progress value={kompass.progress} className="h-2" indicatorClassName="bg-[#3182F6]" />
+                              <Progress value={kompass.progress} className="h-2" indicatorClassName="bg-[#320e9d]" />
                           </div>
                       </CardContent>
                   </Card>
@@ -396,7 +396,7 @@ export default function Goals() {
                             {importedData ? '목표로 저장하기' : '새 Kompass 만들기'}
                         </DialogTitle>
                         {importedData && (
-                            <Badge className="bg-gradient-to-r from-[#3182F6] to-[#1565C0] text-white border-none">
+                            <Badge className="bg-gradient-to-r from-[#320e9d] to-[#1565C0] text-white border-none">
                                 <Sparkles className="h-3 w-3 mr-1" />
                                 AI 분석
                             </Badge>
@@ -417,7 +417,7 @@ export default function Goals() {
                             
                             {importedData.actions.portfolio?.length > 0 && (
                                 <div className="flex items-start gap-2">
-                                    <FolderOpen className="h-4 w-4 text-[#3182F6] mt-0.5 shrink-0" />
+                                    <FolderOpen className="h-4 w-4 text-[#320e9d] mt-0.5 shrink-0" />
                                     <div className="text-xs text-[#4E5968]">
                                         {importedData.actions.portfolio.slice(0, 2).join(' / ')}
                                     </div>
@@ -453,7 +453,7 @@ export default function Goals() {
                             placeholder="예: 유니콘 기업 CPO 되기" 
                             value={newTitle}
                             onChange={(e) => setNewTitle(e.target.value)}
-                            className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6]"
+                            className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#320e9d]"
                             data-testid="input-kompass-title"
                         />
                     </div>
@@ -466,7 +466,7 @@ export default function Goals() {
                             placeholder="예: 2028" 
                             value={newTargetYear}
                             onChange={(e) => setNewTargetYear(e.target.value)}
-                            className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6]"
+                            className="h-12 rounded-xl border-[#E5E8EB] focus-visible:ring-[#320e9d]"
                             data-testid="input-target-year"
                         />
                     </div>
@@ -480,7 +480,7 @@ export default function Goals() {
                             placeholder="이 목표를 달성하고 싶은 이유나 구체적인 모습을 적어보세요." 
                             value={newDescription}
                             onChange={(e) => setNewDescription(e.target.value)}
-                            className="min-h-[120px] rounded-xl border-[#E5E8EB] focus-visible:ring-[#3182F6] resize-none text-sm"
+                            className="min-h-[120px] rounded-xl border-[#E5E8EB] focus-visible:ring-[#320e9d] resize-none text-sm"
                             data-testid="input-description"
                         />
                     </div>
@@ -492,7 +492,7 @@ export default function Goals() {
                         disabled={createKompassMutation.isPending || !selectedProfileId}
                         className={cn(
                             "w-full h-12 text-white font-bold rounded-xl text-lg",
-                            "bg-gradient-to-r from-[#3182F6] to-[#1565C0] hover:opacity-90"
+                            "bg-gradient-to-r from-[#320e9d] to-[#1565C0] hover:opacity-90"
                         )}
                         data-testid="button-submit-kompass"
                     >

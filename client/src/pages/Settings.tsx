@@ -341,7 +341,7 @@ export default function Settings() {
                     {/* Contact Information */}
                     <section>
                         <h3 className="text-base sm:text-lg font-bold text-[#191F28] mb-3 flex items-center gap-2">
-                            <Smartphone className="h-5 w-5 text-[#3182F6]" /> 연락처 정보
+                            <Smartphone className="h-5 w-5 text-[#320e9d]" /> 연락처 정보
                         </h3>
                         <Card className="toss-card">
                             <CardContent className="p-4 sm:p-6 space-y-4">
@@ -351,7 +351,7 @@ export default function Settings() {
                                         value={userEmail}
                                         placeholder="이메일 없음"
                                         disabled 
-                                        className="bg-[#F2F4F6] border-none rounded-xl h-11 sm:h-12 text-sm sm:text-base" 
+                                        className="bg-background border-none rounded-xl h-11 sm:h-12 text-sm sm:text-base" 
                                         data-testid="input-email"
                                     />
                                 </div>
@@ -362,7 +362,7 @@ export default function Settings() {
                                         onChange={handlePhoneChange}
                                         placeholder="010-1234-5678"
                                         maxLength={13}
-                                        className="bg-[#F2F4F6] border-none rounded-xl h-11 sm:h-12 text-sm sm:text-base" 
+                                        className="bg-background border-none rounded-xl h-11 sm:h-12 text-sm sm:text-base" 
                                         data-testid="input-phone"
                                     />
                                     <p className="text-xs text-[#8B95A1]">형식: 010-1234-5678</p>
@@ -386,7 +386,7 @@ export default function Settings() {
                                     <Switch 
                                         checked={marketingConsent}
                                         onCheckedChange={setMarketingConsent}
-                                        className="h-[18px] w-8 data-[state=checked]:bg-[#3182F6] data-[state=unchecked]:bg-[#D1D6DB]"
+                                        className="h-[18px] w-8 data-[state=checked]:bg-[#320e9d] data-[state=unchecked]:bg-[#D1D6DB]"
                                         data-testid="switch-marketing"
                                     />
                                 </div>
@@ -398,7 +398,7 @@ export default function Settings() {
                                     <Switch 
                                         checked={emailNotifications}
                                         onCheckedChange={setEmailNotifications}
-                                        className="h-[18px] w-8 data-[state=checked]:bg-[#3182F6] data-[state=unchecked]:bg-[#D1D6DB]"
+                                        className="h-[18px] w-8 data-[state=checked]:bg-[#320e9d] data-[state=unchecked]:bg-[#D1D6DB]"
                                         data-testid="switch-email-notifications"
                                     />
                                 </div>
@@ -410,7 +410,7 @@ export default function Settings() {
                                     <Switch 
                                         checked={pushNotifications}
                                         onCheckedChange={setPushNotifications}
-                                        className="h-[18px] w-8 data-[state=checked]:bg-[#3182F6] data-[state=unchecked]:bg-[#D1D6DB]"
+                                        className="h-[18px] w-8 data-[state=checked]:bg-[#320e9d] data-[state=unchecked]:bg-[#D1D6DB]"
                                         data-testid="switch-push-notifications"
                                     />
                                 </div>
@@ -436,10 +436,10 @@ export default function Settings() {
                                     </div>
                                 ) : referralInfo ? (
                                     <div className="space-y-4">
-                                        <div className="bg-gradient-to-r from-[#10B981]/10 to-[#3182F6]/10 rounded-xl p-4 border border-[#10B981]/20">
+                                        <div className="bg-gradient-to-r from-[#10B981]/10 to-[#320e9d]/10 rounded-xl p-4 border border-[#10B981]/20">
                                             <p className="text-sm text-[#4E5968] mb-2">
                                                 친구를 초대하면 <span className="font-bold text-[#10B981]">{referralInfo.inviterReward}번</span>을 받고,
-                                                친구도 <span className="font-bold text-[#3182F6]">{referralInfo.inviteeReward}번</span>을 받습니다!
+                                                친구도 <span className="font-bold text-[#320e9d]">{referralInfo.inviteeReward}번</span>을 받습니다!
                                             </p>
                                         </div>
                                         
@@ -449,13 +449,13 @@ export default function Settings() {
                                                 <Input 
                                                     value={referralInfo.referralLink || ""}
                                                     readOnly
-                                                    className="bg-[#F2F4F6] border-none rounded-xl h-11 sm:h-12 text-sm font-mono"
+                                                    className="bg-background border-none rounded-xl h-11 sm:h-12 text-sm font-mono"
                                                     data-testid="input-referral-link"
                                                 />
                                                 <Button
                                                     onClick={copyReferralLink}
                                                     variant="outline"
-                                                    className="h-11 sm:h-12 px-4 rounded-xl border-[#E5E8EB] hover:bg-[#F2F4F6]"
+                                                    className="h-11 sm:h-12 px-4 rounded-xl border-[#E5E8EB] hover:bg-background"
                                                     data-testid="button-copy-referral"
                                                 >
                                                     {copied ? (
@@ -468,7 +468,7 @@ export default function Settings() {
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-3 pt-2">
-                                            <div className="bg-[#F2F4F6] rounded-xl p-4 text-center">
+                                            <div className="bg-background rounded-xl p-4 text-center">
                                                 <div className="flex items-center justify-center gap-1 mb-1">
                                                     <Users className="h-4 w-4 text-[#4E5968]" />
                                                     <span className="text-sm text-[#4E5968]">초대한 친구</span>
@@ -506,7 +506,7 @@ export default function Settings() {
                             <CardContent className="p-0 divide-y divide-[#F2F4F6]">
                                 <button 
                                     onClick={() => setShowPasswordDialog(true)}
-                                    className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-[#F9FAFB] active:bg-[#F2F4F6] transition-colors text-left"
+                                    className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-[#F9FAFB] active:bg-background transition-colors text-left"
                                     data-testid="button-change-password"
                                 >
                                     <div className="flex items-center gap-3">
@@ -517,7 +517,7 @@ export default function Settings() {
                                 </button>
                                 <button 
                                     onClick={() => setShowDeleteDialog(true)}
-                                    className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-[#F9FAFB] active:bg-[#F2F4F6] transition-colors text-left"
+                                    className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-[#F9FAFB] active:bg-background transition-colors text-left"
                                     data-testid="button-delete-account"
                                 >
                                     <div className="flex items-center gap-3">
@@ -533,7 +533,7 @@ export default function Settings() {
                     <Button 
                         onClick={handleSave} 
                         disabled={saveMutation.isPending || !hasChanges}
-                        className="w-full h-12 sm:h-14 text-base sm:text-lg font-bold rounded-xl bg-[#3182F6] hover:bg-[#2b72d7] active:scale-[0.98] transition-all disabled:opacity-50"
+                        className="w-full h-12 sm:h-14 text-base sm:text-lg font-bold rounded-xl bg-[#320e9d] hover:bg-[#2d0c8e] active:scale-[0.98] transition-all disabled:opacity-50"
                         data-testid="button-save-settings"
                     >
                         {saveMutation.isPending ? (
@@ -618,7 +618,7 @@ export default function Settings() {
                         <Button
                             onClick={handlePasswordChange}
                             disabled={passwordChanging || !newPassword || !confirmPassword}
-                            className="bg-[#3182F6] hover:bg-[#2b72d7]"
+                            className="bg-[#320e9d] hover:bg-[#2d0c8e]"
                             data-testid="button-submit-password-change"
                         >
                             {passwordChanging ? (

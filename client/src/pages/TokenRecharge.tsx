@@ -360,7 +360,7 @@ export default function TokenRecharge() {
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <Card className="p-8">
               <div className="flex flex-col items-center gap-4">
-                <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#320e9d]" />
                 <p className="text-lg font-medium">결제 처리 중...</p>
               </div>
             </Card>
@@ -369,7 +369,7 @@ export default function TokenRecharge() {
 
         {/* Current Balance */}
         <Card
-          className="bg-gradient-to-r from-[#3182F6] to-[#5B9CF9] text-white border-none mb-8 shadow-lg shadow-blue-500/30"
+          className="bg-gradient-to-r from-[#320e9d] to-[#5B9CF9] text-white border-none mb-8 shadow-lg shadow-dream/30"
           data-testid="card-balance"
         >
           <CardContent className="p-6">
@@ -417,12 +417,12 @@ export default function TokenRecharge() {
         {!selectedPackage ? (
           <>
             <h3 className="text-lg font-bold text-[#191F28] mb-4 flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-[#3182F6]" /> 충전 패키지
+              <CreditCard className="h-5 w-5 text-[#320e9d]" /> 충전 패키지
             </h3>
             <div className="grid gap-4 mb-8">
               {packagesLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
+                  <Loader2 className="h-8 w-8 animate-spin text-[#320e9d]" />
                 </div>
               ) : (
                 displayPackages.map((pkg) => {
@@ -431,7 +431,7 @@ export default function TokenRecharge() {
                   return (
                     <Card
                       key={pkg.id}
-                      className={`toss-card cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isHighlighted ? "border-[#3182F6] ring-1 ring-[#3182F6]" : ""}`}
+                      className={`toss-card cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isHighlighted ? "border-[#320e9d] ring-1 ring-[#320e9d]" : ""}`}
                       onClick={() => handleSelectPackage(pkg)}
                       data-testid={`card-package-${pkg.id}`}
                     >
@@ -447,7 +447,7 @@ export default function TokenRecharge() {
                               </Badge>
                             )}
                             {hasBadge && (
-                              <Badge className="bg-[#3182F6] text-white border-none hover:bg-[#3182F6]">
+                              <Badge className="bg-[#320e9d] text-white border-none hover:bg-[#320e9d]">
                                 {pkg.description}
                               </Badge>
                             )}
@@ -463,7 +463,7 @@ export default function TokenRecharge() {
                             {formatPrice(pkg.price)}
                           </span>
                           <Button
-                            className={`rounded-full h-10 px-5 font-bold ${isHighlighted ? "bg-[#3182F6] hover:bg-[#2b72d7]" : "bg-[#F2F4F6] text-[#3182F6] hover:bg-[#E5E8EB]"}`}
+                            className={`rounded-full h-10 px-5 font-bold ${isHighlighted ? "bg-[#320e9d] hover:bg-[#2d0c8e]" : "bg-background text-[#320e9d] hover:bg-[#E5E8EB]"}`}
                             disabled={isProcessing}
                             data-testid={`button-buy-${pkg.id}`}
                           >
@@ -508,7 +508,7 @@ export default function TokenRecharge() {
                       )}
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-[#3182F6]">
+                  <span className="text-2xl font-bold text-[#320e9d]">
                     {formatPrice(selectedPackage.price)}
                   </span>
                 </div>
@@ -517,7 +517,7 @@ export default function TokenRecharge() {
 
             {widgetLoading && (
               <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-[#3182F6]" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#320e9d]" />
               </div>
             )}
 
@@ -528,7 +528,7 @@ export default function TokenRecharge() {
               <Button
                 onClick={handleRequestPayment}
                 disabled={isProcessing}
-                className="w-full h-14 text-lg font-bold bg-[#3182F6] hover:bg-[#2b72d7] text-white rounded-2xl"
+                className="w-full h-14 text-lg font-bold bg-[#320e9d] hover:bg-[#2d0c8e] text-white rounded-2xl"
                 data-testid="button-confirm-payment"
               >
                 {isProcessing ? (
@@ -582,7 +582,7 @@ export default function TokenRecharge() {
                     유상 학습권(구매 학습권)
                   </span>
                   : 구매일(충전일)로부터{" "}
-                  <span className="font-bold text-[#3182F6]">1년간</span> 사용
+                  <span className="font-bold text-[#320e9d]">1년간</span> 사용
                   가능합니다. 사용 가능 기간이 경과한 경우에도 관련 법령 및
                   약관에 따라 구매일(충전일)로부터 1년 이내에는 잔액 환급을
                   청구할 수 있습니다.

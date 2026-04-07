@@ -112,166 +112,234 @@ export function Sidebar() {
     });
   }, [queryClient]);
 
-  const allNavItems = [
+  const coreNavItems = [
     { href: "/dashboard", slug: "/dashboard", icon: LayoutDashboard, label: "대시보드" },
     { href: "/profile", slug: "/profile", icon: User, label: "내 프로필", hasSubmenu: true },
+  ];
+
+  const aiNavItems = [
     { href: "/mytest", slug: "/mytest", icon: Brain, label: "진로진단" },
     { href: "/analysis", slug: "/analysis", icon: PieChart, label: "커리어 분석" },
     { href: "/goals", slug: "/goals", icon: Target, label: "목표 관리" },
     { href: "/personal-statement", slug: "/essays", icon: FileText, label: "자기소개서" },
     { href: "/interview", slug: "/interview", icon: Mic, label: "면접 준비" },
+  ];
+
+  const exploreNavItems = [
     { href: "/explorer", slug: "/explorer", icon: Search, label: "직업 탐색" },
   ];
 
   const allBottomItems = [
-    { href: "/recharge", slug: "/recharge", icon: Coins, label: "진로분석 학습권" },
+    { href: "/recharge", slug: "/recharge", icon: Coins, label: "학습권 충전", accent: true },
     { href: "/settings", slug: "/settings", icon: Settings, label: "설정" },
     { href: "/admin", slug: "/admin", icon: Shield, label: "관리자", adminOnly: true },
   ];
 
-  const navItems = allNavItems.filter(item => canAccess(item.slug));
-  const bottomItems = allBottomItems.filter(item => {
-    if (item.adminOnly && !isAdminOrStaff) return false;
-    return canAccess(item.slug);
-  });
+  const filterItems = <T extends { slug: string; adminOnly?: boolean }>(items: T[]) =>
+    items.filter(item => {
+      if (item.adminOnly && !isAdminOrStaff) return false;
+      return canAccess(item.slug);
+    });
+
+  const filteredCore = filterItems(coreNavItems);
+  const filteredAI = filterItems(aiNavItems);
+  const filteredExplore = filterItems(exploreNavItems);
+  const bottomItems = filterItems(allBottomItems);
 
   const isProfileActive = location.startsWith("/profile");
 
+  const renderNavItem = (item: typeof coreNavItems[0]) => {
+    const Icon = item.icon;
+    const isActive = location === item.href;
+
+    if (item.hasSubmenu && item.href === "/profile") {
+      return (
+        <div key={item.href}>
+          <button
+            onClick={() => setProfileExpanded(!profileExpanded)}
+            className={cn(
+              "flex w-full items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
+              isProfileActive
+                ? "bg-dream text-white font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+            )}
+            data-testid="button-profile-menu-toggle"
+          >
+            <Icon className="h-4 w-4 flex-shrink-0" />
+            <span className="flex-1 text-left">{item.label}</span>
+            {profileExpanded ? (
+              <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5 opacity-60" />
+            )}
+          </button>
+          
+          {profileExpanded && (
+            <div className="ml-3 mt-1 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
+              {profileSubItems.map((subItem) => {
+                const SubIcon = subItem.icon;
+                const subHref = `/profile?type=${subItem.id}`;
+                const isSubActive = location === "/profile" && 
+                  new URLSearchParams(searchString).get("type") === subItem.id;
+                
+                return (
+                  <Link
+                    key={subItem.id}
+                    href={subHref}
+                    onMouseEnter={() => prefetchPageData("/profile")}
+                    className={cn(
+                      "flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
+                      isSubActive
+                        ? "bg-dream/10 text-dream font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    )}
+                    data-testid={`link-profile-type-${subItem.id}`}
+                  >
+                    <SubIcon className={cn("h-3.5 w-3.5", isSubActive ? "text-dream" : "")} />
+                    {subItem.label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onMouseEnter={() => prefetchPageData(item.href)}
+        className={cn(
+          "flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
+          isActive
+            ? "bg-dream text-white font-semibold"
+            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+        )}
+      >
+        <Icon className="h-4 w-4 flex-shrink-0" />
+        {item.label}
+      </Link>
+    );
+  };
+
   return (
-    <div className="h-full flex flex-col bg-white border-r border-[#E5E8EB]">
-      <div className="flex h-16 items-center px-6 mb-6">
-        <Link href="/" data-testid="link-sidebar-logo-home">
+    <div className="h-full flex flex-col bg-sidebar border-r border-border">
+      {/* Logo */}
+      <div className="flex h-14 items-center px-4 mb-1">
+        <Link href="/" data-testid="link-sidebar-logo-home" className="flex items-center gap-2">
           <img
             src="/konnect-logo.png"
             alt="Konnect Logo"
-            className="h-8 w-auto cursor-pointer"
+            className="h-7 w-auto cursor-pointer"
           />
         </Link>
       </div>
 
-      <div className="flex-1 px-4 flex flex-col overflow-y-auto">
-        <nav className="space-y-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location === item.href;
-            
-            if (item.hasSubmenu && item.href === "/profile") {
-              return (
-                <div key={item.href}>
-                  <button
-                    onClick={() => setProfileExpanded(!profileExpanded)}
+      <div className="flex-1 px-3 flex flex-col overflow-y-auto space-y-4 pb-2">
+        {/* Core section */}
+        {filteredCore.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest font-semibold px-3 mb-1.5 text-dream">
+              홈
+            </p>
+            <div className="space-y-0.5">
+              {filteredCore.map(renderNavItem)}
+            </div>
+          </div>
+        )}
+
+        {/* AI Tools section */}
+        {filteredAI.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest font-semibold px-3 mb-1.5 text-coral">
+              AI 도구
+            </p>
+            <div className="space-y-0.5">
+              {filteredAI.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onMouseEnter={() => prefetchPageData(item.href)}
                     className={cn(
-                      "flex w-full items-center gap-4 rounded-xl px-5 py-4 text-base font-semibold transition-all duration-200",
-                      isProfileActive
-                        ? "bg-white text-[#3182F6] shadow-sm"
-                        : "text-[#8B95A1] hover:bg-white/50 hover:text-[#4E5968]",
+                      "flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
+                      isActive
+                        ? "bg-dream text-white font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                     )}
-                    data-testid="button-profile-menu-toggle"
                   >
-                    <Icon
-                      className={cn(
-                        "h-5 w-5",
-                        isProfileActive ? "text-[#3182F6]" : "text-[#B0B8C1]",
-                      )}
-                    />
+                    <Icon className="h-4 w-4 flex-shrink-0" />
                     {item.label}
-                    <span className="ml-auto">
-                      {profileExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </span>
-                  </button>
-                  
-                  {profileExpanded && (
-                    <div className="ml-4 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-200">
-                      {profileSubItems.map((subItem) => {
-                        const SubIcon = subItem.icon;
-                        const subHref = `/profile?type=${subItem.id}`;
-                        const isSubActive = location === "/profile" && 
-                          new URLSearchParams(searchString).get("type") === subItem.id;
-                        
-                        return (
-                          <Link
-                            key={subItem.id}
-                            href={subHref}
-                            onMouseEnter={() => prefetchPageData("/profile")}
-                            className={cn(
-                              "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200",
-                              isSubActive
-                                ? "bg-blue-50 text-[#3182F6]"
-                                : "text-[#8B95A1] hover:bg-gray-50 hover:text-[#4E5968]",
-                            )}
-                            data-testid={`link-profile-type-${subItem.id}`}
-                          >
-                            <SubIcon className={cn(
-                              "h-4 w-4",
-                              isSubActive ? "text-[#3182F6]" : "text-[#B0B8C1]"
-                            )} />
-                            {subItem.label}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-            
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onMouseEnter={() => prefetchPageData(item.href)}
-                className={cn(
-                  "flex items-center gap-4 rounded-xl px-5 py-4 text-base font-semibold transition-all duration-200",
-                  isActive
-                    ? "bg-white text-[#3182F6] shadow-sm scale-[1.02]"
-                    : "text-[#8B95A1] hover:bg-white/50 hover:text-[#4E5968]",
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "h-5 w-5",
-                    isActive ? "text-[#3182F6]" : "text-[#B0B8C1]",
-                  )}
-                />
-                {item.label}
-              </Link>
-            );
-          })}
-          
-          {managedGroups.length > 0 && (
-            <div className="pt-4 mt-4 border-t border-[#F2F4F6]">
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Explore section */}
+        {filteredExplore.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest font-semibold px-3 mb-1.5 text-gold">
+              탐색
+            </p>
+            <div className="space-y-0.5">
+              {filteredExplore.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onMouseEnter={() => prefetchPageData(item.href)}
+                    className={cn(
+                      "flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
+                      isActive
+                        ? "bg-dream text-white font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Managed Groups section */}
+        {managedGroups.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest font-semibold px-3 mb-1.5 text-muted-foreground">
+              그룹
+            </p>
+            <div className="space-y-0.5">
               <button
                 onClick={() => setGroupsExpanded(!groupsExpanded)}
                 className={cn(
-                  "flex w-full items-center gap-4 rounded-xl px-5 py-4 text-base font-semibold transition-all duration-200",
+                  "flex w-full items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
                   location.startsWith("/group")
-                    ? "bg-white text-[#3182F6] shadow-sm"
-                    : "text-[#8B95A1] hover:bg-white/50 hover:text-[#4E5968]",
+                    ? "bg-dream text-white font-semibold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 )}
                 data-testid="button-groups-menu-toggle"
               >
-                <Users
-                  className={cn(
-                    "h-5 w-5",
-                    location.startsWith("/group") ? "text-[#3182F6]" : "text-[#B0B8C1]",
-                  )}
-                />
-                그룹 대시보드
-                <span className="ml-auto">
-                  {groupsExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </span>
+                <Users className="h-4 w-4 flex-shrink-0" />
+                <span className="flex-1 text-left">그룹 대시보드</span>
+                {groupsExpanded ? (
+                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5 opacity-60" />
+                )}
               </button>
               
               {groupsExpanded && (
-                <div className="ml-4 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-200">
+                <div className="ml-3 mt-1 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
                   {managedGroups.map((group) => {
                     const groupHref = `/group/${group.id}`;
                     const isActive = location === groupHref || location.startsWith(`/group/${group.id}/`);
@@ -281,17 +349,14 @@ export function Sidebar() {
                         key={group.id}
                         href={groupHref}
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200",
+                          "flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
                           isActive
-                            ? "bg-blue-50 text-[#3182F6]"
-                            : "text-[#8B95A1] hover:bg-gray-50 hover:text-[#4E5968]",
+                            ? "bg-dream/10 text-dream font-semibold"
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                         )}
                         data-testid={`link-group-${group.id}`}
                       >
-                        <GraduationCap className={cn(
-                          "h-4 w-4",
-                          isActive ? "text-[#3182F6]" : "text-[#B0B8C1]"
-                        )} />
+                        <GraduationCap className={cn("h-3.5 w-3.5", isActive ? "text-dream" : "")} />
                         {group.name}
                       </Link>
                     );
@@ -299,46 +364,50 @@ export function Sidebar() {
                 </div>
               )}
             </div>
-          )}
-        </nav>
-
-        <div className="mt-auto pt-4 border-t border-[#F2F4F6] space-y-2 mb-2">
-          {bottomItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onMouseEnter={() => prefetchPageData(item.href)}
-                className={cn(
-                  "flex items-center gap-4 rounded-xl px-5 py-3 text-sm font-medium transition-all duration-200",
-                  isActive
-                    ? "bg-blue-50 text-[#3182F6]"
-                    : "text-[#8B95A1] hover:bg-gray-50 hover:text-[#4E5968]",
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "h-4 w-4",
-                    isActive ? "text-[#3182F6]" : "text-[#B0B8C1]",
-                  )}
-                />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
+          </div>
+        )}
       </div>
 
-      <div className="p-4 pt-0">
+      {/* Bottom items */}
+      <div className="px-3 py-3 border-t border-border space-y-0.5">
+        {bottomItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onMouseEnter={() => prefetchPageData(item.href)}
+              className={cn(
+                "flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
+                isActive
+                  ? item.accent
+                    ? "bg-coral text-white font-semibold"
+                    : "bg-dream text-white font-semibold"
+                  : item.accent
+                    ? "text-coral hover:bg-coral/10 font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              )}
+            >
+              <Icon className="h-4 w-4 flex-shrink-0" />
+              {item.label}
+            </Link>
+          );
+        })}
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-xl px-5 py-3 text-sm font-medium text-[#8B95A1] hover:bg-red-50 hover:text-[#E44E48] transition-colors"
+          className="flex w-full items-center gap-2.5 px-3 py-2 text-sm rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4 flex-shrink-0" />
           로그아웃
         </button>
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 py-3 border-t border-border">
+        <p className="text-[10px] text-muted-foreground text-center">
+          © 2026 <span className="text-dream font-semibold">Konnect</span> — 꿈을 잇다.
+        </p>
       </div>
     </div>
   );

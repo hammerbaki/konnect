@@ -114,7 +114,7 @@ const profileTypeIcons: Record<string, any> = {
 };
 
 const profileTypeColors: Record<string, string> = {
-    general: 'text-blue-600 bg-blue-50',
+    general: 'text-dream bg-dream/10',
     international: 'text-teal-600 bg-teal-50',
     university: 'text-purple-600 bg-purple-50',
     high: 'text-pink-600 bg-pink-50',
@@ -233,10 +233,10 @@ function AnalysisLoadingState({ progress, isSubmitting, isCurrentProfileAnalyzin
             <Card className="bg-white rounded-2xl border border-[#E5E8EB] shadow-lg p-8 max-w-md w-full">
                 <div className="flex flex-col items-center text-center">
                     <div className="relative mb-6">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#3182F6]/20 to-[#3182F6]/5 flex items-center justify-center">
-                            <Loader2 className="h-10 w-10 text-[#3182F6] animate-spin" />
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#320e9d]/20 to-[#320e9d]/5 flex items-center justify-center">
+                            <Loader2 className="h-10 w-10 text-[#320e9d] animate-spin" />
                         </div>
-                        <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#3182F6] flex items-center justify-center shadow-lg">
+                        <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#320e9d] flex items-center justify-center shadow-lg">
                             <Brain className="h-4 w-4 text-white" />
                         </div>
                     </div>
@@ -269,9 +269,9 @@ function AnalysisLoadingState({ progress, isSubmitting, isCurrentProfileAnalyzin
                         </div>
                     )}
                     
-                    <div className="w-full bg-[#F2F4F6] rounded-full h-2 mb-3">
+                    <div className="w-full bg-background rounded-full h-2 mb-3">
                         <div 
-                            className="bg-gradient-to-r from-[#3182F6] to-[#1565C0] h-2 rounded-full transition-all duration-500"
+                            className="bg-gradient-to-r from-[#320e9d] to-[#1565C0] h-2 rounded-full transition-all duration-500"
                             style={{ width: `${Math.max(progress, 10)}%` }}
                         />
                     </div>
@@ -555,8 +555,8 @@ export default function Analysis() {
         if (!latestAnalysis) {
             return (
                 <div className="flex flex-col items-center justify-center py-16 px-4">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#3182F6]/20 to-[#3182F6]/5 flex items-center justify-center mb-6">
-                        <Brain className="h-10 w-10 text-[#3182F6]" />
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#320e9d]/20 to-[#320e9d]/5 flex items-center justify-center mb-6">
+                        <Brain className="h-10 w-10 text-[#320e9d]" />
                     </div>
                     <h3 className="text-xl font-bold text-[#191F28] mb-2 text-center">AI 분석을 시작해보세요</h3>
                     <p className="text-sm text-[#8B95A1] text-center mb-6 max-w-md">
@@ -564,18 +564,18 @@ export default function Analysis() {
                     </p>
 
                     {!kjobsResult && (
-                        <Card className="mb-6 max-w-md border-[#3182F6]/30 bg-gradient-to-r from-[#E8F3FF] to-white">
+                        <Card className="mb-6 max-w-md border-[#320e9d]/30 bg-gradient-to-r from-[#E8F3FF] to-white">
                             <CardContent className="p-4">
                                 <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-[#3182F6]/10 flex items-center justify-center shrink-0">
-                                        <Brain className="w-5 h-5 text-[#3182F6]" />
+                                    <div className="w-10 h-10 rounded-full bg-[#320e9d]/10 flex items-center justify-center shrink-0">
+                                        <Brain className="w-5 h-5 text-[#320e9d]" />
                                     </div>
                                     <div className="flex-1">
                                         <h4 className="font-bold text-[#191F28] text-sm mb-1">진로진단 검사로 더 정확한 분석을!</h4>
                                         <p className="text-xs text-[#8B95A1] mb-2">
                                             K-JOBS 진로진단 검사 결과가 AI 분석에 반영됩니다.
                                         </p>
-                                        <Link href="/mytest" className="inline-flex items-center text-xs font-medium text-[#3182F6] hover:underline" data-testid="link-take-kjobs-test">
+                                        <Link href="/mytest" className="inline-flex items-center text-xs font-medium text-[#320e9d] hover:underline" data-testid="link-take-kjobs-test">
                                             진로진단 시작하기 <ChevronRight className="w-3 h-3 ml-0.5" />
                                         </Link>
                                     </div>
@@ -609,7 +609,7 @@ export default function Analysis() {
                     <Button 
                         onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
                         disabled={isCurrentProfileAnalyzing || isSubmitting || !activeProfileId || !profileValidation.isValid}
-                        className="h-12 px-8 rounded-xl bg-[#3182F6] text-white font-bold disabled:opacity-50"
+                        className="h-12 px-8 rounded-xl bg-[#320e9d] text-white font-bold disabled:opacity-50"
                         data-testid="button-generate-analysis"
                     >
                         {isSubmitting ? (
@@ -669,7 +669,7 @@ export default function Analysis() {
                             <Link href={`/profile?type=${activeProfile.type}`}>
                                 <Button 
                                     variant="outline" 
-                                    className="rounded-xl border-[#E5E8EB] text-[#4E5968] hover:border-[#3182F6] hover:text-[#3182F6]"
+                                    className="rounded-xl border-[#E5E8EB] text-[#4E5968] hover:border-[#320e9d] hover:text-[#320e9d]"
                                     data-testid="button-profile-criteria"
                                 >
                                     {(() => {
@@ -684,7 +684,7 @@ export default function Analysis() {
                             onClick={() => activeProfileId && handleGenerateAnalysis(activeProfileId)}
                             disabled={isCurrentProfileAnalyzing || isSubmitting || !profileValidation.isValid}
                             variant="outline"
-                            className="rounded-xl border-[#3182F6] text-[#3182F6] disabled:opacity-50"
+                            className="rounded-xl border-[#320e9d] text-[#320e9d] disabled:opacity-50"
                             data-testid="button-regenerate-analysis"
                         >
                             {isSubmitting ? (
@@ -708,7 +708,7 @@ export default function Analysis() {
                             <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-[#E5E8EB]">
                                 <div className="text-center">
                                     <p className="text-[10px] text-[#8B95A1] mb-0.5">{stats.label1}</p>
-                                    <p className="text-sm font-bold text-[#3182F6]">{stats.val1}</p>
+                                    <p className="text-sm font-bold text-[#320e9d]">{stats.val1}</p>
                                 </div>
                                 <div className="text-center border-x border-[#E5E8EB]">
                                     <p className="text-[10px] text-[#8B95A1] mb-0.5">{stats.label2}</p>
@@ -726,7 +726,7 @@ export default function Analysis() {
                 {/* K-JOBS 진로진단 결과 섹션 */}
                 {kjobsResult && (
                     <Card className="border-[#E5E8EB] overflow-hidden" data-testid="card-kjobs-result">
-                        <CardHeader className="bg-gradient-to-r from-[#3182F6] to-[#1E5FD3] text-white pb-3">
+                        <CardHeader className="bg-gradient-to-r from-[#320e9d] to-[#1E5FD3] text-white pb-3">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-lg flex items-center gap-2">
                                     <Brain className="w-5 h-5" />
@@ -755,7 +755,7 @@ export default function Analysis() {
                             {kjobsResult.scores && Object.keys(kjobsResult.scores).length > 0 && (
                                 <div className="mb-6" data-testid="section-scores-chart">
                                     <h4 className="text-sm font-semibold text-[#191F28] mb-4 flex items-center gap-2">
-                                        <Activity className="w-4 h-4 text-[#3182F6]" />
+                                        <Activity className="w-4 h-4 text-[#320e9d]" />
                                         역량분석
                                     </h4>
                                     <div className="h-64" data-testid="chart-radar">
@@ -775,8 +775,8 @@ export default function Analysis() {
                                                 <Radar
                                                     name="점수"
                                                     dataKey="value"
-                                                    stroke="#3182F6"
-                                                    fill="#3182F6"
+                                                    stroke="#320e9d"
+                                                    fill="#320e9d"
                                                     fillOpacity={0.3}
                                                 />
                                             </RadarChart>
@@ -789,7 +789,7 @@ export default function Analysis() {
                                                 <span className="text-xs text-[#4E5968]">{KJOBS_AXIS_LABELS[key] || key}</span>
                                                 <span className={cn(
                                                     "text-sm font-bold",
-                                                    value >= 70 ? "text-[#22C55E]" : value >= 50 ? "text-[#3182F6]" : "text-[#8B95A1]"
+                                                    value >= 70 ? "text-[#22C55E]" : value >= 50 ? "text-[#320e9d]" : "text-[#8B95A1]"
                                                 )}>{value}점</span>
                                             </div>
                                         ))}
@@ -1011,7 +1011,7 @@ export default function Analysis() {
                                                 onClick={() => setActiveTab('diagnosis')}
                                                 className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                                                     activeTab === 'diagnosis' 
-                                                        ? 'bg-[#3182F6] text-white' 
+                                                        ? 'bg-[#320e9d] text-white' 
                                                         : 'bg-[#F9FAFB] text-[#6B7280] hover:bg-[#F3F4F6]'
                                                 }`}
                                                 data-testid="tab-diagnosis-based"
@@ -1078,7 +1078,7 @@ export default function Analysis() {
                                                                                     <span className="text-[9px] text-[#8B95A1]">연관도</span>
                                                                                 </div>
                                                                                 <div className="flex flex-col items-center">
-                                                                                    <span className="text-sm font-bold text-[#3182F6]">{job.fitScore}%</span>
+                                                                                    <span className="text-sm font-bold text-[#320e9d]">{job.fitScore}%</span>
                                                                                     <span className="text-[9px] text-[#8B95A1]">적합도</span>
                                                                                 </div>
                                                                             </div>
@@ -1129,11 +1129,11 @@ export default function Analysis() {
                                         {/* 탭2: 진로진단 기반 추천 (참고) */}
                                         {activeTab === 'diagnosis' && (
                                             <div data-testid="section-diagnosis-based">
-                                                <div className="mb-3 p-3 bg-[#EFF6FF] rounded-lg border border-[#3182F6]/20">
+                                                <div className="mb-3 p-3 bg-[#EFF6FF] rounded-lg border border-[#320e9d]/20">
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <Brain className="w-4 h-4 text-[#3182F6]" />
+                                                        <Brain className="w-4 h-4 text-[#320e9d]" />
                                                         <span className="text-sm font-semibold text-[#191F28]">진로진단 기반 추천</span>
-                                                        <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-[9px]">참고용</Badge>
+                                                        <Badge className="bg-[#320e9d]/10 text-[#320e9d] border-0 text-[9px]">참고용</Badge>
                                                     </div>
                                                     <p className="text-[10px] text-[#6B7280]">
                                                         K-JOBS 진로진단 결과 기반으로 적합도가 높은 직업입니다. 희망직무와 다를 수 있습니다.
@@ -1144,10 +1144,10 @@ export default function Analysis() {
                                                     {diagnosisBasedJobs.map((job: any, i: number) => {
                                                         const demandInfo = jobDemandData?.[job.title];
                                                         return (
-                                                        <div key={job.jobId || i} className="p-3 bg-[#FAFAFA] rounded-xl border border-[#3182F6]/20" data-testid={`card-diagnosis-job-${i}`}>
+                                                        <div key={job.jobId || i} className="p-3 bg-[#FAFAFA] rounded-xl border border-[#320e9d]/20" data-testid={`card-diagnosis-job-${i}`}>
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className="w-6 h-6 rounded-full bg-[#3182F6] text-white flex items-center justify-center font-bold text-xs">
+                                                                    <div className="w-6 h-6 rounded-full bg-[#320e9d] text-white flex items-center justify-center font-bold text-xs">
                                                                         {i + 1}
                                                                     </div>
                                                                     <div className="flex flex-col">
@@ -1174,7 +1174,7 @@ export default function Analysis() {
                                                                         </div>
                                                                     )}
                                                                     <div className="flex flex-col items-center">
-                                                                        <span className="text-sm font-bold text-[#3182F6]">{job.fitScore}%</span>
+                                                                        <span className="text-sm font-bold text-[#320e9d]">{job.fitScore}%</span>
                                                                         <span className="text-[9px] text-[#8B95A1]">적합도</span>
                                                                     </div>
                                                                 </div>
@@ -1224,7 +1224,7 @@ export default function Analysis() {
                                                                         <span className="text-[9px] text-[#8B95A1]">연관도</span>
                                                                     </div>
                                                                     <div className="flex flex-col items-center">
-                                                                        <span className="text-sm font-bold text-[#3182F6]">{job.fitScore}%</span>
+                                                                        <span className="text-sm font-bold text-[#320e9d]">{job.fitScore}%</span>
                                                                         <span className="text-[9px] text-[#8B95A1]">적합도</span>
                                                                     </div>
                                                                 </div>
@@ -1270,20 +1270,20 @@ export default function Analysis() {
                         {/* 연결선 */}
                         <div className="absolute left-1/2 -top-3 transform -translate-x-1/2">
                             <div className="flex flex-col items-center">
-                                <ArrowDown className="h-6 w-6 text-[#3182F6] animate-bounce" />
+                                <ArrowDown className="h-6 w-6 text-[#320e9d] animate-bounce" />
                             </div>
                         </div>
                         
-                        <Card className="border-[#3182F6]/30 bg-gradient-to-br from-[#EFF6FF] to-white overflow-hidden mt-2">
+                        <Card className="border-[#320e9d]/30 bg-gradient-to-br from-[#EFF6FF] to-white overflow-hidden mt-2">
                             <CardContent className="p-5">
                                 <div className="flex items-start gap-4">
-                                    <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#3182F6] to-[#1E5FD3] flex items-center justify-center shadow-lg">
+                                    <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#320e9d] to-[#1E5FD3] flex items-center justify-center shadow-lg">
                                         <Sparkles className="h-6 w-6 text-white" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-2">
                                             <h4 className="text-base font-bold text-[#191F28]">AI 분석 요약</h4>
-                                            <Badge className="bg-[#3182F6]/10 text-[#3182F6] border-0 text-xs">
+                                            <Badge className="bg-[#320e9d]/10 text-[#320e9d] border-0 text-xs">
                                                 K-JOBS 기반
                                             </Badge>
                                         </div>
@@ -1291,7 +1291,7 @@ export default function Analysis() {
                                         {/* 진단 결과 요약 */}
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2 text-sm text-[#4E5968]">
-                                                <Brain className="h-4 w-4 text-[#3182F6] shrink-0" />
+                                                <Brain className="h-4 w-4 text-[#320e9d] shrink-0" />
                                                 <span>
                                                     <strong className="text-[#191F28]">Career DNA:</strong> {kjobsResult.careerDna || '분석 완료'}
                                                 </span>
@@ -1318,7 +1318,7 @@ export default function Analysis() {
                                             {kjobsResult.keywords && kjobsResult.keywords.length > 0 && (
                                                 <div className="flex flex-wrap gap-1.5 mt-2">
                                                     {kjobsResult.keywords.slice(0, 4).map((keyword, i) => (
-                                                        <span key={i} className="px-2 py-0.5 bg-[#3182F6]/10 text-[#3182F6] rounded-full text-xs font-medium">
+                                                        <span key={i} className="px-2 py-0.5 bg-[#320e9d]/10 text-[#320e9d] rounded-full text-xs font-medium">
                                                             {keyword}
                                                         </span>
                                                     ))}
@@ -1333,7 +1333,7 @@ export default function Analysis() {
                                                 <p className="text-xs text-[#4E5968] leading-relaxed">
                                                     K-JOBS 진로진단 결과를 바탕으로 AI가 회원님의 <strong className="text-[#191F28]">역량, 성향, 관심사</strong>를 
                                                     종합 분석하여 아래 커리어를 도출했습니다. 각 추천은 진단 데이터에 기반한 
-                                                    <strong className="text-[#3182F6]"> 맞춤형 결과</strong>입니다.
+                                                    <strong className="text-[#320e9d]"> 맞춤형 결과</strong>입니다.
                                                 </p>
                                             </div>
                                         </div>
@@ -1344,7 +1344,7 @@ export default function Analysis() {
                         
                         {/* 하단 연결선 */}
                         <div className="flex justify-center py-2">
-                            <ArrowDown className="h-5 w-5 text-[#3182F6]/50" />
+                            <ArrowDown className="h-5 w-5 text-[#320e9d]/50" />
                         </div>
                     </div>
                 )}
@@ -1366,7 +1366,7 @@ export default function Analysis() {
                             <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200">
                                 <CardHeader className="pb-3">
                                     <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                                        <Globe className="h-5 w-5 text-[#3182F6]" />
+                                        <Globe className="h-5 w-5 text-[#320e9d]" />
                                         프로필 요약
                                     </CardTitle>
                                 </CardHeader>
@@ -1401,7 +1401,7 @@ export default function Analysis() {
                             <Card className="border-[#E5E8EB]">
                                 <CardHeader className="pb-3">
                                     <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                                        <Target className="h-5 w-5 text-[#3182F6]" />
+                                        <Target className="h-5 w-5 text-[#320e9d]" />
                                         희망 직무 적합도
                                         <Badge 
                                             className={cn(
@@ -1544,13 +1544,13 @@ export default function Analysis() {
                             <Card className="border-[#E5E8EB]">
                                 <CardHeader className="pb-3">
                                     <CardTitle className="text-lg font-bold text-[#191F28] flex items-center gap-2">
-                                        <ClockIcon className="h-5 w-5 text-[#3182F6]" />
+                                        <ClockIcon className="h-5 w-5 text-[#320e9d]" />
                                         액션 플랜
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     {foreignStudentData.actionPlan.shortTerm && foreignStudentData.actionPlan.shortTerm.length > 0 && (
-                                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                                        <div className="bg-dream/10 rounded-xl p-4 border border-blue-200">
                                             <h4 className="font-semibold text-blue-700 mb-2 flex items-center gap-2">
                                                 <Badge className="bg-blue-100 text-blue-700">1~3개월</Badge>
                                                 단기 목표
@@ -1623,7 +1623,7 @@ export default function Analysis() {
                 {!isForeignStudent && careerRecommendations.length > 0 && (
                     <div>
                         <div className="flex items-center gap-2 mb-2 px-1">
-                            <Target className="h-5 w-5 text-[#3182F6]" />
+                            <Target className="h-5 w-5 text-[#320e9d]" />
                             <h3 className="text-lg font-bold text-[#191F28]">
                                 {recommendationSectionTitles[profileType]}
                             </h3>
@@ -1642,7 +1642,7 @@ export default function Analysis() {
                                     <Zap className="h-4 w-4 text-[#F59E0B]" />
                                     <span className="text-sm text-[#4E5968]">
                                         K-JOBS 진로진단 적합도: 
-                                        <strong className="text-[#3182F6] ml-1">평균 {avgMatch}%</strong>
+                                        <strong className="text-[#320e9d] ml-1">평균 {avgMatch}%</strong>
                                     </span>
                                 </div>
                             );
@@ -1654,7 +1654,7 @@ export default function Analysis() {
                                 <Bot className="h-4 w-4 text-[#8B95A1]" />
                                 <span className="text-sm text-[#4E5968]">
                                     프로필 정보를 기반으로 AI가 분석한 결과입니다.
-                                    <span className="text-[#3182F6] ml-1">진로진단을 완료하면 더 정확한 추천을 받을 수 있습니다.</span>
+                                    <span className="text-[#320e9d] ml-1">진로진단을 완료하면 더 정확한 추천을 받을 수 있습니다.</span>
                                 </span>
                             </div>
                         )}
@@ -1707,7 +1707,7 @@ export default function Analysis() {
                             )}
                             {activeProfile && (
                                 <Link href={`/profile?type=${activeProfile.type}`}>
-                                    <Button variant="outline" size="sm" className="text-xs text-[#8B95A1] hover:text-[#3182F6]">
+                                    <Button variant="outline" size="sm" className="text-xs text-[#8B95A1] hover:text-[#320e9d]">
                                         <ExternalLink className="h-3 w-3 mr-1" />
                                         수정
                                     </Button>
@@ -1777,7 +1777,7 @@ export default function Analysis() {
                                         분석할 프로필을 선택하거나 새로 만들어주세요
                                     </p>
                                     <Link href="/profile">
-                                        <Button className="bg-[#3182F6]">
+                                        <Button className="bg-[#320e9d]">
                                             <Plus className="h-4 w-4 mr-2" /> 프로필 만들기
                                         </Button>
                                     </Link>
