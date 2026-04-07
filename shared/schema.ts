@@ -1301,3 +1301,20 @@ export const insertAptitudeAnalysisSchema = createInsertSchema(aptitudeAnalyses)
 });
 export type InsertAptitudeAnalysis = z.infer<typeof insertAptitudeAnalysisSchema>;
 export type AptitudeAnalysis = typeof aptitudeAnalyses.$inferSelect;
+
+// ===== MAJOR UNIVERSITY MAP TABLE (전공별 개설 대학 정보) =====
+export const majorUniversityMap = pgTable("major_university_map", {
+  id: serial("id").primaryKey(),
+  majorName: text("major_name").notNull(),
+  univName: text("univ_name").notNull(),
+  region: text("region"),
+  quota: integer("quota"),
+  competitionRate: real("competition_rate"),
+  employmentRate: real("employment_rate"),
+  year: integer("year").default(2024),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertMajorUniversityMapSchema = createInsertSchema(majorUniversityMap).omit({ id: true, updatedAt: true });
+export type InsertMajorUniversityMap = z.infer<typeof insertMajorUniversityMapSchema>;
+export type MajorUniversityMap = typeof majorUniversityMap.$inferSelect;

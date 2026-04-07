@@ -28,7 +28,7 @@ import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, sql as sqlExpr } from "drizzle-orm";
-import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses } from "@shared/schema";
+import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap } from "@shared/schema";
 import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport } from "./dataSync";
 
 // Helper functions for profile defaults
@@ -6197,6 +6197,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Aptitude analyze error:", error?.message);
       res.status(500).json({ message: "분석 중 오류가 발생했습니다: " + error.message });
+    }
+  });
+
+  // GET /api/explore/majors/:majorName/universities — 전공별 개설 대학 조회
+  app.get('/api/explore/majors/:majorName/universities', async (req, res) => {
+    try {
+      const { majorName } = req.params;
+      const rows = await db.select().from(majorUniversityMap)
+        .where(eq(majorUniversityMap.majorName, decodeURIComponent(majorName)))
+        .orderBy(asc(majorUniversityMap.univName));
+      res.json({ data: rows, total: rows.length });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/admin/major-university — 전공-대학 매핑 데이터 입력 (admin)
+  app.post('/api/admin/major-university', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const userRow = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+      if (userRow[0]?.role !== 'admin') return res.status(403).json({ message: '권한 없음' });
+
+      const { rows } = req.body as { rows: Array<{
+        majorName: string; univName: string; region?: string;
+        quota?: number; competitionRate?: number; employmentRate?: number; year?: number;
+      }> };
+
+      if (!Array.isArray(rows) || rows.length === 0) {
+        return res.status(400).json({ message: 'rows 배열이 필요합니다.' });
+      }
+
+      const inserted = await db.insert(majorUniversityMap).values(rows).returning();
+      res.json({ inserted: inserted.length, message: `${inserted.length}개 데이터가 추가되었습니다.` });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 

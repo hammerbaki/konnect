@@ -43,6 +43,17 @@ interface UnivEntry {
   scholarship: number;
 }
 
+interface MajorUnivEntry {
+  id: number;
+  majorName: string;
+  univName: string;
+  region: string | null;
+  quota: number | null;
+  competitionRate: number | null;
+  employmentRate: number | null;
+  year: number | null;
+}
+
 interface Job {
   id: number;
   jobName: string;
@@ -125,6 +136,9 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
 
   const majors = result?.recommendedMajors?.slice(0, 3) ?? [];
   const jobs = result?.recommendedJobs?.slice(0, 3) ?? [];
+  const analyzedDate = result?.createdAt
+    ? new Date(result.createdAt).toLocaleDateString("ko-KR", { month: "long", day: "numeric" })
+    : null;
 
   return (
     <div className="space-y-3">
@@ -139,11 +153,18 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
             <Sparkles className="w-4.5 h-4.5 text-dream" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-ink">AI 맞춤 추천</p>
+            <p className="text-sm font-semibold text-ink">
+              AI 맞춤 추천
+              {result && (
+                <span className="ml-2 text-xs font-normal text-gray-400">
+                  설문 기반 AI 분석 · {analyzedDate}
+                </span>
+              )}
+            </p>
             <p className="text-xs text-gray-500 mt-0.5">
               {result
-                ? "나의 적성 분석 결과를 기반으로 추천 전공과 진로를 제안받으세요"
-                : "나의 적성 분석 결과를 기반으로 추천 전공과 진로를 제안받으세요"}
+                ? "흥미·적성 설문 점수를 AI가 분석하여 추천 전공과 진로를 제안합니다"
+                : "30문항 적성 설문을 완료하면 학생의 흥미·능력 기반으로 AI가 맞춤 전공과 진로를 추천해 드립니다"}
             </p>
           </div>
         </div>
@@ -155,7 +176,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
             data-testid="btn-toggle-ai-result"
           >
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-            {expanded ? "접기" : "결과 보기"}
+            {expanded ? "접기" : "추천 결과 보기"}
           </Button>
         ) : (
           <Button
@@ -165,7 +186,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
             data-testid="btn-go-aptitude"
           >
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-            추천받기
+            적성 설문 시작
           </Button>
         )}
       </div>
@@ -174,7 +195,12 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
       {result && expanded && (
         <Card className="border border-dream/15 bg-white shadow-sm">
           <CardContent className="p-5 space-y-4" data-testid="ai-result-card">
-            <h3 className="text-sm font-semibold text-ink">AI 맞춤 추천 결과</h3>
+            <div className="flex items-start justify-between">
+              <h3 className="text-sm font-semibold text-ink">AI 맞춤 추천 결과</h3>
+              <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
+                흥미·적성 설문 기반
+              </span>
+            </div>
             {result.summary && (
               <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-xl p-3">
                 {result.summary}
@@ -193,7 +219,10 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
                         className="text-xs bg-dream/10 text-dream rounded-full px-3 py-1 font-medium"
                         data-testid={`badge-recommended-major-${i}`}
                       >
-                        {typeof m === "string" ? m : m.name}
+                        {typeof m === "string" ? m : (m as any).name}
+                        {typeof m !== "string" && (m as any).matchScore && (
+                          <span className="ml-1 opacity-70">{(m as any).matchScore}%</span>
+                        )}
                       </span>
                     ))}
                   </div>
@@ -211,12 +240,26 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
                         className="text-xs bg-coral/10 text-coral rounded-full px-3 py-1 font-medium"
                         data-testid={`badge-recommended-job-${i}`}
                       >
-                        {typeof j === "string" ? j : j.name}
+                        {typeof j === "string" ? j : (j as any).name}
                       </span>
                     ))}
                   </div>
                 </div>
               )}
+            </div>
+            <div className="flex items-center gap-2 pt-1">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs h-7 border-dream/30 text-dream"
+                onClick={() => navigate("/aptitude")}
+                data-testid="btn-retake-aptitude"
+              >
+                설문 재응시
+              </Button>
+              <p className="text-xs text-gray-400">
+                * 더 정확한 추천을 위해 적성 설문을 다시 응시할 수 있습니다
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -239,15 +282,18 @@ function hollandBadgeText(code: string | null): string | null {
 function DemandBadge({ demand }: { demand: string | null }) {
   if (!demand) return null;
   const map: Record<string, { label: string; cls: string }> = {
-    "매우 높음": { label: "매우 높음", cls: "bg-emerald-100 text-emerald-700" },
-    "높음":     { label: "높음",     cls: "bg-green-100 text-green-700" },
-    "보통":     { label: "보통",     cls: "bg-amber-100 text-amber-700" },
-    "낮음":     { label: "낮음",     cls: "bg-orange-100 text-orange-600" },
-    "매우 낮음": { label: "매우 낮음", cls: "bg-red-100 text-red-600" },
+    "매우 높음": { label: "수요 매우 높음", cls: "bg-emerald-100 text-emerald-700" },
+    "높음":     { label: "수요 높음",     cls: "bg-green-100 text-green-700" },
+    "보통":     { label: "수요 보통",     cls: "bg-amber-100 text-amber-700" },
+    "낮음":     { label: "수요 낮음",     cls: "bg-orange-100 text-orange-600" },
+    "매우 낮음": { label: "수요 매우 낮음", cls: "bg-red-100 text-red-600" },
   };
   const d = map[demand] ?? { label: demand, cls: "bg-gray-100 text-gray-600" };
   return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${d.cls}`}>
+    <span
+      className={`text-xs font-medium px-2 py-0.5 rounded-full ${d.cls}`}
+      title="졸업 후 취업 시장 수요 전망"
+    >
       {d.label}
     </span>
   );
@@ -259,9 +305,18 @@ function MajorCard({ major }: { major: Major }) {
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [showAllUnivs, setShowAllUnivs] = useState(false);
 
-  const univs: UnivEntry[] = Array.isArray(major.universities) ? major.universities : [];
   const jobs: string[] = Array.isArray(major.relatedJobs) ? major.relatedJobs : [];
   const visibleJobs = showAllJobs ? jobs : jobs.slice(0, 5);
+
+  // 개설 대학 — 전용 API에서 실시간 조회
+  const univQuery = useQuery<{ data: MajorUnivEntry[]; total: number }>({
+    queryKey: ["/api/explore/majors/universities", major.majorName],
+    queryFn: () =>
+      fetch(`/api/explore/majors/${encodeURIComponent(major.majorName)}/universities`)
+        .then(r => r.json()),
+    staleTime: 1000 * 60 * 10,
+  });
+  const univs = univQuery.data?.data ?? [];
   const visibleUnivs = showAllUnivs ? univs : univs.slice(0, 3);
 
   const avgEmp = univs.length > 0
@@ -334,34 +389,56 @@ function MajorCard({ major }: { major: Major }) {
             이 학과 개설 대학
           </p>
 
-          {univs.length === 0 ? (
-            <div className="flex items-center gap-2 py-3 px-3 bg-gray-50 rounded-lg">
-              <Database className="w-4 h-4 text-gray-300" />
-              <span className="text-xs text-gray-400">개설 대학 데이터 업데이트 예정</span>
+          {univQuery.isLoading ? (
+            <div className="space-y-1">
+              {[1, 2, 3].map(i => (
+                <Skeleton key={i} className="h-6 w-full rounded" />
+              ))}
+            </div>
+          ) : univs.length === 0 ? (
+            <div className="flex flex-col gap-1 py-3 px-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-gray-300" />
+                <span className="text-xs text-gray-500 font-medium">개설 대학 데이터 없음</span>
+              </div>
+              <p className="text-xs text-gray-400 pl-6">
+                전공별 개설 대학 데이터는 현재 구축 중입니다.<br />
+                각 대학의 모집 정원·경쟁률은 추후 업데이트될 예정입니다.
+              </p>
             </div>
           ) : (
             <>
               <div className="space-y-1">
                 {visibleUnivs.map((u, i) => (
                   <div
-                    key={i}
-                    className="flex items-center justify-between text-xs py-1 border-b border-gray-50 last:border-0"
+                    key={u.id}
+                    className="flex items-center justify-between text-xs py-1.5 border-b border-gray-50 last:border-0"
                     data-testid={`row-univ-${major.id}-${i}`}
                   >
                     <span className="font-medium text-ink flex items-center gap-1">
                       <MapPin className="w-3 h-3 text-gray-300" />
                       {u.univName}
-                      <span className="text-gray-400 font-normal">({u.region})</span>
+                      {u.region && <span className="text-gray-400 font-normal">({u.region})</span>}
                     </span>
                     <div className="flex items-center gap-3">
-                      <span className="text-orange-500 font-medium flex items-center gap-0.5">
-                        <TrendingUp className="w-3 h-3" />
-                        {u.competition != null ? `${u.competition.toFixed(1)}:1` : "-"}
-                      </span>
-                      <span className="text-blue-600 font-medium flex items-center gap-0.5">
-                        <Award className="w-3 h-3" />
-                        대학취업 {u.employmentRate != null ? `${u.employmentRate.toFixed(0)}%` : "-"}
-                      </span>
+                      {u.quota != null && (
+                        <span className="text-gray-500 flex items-center gap-0.5">
+                          <Users className="w-3 h-3" />
+                          정원 {u.quota}명
+                        </span>
+                      )}
+                      {u.competitionRate != null && (
+                        <span className="text-orange-500 font-medium flex items-center gap-0.5">
+                          <TrendingUp className="w-3 h-3" />
+                          {u.competitionRate.toFixed(1)}:1
+                        </span>
+                      )}
+                      {u.employmentRate != null && (
+                        <span className="text-blue-600 font-medium flex items-center gap-0.5">
+                          <Award className="w-3 h-3" />
+                          취업 {u.employmentRate.toFixed(0)}%
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -384,7 +461,7 @@ function MajorCard({ major }: { major: Major }) {
                 {avgEmp && (
                   <span className="flex items-center gap-1">
                     <TrendingUp className="w-3 h-3 text-emerald-500" />
-                    개설대학 평균취업률 <strong className="text-emerald-600">{avgEmp}%</strong>
+                    평균취업률 <strong className="text-emerald-600">{avgEmp}%</strong>
                   </span>
                 )}
                 <span className="flex items-center gap-1">
