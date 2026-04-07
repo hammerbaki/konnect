@@ -428,6 +428,124 @@ ${batchDesc}
   return { demandUpdated, jobsUpdated, errors };
 }
 
+// ---- CareerNet: enrich per-major employment rate and salary ----
+export async function enrichMajorCareerNetData(
+  onProgress?: (msg: string) => void
+): Promise<{ updated: number; matched: number; errors: number }> {
+  if (!CAREERNET_KEY) {
+    onProgress?.('CAREERNET_API_KEY 미설정 — 학과별 취업률 동기화 건너뜀');
+    return { updated: 0, matched: 0, errors: 0 };
+  }
+
+  // Check if already done
+  const needCheck = await db.execute(sql`
+    SELECT COUNT(*) as cnt FROM cached_majors WHERE employment_rate IS NULL
+  `);
+  const needCount = parseInt(String((needCheck as any).rows?.[0]?.cnt ?? '0'));
+  if (needCount === 0) {
+    onProgress?.('학과별 취업률 데이터 이미 완료됨 — 건너뜀');
+    return { updated: 0, matched: 0, errors: 0 };
+  }
+  onProgress?.(`${needCount}개 학과에 CareerNet 학과별 취업률 데이터 보강 시작`);
+
+  // Fetch all CareerNet major list (20 per page)
+  const CAREERNET_URL = 'https://www.career.go.kr/cnet/openapi/getOpenApi';
+  const careerNetList: Array<{ mClass: string; majorSeq: string }> = [];
+  let page = 1;
+  while (true) {
+    const url = `${CAREERNET_URL}?apiKey=${CAREERNET_KEY}&svcType=api&svcCode=MAJOR&contentType=json&gubun=univ_list&pageIndex=${page}&pageCount=20`;
+    const res = await fetch(url);
+    if (!res.ok) break;
+    const data = await res.json();
+    const items: Array<{ mClass: string; majorSeq: string; totalCount?: string }> =
+      data?.dataSearch?.content ?? [];
+    if (items.length === 0) break;
+    careerNetList.push(...items);
+    const total = parseInt(items[0]?.totalCount ?? '0');
+    if (careerNetList.length >= total) break;
+    page++;
+    if (page > 60) break; // safety cap
+    await new Promise(r => setTimeout(r, 100)); // polite delay
+  }
+  onProgress?.(`CareerNet 학과 목록: ${careerNetList.length}개 로드됨`);
+
+  // Build multi-key lookup: original name, name+과, name stripped of 과
+  const nameToSeq = new Map<string, string>();
+  for (const m of careerNetList) {
+    const key = m.mClass?.trim();
+    if (!key || !m.majorSeq) continue;
+    // exact name
+    if (!nameToSeq.has(key)) nameToSeq.set(key, m.majorSeq);
+    // stripped key (remove trailing 과 → allows DB "간호학" to match CareerNet "간호학과")
+    const stripped = key.endsWith('과') ? key.slice(0, -1) : key;
+    if (!nameToSeq.has(stripped)) nameToSeq.set(stripped, m.majorSeq);
+  }
+
+  // Get all cached_majors needing update
+  const allMajors = await db.select({ id: cachedMajors.id, majorName: cachedMajors.majorName })
+    .from(cachedMajors);
+
+  let updated = 0;
+  let matched = 0;
+  let errors = 0;
+
+  for (const major of allMajors) {
+    const dbName = major.majorName ?? '';
+    // Try: exact → DB name + 과 (e.g. "간호학" → "간호학과" stripped = "간호학" ✓)
+    const majorSeq = nameToSeq.get(dbName) || nameToSeq.get(dbName + '과');
+    if (!majorSeq) continue; // no match — skip
+    matched++;
+
+    try {
+      const url = `${CAREERNET_URL}?apiKey=${CAREERNET_KEY}&svcType=api&svcCode=MAJOR_VIEW&contentType=json&gubun=univ_list&majorSeq=${majorSeq}`;
+      const res = await fetch(url);
+      if (!res.ok) { errors++; continue; }
+      const data = await res.json();
+      const content = data?.dataSearch?.content?.[0];
+      if (!content) { errors++; continue; }
+
+      // Parse employment: e.g. "<strong>80</strong> % 이상" or "70 ~ 80 %"
+      const empRaw: string = content.employment ?? '';
+      const empStripped = empRaw.replace(/<[^>]*>/g, '').trim();
+      let empRate: number | null = null;
+      const rangeMatch = empStripped.match(/(\d+(?:\.\d+)?)\s*[~～]\s*(\d+(?:\.\d+)?)/);
+      if (rangeMatch) {
+        empRate = (parseFloat(rangeMatch[1]) + parseFloat(rangeMatch[2])) / 2;
+      } else {
+        const singleMatch = empStripped.match(/(\d+(?:\.\d+)?)/);
+        if (singleMatch) empRate = parseFloat(singleMatch[1]);
+      }
+
+      // Parse salary (만원): e.g. "284.1"
+      const salaryWan = parseFloat(content.salary ?? '0') || null;
+
+      await db.update(cachedMajors)
+        .set({
+          employmentRate: empRate,
+          avgSalaryDistribution: {
+            avg_monthly_wan: salaryWan,
+            raw_employment: empRaw,
+            raw_salary: content.salary ?? null,
+            source: 'careernet',
+          } as any,
+        })
+        .where(eq(cachedMajors.id, major.id));
+
+      updated++;
+      if (updated % 20 === 0) onProgress?.(`  진행중: ${updated}개 완료 (${allMajors.length}개 중)`);
+      await new Promise(r => setTimeout(r, 120)); // polite delay
+    } catch (e: any) {
+      onProgress?.(`  오류 [${major.majorName}]: ${e.message}`);
+      errors++;
+    }
+  }
+
+  onProgress?.(
+    `CareerNet 학과별 데이터 완료 — 업데이트: ${updated}개, 매칭: ${matched}개, 오류: ${errors}개`
+  );
+  return { updated, matched, errors };
+}
+
 // ---- Data quality report ----
 export async function getDataQualityReport() {
   const [majorStats, jobStats, univStats] = await Promise.all([

@@ -32,6 +32,12 @@ interface Major {
   hollandCode: string | null;
   demand: string | null;
   employmentRate: number | null;
+  avgSalaryDistribution: {
+    avg_monthly_wan?: number | null;
+    raw_employment?: string | null;
+    raw_salary?: string | null;
+    source?: string;
+  } | null;
 }
 
 interface UnivEntry {
@@ -312,6 +318,22 @@ function MajorCard({ major }: { major: Major }) {
   const jobs: string[] = Array.isArray(major.relatedJobs) ? major.relatedJobs : [];
   const visibleJobs = showAllJobs ? jobs : jobs.slice(0, 5);
 
+  // 관련 직업 통계 — showMore 시 lazy fetch
+  const jobStatsQuery = useQuery<{
+    avgSalaryWan: number | null;
+    jobCount: number;
+    jobsWithSalary: number;
+    dominantGrowth: string | null;
+  }>({
+    queryKey: ["/api/explore/majors/job-stats", major.majorName],
+    queryFn: () =>
+      fetch(`/api/explore/majors/${encodeURIComponent(major.majorName)}/job-stats`)
+        .then(r => r.json()),
+    enabled: showMore,
+    staleTime: 1000 * 60 * 30,
+  });
+  const jobStats = jobStatsQuery.data;
+
   // 개설 대학 — 전용 API에서 실시간 조회
   const univQuery = useQuery<{ data: MajorUnivEntry[]; total: number }>({
     queryKey: ["/api/explore/majors/universities", major.majorName],
@@ -490,15 +512,23 @@ function MajorCard({ major }: { major: Major }) {
                     </span>
                     <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                       {u.competitionRate != null && u.competitionRate > 0 && (
-                        <span className="text-orange-500 font-medium flex items-center gap-0.5">
+                        <span
+                          className="text-orange-500 font-medium flex items-center gap-0.5"
+                          title="대학 전체 신입생 경쟁률 기준 (학과별 수치 아님)"
+                        >
                           <TrendingUp className="w-3 h-3" />
                           {u.competitionRate.toFixed(1)}:1
+                          <span className="text-[9px] text-orange-300 font-normal ml-0.5">전체</span>
                         </span>
                       )}
                       {u.employmentRate != null && u.employmentRate > 0 && (
-                        <span className="text-blue-600 font-medium flex items-center gap-0.5">
+                        <span
+                          className="text-blue-600 font-medium flex items-center gap-0.5"
+                          title="대학 전체 취업률 기준 (학과별 수치 아님)"
+                        >
                           <Award className="w-3 h-3" />
                           {u.employmentRate.toFixed(0)}%
+                          <span className="text-[9px] text-blue-300 font-normal ml-0.5">전체</span>
                         </span>
                       )}
                     </div>
@@ -530,9 +560,14 @@ function MajorCard({ major }: { major: Major }) {
               {/* Footer summary */}
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50 text-xs text-gray-500">
                 {avgEmp && Number(avgEmp) > 0 && (
-                  <span className="flex items-center gap-1">
+                  <span
+                    className="flex items-center gap-1"
+                    title="개설 대학들의 학교 전체 취업률 평균 (학과별 수치 아님)"
+                  >
                     <TrendingUp className="w-3 h-3 text-emerald-500" />
-                    평균취업률 <strong className="text-emerald-600">{avgEmp}%</strong>
+                    개설 대학 평균 취업률&nbsp;
+                    <strong className="text-emerald-600">{avgEmp}%</strong>
+                    <span className="text-[9px] text-gray-400">(대학 전체 기준)</span>
                   </span>
                 )}
                 <span className="flex items-center gap-1 ml-auto">
@@ -545,7 +580,8 @@ function MajorCard({ major }: { major: Major }) {
         </div>
 
         {/* ── 더 보기 토글 ── */}
-        {(major.demand || major.relatedSubjects || major.hollandCode) && (
+        {(major.demand || major.relatedSubjects || major.hollandCode ||
+          major.employmentRate || major.avgSalaryDistribution?.avg_monthly_wan) && (
           <div>
             <button
               className="text-xs text-gray-400 hover:text-dream flex items-center gap-0.5 mt-1"
@@ -558,6 +594,70 @@ function MajorCard({ major }: { major: Major }) {
 
             {showMore && (
               <div className="mt-2 space-y-1.5 text-xs text-gray-600 pl-1">
+                {/* 학과별 취업률 (CareerNet 직접 조회) */}
+                {major.employmentRate != null && major.employmentRate > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <Award className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                    <span>
+                      <span className="font-medium text-emerald-600">학과 취업률: </span>
+                      <span className="font-semibold text-emerald-700">{major.employmentRate.toFixed(0)}%</span>
+                      <span className="text-gray-400 ml-1">(커리어넷 학과 기준)</span>
+                    </span>
+                  </div>
+                )}
+                {/* 학과별 평균 급여 (CareerNet 직접 조회) */}
+                {major.avgSalaryDistribution?.avg_monthly_wan != null &&
+                  major.avgSalaryDistribution.avg_monthly_wan > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <Banknote className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+                    <span>
+                      <span className="font-medium text-gold">학과 평균 급여: </span>
+                      <span className="font-semibold text-amber-700">
+                        월 {major.avgSalaryDistribution.avg_monthly_wan.toFixed(0)}만원
+                      </span>
+                      <span className="text-gray-400 ml-1">(커리어넷 학과 기준)</span>
+                    </span>
+                  </div>
+                )}
+                {/* 관련 직업 기준 급여·전망 (CareerNet 직접 데이터 없는 경우) */}
+                {(!major.employmentRate || !major.avgSalaryDistribution?.avg_monthly_wan) &&
+                  jobStats && (jobStats.avgSalaryWan || jobStats.dominantGrowth) && (
+                  <div className="space-y-1">
+                    {jobStats.avgSalaryWan && jobStats.avgSalaryWan > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <Banknote className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+                        <span>
+                          <span className="font-medium text-gold">관련 직업 평균 연봉: </span>
+                          <span className="font-semibold text-amber-700">
+                            연 {jobStats.avgSalaryWan.toLocaleString()}만원
+                          </span>
+                          <span className="text-gray-400 ml-1">
+                            (관련 직업 {jobStats.jobsWithSalary}개 기준)
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                    {jobStats.dominantGrowth && (
+                      <div className="flex items-center gap-1.5">
+                        {jobStats.dominantGrowth.includes("증가") ? (
+                          <TrendingUp className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                        ) : jobStats.dominantGrowth.includes("감소") ? (
+                          <TrendingDown className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                        ) : (
+                          <Minus className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                        )}
+                        <span>
+                          <span className="font-medium">관련 직업 고용전망: </span>
+                          <span className={`font-semibold ${
+                            jobStats.dominantGrowth.includes("증가") ? "text-emerald-600" :
+                            jobStats.dominantGrowth.includes("감소") ? "text-red-500" : "text-gray-600"
+                          }`}>{jobStats.dominantGrowth}</span>
+                          <span className="text-gray-400 ml-1">(관련 직업 기준)</span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {major.hollandCode && (
                   <div>
                     <span className="font-medium text-dream">홀랜드 코드: </span>
@@ -718,13 +818,13 @@ function UniversityCard({ univ }: { univ: University }) {
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           <StatRow
             icon={<TrendingUp className="w-3.5 h-3.5 text-coral" />}
-            label="경쟁률"
+            label="경쟁률 (학교 전체)"
             value={univ.competitionRate && univ.competitionRate > 0
               ? `${univ.competitionRate.toFixed(1)}:1` : none}
           />
           <StatRow
             icon={<Briefcase className="w-3.5 h-3.5 text-emerald-500" />}
-            label="취업률"
+            label="취업률 (학교 전체)"
             value={univ.employmentRate && univ.employmentRate > 0
               ? `${univ.employmentRate.toFixed(1)}%` : none}
             color="text-emerald-600"

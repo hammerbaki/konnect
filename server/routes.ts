@@ -29,7 +29,7 @@ import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, sql as sqlExpr } from "drizzle-orm";
 import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap } from "@shared/schema";
-import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport } from "./dataSync";
+import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData } from "./dataSync";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -5995,6 +5995,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/admin/sync-major-careernet — CareerNet 학과별 취업률·급여 동기화
+  app.post('/api/admin/sync-major-careernet', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
+      const logs: string[] = [];
+      // force=true → bypass "already done" check
+      if (req.body?.force) {
+        const { db: dbInst } = await import('./db');
+        const { sql: sqlDrizzle } = await import('drizzle-orm');
+        await dbInst.execute(sqlDrizzle`UPDATE cached_majors SET employment_rate = NULL, avg_salary_distribution = NULL`);
+        logs.push('기존 학과별 데이터 초기화 완료 (force mode)');
+      }
+      const result = await enrichMajorCareerNetData((msg) => logs.push(msg));
+      res.json({ ...result, logs });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // POST /api/admin/sync-jobs — CareerNet + GPT-4o-mini 직업 설명 생성
   app.post('/api/admin/sync-jobs', isAuthenticated, async (req: any, res) => {
     try {
@@ -6197,6 +6216,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Aptitude analyze error:", error?.message);
       res.status(500).json({ message: "분석 중 오류가 발생했습니다: " + error.message });
+    }
+  });
+
+  // GET /api/explore/majors/:majorName/job-stats — 관련 직업 급여·고용전망 통계
+  app.get('/api/explore/majors/:majorName/job-stats', async (req, res) => {
+    try {
+      const majorName = decodeURIComponent(req.params.majorName);
+      const result = await db.execute(sqlExpr`
+        SELECT
+          ROUND(AVG(cj.salary)::numeric / 10000, 0)::int AS avg_salary_wan,
+          COUNT(DISTINCT cj.job_name)::int AS job_count,
+          COUNT(DISTINCT cj.job_name) FILTER (WHERE cj.salary > 0)::int AS jobs_with_salary,
+          (
+            SELECT growth_kw FROM (
+              SELECT
+                CASE
+                  WHEN growth ILIKE '%감소%' THEN '감소'
+                  WHEN growth ILIKE '%유지%' THEN '유지'
+                  WHEN growth ILIKE '%증가%' THEN '증가'
+                  ELSE NULL
+                END AS growth_kw,
+                COUNT(*) as cnt
+              FROM cached_jobs cj2
+              WHERE cj2.job_name = ANY(
+                SELECT jsonb_array_elements_text(cm2.related_jobs)
+                FROM cached_majors cm2 WHERE cm2.major_name = ${majorName}
+              ) AND cj2.growth IS NOT NULL
+              GROUP BY growth_kw ORDER BY cnt DESC LIMIT 1
+            ) g
+            WHERE growth_kw IS NOT NULL
+          ) AS dominant_growth
+        FROM cached_majors cm
+        JOIN cached_jobs cj ON cj.job_name = ANY(
+          SELECT jsonb_array_elements_text(cm.related_jobs)
+        )
+        WHERE cm.major_name = ${majorName}
+          AND cj.salary > 0
+      `);
+      const row = (result as any).rows?.[0] ?? {};
+      res.json({
+        avgSalaryWan: row.avg_salary_wan ? Number(row.avg_salary_wan) : null,
+        jobCount: row.job_count ? Number(row.job_count) : 0,
+        jobsWithSalary: row.jobs_with_salary ? Number(row.jobs_with_salary) : 0,
+        dominantGrowth: row.dominant_growth ?? null,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 

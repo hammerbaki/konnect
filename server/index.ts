@@ -4,7 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import helmet from "helmet";
 import compression from "compression";
-import { generateMajorDescriptions, generateJobDescriptions, enrichMajorRelatedData } from "./dataSync";
+import { generateMajorDescriptions, generateJobDescriptions, enrichMajorRelatedData, enrichMajorCareerNetData } from "./dataSync";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
 
@@ -284,6 +284,12 @@ app.use((req, res, next) => {
             } else {
               console.log('[DataSync] All major demand/jobs data complete — skipping enrichment.');
             }
+
+            // Enrich per-major employment rate + salary from CareerNet MAJOR_VIEW
+            const careerNetResult = await enrichMajorCareerNetData(
+              (m) => console.log('[DataSync CareerNet]', m)
+            );
+            console.log('[DataSync] CareerNet major data result:', careerNetResult);
           } catch (e) {
             console.error('[DataSync] Background sync error:', e);
           }
