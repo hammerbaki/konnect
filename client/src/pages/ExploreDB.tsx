@@ -274,14 +274,34 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
   );
 }
 
-// ---- Holland Code → Label ----
-const hollandLabel: Record<string, string> = {
-  R: "실재형", I: "탐구형", A: "예술형", S: "사회형", E: "기업형", C: "관습형",
+// ---- Holland Code → Label (출처: 커리어넷 직업심리학 분류 체계) ----
+// 데이터 정확성 원칙: 커리어넷 DB에서 가져온 홀랜드 코드를 그대로 표시.
+// LLM으로 홀랜드 코드를 생성하거나 추측하여 채워넣는 것을 금지함.
+const hollandLabel: Record<string, { name: string; desc: string }> = {
+  R: { name: "실재형", desc: "기계, 도구, 동물 등 구체적 대상을 다루는 활동 선호" },
+  I: { name: "탐구형", desc: "탐구, 분석, 연구 등 지적 활동 선호" },
+  A: { name: "예술형", desc: "창의적, 자유로운 표현 활동 선호" },
+  S: { name: "사회형", desc: "사람을 돕고, 가르치고, 돌보는 활동 선호" },
+  E: { name: "진취형", desc: "조직을 이끌고, 설득하고, 관리하는 활동 선호" },
+  C: { name: "관습형", desc: "정해진 규칙과 절차에 따라 체계적으로 일하는 것 선호" },
 };
-function hollandBadgeText(code: string | null): string | null {
+
+/** "SAI" → "S=사회형, A=예술형, I=탐구형" */
+function hollandExpand(code: string | null): string | null {
   if (!code) return null;
-  const first = code.trim().charAt(0).toUpperCase();
-  return hollandLabel[first] ?? code;
+  const parts = code.trim().toUpperCase().split('').filter(c => hollandLabel[c]);
+  if (parts.length === 0) return null;
+  return parts.map(c => `${c}=${hollandLabel[c].name}`).join(', ');
+}
+
+/** JSON 배열 또는 쉼표 구분 문자열로 저장된 관련 과목을 읽기 좋게 변환 */
+function parseSubjects(raw: string | null): string | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.join(', ');
+  } catch {}
+  return raw;
 }
 
 // ---- Demand Badge ----
@@ -658,20 +678,31 @@ function MajorCard({ major }: { major: Major }) {
                     )}
                   </div>
                 )}
-                {major.hollandCode && (
-                  <div>
-                    <span className="font-medium text-dream">홀랜드 코드: </span>
-                    {major.hollandCode} ({hollandBadgeText(major.hollandCode)})
+                {major.hollandCode && hollandExpand(major.hollandCode) && (
+                  <div className="space-y-1">
+                    <div className="flex items-start gap-1.5">
+                      <span className="font-medium text-dream flex-shrink-0">홀랜드 코드: </span>
+                      <span>
+                        <span className="font-semibold">{major.hollandCode}</span>
+                        <span className="text-gray-500 ml-1">({hollandExpand(major.hollandCode)})</span>
+                      </span>
+                    </div>
+                    <div className="text-gray-400 text-[10px] leading-relaxed pl-0.5">
+                      홀랜드 코드는 직업심리학자 존 홀랜드(John Holland)가 개발한 직업 흥미 유형 분류 체계로,
+                      6가지 유형(R실재형, I탐구형, A예술형, S사회형, E진취형, C관습형)의 조합으로 해당 학과/직업의 특성을 나타냅니다. 출처: 커리어넷
+                    </div>
                   </div>
                 )}
                 {major.demand && (
                   <div>
                     <span className="font-medium text-gold">수요전망: </span>{major.demand}
+                    <span className="text-gray-400 ml-1">(AI 예측 — 참고용)</span>
                   </div>
                 )}
-                {major.relatedSubjects && (
+                {parseSubjects(major.relatedSubjects) && (
                   <div>
-                    <span className="font-medium">관련 과목: </span>{major.relatedSubjects}
+                    <span className="font-medium">관련 과목 <span className="font-normal text-gray-400">(출처: 커리어넷)</span>: </span>
+                    {parseSubjects(major.relatedSubjects)}
                   </div>
                 )}
               </div>
