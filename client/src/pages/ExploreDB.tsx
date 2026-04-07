@@ -339,6 +339,8 @@ function MajorCard({ major }: { major: Major }) {
   // 관련 직업 통계 — showMore 시 lazy fetch
   const jobStatsQuery = useQuery<{
     avgSalaryWan: number | null;
+    minSalaryWan: number | null;
+    maxSalaryWan: number | null;
     jobCount: number;
     jobsWithSalary: number;
     dominantGrowth: string | null;
@@ -598,8 +600,7 @@ function MajorCard({ major }: { major: Major }) {
         </div>
 
         {/* ── 더 보기 토글 ── */}
-        {(major.demand || major.relatedSubjects || major.hollandCode ||
-          major.employmentRate || major.avgSalaryDistribution?.avg_monthly_wan) && (
+        {(major.demand || major.relatedSubjects || major.hollandCode) && (
           <div>
             <button
               className="text-xs text-gray-400 hover:text-dream flex items-center gap-0.5 mt-1"
@@ -612,65 +613,42 @@ function MajorCard({ major }: { major: Major }) {
 
             {showMore && (
               <div className="mt-2 space-y-1.5 text-xs text-gray-600 pl-1">
-                {/* 학과별 취업률 — source: careernet */}
-                {major.employmentRate != null && major.employmentRate > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <Award className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                {/* 관련 직업 급여 범위 — source: cached_jobs */}
+                {jobStats && jobStats.jobsWithSalary > 0 &&
+                  jobStats.minSalaryWan != null && jobStats.maxSalaryWan != null && (
+                  <div className="flex items-start gap-1.5">
+                    <Banknote className="w-3.5 h-3.5 text-gold flex-shrink-0 mt-0.5" />
                     <span>
-                      <span className="font-medium text-emerald-600">학과 취업률: </span>
-                      <span className="font-semibold text-emerald-700">{major.employmentRate.toFixed(0)}%</span>
-                    </span>
-                  </div>
-                )}
-                {/* 학과별 평균 급여 — source: careernet */}
-                {major.avgSalaryDistribution?.avg_monthly_wan != null &&
-                  major.avgSalaryDistribution.avg_monthly_wan > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <Banknote className="w-3.5 h-3.5 text-gold flex-shrink-0" />
-                    <span>
-                      <span className="font-medium text-gold">학과 평균 급여: </span>
+                      <span className="font-medium text-gold">관련 직업 급여 범위: </span>
                       <span className="font-semibold text-amber-700">
-                        월 {major.avgSalaryDistribution.avg_monthly_wan.toFixed(0)}만원
+                        연평균 {jobStats.minSalaryWan.toLocaleString()}만원
+                        {jobStats.minSalaryWan !== jobStats.maxSalaryWan && (
+                          <> ~ {jobStats.maxSalaryWan.toLocaleString()}만원</>
+                        )}
+                      </span>
+                      <span className="text-gray-400 ml-1 text-[10px]">
+                        (관련 직업 {jobStats.jobsWithSalary}개 기준)
                       </span>
                     </span>
                   </div>
                 )}
-                {/* 관련 직업 기준 급여·전망 — source: careernet (cached_jobs) */}
-                {(!major.employmentRate || !major.avgSalaryDistribution?.avg_monthly_wan) &&
-                  jobStats && (jobStats.avgSalaryWan || jobStats.dominantGrowth) && (
-                  <div className="space-y-1">
-                    {jobStats.avgSalaryWan && jobStats.avgSalaryWan > 0 && (
-                      <div className="flex items-center gap-1.5">
-                        <Banknote className="w-3.5 h-3.5 text-gold flex-shrink-0" />
-                        <span>
-                          <span className="font-medium text-gold">관련 직업 평균 연봉: </span>
-                          <span className="font-semibold text-amber-700">
-                            연 {jobStats.avgSalaryWan.toLocaleString()}만원
-                          </span>
-                          <span className="text-gray-400 ml-1">
-                            (직업 {jobStats.jobsWithSalary}개 평균)
-                          </span>
-                        </span>
-                      </div>
+                {/* 관련 직업 고용전망 — source: cached_jobs */}
+                {jobStats?.dominantGrowth && (
+                  <div className="flex items-center gap-1.5">
+                    {jobStats.dominantGrowth.includes("증가") ? (
+                      <TrendingUp className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                    ) : jobStats.dominantGrowth.includes("감소") ? (
+                      <TrendingDown className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                    ) : (
+                      <Minus className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                     )}
-                    {jobStats.dominantGrowth && (
-                      <div className="flex items-center gap-1.5">
-                        {jobStats.dominantGrowth.includes("증가") ? (
-                          <TrendingUp className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                        ) : jobStats.dominantGrowth.includes("감소") ? (
-                          <TrendingDown className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-                        ) : (
-                          <Minus className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                        )}
-                        <span>
-                          <span className="font-medium">관련 직업 고용전망: </span>
-                          <span className={`font-semibold ${
-                            jobStats.dominantGrowth.includes("증가") ? "text-emerald-600" :
-                            jobStats.dominantGrowth.includes("감소") ? "text-red-500" : "text-gray-600"
-                          }`}>{jobStats.dominantGrowth}</span>
-                        </span>
-                      </div>
-                    )}
+                    <span>
+                      <span className="font-medium">관련 직업 고용전망: </span>
+                      <span className={`font-semibold ${
+                        jobStats.dominantGrowth.includes("증가") ? "text-emerald-600" :
+                        jobStats.dominantGrowth.includes("감소") ? "text-red-500" : "text-gray-600"
+                      }`}>{jobStats.dominantGrowth}</span>
+                    </span>
                   </div>
                 )}
                 {/* 홀랜드 코드 — source: careernet */}
@@ -736,6 +714,18 @@ function MajorDetailModal({
   });
   const major = data?.data?.find(m => m.majorName === majorName) ?? data?.data?.[0] ?? null;
 
+  const { data: jobStats } = useQuery<{
+    minSalaryWan: number | null;
+    maxSalaryWan: number | null;
+    jobsWithSalary: number;
+  }>({
+    queryKey: ['major-job-stats', majorName],
+    queryFn: () =>
+      fetch(`/api/explore/majors/${encodeURIComponent(majorName)}/job-stats`)
+        .then(r => r.json()),
+    enabled: !!major,
+  });
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -790,20 +780,21 @@ function MajorDetailModal({
                   </div>
                 </div>
               )}
-              {major.employmentRate != null && major.employmentRate > 0 && (
-                <div className="flex items-center gap-1.5 text-xs">
-                  <span className="font-semibold text-gray-700">💰 취업률:</span>
-                  <span className="font-semibold text-emerald-600">{major.employmentRate.toFixed(1)}%</span>
-                  <span className="text-gray-400">(커리어넷 기준)</span>
-                </div>
-              )}
-              {major.avgSalaryDistribution?.avg_monthly_wan != null &&
-                major.avgSalaryDistribution.avg_monthly_wan > 0 && (
-                <div className="flex items-center gap-1.5 text-xs">
-                  <span className="font-semibold text-gray-700">📊 평균 급여:</span>
-                  <span className="font-semibold text-emerald-600">
-                    월 {major.avgSalaryDistribution.avg_monthly_wan.toLocaleString()}만원
-                  </span>
+              {jobStats && jobStats.jobsWithSalary > 0 &&
+                jobStats.minSalaryWan != null && jobStats.maxSalaryWan != null && (
+                <div>
+                  <p className="font-semibold text-gray-700 mb-1 flex items-center gap-1 text-xs">
+                    💰 관련 직업 급여 범위
+                  </p>
+                  <div className="text-xs text-emerald-600 font-semibold">
+                    연평균 {jobStats.minSalaryWan.toLocaleString()}만원
+                    {jobStats.minSalaryWan !== jobStats.maxSalaryWan && (
+                      <> ~ {jobStats.maxSalaryWan.toLocaleString()}만원</>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-gray-400 mt-0.5">
+                    (관련 직업 {jobStats.jobsWithSalary}개 기준)
+                  </div>
                 </div>
               )}
             </>

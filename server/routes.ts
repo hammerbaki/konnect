@@ -6233,6 +6233,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await db.execute(sqlExpr`
         SELECT
           ROUND(AVG(cj.salary)::numeric / 10000, 0)::int AS avg_salary_wan,
+          ROUND(MIN(cj.salary)::numeric / 10000, 0)::int AS min_salary_wan,
+          ROUND(MAX(cj.salary)::numeric / 10000, 0)::int AS max_salary_wan,
           COUNT(DISTINCT cj.job_name)::int AS job_count,
           COUNT(DISTINCT cj.job_name) FILTER (WHERE cj.salary > 0)::int AS jobs_with_salary,
           (
@@ -6264,6 +6266,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const row = (result as any).rows?.[0] ?? {};
       res.json({
         avgSalaryWan: row.avg_salary_wan ? Number(row.avg_salary_wan) : null,
+        minSalaryWan: row.min_salary_wan ? Number(row.min_salary_wan) : null,
+        maxSalaryWan: row.max_salary_wan ? Number(row.max_salary_wan) : null,
         jobCount: row.job_count ? Number(row.job_count) : 0,
         jobsWithSalary: row.jobs_with_salary ? Number(row.jobs_with_salary) : 0,
         dominantGrowth: row.dominant_growth ?? null,
