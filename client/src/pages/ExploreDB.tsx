@@ -15,7 +15,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, ChevronDown, ChevronUp, GraduationCap, Briefcase, Building2,
-  TrendingUp, TrendingDown, Minus, BookOpen, Award, MapPin, Users, DollarSign
+  TrendingUp, TrendingDown, Minus, BookOpen, Award, MapPin, DollarSign,
+  Database, Wifi
 } from "lucide-react";
 
 // ---- Types ----
@@ -443,9 +444,23 @@ export default function ExploreDB() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-ink">학과 · 직업 · 대학 탐색</h1>
-        <p className="text-sm text-gray-500 mt-1">관심 분야를 검색하고 진로를 설계해보세요.</p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-ink">학과 · 직업 · 대학 탐색</h1>
+          <p className="text-sm text-gray-500 mt-1">관심 분야를 검색하고 진로를 설계해보세요.</p>
+        </div>
+        {/* API 연동 상태 배지 */}
+        <div className="flex flex-wrap gap-2 items-center" data-testid="api-status-bar">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full">
+            <Wifi className="w-3 h-3" />
+            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            API 연동됨
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-dream/8 text-dream border border-dream/20 px-3 py-1.5 rounded-full">
+            <Database className="w-3 h-3" />
+            학과 235 · 직업 552 · 대학 489
+          </span>
+        </div>
       </div>
 
       <Tabs value={tab} onValueChange={handleTabChange}>

@@ -114,14 +114,19 @@ export function Sidebar() {
     });
   }, [queryClient]);
 
+  // 핵심 신규 기능 (최상단 고정)
+  const featuredNavItems = [
+    { href: "/explore", slug: "/explore", icon: BookOpen, label: "학과·직업·대학 탐색" },
+    { href: "/aptitude", slug: "/aptitude", icon: Brain, label: "전공 적성 분석" },
+  ];
+
   const coreNavItems = [
     { href: "/dashboard", slug: "/dashboard", icon: LayoutDashboard, label: "대시보드" },
     { href: "/profile", slug: "/profile", icon: User, label: "내 프로필", hasSubmenu: true },
   ];
 
   const aiNavItems = [
-    { href: "/mytest", slug: "/mytest", icon: Brain, label: "진로진단" },
-    { href: "/aptitude", slug: "/aptitude", icon: GraduationCap, label: "전공 적성 분석" },
+    { href: "/mytest", slug: "/mytest", icon: GraduationCap, label: "진로진단" },
     { href: "/analysis", slug: "/analysis", icon: PieChart, label: "커리어 분석" },
     { href: "/goals", slug: "/goals", icon: Target, label: "목표 관리" },
     { href: "/personal-statement", slug: "/essays", icon: FileText, label: "자기소개서" },
@@ -129,8 +134,7 @@ export function Sidebar() {
   ];
 
   const exploreNavItems = [
-    { href: "/explore", slug: "/explore", icon: BookOpen, label: "학과·직업·대학 탐색" },
-    { href: "/explorer", slug: "/explorer", icon: Search, label: "직업 탐색 (구)" },
+    { href: "/explorer", slug: "/explorer", icon: Search, label: "직업 탐색" },
   ];
 
   const allBottomItems = [
@@ -145,6 +149,7 @@ export function Sidebar() {
       return canAccess(item.slug);
     });
 
+  const filteredFeatured = filterItems(featuredNavItems);
   const filteredCore = filterItems(coreNavItems);
   const filteredAI = filterItems(aiNavItems);
   const filteredExplore = filterItems(exploreNavItems);
@@ -242,6 +247,48 @@ export function Sidebar() {
       </div>
 
       <div className="flex-1 px-3 flex flex-col overflow-y-auto space-y-4 pb-2">
+        {/* ★ Featured — 신규 핵심 기능 (최상단) */}
+        {filteredFeatured.length > 0 && (
+          <div>
+            <div className="flex items-center gap-1.5 px-3 mb-1.5">
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-dream">핵심 기능</p>
+              <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-coral text-white px-1.5 py-0.5 rounded-full leading-none">
+                NEW
+              </span>
+            </div>
+            <div className="space-y-0.5">
+              {filteredFeatured.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.href || location.startsWith(item.href + "/");
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onMouseEnter={() => prefetchPageData(item.href)}
+                    data-testid={`link-featured-${item.slug.replace("/", "")}`}
+                    className={cn(
+                      "flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-all font-medium border",
+                      isActive
+                        ? "bg-dream text-white font-semibold border-dream shadow-sm"
+                        : "text-ink border-dream/20 bg-dream/5 hover:bg-dream/10 hover:border-dream/40"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="flex-1 truncate">{item.label}</span>
+                    <span className={cn(
+                      "inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none flex-shrink-0",
+                      isActive ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-600"
+                    )}>
+                      <span className="w-1.5 h-1.5 bg-current rounded-full animate-pulse" />
+                      DB
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Core section */}
         {filteredCore.length > 0 && (
           <div>

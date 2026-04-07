@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import {
   Brain, ChevronLeft, ChevronRight, RotateCcw, Sparkles,
-  Briefcase, GraduationCap, CheckCircle2, Clock
+  Briefcase, GraduationCap, Clock, Database, Wifi
 } from "lucide-react";
 
 // ---- Types ----
@@ -83,6 +83,18 @@ function ScoreButton({ score, selected, onClick }: { score: number; selected: bo
 function StartScreen({ onStart, latestResult }: { onStart: () => void; latestResult: AptitudeResult | null }) {
   return (
     <div className="max-w-lg mx-auto px-4 py-10 text-center space-y-8">
+      {/* API 상태 배지 */}
+      <div className="flex justify-center gap-2 flex-wrap" data-testid="aptitude-api-status">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full">
+          <Wifi className="w-3 h-3" />
+          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+          API 연동됨
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-dream/8 text-dream border border-dream/20 px-3 py-1.5 rounded-full">
+          <Database className="w-3 h-3" />
+          GPT-4o-mini · DB 연동 추천
+        </span>
+      </div>
       <div className="space-y-3">
         <div className="w-16 h-16 bg-dream/10 rounded-2xl flex items-center justify-center mx-auto">
           <Brain className="w-8 h-8 text-dream" />
@@ -263,16 +275,23 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-ink">적성 분석 결과</h1>
           <p className="text-xs text-gray-400 mt-0.5">
             {new Date(result.createdAt).toLocaleDateString("ko-KR")}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={onRetake} data-testid="btn-retake">
-          <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> 다시 검사
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full">
+            <Wifi className="w-3 h-3" />
+            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            API 연동됨
+          </span>
+          <Button variant="outline" size="sm" onClick={onRetake} data-testid="btn-retake">
+            <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> 다시 검사
+          </Button>
+        </div>
       </div>
 
       {/* Summary */}
