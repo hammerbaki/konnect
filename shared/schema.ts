@@ -1318,3 +1318,25 @@ export const majorUniversityMap = pgTable("major_university_map", {
 export const insertMajorUniversityMapSchema = createInsertSchema(majorUniversityMap).omit({ id: true, updatedAt: true });
 export type InsertMajorUniversityMap = z.infer<typeof insertMajorUniversityMapSchema>;
 export type MajorUniversityMap = typeof majorUniversityMap.$inferSelect;
+
+// ===== UNIVERSITY MAJORS TABLE (학과 찾기 엑셀 데이터) =====
+export const universityMajors = pgTable("university_majors", {
+  id: serial("id").primaryKey(),
+  majorName: text("major_name").notNull(),
+  universityName: text("university_name").notNull(),
+  division: text("division"),
+  universityType: text("university_type"),
+  region: text("region"),
+  location: text("location"),
+  locationDetail: text("location_detail"),
+  establishment: text("establishment"),
+  dayNight: text("day_night"),
+  majorCharacteristic: text("major_characteristic"),
+  categoryLarge: text("category_large"),
+  categoryMedium: text("category_medium"),
+  categorySmall: text("category_small"),
+});
+
+export const insertUniversityMajorSchema = createInsertSchema(universityMajors).omit({ id: true });
+export type InsertUniversityMajor = z.infer<typeof insertUniversityMajorSchema>;
+export type UniversityMajor = typeof universityMajors.$inferSelect;

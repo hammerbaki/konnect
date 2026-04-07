@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, real, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, real, integer, timestamp, text } from "drizzle-orm/pg-core";
 
 export const universityInfoTable = pgTable("university_info", {
   id: serial("id").primaryKey(),
@@ -24,3 +24,23 @@ export const universityInfoTable = pgTable("university_info", {
 
 export type UniversityInfo = typeof universityInfoTable.$inferSelect;
 export type InsertUniversityInfo = typeof universityInfoTable.$inferInsert;
+
+export const universityMajorsTable = pgTable("university_majors", {
+  id: serial("id").primaryKey(),
+  majorName: text("major_name").notNull(),
+  universityName: text("university_name").notNull(),
+  division: text("division"),
+  universityType: text("university_type"),
+  region: text("region"),
+  location: text("location"),
+  locationDetail: text("location_detail"),
+  establishment: text("establishment"),
+  dayNight: text("day_night"),
+  majorCharacteristic: text("major_characteristic"),
+  categoryLarge: text("category_large"),
+  categoryMedium: text("category_medium"),
+  categorySmall: text("category_small"),
+});
+
+export type UniversityMajor = typeof universityMajorsTable.$inferSelect;
+export type InsertUniversityMajor = typeof universityMajorsTable.$inferInsert;

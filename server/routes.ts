@@ -28,7 +28,7 @@ import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, sql as sqlExpr } from "drizzle-orm";
-import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap } from "@shared/schema";
+import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap, universityMajors } from "@shared/schema";
 import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData } from "./dataSync";
 import { syncUniversityApi } from "./universityApiSync";
 
@@ -6282,10 +6282,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/explore/majors/:majorName/universities', async (req, res) => {
     try {
       const { majorName } = req.params;
-      const rows = await db.select().from(majorUniversityMap)
-        .where(eq(majorUniversityMap.majorName, decodeURIComponent(majorName)))
+      const decodedName = decodeURIComponent(majorName);
+
+      // 1) majorUniversityMap 에서 조회
+      const mapRows = await db.select().from(majorUniversityMap)
+        .where(eq(majorUniversityMap.majorName, decodedName))
         .orderBy(desc(majorUniversityMap.competitionRate), asc(majorUniversityMap.univName));
-      res.json({ data: rows, total: rows.length });
+
+      // 2) university_majors 에서 정확 일치 우선, 포함 관계 보조
+      const exactRows = await db.select().from(universityMajors)
+        .where(eq(universityMajors.majorName, decodedName));
+
+      const likeRows = exactRows.length === 0
+        ? await db.select().from(universityMajors)
+            .where(ilike(universityMajors.majorName, `%${decodedName}%`))
+        : [];
+
+      const umRows = exactRows.length > 0 ? exactRows : likeRows;
+
+      // 3) university_info 에서 대학 세부 정보 조회 (for competitionRate, employmentRate links)
+      const univNames = [...new Set(umRows.map(r => r.universityName))];
+      let univInfoMap: Record<string, { id: number; competitionRate: number | null; employmentRate: number | null }> = {};
+      if (univNames.length > 0) {
+        const univInfoRows = await db.select({
+          id: universityInfo.id,
+          univName: universityInfo.univName,
+          competitionRate: universityInfo.competitionRate,
+          employmentRate: universityInfo.employmentRate,
+        }).from(universityInfo)
+          .where(or(...univNames.map(n => eq(universityInfo.univName, n!))));
+        for (const ui of univInfoRows) {
+          if (ui.univName) univInfoMap[ui.univName] = { id: ui.id, competitionRate: ui.competitionRate, employmentRate: ui.employmentRate };
+        }
+      }
+
+      // 4) university_majors 결과를 MajorUnivEntry 형태로 변환 및 dedup
+      const existingUnivNames = new Set(mapRows.map(r => r.univName));
+      const umMapped = umRows
+        .filter(r => !existingUnivNames.has(r.universityName))
+        .map(r => {
+          const info = univInfoMap[r.universityName ?? ''];
+          return {
+            id: r.id + 1000000,
+            majorName: r.majorName,
+            univName: r.universityName,
+            region: r.region ?? r.location ?? null,
+            quota: null as number | null,
+            competitionRate: info?.competitionRate ?? null,
+            employmentRate: info?.employmentRate ?? null,
+            year: null as number | null,
+            division: r.division ?? null,
+            universityType: r.universityType ?? null,
+            establishment: r.establishment ?? null,
+            hasUnivInfo: !!info,
+            univInfoId: info?.id ?? null,
+          };
+        });
+
+      // Remove dedupes within umMapped (same university name)
+      const seenUmNames = new Set<string>();
+      const umDeduped = umMapped.filter(r => {
+        if (seenUmNames.has(r.univName ?? '')) return false;
+        seenUmNames.add(r.univName ?? '');
+        return true;
+      });
+
+      // 5) mapRows 에도 division, establishment, hasUnivInfo 추가
+      const mapRowsEnriched = mapRows.map(r => ({
+        ...r,
+        division: null as string | null,
+        establishment: null as string | null,
+        hasUnivInfo: true,
+        univInfoId: null as number | null,
+      }));
+
+      const combined = [...mapRowsEnriched, ...umDeduped];
+      combined.sort((a, b) => (b.competitionRate ?? 0) - (a.competitionRate ?? 0) || (a.univName ?? '').localeCompare(b.univName ?? '', 'ko'));
+
+      res.json({ data: combined, total: combined.length });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

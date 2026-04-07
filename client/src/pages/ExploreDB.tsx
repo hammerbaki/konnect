@@ -58,6 +58,11 @@ interface MajorUnivEntry {
   competitionRate: number | null;
   employmentRate: number | null;
   year: number | null;
+  division: string | null;
+  universityType: string | null;
+  establishment: string | null;
+  hasUnivInfo: boolean;
+  univInfoId: number | null;
 }
 
 interface Job {
@@ -324,7 +329,7 @@ function DemandBadge({ demand }: { demand: string | null }) {
 }
 
 // ---- Major Card ----
-function MajorCard({ major }: { major: Major }) {
+function MajorCard({ major, onNavigateToUniversity }: { major: Major; onNavigateToUniversity?: (univName: string) => void }) {
   const [showMore, setShowMore] = useState(false);
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [univPage, setUnivPage] = useState(1);
@@ -497,10 +502,39 @@ function MajorCard({ major }: { major: Major }) {
                     className="flex items-center justify-between text-xs py-1.5 border-b border-gray-50 last:border-0"
                     data-testid={`row-univ-${major.id}-${i}`}
                   >
-                    <span className="font-medium text-ink flex items-center gap-1 min-w-0 truncate">
+                    <span className="font-medium text-ink flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
                       <MapPin className="w-3 h-3 text-gray-300 flex-shrink-0" />
-                      <span className="truncate">{u.univName}</span>
-                      {u.region && <span className="text-gray-400 font-normal flex-shrink-0">({u.region})</span>}
+                      {u.hasUnivInfo && onNavigateToUniversity ? (
+                        <button
+                          className="truncate text-dream hover:underline text-left"
+                          onClick={() => onNavigateToUniversity(u.univName ?? '')}
+                          data-testid={`link-univ-${major.id}-${i}`}
+                        >
+                          {u.univName}
+                        </button>
+                      ) : (
+                        <span className="truncate">{u.univName}</span>
+                      )}
+                      {u.region && <span className="text-gray-400 font-normal flex-shrink-0 ml-0.5">({u.region})</span>}
+                      {u.universityType && u.universityType !== "대학교" && (
+                        <span className="flex-shrink-0 text-[9px] px-1 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium ml-0.5">
+                          {u.universityType.replace("사이버대학(대학)", "사이버대학").replace("사이버대학(전문대학)", "사이버전문대")}
+                        </span>
+                      )}
+                      {u.division && u.division !== "본교" && (
+                        <span className="flex-shrink-0 text-[9px] px-1 py-0.5 rounded bg-purple-50 text-purple-600 font-medium ml-0.5">
+                          {u.division}
+                        </span>
+                      )}
+                      {u.establishment && (
+                        <span className={`flex-shrink-0 text-[9px] px-1 py-0.5 rounded font-medium ml-0.5 ${
+                          u.establishment.includes("국립") ? "bg-blue-50 text-blue-600" :
+                          u.establishment.includes("사립") ? "bg-amber-50 text-amber-600" :
+                          "bg-gray-50 text-gray-500"
+                        }`}>
+                          {u.establishment}
+                        </span>
+                      )}
                     </span>
                   </div>
                 ))}
@@ -1190,6 +1224,14 @@ export default function ExploreDB() {
     setPage(1);
   }, []);
 
+  // 전공 카드에서 대학명 클릭 → 대학 탭으로 이동 후 검색
+  const navigateToUniversity = useCallback((univName: string) => {
+    setTab("universities");
+    setSearch(univName);
+    setSearchInput(univName);
+    setPage(1);
+  }, []);
+
   const majorTotal = 235;
   const jobTotal = 443;
   const univTotal = univsQuery.data?.total ?? 0;
@@ -1346,7 +1388,7 @@ export default function ExploreDB() {
             <>
               <div className="space-y-3">
                 {(majorsQuery.data?.data ?? []).map(m => (
-                  <MajorCard key={m.id} major={m} />
+                  <MajorCard key={m.id} major={m} onNavigateToUniversity={navigateToUniversity} />
                 ))}
               </div>
               <Pagination
