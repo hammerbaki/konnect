@@ -728,13 +728,13 @@ function MajorDetailModal({
   onClose: () => void;
   onNavigate: (name: string) => void;
 }) {
-  const { data, isLoading } = useQuery<{ majors: Major[] }>({
+  const { data, isLoading } = useQuery<{ data: Major[]; total: number }>({
     queryKey: ['major-modal', majorName],
     queryFn: () =>
       fetch(`/api/explore/majors?search=${encodeURIComponent(majorName)}&limit=10`)
         .then(r => r.json()),
   });
-  const major = data?.majors?.find(m => m.majorName === majorName) ?? data?.majors?.[0] ?? null;
+  const major = data?.data?.find(m => m.majorName === majorName) ?? data?.data?.[0] ?? null;
 
   return (
     <div
@@ -771,32 +771,43 @@ function MajorDetailModal({
           ) : major ? (
             <>
               {major.description && (
-                <p className="text-gray-600 leading-relaxed text-xs">{major.description}</p>
-              )}
-              {major.employmentRate != null && major.employmentRate > 0 && (
-                <div className="flex items-center gap-1.5 text-xs">
-                  <Award className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-gray-600">
-                    취업률: <span className="font-semibold text-emerald-600">{major.employmentRate.toFixed(1)}%</span>
-                    <span className="text-gray-400 ml-1">(커리어넷 기준)</span>
-                  </span>
+                <div>
+                  <p className="font-semibold text-gray-700 mb-1 flex items-center gap-1 text-xs">
+                    📝 학과 설명
+                  </p>
+                  <p className="text-gray-600 leading-relaxed text-xs">{major.description}</p>
                 </div>
               )}
               {Array.isArray(major.relatedJobs) && major.relatedJobs.length > 0 && (
                 <div>
                   <p className="font-semibold text-gray-700 mb-1.5 flex items-center gap-1 text-xs">
-                    <Briefcase className="w-3.5 h-3.5 text-coral" /> 관련 직업
+                    💼 관련 직업
                   </p>
                   <div className="flex flex-wrap gap-1">
-                    {major.relatedJobs.map((j: string, i: number) => (
+                    {major.relatedJobs.slice(0, 5).map((j: string, i: number) => (
                       <span key={i} className="bg-coral/10 text-coral rounded-full px-2 py-0.5 text-xs">{j}</span>
                     ))}
                   </div>
                 </div>
               )}
+              {major.employmentRate != null && major.employmentRate > 0 && (
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="font-semibold text-gray-700">💰 취업률:</span>
+                  <span className="font-semibold text-emerald-600">{major.employmentRate.toFixed(1)}%</span>
+                </div>
+              )}
+              {major.avgSalaryDistribution?.avg_monthly_wan != null &&
+                major.avgSalaryDistribution.avg_monthly_wan > 0 && (
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="font-semibold text-gray-700">📊 평균 급여:</span>
+                  <span className="font-semibold text-emerald-600">
+                    월 {major.avgSalaryDistribution.avg_monthly_wan.toLocaleString()}만원
+                  </span>
+                </div>
+              )}
             </>
           ) : (
-            <p className="text-gray-400 text-xs">전공 정보를 찾을 수 없습니다.</p>
+            <p className="text-gray-500 text-xs">이 전공의 상세 정보는 아직 준비 중입니다.</p>
           )}
         </div>
 
@@ -807,7 +818,7 @@ function MajorDetailModal({
             onClick={() => { onNavigate(majorName); onClose(); }}
             className="flex-1 text-xs bg-dream/10 text-dream rounded-lg py-2 hover:bg-dream/20 transition-colors font-medium"
           >
-            전공 탭에서 자세히 보기 →
+            {major ? '전공 탭에서 자세히 보기 →' : '전공 탭에서 검색하기 →'}
           </button>
           <button
             onClick={onClose}
@@ -947,9 +958,9 @@ function JobCard({
               className="mt-3 w-full flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-dream transition-colors border-t border-gray-50 pt-2"
             >
               {open ? (
-                <><ChevronUp className="w-3 h-3" /> 접기</>
+                <><ChevronUp className="w-3 h-3" /> 관련 전공 접기</>
               ) : (
-                <><ChevronDown className="w-3 h-3" /> 추가 정보</>
+                <><ChevronDown className="w-3 h-3" /> 관련 전공</>
               )}
             </button>
           )}

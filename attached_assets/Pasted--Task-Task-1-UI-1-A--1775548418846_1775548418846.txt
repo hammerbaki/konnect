@@ -1,0 +1,101 @@
+세 가지 작업을 병렬로 진행할 수 있도록 Task별로 분리해서 작성하겠습니다.
+
+Task 1: 직업 카드 UI 수정 + 전공 모달 개선
+
+1-A. "추가 정보" → "관련 전공"으로 변경
+직업 카드 하단의 ▾ 추가 정보 텍스트를 ▾ 관련 전공으로 변경해라. 펼친 상태에서는 ▴ 관련 전공 접기로 표시해라.
+현재 펼침 영역에 관련 전공만 표시되고 있으므로 라벨이 내용과 일치해야 한다.
+1-B. 전공 클릭 시 모달에 전공 요약 정보 표시
+현재 전공을 클릭하면 "전공 정보를 찾을 수 없습니다" + "전공 탭에서 자세히 보기" 버튼만 나온다. 이것을 다음과 같이 개선해라:
+cached_majors에 해당 전공이 있는 경우:
+모달에 다음 정보를 요약 표시해라. 모든 항목은 DB에 있는 값만 표시하고, 없는 항목은 숨겨라:
+[모달]
+경영정보과
+
+📝 학과 설명: (cached_majors의 description 또는 summary 필드)
+💼 관련 직업: (cached_majors의 related_jobs에서 상위 5개)
+💰 취업률: (데이터 있으면 표시)
+📊 평균 급여: (데이터 있으면 표시)
+
+[전공 탭에서 자세히 보기 →]  [닫기]
+cached_majors에 해당 전공이 없는 경우:
+현재처럼 "전공 정보를 찾을 수 없습니다"를 표시하되, 문구를 개선해라:
+[모달]
+경영정보과
+
+이 전공의 상세 정보는 아직 준비 중입니다.
+
+[전공 탭에서 검색하기 →]  [닫기]
+⚠️ 주의: 모달에 표시하는 모든 정보는 cached_majors DB에서 가져와라. LLM으로 학과 설명이나 관련 직업을 생성하지 마라.
+구현 체크리스트:
+
+ ▾ 추가 정보 → ▾ 관련 전공으로 변경
+ 펼침 시 ▴ 관련 전공 접기
+ cached_majors에 있는 전공: 모달에 요약 정보 표시
+ cached_majors에 없는 전공: "상세 정보는 아직 준비 중입니다" 표시
+ 모달 내 모든 데이터가 DB 원본인지 확인
+
+
+Task 2: 학과 찾기 데이터 연동 (29,498개 대학-학과 매핑)
+
+목표: 업로드된 학과 찾기.xlsx 데이터를 DB에 반영하여 "이 전공을 어느 대학에서 제공하는지" 연결
+데이터 파일: 프로젝트 폴더에 이미 업로드된 학과 찾기.xlsx
+
+29,498개 행 (대학-학과 쌍)
+15개 컬럼: No, 학과명, 학교명, 구분, 학교종류, 학교지역, 소재지, 소재지(상세), 설립구분, 주야구분, 학과특성, 표준분류계열(대), 표준분류계열(중), 표준분류계열(소), 관심
+
+1. 새 테이블 생성
+sqlCREATE TABLE university_majors (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  major_name VARCHAR(200) NOT NULL,       -- 학과명
+  university_name VARCHAR(200) NOT NULL,  -- 학교명
+  division VARCHAR(50),                    -- 구분 (대학, 전문대학 등)
+  university_type VARCHAR(50),             -- 학교종류
+  region VARCHAR(50),                      -- 학교지역
+  location VARCHAR(100),                   -- 소재지
+  location_detail VARCHAR(200),            -- 소재지(상세)
+  establishment VARCHAR(50),               -- 설립구분 (국립, 사립 등)
+  day_night VARCHAR(20),                   -- 주야구분
+  major_characteristic TEXT,               -- 학과특성
+  category_large VARCHAR(50),              -- 표준분류계열(대)
+  category_medium VARCHAR(50),             -- 표준분류계열(중)
+  category_small VARCHAR(100),             -- 표준분류계열(소)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+2. 엑셀 데이터 임포트
+학과 찾기.xlsx 파일을 읽어서 university_majors 테이블에 29,498개 행을 모두 INSERT 해라. 4년제 대학만 필터링하지 말고 전체를 넣어라 (전문대학 포함). 필터링은 조회 시점에 한다.
+3. cached_majors와 연결
+cached_majors의 전공명과 university_majors의 학과명을 매칭하여, 전공 상세 페이지에서 "이 전공을 제공하는 대학 목록"을 표시할 수 있도록 해라:
+
+매칭 방식: cached_majors.name과 university_majors.major_name이 동일하거나 포함 관계인 경우
+예: cached_majors에 "간호학"이 있으면, university_majors에서 학과명이 "간호학과", "간호학전공" 등을 매칭
+매칭 결과를 전공 상세 페이지에 표시:
+
+간호학
+
+🏫 개설 대학 (42개교)
+  서울대학교 (국립, 서울)
+  연세대학교 (사립, 서울)
+  고려대학교 (사립, 서울)
+  ...
+  [더보기]
+
+지역별 필터를 제공해라 (서울, 경기, 부산 등)
+
+4. universities 테이블과도 연결
+university_majors.university_name과 기존 universities 테이블(489개)의 학교명을 매칭해라. 매칭되는 대학은 클릭 시 대학 상세 페이지로 이동할 수 있게 링크를 걸어라.
+⚠️ 주의:
+
+엑셀 데이터를 있는 그대로 임포트해라. 값을 변경하거나 보완하지 마라.
+매칭이 안 되는 전공/대학은 링크 없이 텍스트로만 표시해라.
+LLM으로 매칭을 추측하지 마라. 문자열 매칭만 사용해라.
+
+구현 체크리스트:
+
+ university_majors 테이블 생성
+ 29,498개 행 임포트
+ cached_majors와 학과명 매칭 로직 구현
+ 전공 상세 페이지에 "개설 대학" 목록 표시
+ 지역별 필터 추가
+ universities 테이블과 대학명 매칭 → 대학 상세 링크
+ 임포트 후 총 행 수, 매칭된 전공 수, 매칭된 대학 수 보고
