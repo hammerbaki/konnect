@@ -30,6 +30,7 @@ import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, sql as sqlExpr } from "drizzle-orm";
 import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap } from "@shared/schema";
 import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData } from "./dataSync";
+import { syncUniversityApi } from "./universityApiSync";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -6287,6 +6288,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ data: rows, total: rows.length });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/admin/sync-university-api — 공공데이터포털 대학 정보 API 동기화 (admin)
+  app.post('/api/admin/sync-university-api', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const userRow = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+      if (userRow[0]?.role !== 'admin') return res.status(403).json({ message: '권한 없음' });
+
+      const result = await syncUniversityApi();
+      res.json({
+        success: true,
+        api1: {
+          matched: result.api1Matched,
+          unmatchedCount: result.api1Unmatched.length,
+          unmatched: result.api1Unmatched,
+        },
+        api2: {
+          matched: result.api2Matched,
+          unmatchedCount: result.api2Unmatched.length,
+          unmatched: result.api2Unmatched,
+        },
+        errors: result.errors,
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message, errors: [error.message] });
     }
   });
 
