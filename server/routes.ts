@@ -5953,6 +5953,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           avgTuition: universityInfo.avgTuition,
           dormitoryRate: universityInfo.dormitoryRate,
           scholarshipPerStudent: universityInfo.scholarshipPerStudent,
+          studentCount: universityInfo.studentCount,
+          admissionQuota: universityInfo.admissionQuota,
         }).from(universityInfo)
           .where(whereClause)
           .orderBy(orderByClause)

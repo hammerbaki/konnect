@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, ChevronDown, ChevronUp, GraduationCap, Briefcase, Building2,
-  TrendingUp, TrendingDown, Minus, BookOpen, Award, MapPin, DollarSign,
-  Database, Wifi, Sparkles, Home
+  TrendingUp, TrendingDown, Minus, BookOpen, Award, MapPin, Banknote,
+  Database, Wifi, Sparkles, Home, Users, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight
 } from "lucide-react";
 
 // ---- Types ----
@@ -68,6 +68,8 @@ interface University {
   avgTuition: number | null;
   dormitoryRate: number | null;
   scholarshipPerStudent: number | null;
+  studentCount: number | null;
+  admissionQuota: number | null;
 }
 
 interface ApiResponse<T> {
@@ -349,7 +351,7 @@ function JobCard({ job }: { job: Job }) {
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               {job.salary && (
                 <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                  <DollarSign className="w-3.5 h-3.5" />
+                  <Banknote className="w-3.5 h-3.5" />
                   월평균 {Math.round(job.salary / 10000).toLocaleString()}만원
                 </span>
               )}
@@ -397,9 +399,31 @@ function JobCard({ job }: { job: Job }) {
   );
 }
 
+// ---- Stat Row helper for university card ----
+function StatRow({ icon, label, value, color = "text-ink" }: {
+  icon: ReactNode;
+  label: string;
+  value: ReactNode;
+  color?: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      <div className="flex-shrink-0">{icon}</div>
+      <div className="min-w-0">
+        <span className="text-xs text-gray-500">{label} </span>
+        <span className={`text-xs font-bold ${color}`}>{value}</span>
+      </div>
+    </div>
+  );
+}
+
 // ---- University Card (2-column grid style) ----
 function UniversityCard({ univ }: { univ: University }) {
-  const tuitionWan = univ.avgTuition ? Math.round(univ.avgTuition / 10) : null;
+  const tuitionWan = univ.avgTuition && univ.avgTuition > 0 ? Math.round(univ.avgTuition / 10) : null;
+  const scholarshipWan = univ.scholarshipPerStudent && univ.scholarshipPerStudent > 0
+    ? Math.round(univ.scholarshipPerStudent / 10000)
+    : null;
+  const none = <span className="text-gray-400 font-normal">없음</span>;
 
   return (
     <Card className="border border-gray-100 hover:shadow-md transition-shadow" data-testid={`card-univ-${univ.id}`}>
@@ -428,44 +452,45 @@ function UniversityCard({ univ }: { univ: University }) {
           </div>
         </div>
 
-        {/* Stats grid */}
+        {/* Stats grid — always 3 rows × 2 cols, shows 없음 when missing */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-          {univ.competitionRate != null && univ.competitionRate > 0 && (
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-3.5 h-3.5 text-coral flex-shrink-0" />
-              <div>
-                <span className="text-xs text-gray-500">경쟁률 </span>
-                <span className="text-xs font-bold text-ink">{univ.competitionRate.toFixed(1)}:1</span>
-              </div>
-            </div>
-          )}
-          {univ.employmentRate != null && univ.employmentRate > 0 && (
-            <div className="flex items-center gap-2">
-              <Briefcase className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-              <div>
-                <span className="text-xs text-gray-500">취업률 </span>
-                <span className="text-xs font-bold text-ink">{univ.employmentRate.toFixed(1)}%</span>
-              </div>
-            </div>
-          )}
-          {tuitionWan != null && tuitionWan > 0 && (
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-3.5 h-3.5 text-gold flex-shrink-0" />
-              <div>
-                <span className="text-xs text-gray-500">등록금 </span>
-                <span className="text-xs font-bold text-ink">{tuitionWan.toLocaleString()}만원</span>
-              </div>
-            </div>
-          )}
-          {univ.dormitoryRate != null && univ.dormitoryRate > 0 && (
-            <div className="flex items-center gap-2">
-              <Home className="w-3.5 h-3.5 text-dream flex-shrink-0" />
-              <div>
-                <span className="text-xs text-gray-500">기숙사 </span>
-                <span className="text-xs font-bold text-ink">{univ.dormitoryRate.toFixed(1)}%</span>
-              </div>
-            </div>
-          )}
+          <StatRow
+            icon={<TrendingUp className="w-3.5 h-3.5 text-coral" />}
+            label="경쟁률"
+            value={univ.competitionRate && univ.competitionRate > 0
+              ? `${univ.competitionRate.toFixed(1)}:1` : none}
+          />
+          <StatRow
+            icon={<Briefcase className="w-3.5 h-3.5 text-emerald-500" />}
+            label="취업률"
+            value={univ.employmentRate && univ.employmentRate > 0
+              ? `${univ.employmentRate.toFixed(1)}%` : none}
+            color="text-emerald-600"
+          />
+          <StatRow
+            icon={<Banknote className="w-3.5 h-3.5 text-gold" />}
+            label="등록금"
+            value={tuitionWan ? `${tuitionWan.toLocaleString()}만원` : none}
+          />
+          <StatRow
+            icon={<Home className="w-3.5 h-3.5 text-dream" />}
+            label="기숙사 수용률"
+            value={univ.dormitoryRate && univ.dormitoryRate > 0
+              ? `${univ.dormitoryRate.toFixed(1)}%` : none}
+            color="text-dream"
+          />
+          <StatRow
+            icon={<Users className="w-3.5 h-3.5 text-blue-400" />}
+            label="재학생"
+            value={univ.studentCount && univ.studentCount > 0
+              ? `${univ.studentCount.toLocaleString()}명` : none}
+          />
+          <StatRow
+            icon={<Award className="w-3.5 h-3.5 text-amber-500" />}
+            label="1인당 장학금"
+            value={scholarshipWan ? `${scholarshipWan.toLocaleString()}만원` : none}
+            color="text-amber-600"
+          />
         </div>
       </CardContent>
     </Card>
@@ -476,14 +501,80 @@ function UniversityCard({ univ }: { univ: University }) {
 function Pagination({ page, total, limit, onPage }: { page: number; total: number; limit: number; onPage: (p: number) => void }) {
   const totalPages = Math.ceil(total / limit);
   if (totalPages <= 1) return null;
+
+  // Build visible page numbers: show up to 10 around current page
+  const range = 5;
+  let start = Math.max(1, page - range);
+  let end = Math.min(totalPages, page + range);
+  if (end - start < 9) {
+    if (start === 1) end = Math.min(totalPages, start + 9);
+    else start = Math.max(1, end - 9);
+  }
+  const pages: number[] = [];
+  for (let i = start; i <= end; i++) pages.push(i);
+
   return (
-    <div className="flex items-center justify-center gap-2 mt-6">
-      <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPage(page - 1)} data-testid="btn-prev-page">
-        이전
+    <div className="flex items-center justify-center gap-1 mt-6 flex-wrap">
+      {/* 첫 페이지 */}
+      <Button
+        variant="outline" size="icon"
+        className="w-7 h-7"
+        disabled={page <= 1}
+        onClick={() => onPage(1)}
+        data-testid="btn-first-page"
+        title="첫 페이지"
+      >
+        <ChevronsLeft className="w-3.5 h-3.5" />
       </Button>
-      <span className="text-sm text-gray-600">{page} / {totalPages}</span>
-      <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => onPage(page + 1)} data-testid="btn-next-page">
-        다음
+      {/* 이전 */}
+      <Button
+        variant="outline" size="icon"
+        className="w-7 h-7"
+        disabled={page <= 1}
+        onClick={() => onPage(page - 1)}
+        data-testid="btn-prev-page"
+        title="이전"
+      >
+        <ChevronLeft className="w-3.5 h-3.5" />
+      </Button>
+
+      {/* Page numbers */}
+      {start > 1 && <span className="text-xs text-gray-400 px-1">…</span>}
+      {pages.map(p => (
+        <Button
+          key={p}
+          variant={p === page ? "default" : "outline"}
+          size="icon"
+          className={`w-7 h-7 text-xs ${p === page ? "bg-dream text-white hover:bg-dream/90" : ""}`}
+          onClick={() => onPage(p)}
+          data-testid={`btn-page-${p}`}
+        >
+          {p}
+        </Button>
+      ))}
+      {end < totalPages && <span className="text-xs text-gray-400 px-1">…</span>}
+
+      {/* 다음 */}
+      <Button
+        variant="outline" size="icon"
+        className="w-7 h-7"
+        disabled={page >= totalPages}
+        onClick={() => onPage(page + 1)}
+        data-testid="btn-next-page"
+        title="다음"
+      >
+        <ChevronRight className="w-3.5 h-3.5" />
+      </Button>
+      {/* 마지막 페이지 */}
+      <Button
+        variant="outline" size="icon"
+        className="w-7 h-7"
+        disabled={page >= totalPages}
+        onClick={() => onPage(totalPages)}
+        data-testid="btn-last-page"
+        title="마지막 페이지"
+      >
+        <ChevronsRight className="w-3.5 h-3.5" />
       </Button>
     </div>
   );
@@ -583,7 +674,7 @@ export default function ExploreDB() {
   };
 
   const majorTotal = 235;
-  const jobTotal = 552;
+  const jobTotal = 443;
   const univTotal = univsQuery.data?.total ?? 0;
 
   return (
@@ -595,7 +686,7 @@ export default function ExploreDB() {
             <BookOpen className="w-6 h-6 text-dream" />
             전공/진로 탐색
           </h1>
-          <p className="text-sm text-gray-500 mt-1">전공·직업·대학 정보를 탐색하고 나에게 맞는 진로를 찾아보세요</p>
+          <p className="text-sm text-gray-500 mt-1">대학·전공·직업 정보를 탐색하고 나에게 맞는 진로를 찾아보세요</p>
         </div>
         <div className="flex flex-wrap gap-2 items-center" data-testid="api-status-bar">
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full">
@@ -605,7 +696,7 @@ export default function ExploreDB() {
           </span>
           <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-dream/8 text-dream border border-dream/20 px-3 py-1.5 rounded-full">
             <Database className="w-3 h-3" />
-            전공 {majorTotal} · 직업 {jobTotal} · 대학 {univsQuery.data?.total ?? 489}
+            대학 {univsQuery.data?.total ?? 489} · 전공 {majorTotal} · 직업 {jobTotal}
           </span>
         </div>
       </div>
