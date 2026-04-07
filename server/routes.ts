@@ -5916,21 +5916,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/explore/universities
   app.get('/api/explore/universities', async (req, res) => {
     try {
-      const { search = '', region = '', page = '1', limit = '20' } = req.query as Record<string, string>;
+      const { search = '', region = '', sort = 'competition', page = '1', limit = '20' } = req.query as Record<string, string>;
       const pageNum = Math.max(1, parseInt(page));
       const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
 
-      const conditions = [];
+      const conditions: any[] = [];
       if (search) conditions.push(ilike(universityInfo.univName, `%${search}%`));
       if (region) conditions.push(eq(universityInfo.region, region));
+      // Filter out rows where all key numeric columns are 0 (incomplete data)
+      conditions.push(
+        sqlExpr`(${universityInfo.competitionRate} > 0 OR ${universityInfo.employmentRate} > 0 OR ${universityInfo.avgTuition} > 0)`
+      );
 
-      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+      const whereClause = and(...conditions);
+
+      let orderByClause;
+      if (sort === 'employment') orderByClause = desc(universityInfo.employmentRate);
+      else if (sort === 'tuition_asc') orderByClause = asc(universityInfo.avgTuition);
+      else if (sort === 'tuition_desc') orderByClause = desc(universityInfo.avgTuition);
+      else if (sort === 'name') orderByClause = asc(universityInfo.univName);
+      else orderByClause = desc(universityInfo.competitionRate); // default: 경쟁률 높은 순
 
       const [rows, totalRows] = await Promise.all([
-        db.select().from(universityInfo)
+        db.select({
+          id: universityInfo.id,
+          univName: universityInfo.univName,
+          campusType: universityInfo.campusType,
+          schoolType: universityInfo.schoolType,
+          univType: universityInfo.univType,
+          foundationType: universityInfo.foundationType,
+          region: universityInfo.region,
+          competitionRate: universityInfo.competitionRate,
+          employmentRate: universityInfo.employmentRate,
+          avgTuition: universityInfo.avgTuition,
+          dormitoryRate: universityInfo.dormitoryRate,
+          scholarshipPerStudent: universityInfo.scholarshipPerStudent,
+        }).from(universityInfo)
           .where(whereClause)
-          .orderBy(asc(universityInfo.univName))
+          .orderBy(orderByClause)
           .limit(limitNum).offset(offset),
         db.select({ cnt: count() }).from(universityInfo).where(whereClause),
       ]);

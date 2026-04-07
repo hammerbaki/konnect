@@ -116,7 +116,7 @@ export function Sidebar() {
 
   // 핵심 신규 기능 (최상단 고정)
   const featuredNavItems = [
-    { href: "/explore", slug: "/explore", icon: BookOpen, label: "학과·직업·대학 탐색" },
+    { href: "/explore", slug: "/explore", icon: BookOpen, label: "학과/직업 탐색" },
     { href: "/aptitude", slug: "/aptitude", icon: Brain, label: "전공 적성 분석" },
   ];
 

@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, ChevronDown, ChevronUp, GraduationCap, Briefcase, Building2,
   TrendingUp, TrendingDown, Minus, BookOpen, Award, MapPin, DollarSign,
-  Database, Wifi
+  Database, Wifi, Sparkles, Home
 } from "lucide-react";
 
 // ---- Types ----
@@ -57,12 +58,15 @@ interface Job {
 interface University {
   id: number;
   univName: string;
-  region: string | null;
+  campusType: string | null;
+  schoolType: string | null;
   univType: string | null;
   foundationType: string | null;
+  region: string | null;
   competitionRate: number | null;
   employmentRate: number | null;
   avgTuition: number | null;
+  dormitoryRate: number | null;
   scholarshipPerStudent: number | null;
 }
 
@@ -77,6 +81,14 @@ interface Categories {
   majorCategories: string[];
   jobFields: string[];
   regions: string[];
+}
+
+interface AptitudeResult {
+  id: number;
+  summary: string | null;
+  recommendedJobs: Array<{ name: string; reason: string }>;
+  recommendedMajors: Array<{ name: string; reason: string }>;
+  createdAt: string;
 }
 
 // ---- Helpers ----
@@ -102,6 +114,113 @@ function GrowthBadge({ growth }: { growth: string | null }) {
 function truncate(str: string | null, len = 80) {
   if (!str) return "설명 없음";
   return str.length > len ? str.slice(0, len) + "…" : str;
+}
+
+// ---- AI Recommendation Banner ----
+function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefined; isLoading: boolean }) {
+  const [, navigate] = useLocation();
+  const [expanded, setExpanded] = useState(false);
+
+  const majors = result?.recommendedMajors?.slice(0, 3) ?? [];
+  const jobs = result?.recommendedJobs?.slice(0, 3) ?? [];
+
+  return (
+    <div className="space-y-3">
+      {/* Banner row */}
+      <div
+        className="flex items-center justify-between bg-dream/6 border border-dream/15 rounded-2xl px-5 py-4 cursor-pointer hover:bg-dream/10 transition-colors"
+        onClick={() => result ? setExpanded(e => !e) : navigate("/aptitude")}
+        data-testid="ai-recommend-banner"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-dream/10 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Sparkles className="w-4.5 h-4.5 text-dream" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-ink">AI 맞춤 추천</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {result
+                ? "나의 적성 분석 결과를 기반으로 추천 전공과 진로를 제안받으세요"
+                : "나의 적성 분석 결과를 기반으로 추천 전공과 진로를 제안받으세요"}
+            </p>
+          </div>
+        </div>
+        {result ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-dream/30 text-dream hover:bg-dream/10 shrink-0"
+            data-testid="btn-toggle-ai-result"
+          >
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+            {expanded ? "접기" : "결과 보기"}
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            className="bg-dream hover:bg-dream/90 text-white shrink-0"
+            onClick={(e) => { e.stopPropagation(); navigate("/aptitude"); }}
+            data-testid="btn-go-aptitude"
+          >
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+            추천받기
+          </Button>
+        )}
+      </div>
+
+      {/* Expanded AI result card */}
+      {result && expanded && (
+        <Card className="border border-dream/15 bg-white shadow-sm">
+          <CardContent className="p-5 space-y-4" data-testid="ai-result-card">
+            <h3 className="text-sm font-semibold text-ink">AI 맞춤 추천 결과</h3>
+            {result.summary && (
+              <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-xl p-3">
+                {result.summary}
+              </p>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {majors.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                    <GraduationCap className="w-3.5 h-3.5 text-dream" /> 추천 전공
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {majors.map((m, i) => (
+                      <span
+                        key={i}
+                        className="text-xs bg-dream/10 text-dream rounded-full px-3 py-1 font-medium"
+                        data-testid={`badge-recommended-major-${i}`}
+                      >
+                        {typeof m === "string" ? m : m.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {jobs.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5 text-coral" /> 추천 직업
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {jobs.map((j, i) => (
+                      <span
+                        key={i}
+                        className="text-xs bg-coral/10 text-coral rounded-full px-3 py-1 font-medium"
+                        data-testid={`badge-recommended-job-${i}`}
+                      >
+                        {typeof j === "string" ? j : j.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
 }
 
 // ---- Major Card ----
@@ -278,63 +397,73 @@ function JobCard({ job }: { job: Job }) {
   );
 }
 
-// ---- University Card ----
+// ---- University Card (2-column grid style) ----
 function UniversityCard({ univ }: { univ: University }) {
   const tuitionWan = univ.avgTuition ? Math.round(univ.avgTuition / 10) : null;
-  const scholarshipWan = univ.scholarshipPerStudent ? Math.round(univ.scholarshipPerStudent / 10000) : null;
 
   return (
     <Card className="border border-gray-100 hover:shadow-md transition-shadow" data-testid={`card-univ-${univ.id}`}>
       <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-2">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-2 mb-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className="font-semibold text-ink text-sm" data-testid={`text-univ-name-${univ.id}`}>
-                {univ.univName}
-              </h3>
-              {univ.foundationType && (
-                <Badge variant="secondary" className="text-xs px-2 py-0 h-5 bg-gray-100 text-gray-600">
-                  {univ.foundationType}
-                </Badge>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-500">
-              {univ.region && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" /> {univ.region}
-                </span>
-              )}
-              {univ.univType && (
-                <span className="flex items-center gap-1">
-                  <Building2 className="w-3 h-3" /> {univ.univType}
-                </span>
-              )}
-            </div>
+            <h3 className="font-semibold text-ink text-sm leading-tight" data-testid={`text-univ-name-${univ.id}`}>
+              {univ.univName}
+            </h3>
+            {univ.campusType && univ.campusType !== "본교" && (
+              <p className="text-xs text-gray-400 mt-0.5">{univ.campusType}</p>
+            )}
+          </div>
+          <div className="flex gap-1.5 flex-shrink-0 flex-wrap justify-end">
+            {univ.region && (
+              <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                <MapPin className="w-2.5 h-2.5" /> {univ.region}
+              </span>
+            )}
+            {univ.foundationType && (
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                {univ.foundationType}
+              </span>
+            )}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 mt-3">
-          {univ.competitionRate != null && (
-            <div className="bg-dream/5 rounded-lg p-2 text-center">
-              <p className="text-xs text-gray-500">경쟁률</p>
-              <p className="text-sm font-semibold text-dream">{univ.competitionRate.toFixed(1)}:1</p>
+
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          {univ.competitionRate != null && univ.competitionRate > 0 && (
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-3.5 h-3.5 text-coral flex-shrink-0" />
+              <div>
+                <span className="text-xs text-gray-500">경쟁률 </span>
+                <span className="text-xs font-bold text-ink">{univ.competitionRate.toFixed(1)}:1</span>
+              </div>
             </div>
           )}
-          {univ.employmentRate != null && (
-            <div className="bg-coral/5 rounded-lg p-2 text-center">
-              <p className="text-xs text-gray-500">취업률</p>
-              <p className="text-sm font-semibold text-coral">{univ.employmentRate.toFixed(1)}%</p>
+          {univ.employmentRate != null && univ.employmentRate > 0 && (
+            <div className="flex items-center gap-2">
+              <Briefcase className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+              <div>
+                <span className="text-xs text-gray-500">취업률 </span>
+                <span className="text-xs font-bold text-ink">{univ.employmentRate.toFixed(1)}%</span>
+              </div>
             </div>
           )}
-          {tuitionWan != null && (
-            <div className="bg-gold/5 rounded-lg p-2 text-center">
-              <p className="text-xs text-gray-500">평균 등록금</p>
-              <p className="text-sm font-semibold text-gold">{tuitionWan.toLocaleString()}만원</p>
+          {tuitionWan != null && tuitionWan > 0 && (
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+              <div>
+                <span className="text-xs text-gray-500">등록금 </span>
+                <span className="text-xs font-bold text-ink">{tuitionWan.toLocaleString()}만원</span>
+              </div>
             </div>
           )}
-          {scholarshipWan != null && (
-            <div className="bg-green-50 rounded-lg p-2 text-center">
-              <p className="text-xs text-gray-500">1인당 장학금</p>
-              <p className="text-sm font-semibold text-green-600">{scholarshipWan.toLocaleString()}만원</p>
+          {univ.dormitoryRate != null && univ.dormitoryRate > 0 && (
+            <div className="flex items-center gap-2">
+              <Home className="w-3.5 h-3.5 text-dream flex-shrink-0" />
+              <div>
+                <span className="text-xs text-gray-500">기숙사 </span>
+                <span className="text-xs font-bold text-ink">{univ.dormitoryRate.toFixed(1)}%</span>
+              </div>
             </div>
           )}
         </div>
@@ -360,16 +489,21 @@ function Pagination({ page, total, limit, onPage }: { page: number; total: numbe
   );
 }
 
-// ---- Skeleton List ----
-function SkeletonList() {
+// ---- Skeleton Grid ----
+function SkeletonGrid({ cols = 2 }: { cols?: number }) {
   return (
-    <div className="space-y-3">
+    <div className={`grid gap-3 ${cols === 2 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
       {Array.from({ length: 6 }).map((_, i) => (
         <Card key={i} className="border border-gray-100">
           <CardContent className="p-4">
-            <Skeleton className="h-4 w-1/3 mb-2" />
-            <Skeleton className="h-3 w-full mb-1" />
-            <Skeleton className="h-3 w-2/3" />
+            <Skeleton className="h-4 w-2/3 mb-2" />
+            <Skeleton className="h-3 w-1/3 mb-3" />
+            <div className="grid grid-cols-2 gap-2">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-full" />
+            </div>
           </CardContent>
         </Card>
       ))}
@@ -379,17 +513,34 @@ function SkeletonList() {
 
 // ---- Main Page ----
 export default function ExploreDB() {
-  const [tab, setTab] = useState<"majors" | "jobs" | "universities">("majors");
+  const [tab, setTab] = useState<"universities" | "majors" | "jobs">("universities");
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [category, setCategory] = useState("all");
   const [field, setField] = useState("all");
   const [region, setRegion] = useState("all");
+  const [sort, setSort] = useState("competition");
   const [page, setPage] = useState(1);
 
   const { data: categories } = useQuery<Categories>({
     queryKey: ["/api/explore/categories"],
     staleTime: 1000 * 60 * 10,
+  });
+
+  const { data: latestAptitude, isLoading: aptitudeLoading } = useQuery<AptitudeResult>({
+    queryKey: ["/api/aptitude/latest"],
+    retry: false,
+  });
+
+  const univsQuery = useQuery<ApiResponse<University>>({
+    queryKey: ["/api/explore/universities", search, region, sort, page],
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(page), limit: "20", sort });
+      if (search) params.set("search", search);
+      if (region && region !== "all") params.set("region", region);
+      return fetch(`/api/explore/universities?${params}`).then(r => r.json());
+    },
+    enabled: tab === "universities",
   });
 
   const majorsQuery = useQuery<ApiResponse<Major>>({
@@ -414,17 +565,6 @@ export default function ExploreDB() {
     enabled: tab === "jobs",
   });
 
-  const univsQuery = useQuery<ApiResponse<University>>({
-    queryKey: ["/api/explore/universities", search, region, page],
-    queryFn: () => {
-      const params = new URLSearchParams({ page: String(page), limit: "20" });
-      if (search) params.set("search", search);
-      if (region && region !== "all") params.set("region", region);
-      return fetch(`/api/explore/universities?${params}`).then(r => r.json());
-    },
-    enabled: tab === "universities",
-  });
-
   const handleSearch = useCallback(() => {
     setSearch(searchInput);
     setPage(1);
@@ -442,14 +582,21 @@ export default function ExploreDB() {
     setPage(1);
   };
 
+  const majorTotal = 235;
+  const jobTotal = 552;
+  const univTotal = univsQuery.data?.total ?? 0;
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+      {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">학과 · 직업 · 대학 탐색</h1>
-          <p className="text-sm text-gray-500 mt-1">관심 분야를 검색하고 진로를 설계해보세요.</p>
+          <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
+            <BookOpen className="w-6 h-6 text-dream" />
+            전공/진로 탐색
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">전공·직업·대학 정보를 탐색하고 나에게 맞는 진로를 찾아보세요</p>
         </div>
-        {/* API 연동 상태 배지 */}
         <div className="flex flex-wrap gap-2 items-center" data-testid="api-status-bar">
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full">
             <Wifi className="w-3 h-3" />
@@ -458,47 +605,122 @@ export default function ExploreDB() {
           </span>
           <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-dream/8 text-dream border border-dream/20 px-3 py-1.5 rounded-full">
             <Database className="w-3 h-3" />
-            학과 235 · 직업 552 · 대학 489
+            전공 {majorTotal} · 직업 {jobTotal} · 대학 {univsQuery.data?.total ?? 489}
           </span>
         </div>
       </div>
 
+      {/* AI Recommendation Banner */}
+      <AiRecommendBanner result={latestAptitude ?? null} isLoading={aptitudeLoading} />
+
+      {/* Tabs */}
       <Tabs value={tab} onValueChange={handleTabChange}>
         <TabsList className="bg-gray-100 p-1 rounded-xl h-auto" data-testid="tabs-explore">
-          <TabsTrigger value="majors" className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-dream data-[state=active]:text-white" data-testid="tab-majors">
-            <GraduationCap className="w-4 h-4" /> 학과
+          <TabsTrigger
+            value="universities"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-dream data-[state=active]:text-white"
+            data-testid="tab-universities"
+          >
+            <Building2 className="w-4 h-4" /> 대학 정보
           </TabsTrigger>
-          <TabsTrigger value="jobs" className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-coral data-[state=active]:text-white" data-testid="tab-jobs">
-            <Briefcase className="w-4 h-4" /> 직업
+          <TabsTrigger
+            value="majors"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-dream data-[state=active]:text-white"
+            data-testid="tab-majors"
+          >
+            <GraduationCap className="w-4 h-4" /> 전공 <span className="text-xs opacity-70">({majorTotal})</span>
           </TabsTrigger>
-          <TabsTrigger value="universities" className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-gold data-[state=active]:text-white" data-testid="tab-universities">
-            <Building2 className="w-4 h-4" /> 대학
+          <TabsTrigger
+            value="jobs"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-coral data-[state=active]:text-white"
+            data-testid="tab-jobs"
+          >
+            <Briefcase className="w-4 h-4" /> 직업 <span className="text-xs opacity-70">({jobTotal})</span>
           </TabsTrigger>
         </TabsList>
 
-        {/* Search + Filter bar */}
-        <div className="flex gap-2 mt-4">
-          <div className="flex-1 flex gap-2">
+        {/* ===== 대학 정보 탭 ===== */}
+        <TabsContent value="universities" className="mt-4 space-y-4">
+          {/* Search + Filter row */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                data-testid="input-search"
-                className="pl-9 pr-4"
-                placeholder={
-                  tab === "majors" ? "학과명 검색..." :
-                  tab === "jobs" ? "직업명 검색..." : "대학명 검색..."
-                }
+                data-testid="input-search-univ"
+                className="pl-9"
+                placeholder="대학명 검색..."
                 value={searchInput}
                 onChange={e => setSearchInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSearch()}
               />
             </div>
-            <Button onClick={handleSearch} className="bg-dream hover:bg-dream/90 text-white" data-testid="btn-search">
+            <Select value={region} onValueChange={v => handleFilter(v, setRegion)} data-testid="select-region">
+              <SelectTrigger className="w-28" data-testid="select-trigger-region">
+                <SelectValue placeholder="전체" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체</SelectItem>
+                {categories?.regions.map(r => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sort} onValueChange={v => { setSort(v); setPage(1); }} data-testid="select-sort">
+              <SelectTrigger className="w-38" data-testid="select-trigger-sort">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="competition">경쟁률 높은 순</SelectItem>
+                <SelectItem value="employment">취업률 높은 순</SelectItem>
+                <SelectItem value="tuition_asc">등록금 낮은 순</SelectItem>
+                <SelectItem value="tuition_desc">등록금 높은 순</SelectItem>
+                <SelectItem value="name">이름 순</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={handleSearch} className="bg-dream hover:bg-dream/90 text-white" data-testid="btn-search-univ">
               검색
             </Button>
           </div>
 
-          {tab === "majors" && (
+          {/* Count */}
+          {!univsQuery.isLoading && (
+            <p className="text-xs text-gray-400">총 {univsQuery.data?.total ?? 0}개 대학</p>
+          )}
+
+          {/* Grid */}
+          {univsQuery.isLoading ? (
+            <SkeletonGrid cols={2} />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(univsQuery.data?.data ?? []).map(u => (
+                  <UniversityCard key={u.id} univ={u} />
+                ))}
+              </div>
+              <Pagination
+                page={page}
+                total={univsQuery.data?.total ?? 0}
+                limit={20}
+                onPage={setPage}
+              />
+            </>
+          )}
+        </TabsContent>
+
+        {/* ===== 전공 탭 ===== */}
+        <TabsContent value="majors" className="mt-4 space-y-4">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                data-testid="input-search-major"
+                className="pl-9"
+                placeholder="학과명 검색..."
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleSearch()}
+              />
+            </div>
             <Select value={category} onValueChange={v => handleFilter(v, setCategory)} data-testid="select-category">
               <SelectTrigger className="w-36" data-testid="select-trigger-category">
                 <SelectValue placeholder="계열 전체" />
@@ -510,9 +732,46 @@ export default function ExploreDB() {
                 ))}
               </SelectContent>
             </Select>
+            <Button onClick={handleSearch} className="bg-dream hover:bg-dream/90 text-white" data-testid="btn-search-major">
+              검색
+            </Button>
+          </div>
+          {!majorsQuery.isLoading && (
+            <p className="text-xs text-gray-400">총 {majorsQuery.data?.total ?? 0}개 학과</p>
           )}
+          {majorsQuery.isLoading ? (
+            <SkeletonGrid cols={1} />
+          ) : (
+            <>
+              <div className="space-y-3">
+                {(majorsQuery.data?.data ?? []).map(m => (
+                  <MajorCard key={m.id} major={m} />
+                ))}
+              </div>
+              <Pagination
+                page={page}
+                total={majorsQuery.data?.total ?? 0}
+                limit={20}
+                onPage={setPage}
+              />
+            </>
+          )}
+        </TabsContent>
 
-          {tab === "jobs" && (
+        {/* ===== 직업 탭 ===== */}
+        <TabsContent value="jobs" className="mt-4 space-y-4">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                data-testid="input-search-job"
+                className="pl-9"
+                placeholder="직업명 검색..."
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleSearch()}
+              />
+            </div>
             <Select value={field} onValueChange={v => handleFilter(v, setField)} data-testid="select-field">
               <SelectTrigger className="w-44" data-testid="select-trigger-field">
                 <SelectValue placeholder="직업 분야 전체" />
@@ -524,72 +783,25 @@ export default function ExploreDB() {
                 ))}
               </SelectContent>
             </Select>
+            <Button onClick={handleSearch} className="bg-dream hover:bg-dream/90 text-white" data-testid="btn-search-job">
+              검색
+            </Button>
+          </div>
+          {!jobsQuery.isLoading && (
+            <p className="text-xs text-gray-400">총 {jobsQuery.data?.total ?? 0}개 직업</p>
           )}
-
-          {tab === "universities" && (
-            <Select value={region} onValueChange={v => handleFilter(v, setRegion)} data-testid="select-region">
-              <SelectTrigger className="w-32" data-testid="select-trigger-region">
-                <SelectValue placeholder="지역 전체" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">지역 전체</SelectItem>
-                {categories?.regions.map(r => (
-                  <SelectItem key={r} value={r}>{r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-
-        {/* Majors Tab */}
-        <TabsContent value="majors" className="mt-4 space-y-3">
-          {majorsQuery.isLoading ? <SkeletonList /> : (
+          {jobsQuery.isLoading ? (
+            <SkeletonGrid cols={1} />
+          ) : (
             <>
-              <p className="text-xs text-gray-400">총 {majorsQuery.data?.total ?? 0}개 학과</p>
-              {(majorsQuery.data?.data ?? []).map(m => (
-                <MajorCard key={m.id} major={m} />
-              ))}
-              <Pagination
-                page={page}
-                total={majorsQuery.data?.total ?? 0}
-                limit={20}
-                onPage={setPage}
-              />
-            </>
-          )}
-        </TabsContent>
-
-        {/* Jobs Tab */}
-        <TabsContent value="jobs" className="mt-4 space-y-3">
-          {jobsQuery.isLoading ? <SkeletonList /> : (
-            <>
-              <p className="text-xs text-gray-400">총 {jobsQuery.data?.total ?? 0}개 직업</p>
-              {(jobsQuery.data?.data ?? []).map(j => (
-                <JobCard key={j.id} job={j} />
-              ))}
-              <Pagination
-                page={page}
-                total={jobsQuery.data?.total ?? 0}
-                limit={20}
-                onPage={setPage}
-              />
-            </>
-          )}
-        </TabsContent>
-
-        {/* Universities Tab */}
-        <TabsContent value="universities" className="mt-4 space-y-3">
-          {univsQuery.isLoading ? <SkeletonList /> : (
-            <>
-              <p className="text-xs text-gray-400">총 {univsQuery.data?.total ?? 0}개 대학</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(univsQuery.data?.data ?? []).map(u => (
-                  <UniversityCard key={u.id} univ={u} />
+              <div className="space-y-3">
+                {(jobsQuery.data?.data ?? []).map(j => (
+                  <JobCard key={j.id} job={j} />
                 ))}
               </div>
               <Pagination
                 page={page}
-                total={univsQuery.data?.total ?? 0}
+                total={jobsQuery.data?.total ?? 0}
                 limit={20}
                 onPage={setPage}
               />
