@@ -1208,3 +1208,74 @@ export interface GroupMemberWithUser extends GroupMember {
   analysisCount?: number;
   lastAnalyzedAt?: Date | null;
 }
+
+// ===== CACHED JOBS TABLE (직업 탐색 데이터) =====
+export const cachedJobs = pgTable("cached_jobs", {
+  id: integer("id").primaryKey(),
+  jobSeq: text("job_seq"),
+  jobName: text("job_name"),
+  field: text("field"),
+  description: text("description"),
+  relatedMajors: jsonb("related_majors").default([]),
+  salary: integer("salary"),
+  growth: text("growth"),
+  qualifications: jsonb("qualifications").default([]),
+  hollandCode: text("holland_code"),
+  syncedAt: timestamp("synced_at").defaultNow(),
+});
+
+export const insertCachedJobSchema = createInsertSchema(cachedJobs).omit({ id: true });
+export type InsertCachedJob = z.infer<typeof insertCachedJobSchema>;
+export type CachedJob = typeof cachedJobs.$inferSelect;
+
+// ===== CACHED MAJORS TABLE (학과 탐색 데이터) =====
+export const cachedMajors = pgTable("cached_majors", {
+  id: integer("id").primaryKey(),
+  majorSeq: text("major_seq"),
+  majorName: text("major_name"),
+  category: text("category"),
+  description: text("description"),
+  relatedJobs: jsonb("related_jobs").default([]),
+  relatedSubjects: text("related_subjects"),
+  universities: jsonb("universities"),
+  hollandCode: text("holland_code"),
+  demand: text("demand"),
+  syncedAt: timestamp("synced_at").defaultNow(),
+  dataSource: text("data_source"),
+  employmentRate: real("employment_rate"),
+  employmentRateMale: real("employment_rate_male"),
+  employmentRateFemale: real("employment_rate_female"),
+  avgSalaryDistribution: jsonb("avg_salary_distribution"),
+  jobSatisfaction: jsonb("job_satisfaction"),
+});
+
+export const insertCachedMajorSchema = createInsertSchema(cachedMajors).omit({ id: true });
+export type InsertCachedMajor = z.infer<typeof insertCachedMajorSchema>;
+export type CachedMajor = typeof cachedMajors.$inferSelect;
+
+// ===== UNIVERSITY INFO TABLE (대학 정보 데이터) =====
+export const universityInfo = pgTable("university_info", {
+  id: integer("id").primaryKey(),
+  univName: text("univ_name"),
+  campusType: text("campus_type"),
+  schoolType: text("school_type"),
+  univType: text("univ_type"),
+  foundationType: text("foundation_type"),
+  region: text("region"),
+  admissionQuota: integer("admission_quota"),
+  graduateCount: integer("graduate_count"),
+  studentCount: integer("student_count"),
+  competitionRate: real("competition_rate"),
+  admissionRate: real("admission_rate"),
+  employmentRate: real("employment_rate"),
+  foreignStudentCount: integer("foreign_student_count"),
+  scholarshipPerStudent: integer("scholarship_per_student"),
+  avgTuition: real("avg_tuition"),
+  educationCostPerStudent: integer("education_cost_per_student"),
+  dormitoryRate: real("dormitory_rate"),
+  syncedAt: timestamp("synced_at").defaultNow(),
+});
+
+export const insertUniversityInfoSchema = createInsertSchema(universityInfo).omit({ id: true });
+export type InsertUniversityInfo = z.infer<typeof insertUniversityInfoSchema>;
+export type UniversityInfo = typeof universityInfo.$inferSelect;
