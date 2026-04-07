@@ -303,7 +303,11 @@ function DemandBadge({ demand }: { demand: string | null }) {
 function MajorCard({ major }: { major: Major }) {
   const [showMore, setShowMore] = useState(false);
   const [showAllJobs, setShowAllJobs] = useState(false);
-  const [showAllUnivs, setShowAllUnivs] = useState(false);
+  const [univPage, setUnivPage] = useState(1);
+  const [univRegion, setUnivRegion] = useState<string>("전체");
+  const [univSort, setUnivSort] = useState<"경쟁률" | "취업률" | "이름">("경쟁률");
+
+  const UNIV_PER_PAGE = 6;
 
   const jobs: string[] = Array.isArray(major.relatedJobs) ? major.relatedJobs : [];
   const visibleJobs = showAllJobs ? jobs : jobs.slice(0, 5);
@@ -317,7 +321,27 @@ function MajorCard({ major }: { major: Major }) {
     staleTime: 1000 * 60 * 10,
   });
   const univs = univQuery.data?.data ?? [];
-  const visibleUnivs = showAllUnivs ? univs : univs.slice(0, 3);
+
+  // Unique regions for filter
+  const regions = ["전체", ...Array.from(new Set(univs.map(u => u.region ?? "기타").filter(Boolean)))
+    .sort((a, b) => {
+      const order = ["서울", "경기", "인천", "부산", "대전", "대구", "광주", "울산", "경북", "경남", "충북", "충남", "전북", "전남", "강원", "제주", "세종"];
+      const ai = order.indexOf(a), bi = order.indexOf(b);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    })
+  ];
+
+  // Filtered + sorted
+  const filteredUnivs = univs
+    .filter(u => univRegion === "전체" || u.region === univRegion)
+    .sort((a, b) => {
+      if (univSort === "경쟁률") return (b.competitionRate ?? 0) - (a.competitionRate ?? 0);
+      if (univSort === "취업률") return (b.employmentRate ?? 0) - (a.employmentRate ?? 0);
+      return (a.univName ?? "").localeCompare(b.univName ?? "", "ko");
+    });
+
+  const totalPages = Math.ceil(filteredUnivs.length / UNIV_PER_PAGE);
+  const visibleUnivs = filteredUnivs.slice(0, univPage * UNIV_PER_PAGE);
 
   const avgEmp = univs.length > 0
     ? (univs.reduce((s, u) => s + (u.employmentRate ?? 0), 0) / univs.length).toFixed(1)
@@ -384,10 +408,53 @@ function MajorCard({ major }: { major: Major }) {
 
         {/* ── 개설 대학 ── */}
         <div className="border-t border-gray-100 pt-3">
-          <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-            <Building2 className="w-3.5 h-3.5 text-dream" />
-            이 학과 개설 대학
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+              <Building2 className="w-3.5 h-3.5 text-dream" />
+              개설 대학
+              {univs.length > 0 && (
+                <span className="ml-1 text-dream font-bold">{univs.length}개</span>
+              )}
+            </p>
+            {univs.length > 0 && (
+              <div className="flex items-center gap-1">
+                {(["경쟁률", "취업률", "이름"] as const).map(s => (
+                  <button
+                    key={s}
+                    onClick={() => { setUnivSort(s); setUnivPage(1); }}
+                    className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
+                      univSort === s
+                        ? "bg-dream text-white border-dream"
+                        : "text-gray-400 border-gray-200 hover:border-dream hover:text-dream"
+                    }`}
+                    data-testid={`btn-sort-${s}-${major.id}`}
+                  >
+                    {s}순
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Region filter chips — show when ≥4 regions */}
+          {regions.length >= 5 && (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {regions.map(r => (
+                <button
+                  key={r}
+                  onClick={() => { setUnivRegion(r); setUnivPage(1); }}
+                  className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                    univRegion === r
+                      ? "bg-coral text-white border-coral"
+                      : "text-gray-400 border-gray-200 hover:border-coral hover:text-coral"
+                  }`}
+                  data-testid={`btn-region-${r}-${major.id}`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          )}
 
           {univQuery.isLoading ? (
             <div className="space-y-1">
@@ -396,16 +463,17 @@ function MajorCard({ major }: { major: Major }) {
               ))}
             </div>
           ) : univs.length === 0 ? (
-            <div className="flex flex-col gap-1 py-3 px-3 bg-gray-50 rounded-lg">
+            <div className="flex flex-col gap-1 py-2 px-3 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-2">
                 <Database className="w-4 h-4 text-gray-300" />
                 <span className="text-xs text-gray-500 font-medium">개설 대학 데이터 없음</span>
               </div>
               <p className="text-xs text-gray-400 pl-6">
-                전공별 개설 대학 데이터는 현재 구축 중입니다.<br />
-                각 대학의 모집 정원·경쟁률은 추후 업데이트될 예정입니다.
+                현재 데이터에서 이 학과명으로 개설된 대학을 찾을 수 없습니다.
               </p>
             </div>
+          ) : filteredUnivs.length === 0 ? (
+            <p className="text-xs text-gray-400 py-2">해당 지역에 개설된 대학이 없습니다.</p>
           ) : (
             <>
               <div className="space-y-1">
@@ -415,56 +483,59 @@ function MajorCard({ major }: { major: Major }) {
                     className="flex items-center justify-between text-xs py-1.5 border-b border-gray-50 last:border-0"
                     data-testid={`row-univ-${major.id}-${i}`}
                   >
-                    <span className="font-medium text-ink flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-gray-300" />
-                      {u.univName}
-                      {u.region && <span className="text-gray-400 font-normal">({u.region})</span>}
+                    <span className="font-medium text-ink flex items-center gap-1 min-w-0 truncate">
+                      <MapPin className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                      <span className="truncate">{u.univName}</span>
+                      {u.region && <span className="text-gray-400 font-normal flex-shrink-0">({u.region})</span>}
                     </span>
-                    <div className="flex items-center gap-3">
-                      {u.quota != null && (
-                        <span className="text-gray-500 flex items-center gap-0.5">
-                          <Users className="w-3 h-3" />
-                          정원 {u.quota}명
-                        </span>
-                      )}
-                      {u.competitionRate != null && (
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      {u.competitionRate != null && u.competitionRate > 0 && (
                         <span className="text-orange-500 font-medium flex items-center gap-0.5">
                           <TrendingUp className="w-3 h-3" />
                           {u.competitionRate.toFixed(1)}:1
                         </span>
                       )}
-                      {u.employmentRate != null && (
+                      {u.employmentRate != null && u.employmentRate > 0 && (
                         <span className="text-blue-600 font-medium flex items-center gap-0.5">
                           <Award className="w-3 h-3" />
-                          취업 {u.employmentRate.toFixed(0)}%
+                          {u.employmentRate.toFixed(0)}%
                         </span>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
-              {univs.length > 3 && (
+
+              {/* Load more */}
+              {univPage < totalPages && (
                 <button
-                  className="mt-1.5 text-xs text-dream hover:underline flex items-center gap-0.5"
-                  onClick={() => setShowAllUnivs(v => !v)}
-                  data-testid={`btn-toggle-univs-${major.id}`}
+                  className="mt-1.5 w-full text-xs text-dream hover:underline flex items-center justify-center gap-0.5 py-1"
+                  onClick={() => setUnivPage(p => p + 1)}
+                  data-testid={`btn-load-more-univs-${major.id}`}
                 >
-                  {showAllUnivs
-                    ? <><ChevronUp className="w-3 h-3" /> 접기</>
-                    : <><ChevronDown className="w-3 h-3" /> 외 {univs.length - 3}개 대학</>
-                  }
+                  <ChevronDown className="w-3 h-3" />
+                  더 보기 ({filteredUnivs.length - visibleUnivs.length}개 남음)
+                </button>
+              )}
+              {univPage > 1 && (
+                <button
+                  className="mt-0.5 w-full text-xs text-gray-400 hover:text-gray-600 flex items-center justify-center gap-0.5 py-0.5"
+                  onClick={() => setUnivPage(1)}
+                  data-testid={`btn-collapse-univs-${major.id}`}
+                >
+                  <ChevronUp className="w-3 h-3" /> 접기
                 </button>
               )}
 
               {/* Footer summary */}
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50 text-xs text-gray-500">
-                {avgEmp && (
+                {avgEmp && Number(avgEmp) > 0 && (
                   <span className="flex items-center gap-1">
                     <TrendingUp className="w-3 h-3 text-emerald-500" />
                     평균취업률 <strong className="text-emerald-600">{avgEmp}%</strong>
                   </span>
                 )}
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 ml-auto">
                   <GraduationCap className="w-3 h-3 text-dream" />
                   총 <strong className="text-dream">{univs.length}</strong>개 대학
                 </span>

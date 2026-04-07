@@ -6206,7 +6206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { majorName } = req.params;
       const rows = await db.select().from(majorUniversityMap)
         .where(eq(majorUniversityMap.majorName, decodeURIComponent(majorName)))
-        .orderBy(asc(majorUniversityMap.univName));
+        .orderBy(desc(majorUniversityMap.competitionRate), asc(majorUniversityMap.univName));
       res.json({ data: rows, total: rows.length });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
