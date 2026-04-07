@@ -132,10 +132,6 @@ function GrowthBadge({ growth }: { growth: string | null }) {
   );
 }
 
-function truncate(str: string | null, len = 80) {
-  if (!str) return "설명 없음";
-  return str.length > len ? str.slice(0, len) + "…" : str;
-}
 
 // ---- AI Recommendation Banner ----
 function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefined; isLoading: boolean }) {
@@ -722,6 +718,109 @@ function MajorCard({ major }: { major: Major }) {
   );
 }
 
+// ---- Major Detail Modal ----
+function MajorDetailModal({
+  majorName,
+  onClose,
+  onNavigate,
+}: {
+  majorName: string;
+  onClose: () => void;
+  onNavigate: (name: string) => void;
+}) {
+  const { data, isLoading } = useQuery<{ majors: Major[] }>({
+    queryKey: ['major-modal', majorName],
+    queryFn: () =>
+      fetch(`/api/explore/majors?search=${encodeURIComponent(majorName)}&limit=10`)
+        .then(r => r.json()),
+  });
+  const major = data?.majors?.find(m => m.majorName === majorName) ?? data?.majors?.[0] ?? null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+      data-testid="modal-major-detail"
+    >
+      <div className="absolute inset-0 bg-black/40" />
+      <div
+        className="relative bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[80vh] flex flex-col z-10"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* 헤더 */}
+        <div className="sticky top-0 bg-white border-b border-gray-100 p-4 flex items-center justify-between rounded-t-xl">
+          <div>
+            <h2 className="font-bold text-dream text-base">{majorName}</h2>
+            {major?.category && (
+              <span className="text-xs text-gray-400">{major.category}</span>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-lg leading-none px-1"
+            data-testid="btn-close-modal"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* 본문 */}
+        <div className="p-4 space-y-3 text-sm overflow-y-auto flex-1">
+          {isLoading ? (
+            <p className="text-gray-400 text-xs">불러오는 중...</p>
+          ) : major ? (
+            <>
+              {major.description && (
+                <p className="text-gray-600 leading-relaxed text-xs">{major.description}</p>
+              )}
+              {major.employmentRate != null && major.employmentRate > 0 && (
+                <div className="flex items-center gap-1.5 text-xs">
+                  <Award className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-gray-600">
+                    취업률: <span className="font-semibold text-emerald-600">{major.employmentRate.toFixed(1)}%</span>
+                    <span className="text-gray-400 ml-1">(커리어넷 기준)</span>
+                  </span>
+                </div>
+              )}
+              {Array.isArray(major.relatedJobs) && major.relatedJobs.length > 0 && (
+                <div>
+                  <p className="font-semibold text-gray-700 mb-1.5 flex items-center gap-1 text-xs">
+                    <Briefcase className="w-3.5 h-3.5 text-coral" /> 관련 직업
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {major.relatedJobs.map((j: string, i: number) => (
+                      <span key={i} className="bg-coral/10 text-coral rounded-full px-2 py-0.5 text-xs">{j}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-gray-400 text-xs">전공 정보를 찾을 수 없습니다.</p>
+          )}
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="p-4 border-t border-gray-100 flex gap-2 rounded-b-xl">
+          <button
+            data-testid="btn-modal-navigate"
+            onClick={() => { onNavigate(majorName); onClose(); }}
+            className="flex-1 text-xs bg-dream/10 text-dream rounded-lg py-2 hover:bg-dream/20 transition-colors font-medium"
+          >
+            전공 탭에서 자세히 보기 →
+          </button>
+          <button
+            onClick={onClose}
+            className="text-xs text-gray-400 hover:text-gray-600 px-3"
+          >
+            닫기
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---- Job Card ----
 function JobCard({
   job,
@@ -733,146 +832,130 @@ function JobCard({
   onMajorClick: (name: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [modalMajor, setModalMajor] = useState<string | null>(null);
   // DB에 있는 related_majors만 표시. LLM 생성 금지.
   const majors: string[] = Array.isArray(job.relatedMajors) ? job.relatedMajors : [];
-  const PREVIEW = 3;
-  const previewMajors = majors.slice(0, PREVIEW);
-  const extraCount = majors.length - PREVIEW;
+  const hasExtra = !!(job.growth || majors.length > 0);
 
   return (
-    <Card
-      className="hover:shadow-md transition-shadow border border-gray-100"
-      data-testid={`card-job-${job.id}`}
-    >
-      <CardContent className="p-4">
-        {/* ── 접힌 상태 (항상 표시) ── */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className="font-semibold text-ink text-sm" data-testid={`text-job-name-${job.id}`}>
-                {job.jobName}
-              </h3>
-              {job.field && (
-                <Badge variant="secondary" className="bg-coral/10 text-coral text-xs px-2 py-0 h-5">
-                  {job.field}
-                </Badge>
+    <>
+      {modalMajor && (
+        <MajorDetailModal
+          majorName={modalMajor}
+          onClose={() => setModalMajor(null)}
+          onNavigate={name => { onMajorClick(name); setModalMajor(null); }}
+        />
+      )}
+      <Card
+        className="hover:shadow-md transition-shadow border border-gray-100"
+        data-testid={`card-job-${job.id}`}
+      >
+        <CardContent className="p-4">
+          {/* ── 접힌 상태 (항상 표시) ── */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <h3 className="font-semibold text-ink text-sm" data-testid={`text-job-name-${job.id}`}>
+                  {job.jobName}
+                </h3>
+                {job.field && (
+                  <Badge variant="secondary" className="bg-coral/10 text-coral text-xs px-2 py-0 h-5">
+                    {job.field}
+                  </Badge>
+                )}
+              </div>
+              {/* 설명: 말줄임 없이 전체 표시 */}
+              {job.description && (
+                <p className="text-xs text-gray-500 leading-relaxed">{job.description}</p>
+              )}
+              {/* 급여 (데이터 있을 때만) */}
+              {job.salary != null && job.salary > 0 && (
+                <div className="flex items-center gap-1 mt-2">
+                  <Banknote className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                  <span className="text-xs font-medium text-emerald-600">
+                    연평균 {Math.round(job.salary / 10000).toLocaleString()}만원
+                  </span>
+                </div>
               )}
             </div>
-            <p className="text-xs text-gray-500 line-clamp-2">{truncate(job.description, 100)}</p>
-
-            {/* 급여 (데이터 있을 때만) */}
-            {job.salary != null && job.salary > 0 && (
-              <div className="flex items-center gap-1 mt-2">
-                <Banknote className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                <span className="text-xs font-medium text-emerald-600">
-                  연평균 {Math.round(job.salary / 10000).toLocaleString()}만원
-                </span>
-              </div>
-            )}
-
-            {/* 관련 전공 미리보기 (최대 3개 + +N) */}
-            {majors.length > 0 && (
-              <div className="flex items-center gap-1 mt-2 flex-wrap">
-                <GraduationCap className="w-3 h-3 text-dream flex-shrink-0" />
-                {previewMajors.map((m, i) => (
-                  <button
-                    key={i}
-                    data-testid={`btn-major-link-${job.id}-${i}`}
-                    onClick={e => { e.stopPropagation(); onMajorClick(m); }}
-                    className={`text-xs px-1.5 py-0.5 rounded-full transition-colors ${
-                      validMajors.has(m)
-                        ? "bg-dream/10 text-dream hover:bg-dream/20 cursor-pointer"
-                        : "bg-gray-100 text-gray-500 cursor-default"
-                    }`}
-                  >
-                    {m}
-                  </button>
-                ))}
-                {extraCount > 0 && (
-                  <span className="text-xs text-gray-400">(+{extraCount})</span>
-                )}
-              </div>
+            {/* 우측 상단 chevron (추가 정보 있을 때만) */}
+            {hasExtra && (
+              <button
+                className="flex-shrink-0 text-gray-400 mt-1 hover:text-gray-600"
+                onClick={() => setOpen(o => !o)}
+                data-testid={`btn-job-toggle-${job.id}`}
+              >
+                {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
             )}
           </div>
-          {/* 우측 상단 chevron */}
-          <button
-            className="flex-shrink-0 text-gray-400 mt-1 hover:text-gray-600"
-            onClick={() => setOpen(o => !o)}
-            data-testid={`btn-job-toggle-${job.id}`}
-          >
-            {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-        </div>
 
-        {/* ── 펼침 영역 (추가 정보만, 접힌 내용 반복 금지) ── */}
-        {open && (
-          <div className="mt-3 pt-3 border-t border-gray-100 space-y-3 text-xs">
-            {/* 수요전망 */}
-            {job.growth && (
-              <div className="flex items-center gap-1.5">
-                {job.growth.includes("증가") ? (
-                  <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                ) : job.growth.includes("감소") ? (
-                  <TrendingDown className="w-3.5 h-3.5 text-red-400" />
-                ) : (
-                  <Minus className="w-3.5 h-3.5 text-gray-400" />
-                )}
-                <span className="text-gray-600">
-                  <span className="font-medium">수요전망: </span>
-                  <span className={`font-semibold ${
-                    job.growth.includes("증가") ? "text-emerald-600" :
-                    job.growth.includes("감소") ? "text-red-500" : "text-gray-600"
-                  }`}>{job.growth}</span>
-                </span>
-              </div>
-            )}
+          {/* ── 펼침 영역 (수요전망 + 관련 전공만, 접힌 내용 반복 금지) ── */}
+          {open && (
+            <div className="mt-3 pt-3 border-t border-gray-100 space-y-3 text-xs">
+              {/* 수요전망: 전문 표시, 잘리지 않음 */}
+              {job.growth && (
+                <div className="flex items-start gap-1.5">
+                  {job.growth.includes("증가") ? (
+                    <TrendingUp className="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
+                  ) : job.growth.includes("감소") ? (
+                    <TrendingDown className="w-3.5 h-3.5 text-red-400 mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <Minus className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                  )}
+                  <div>
+                    <span className="font-medium text-gray-700">수요전망: </span>
+                    <span className="text-gray-600 leading-relaxed">{job.growth}</span>
+                  </div>
+                </div>
+              )}
 
-            {/* 관련 전공 전체 목록 (3개 초과 시에만 표시) */}
-            {majors.length > PREVIEW && (
-              <div>
-                <p className="font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                  <GraduationCap className="w-3.5 h-3.5 text-dream" /> 관련 전공 전체
-                </p>
-                <ul className="space-y-1 pl-1">
-                  {majors.map((m, i) => (
-                    <li key={i} className="flex items-center gap-1.5">
-                      <span className="text-gray-400">•</span>
-                      {validMajors.has(m) ? (
-                        <button
-                          data-testid={`btn-major-detail-${job.id}-${i}`}
-                          onClick={() => onMajorClick(m)}
-                          className="text-dream hover:underline text-left"
-                        >
-                          {m} <span className="text-gray-400 text-[10px]">→ 전공 상세보기</span>
-                        </button>
-                      ) : (
-                        <span className="text-gray-600">{m}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+              {/* 관련 전공 전체 목록 (모달로 열기) */}
+              {majors.length > 0 && (
+                <div>
+                  <p className="font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
+                    <GraduationCap className="w-3.5 h-3.5 text-dream" /> 관련 전공
+                  </p>
+                  <ul className="space-y-1 pl-1">
+                    {majors.map((m, i) => (
+                      <li key={i} className="flex items-center gap-1.5">
+                        <span className="text-gray-400">•</span>
+                        {validMajors.has(m) ? (
+                          <button
+                            data-testid={`btn-major-detail-${job.id}-${i}`}
+                            onClick={() => setModalMajor(m)}
+                            className="text-dream hover:underline text-left"
+                          >
+                            {m} <span className="text-gray-400 text-[10px]">→ 전공 상세보기</span>
+                          </button>
+                        ) : (
+                          <span className="text-gray-600">{m}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
 
-          </div>
-        )}
-
-        {/* ── 하단 토글 버튼 (추가 정보 있을 때만 표시) ── */}
-        {(job.growth || majors.length > PREVIEW) && (
-          <button
-            data-testid={`btn-job-expand-${job.id}`}
-            onClick={() => setOpen(o => !o)}
-            className="mt-3 w-full flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-dream transition-colors py-0.5 border-t border-gray-50 pt-2"
-          >
-            {open ? (
-              <><ChevronUp className="w-3 h-3" /> 접기</>
-            ) : (
-              <><ChevronDown className="w-3 h-3" /> 추가 정보</>
-            )}
-          </button>
-        )}
-      </CardContent>
-    </Card>
+          {/* ── 하단 토글 버튼 (추가 정보 있을 때만 표시) ── */}
+          {hasExtra && (
+            <button
+              data-testid={`btn-job-expand-${job.id}`}
+              onClick={() => setOpen(o => !o)}
+              className="mt-3 w-full flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-dream transition-colors border-t border-gray-50 pt-2"
+            >
+              {open ? (
+                <><ChevronUp className="w-3 h-3" /> 접기</>
+              ) : (
+                <><ChevronDown className="w-3 h-3" /> 추가 정보</>
+              )}
+            </button>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 }
 
