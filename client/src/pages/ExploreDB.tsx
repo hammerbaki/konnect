@@ -1263,12 +1263,6 @@ export default function ExploreDB() {
           </h1>
           <p className="text-sm text-gray-500 mt-1">대학·전공·직업 정보를 탐색하고 나에게 맞는 진로를 찾아보세요</p>
         </div>
-        <div className="flex flex-wrap gap-2 items-center" data-testid="api-status-bar">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-dream/8 text-dream border border-dream/20 px-3 py-1.5 rounded-full">
-            <Database className="w-3 h-3" />
-            대학 {univsQuery.data?.total ?? 489} · 전공 {majorTotal} · 직업 {jobTotal}
-          </span>
-        </div>
       </div>
 
       {/* AI Recommendation Banner */}
