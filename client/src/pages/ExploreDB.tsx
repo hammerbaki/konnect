@@ -17,8 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, ChevronDown, ChevronUp, GraduationCap, Briefcase, Building2,
   TrendingUp, TrendingDown, Minus, BookOpen, Award, MapPin, Banknote,
-  Database, Wifi, Sparkles, Home, Users, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight,
-  ExternalLink
+  Database, Wifi, Sparkles, Home, Users, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight
 } from "lucide-react";
 
 // ---- Types ----
@@ -736,14 +735,9 @@ function JobCard({
   const [open, setOpen] = useState(false);
   // DB에 있는 related_majors만 표시. LLM 생성 금지.
   const majors: string[] = Array.isArray(job.relatedMajors) ? job.relatedMajors : [];
-  const quals: string[] = Array.isArray(job.qualifications) ? job.qualifications : [];
   const PREVIEW = 3;
   const previewMajors = majors.slice(0, PREVIEW);
   const extraCount = majors.length - PREVIEW;
-
-  const careerNetUrl = job.jobSeq
-    ? `https://www.career.go.kr/cnet/front/base/job/jobView.do?SEQ=${job.jobSeq}`
-    : null;
 
   return (
     <Card
@@ -751,11 +745,8 @@ function JobCard({
       data-testid={`card-job-${job.id}`}
     >
       <CardContent className="p-4">
-        {/* ── 헤더 (항상 표시) ── */}
-        <div
-          className="flex items-start justify-between gap-2 cursor-pointer"
-          onClick={() => setOpen(o => !o)}
-        >
+        {/* ── 접힌 상태 (항상 표시) ── */}
+        <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <h3 className="font-semibold text-ink text-sm" data-testid={`text-job-name-${job.id}`}>
@@ -769,16 +760,15 @@ function JobCard({
             </div>
             <p className="text-xs text-gray-500 line-clamp-2">{truncate(job.description, 100)}</p>
 
-            {/* 급여 + 성장전망 (데이터 있을 때만) */}
-            <div className="flex items-center gap-3 mt-2 flex-wrap">
-              {job.salary != null && job.salary > 0 && (
-                <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                  <Banknote className="w-3.5 h-3.5" />
-                  월평균 {Math.round(job.salary / 10000).toLocaleString()}만원
+            {/* 급여 (데이터 있을 때만) */}
+            {job.salary != null && job.salary > 0 && (
+              <div className="flex items-center gap-1 mt-2">
+                <Banknote className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                <span className="text-xs font-medium text-emerald-600">
+                  연평균 {Math.round(job.salary / 10000).toLocaleString()}만원
                 </span>
-              )}
-              <GrowthBadge growth={job.growth} />
-            </div>
+              </div>
+            )}
 
             {/* 관련 전공 미리보기 (최대 3개 + +N) */}
             {majors.length > 0 && (
@@ -804,31 +794,19 @@ function JobCard({
               </div>
             )}
           </div>
-          <div className="flex-shrink-0 text-gray-400 mt-1">
+          {/* 우측 상단 chevron */}
+          <button
+            className="flex-shrink-0 text-gray-400 mt-1 hover:text-gray-600"
+            onClick={() => setOpen(o => !o)}
+            data-testid={`btn-job-toggle-${job.id}`}
+          >
             {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </div>
+          </button>
         </div>
 
-        {/* ── 펼친 상태 ── */}
+        {/* ── 펼침 영역 (추가 정보만, 접힌 내용 반복 금지) ── */}
         {open && (
-          <div className="mt-4 pt-4 border-t border-gray-100 space-y-3 text-xs">
-            {job.description && (
-              <p className="text-gray-600 leading-relaxed">{job.description}</p>
-            )}
-
-            {/* 급여 상세 */}
-            {job.salary != null && job.salary > 0 && (
-              <div className="flex items-center gap-1.5">
-                <Banknote className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-gray-600">
-                  <span className="font-medium">월평균: </span>
-                  <span className="font-semibold text-emerald-700">
-                    {Math.round(job.salary / 10000).toLocaleString()}만원
-                  </span>
-                </span>
-              </div>
-            )}
-
+          <div className="mt-3 pt-3 border-t border-gray-100 space-y-3 text-xs">
             {/* 수요전망 */}
             {job.growth && (
               <div className="flex items-center gap-1.5">
@@ -849,11 +827,11 @@ function JobCard({
               </div>
             )}
 
-            {/* 관련 전공 전체 목록 */}
-            {majors.length > 0 && (
+            {/* 관련 전공 전체 목록 (3개 초과 시에만 표시) */}
+            {majors.length > PREVIEW && (
               <div>
                 <p className="font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                  <GraduationCap className="w-3.5 h-3.5 text-dream" /> 관련 전공
+                  <GraduationCap className="w-3.5 h-3.5 text-dream" /> 관련 전공 전체
                 </p>
                 <ul className="space-y-1 pl-1">
                   {majors.map((m, i) => (
@@ -876,35 +854,22 @@ function JobCard({
               </div>
             )}
 
-            {/* 자격증 */}
-            {quals.length > 0 && (
-              <div>
-                <p className="font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                  <Award className="w-3.5 h-3.5 text-gold" /> 필요 자격증
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {quals.map((q, i) => (
-                    <span key={i} className="bg-gold/10 text-gold rounded-full px-2 py-0.5">{q}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 커리어넷 링크 */}
-            {careerNetUrl && (
-              <a
-                href={careerNetUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-testid={`link-careernet-${job.id}`}
-                onClick={e => e.stopPropagation()}
-                className="flex items-center gap-1 text-dream hover:underline mt-1"
-              >
-                <ExternalLink className="w-3 h-3" />
-                커리어넷에서 더 보기
-              </a>
-            )}
           </div>
+        )}
+
+        {/* ── 하단 토글 버튼 (추가 정보 있을 때만 표시) ── */}
+        {(job.growth || majors.length > PREVIEW) && (
+          <button
+            data-testid={`btn-job-expand-${job.id}`}
+            onClick={() => setOpen(o => !o)}
+            className="mt-3 w-full flex items-center justify-center gap-1 text-xs text-gray-400 hover:text-dream transition-colors py-0.5 border-t border-gray-50 pt-2"
+          >
+            {open ? (
+              <><ChevronUp className="w-3 h-3" /> 접기</>
+            ) : (
+              <><ChevronDown className="w-3 h-3" /> 추가 정보</>
+            )}
+          </button>
         )}
       </CardContent>
     </Card>
