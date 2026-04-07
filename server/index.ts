@@ -4,7 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import helmet from "helmet";
 import compression from "compression";
-import { generateMajorDescriptions, generateJobDescriptions } from "./dataSync";
+import { generateMajorDescriptions, generateJobDescriptions, enrichMajorRelatedData } from "./dataSync";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
 
@@ -268,6 +268,21 @@ app.use((req, res, next) => {
               console.log('[DataSync] Job result:', jobResult);
             } else {
               console.log('[DataSync] All job descriptions present — skipping.');
+            }
+
+            // Enrich demand + related jobs for majors that need it
+            const enrichCheck = await db.execute(sql`
+              SELECT COUNT(*) as cnt FROM cached_majors
+              WHERE (demand IS NULL OR demand = '')
+                 OR (related_jobs IS NULL OR jsonb_array_length(related_jobs) <= 3)
+            `);
+            const needsEnrich = parseInt((enrichCheck as any).rows?.[0]?.cnt ?? '0');
+            if (needsEnrich > 0) {
+              console.log(`[DataSync] ${needsEnrich} majors need demand/jobs enrichment — starting...`);
+              const enrichResult = await enrichMajorRelatedData((m) => console.log('[DataSync Enrich]', m));
+              console.log('[DataSync] Enrich result:', enrichResult);
+            } else {
+              console.log('[DataSync] All major demand/jobs data complete — skipping enrichment.');
             }
           } catch (e) {
             console.error('[DataSync] Background sync error:', e);

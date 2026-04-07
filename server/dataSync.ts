@@ -299,6 +299,135 @@ export async function removeDuplicateJobs(): Promise<{ removed: number }> {
   return { removed };
 }
 
+// ---- GPT-4o-mini: enrich demand + related jobs for all majors ----
+export async function enrichMajorRelatedData(
+  onProgress?: (msg: string) => void
+): Promise<{ demandUpdated: number; jobsUpdated: number; errors: number }> {
+  const { default: OpenAI } = await import('openai');
+  const openai = new OpenAI({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  });
+
+  // 1. Fetch all job names from cached_jobs as reference
+  const allJobsResult = await db.execute(sql`SELECT job_name FROM cached_jobs ORDER BY job_name`);
+  const allJobNames: string[] = ((allJobsResult as any).rows ?? []).map((r: any) => r.job_name);
+  const jobListStr = allJobNames.join(', ');
+  onProgress?.(`직업 참조 목록: ${allJobNames.length}개 로드됨`);
+
+  // 2. Find majors needing enrichment: missing demand OR ≤3 related jobs
+  const rows = await db.execute(sql`
+    SELECT id, major_name, category, related_jobs,
+      CASE WHEN demand IS NULL OR demand = '' THEN true ELSE false END as needs_demand,
+      CASE WHEN related_jobs IS NULL OR jsonb_array_length(related_jobs) <= 3 THEN true ELSE false END as needs_jobs
+    FROM cached_majors
+    WHERE (demand IS NULL OR demand = '')
+       OR (related_jobs IS NULL OR jsonb_array_length(related_jobs) <= 3)
+    ORDER BY major_name
+  `);
+  const items = (rows as any).rows ?? [];
+  onProgress?.(`보강이 필요한 학과: ${items.length}개 (수요 없음 또는 직업 ≤3개)`);
+
+  let demandUpdated = 0;
+  let jobsUpdated = 0;
+  let errors = 0;
+  const BATCH = 10;
+
+  for (let i = 0; i < items.length; i += BATCH) {
+    const batch = items.slice(i, i + BATCH);
+
+    const batchDesc = batch.map((m: any, idx: number) => {
+      const currentJobs = Array.isArray(m.related_jobs) ? m.related_jobs.join(', ') : '';
+      return `${idx + 1}. 학과명: ${m.major_name}, 계열: ${m.category || '미분류'}, 현재 직업: ${currentJobs || '없음'}`;
+    }).join('\n');
+
+    try {
+      const res = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{
+          role: 'user',
+          content: `당신은 한국 대학 전공 데이터 전문가입니다.
+다음 학과들의 취업 수요 전망과 관련 직업을 분석해 주세요.
+
+[참고 직업 목록 - 반드시 이 목록에서만 선택]
+${jobListStr}
+
+[학과 목록]
+${batchDesc}
+
+각 학과에 대해:
+1. 취업 수요 전망 (demand): "매우 높음", "높음", "보통", "낮음", "매우 낮음" 중 하나
+2. 관련 직업 (jobs): 위 참고 목록에서 해당 학과와 가장 관련있는 직업 5~8개를 정확한 이름으로 선택
+
+반드시 아래 JSON 형식으로만 응답하세요:
+{"items": [{"idx": 1, "demand": "높음", "jobs": ["직업1", "직업2", ...]}, ...]}`,
+        }],
+        response_format: { type: 'json_object' },
+        temperature: 0.2,
+        max_tokens: 3000,
+      });
+
+      const content = res.choices[0]?.message?.content || '{}';
+      let parsed: any;
+      try {
+        const raw = JSON.parse(content);
+        parsed = raw.items || raw.result || (Array.isArray(raw) ? raw : null);
+        if (!parsed) {
+          const arrKey = Object.keys(raw).find(k => Array.isArray(raw[k]));
+          if (arrKey) parsed = raw[arrKey];
+        }
+      } catch { errors += batch.length; continue; }
+
+      if (!Array.isArray(parsed)) { errors += batch.length; continue; }
+
+      for (let j = 0; j < Math.min(parsed.length, batch.length); j++) {
+        const item = batch[j];
+        const result = parsed[j];
+        if (!result) { errors++; continue; }
+
+        const needsDemand = !item.demand || item.demand === '';
+        const needsJobs = !item.related_jobs || (Array.isArray(item.related_jobs) && item.related_jobs.length <= 3);
+
+        // Validate demand value
+        const validDemand = ['매우 높음', '높음', '보통', '낮음', '매우 낮음'];
+        const demand = validDemand.includes(result.demand) ? result.demand : null;
+
+        // Validate jobs — only keep those that exist in the reference list
+        const rawJobs: string[] = Array.isArray(result.jobs) ? result.jobs : [];
+        const validJobs = rawJobs.filter(j => allJobNames.includes(j)).slice(0, 8);
+
+        if (needsDemand && demand) {
+          await db.execute(sql`
+            UPDATE cached_majors SET demand = ${demand}, synced_at = NOW()
+            WHERE id = ${item.id}
+          `);
+          demandUpdated++;
+        }
+
+        if (needsJobs && validJobs.length >= 3) {
+          await db.execute(sql`
+            UPDATE cached_majors SET related_jobs = ${JSON.stringify(validJobs)}::jsonb, synced_at = NOW()
+            WHERE id = ${item.id}
+          `);
+          jobsUpdated++;
+        } else if (needsJobs && validJobs.length < 3) {
+          errors++;
+        }
+      }
+
+      onProgress?.(`보강 진행: ${Math.min(i + BATCH, items.length)}/${items.length} (수요 ${demandUpdated}개, 직업 ${jobsUpdated}개 업데이트)`);
+    } catch (err: any) {
+      errors += batch.length;
+      onProgress?.(`배치 오류: ${err.message}`);
+    }
+
+    await new Promise(r => setTimeout(r, 400));
+  }
+
+  onProgress?.(`보강 완료: 수요 ${demandUpdated}개, 직업 ${jobsUpdated}개 업데이트, 오류 ${errors}개`);
+  return { demandUpdated, jobsUpdated, errors };
+}
+
 // ---- Data quality report ----
 export async function getDataQualityReport() {
   const [majorStats, jobStats, univStats] = await Promise.all([
