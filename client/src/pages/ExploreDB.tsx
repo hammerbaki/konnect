@@ -225,98 +225,212 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
   );
 }
 
+// ---- Holland Code → Label ----
+const hollandLabel: Record<string, string> = {
+  R: "실재형", I: "탐구형", A: "예술형", S: "사회형", E: "기업형", C: "관습형",
+};
+function hollandBadgeText(code: string | null): string | null {
+  if (!code) return null;
+  const first = code.trim().charAt(0).toUpperCase();
+  return hollandLabel[first] ?? code;
+}
+
+// ---- Demand Badge ----
+function DemandBadge({ demand }: { demand: string | null }) {
+  if (!demand) return null;
+  const map: Record<string, { label: string; cls: string }> = {
+    "매우 높음": { label: "매우 높음", cls: "bg-emerald-100 text-emerald-700" },
+    "높음":     { label: "높음",     cls: "bg-green-100 text-green-700" },
+    "보통":     { label: "보통",     cls: "bg-amber-100 text-amber-700" },
+    "낮음":     { label: "낮음",     cls: "bg-orange-100 text-orange-600" },
+    "매우 낮음": { label: "매우 낮음", cls: "bg-red-100 text-red-600" },
+  };
+  const d = map[demand] ?? { label: demand, cls: "bg-gray-100 text-gray-600" };
+  return (
+    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${d.cls}`}>
+      {d.label}
+    </span>
+  );
+}
+
 // ---- Major Card ----
 function MajorCard({ major }: { major: Major }) {
-  const [open, setOpen] = useState(false);
+  const [showMore, setShowMore] = useState(false);
+  const [showAllJobs, setShowAllJobs] = useState(false);
+  const [showAllUnivs, setShowAllUnivs] = useState(false);
+
   const univs: UnivEntry[] = Array.isArray(major.universities) ? major.universities : [];
   const jobs: string[] = Array.isArray(major.relatedJobs) ? major.relatedJobs : [];
+  const visibleJobs = showAllJobs ? jobs : jobs.slice(0, 5);
+  const visibleUnivs = showAllUnivs ? univs : univs.slice(0, 3);
+
+  const avgEmp = univs.length > 0
+    ? (univs.reduce((s, u) => s + (u.employmentRate ?? 0), 0) / univs.length).toFixed(1)
+    : null;
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow border border-gray-100"
+      className="hover:shadow-md transition-shadow border border-gray-100"
       data-testid={`card-major-${major.id}`}
-      onClick={() => setOpen(o => !o)}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-4 space-y-3">
+
+        {/* ── Header: name + badges ── */}
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className="font-semibold text-ink text-sm" data-testid={`text-major-name-${major.id}`}>
-                {major.majorName}
-              </h3>
-              {major.category && (
-                <Badge variant="secondary" className="bg-dream/10 text-dream text-xs px-2 py-0 h-5">
-                  {major.category}
-                </Badge>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 line-clamp-2">{truncate(major.description, 100)}</p>
-            {jobs.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {jobs.slice(0, 4).map((j, i) => (
-                  <span key={i} className="text-xs bg-coral/10 text-coral rounded-full px-2 py-0.5">
-                    {j}
-                  </span>
-                ))}
-                {jobs.length > 4 && (
-                  <span className="text-xs text-gray-400">+{jobs.length - 4}</span>
-                )}
-              </div>
+          <h3 className="font-bold text-ink text-base leading-tight" data-testid={`text-major-name-${major.id}`}>
+            {major.majorName}
+          </h3>
+          <div className="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end">
+            {major.category && (
+              <span className="text-xs font-medium bg-dream/10 text-dream px-2 py-0.5 rounded-full">
+                {major.category}
+              </span>
             )}
-          </div>
-          <div className="flex-shrink-0 text-gray-400 mt-1">
-            {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            <DemandBadge demand={major.demand} />
           </div>
         </div>
 
-        {open && (
-          <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
-            {major.demand && (
-              <div className="text-xs text-gray-600">
-                <span className="font-medium text-gold">수요전망: </span>{major.demand}
+        {/* ── Description ── */}
+        {major.description && (
+          <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">
+            {major.description}
+          </p>
+        )}
+
+        {/* ── 장래 직업 ── */}
+        {jobs.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
+              <Briefcase className="w-3.5 h-3.5 text-coral" />
+              장래 직업
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {visibleJobs.map((j, i) => (
+                <span
+                  key={i}
+                  className="text-xs bg-coral/10 text-coral rounded-full px-2 py-0.5"
+                  data-testid={`tag-job-${major.id}-${i}`}
+                >
+                  {j}
+                </span>
+              ))}
+              {!showAllJobs && jobs.length > 5 && (
+                <button
+                  className="text-xs text-gray-400 hover:text-gray-600 px-1"
+                  onClick={() => setShowAllJobs(true)}
+                  data-testid={`btn-show-all-jobs-${major.id}`}
+                >
+                  +{jobs.length - 5}개 더
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── 개설 대학 ── */}
+        <div className="border-t border-gray-100 pt-3">
+          <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+            <Building2 className="w-3.5 h-3.5 text-dream" />
+            이 학과 개설 대학
+          </p>
+
+          {univs.length === 0 ? (
+            <div className="flex items-center gap-2 py-3 px-3 bg-gray-50 rounded-lg">
+              <Database className="w-4 h-4 text-gray-300" />
+              <span className="text-xs text-gray-400">개설 대학 데이터 업데이트 예정</span>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-1">
+                {visibleUnivs.map((u, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between text-xs py-1 border-b border-gray-50 last:border-0"
+                    data-testid={`row-univ-${major.id}-${i}`}
+                  >
+                    <span className="font-medium text-ink flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-gray-300" />
+                      {u.univName}
+                      <span className="text-gray-400 font-normal">({u.region})</span>
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-orange-500 font-medium flex items-center gap-0.5">
+                        <TrendingUp className="w-3 h-3" />
+                        {u.competition != null ? `${u.competition.toFixed(1)}:1` : "-"}
+                      </span>
+                      <span className="text-blue-600 font-medium flex items-center gap-0.5">
+                        <Award className="w-3 h-3" />
+                        대학취업 {u.employmentRate != null ? `${u.employmentRate.toFixed(0)}%` : "-"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
-            {major.relatedSubjects && (
-              <div className="text-xs text-gray-600">
-                <span className="font-medium">관련 과목: </span>{major.relatedSubjects}
+              {univs.length > 3 && (
+                <button
+                  className="mt-1.5 text-xs text-dream hover:underline flex items-center gap-0.5"
+                  onClick={() => setShowAllUnivs(v => !v)}
+                  data-testid={`btn-toggle-univs-${major.id}`}
+                >
+                  {showAllUnivs
+                    ? <><ChevronUp className="w-3 h-3" /> 접기</>
+                    : <><ChevronDown className="w-3 h-3" /> 외 {univs.length - 3}개 대학</>
+                  }
+                </button>
+              )}
+
+              {/* Footer summary */}
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50 text-xs text-gray-500">
+                {avgEmp && (
+                  <span className="flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3 text-emerald-500" />
+                    개설대학 평균취업률 <strong className="text-emerald-600">{avgEmp}%</strong>
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <GraduationCap className="w-3 h-3 text-dream" />
+                  총 <strong className="text-dream">{univs.length}</strong>개 대학
+                </span>
               </div>
-            )}
-            {univs.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5 text-dream" /> 개설 대학
-                </p>
-                <div className="overflow-x-auto">
-                  <table className="text-xs w-full min-w-[480px]">
-                    <thead>
-                      <tr className="text-gray-400 border-b">
-                        <th className="text-left pb-1 font-medium">대학명</th>
-                        <th className="text-left pb-1 font-medium">지역</th>
-                        <th className="text-right pb-1 font-medium">경쟁률</th>
-                        <th className="text-right pb-1 font-medium">대학취업률</th>
-                        <th className="text-right pb-1 font-medium">등록금(만원)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {univs.slice(0, 10).map((u, i) => (
-                        <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                          <td className="py-1 font-medium text-ink">{u.univName}</td>
-                          <td className="py-1 text-gray-500">{u.region}</td>
-                          <td className="py-1 text-right">{u.competition?.toFixed(1) ?? "-"}</td>
-                          <td className="py-1 text-right text-blue-600">{u.employmentRate?.toFixed(1) ?? "-"}%</td>
-                          <td className="py-1 text-right">{u.tuition ? Math.round(u.tuition / 10).toLocaleString() : "-"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {univs.length > 10 && (
-                  <p className="text-xs text-gray-400 mt-1">외 {univs.length - 10}개 대학</p>
+            </>
+          )}
+        </div>
+
+        {/* ── 더 보기 토글 ── */}
+        {(major.demand || major.relatedSubjects || major.hollandCode) && (
+          <div>
+            <button
+              className="text-xs text-gray-400 hover:text-dream flex items-center gap-0.5 mt-1"
+              onClick={() => setShowMore(v => !v)}
+              data-testid={`btn-more-${major.id}`}
+            >
+              {showMore ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {showMore ? "접기" : "추가 정보"}
+            </button>
+
+            {showMore && (
+              <div className="mt-2 space-y-1.5 text-xs text-gray-600 pl-1">
+                {major.hollandCode && (
+                  <div>
+                    <span className="font-medium text-dream">홀랜드 코드: </span>
+                    {major.hollandCode} ({hollandBadgeText(major.hollandCode)})
+                  </div>
+                )}
+                {major.demand && (
+                  <div>
+                    <span className="font-medium text-gold">수요전망: </span>{major.demand}
+                  </div>
+                )}
+                {major.relatedSubjects && (
+                  <div>
+                    <span className="font-medium">관련 과목: </span>{major.relatedSubjects}
+                  </div>
                 )}
               </div>
             )}
           </div>
         )}
+
       </CardContent>
     </Card>
   );
