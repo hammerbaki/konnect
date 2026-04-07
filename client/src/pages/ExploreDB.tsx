@@ -794,6 +794,7 @@ function MajorDetailModal({
                 <div className="flex items-center gap-1.5 text-xs">
                   <span className="font-semibold text-gray-700">💰 취업률:</span>
                   <span className="font-semibold text-emerald-600">{major.employmentRate.toFixed(1)}%</span>
+                  <span className="text-gray-400">(커리어넷 기준)</span>
                 </div>
               )}
               {major.avgSalaryDistribution?.avg_monthly_wan != null &&
