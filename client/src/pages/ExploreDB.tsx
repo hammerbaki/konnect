@@ -329,8 +329,6 @@ function MajorCard({ major }: { major: Major }) {
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [univPage, setUnivPage] = useState(1);
   const [univRegion, setUnivRegion] = useState<string>("전체");
-  const [univSort, setUnivSort] = useState<"경쟁률" | "취업률" | "이름">("경쟁률");
-
   const UNIV_PER_PAGE = 6;
 
   const jobs: string[] = Array.isArray(major.relatedJobs) ? major.relatedJobs : [];
@@ -376,18 +374,10 @@ function MajorCard({ major }: { major: Major }) {
   // Filtered + sorted
   const filteredUnivs = univs
     .filter(u => univRegion === "전체" || u.region === univRegion)
-    .sort((a, b) => {
-      if (univSort === "경쟁률") return (b.competitionRate ?? 0) - (a.competitionRate ?? 0);
-      if (univSort === "취업률") return (b.employmentRate ?? 0) - (a.employmentRate ?? 0);
-      return (a.univName ?? "").localeCompare(b.univName ?? "", "ko");
-    });
+    .sort((a, b) => (a.univName ?? "").localeCompare(b.univName ?? "", "ko"));
 
   const totalPages = Math.ceil(filteredUnivs.length / UNIV_PER_PAGE);
   const visibleUnivs = filteredUnivs.slice(0, univPage * UNIV_PER_PAGE);
-
-  const avgEmp = univs.length > 0
-    ? (univs.reduce((s, u) => s + (u.employmentRate ?? 0), 0) / univs.length).toFixed(1)
-    : null;
 
   return (
     <Card
@@ -458,24 +448,6 @@ function MajorCard({ major }: { major: Major }) {
                 <span className="ml-1 text-dream font-bold">{univs.length}개</span>
               )}
             </p>
-            {univs.length > 0 && (
-              <div className="flex items-center gap-1">
-                {(["경쟁률", "취업률", "이름"] as const).map(s => (
-                  <button
-                    key={s}
-                    onClick={() => { setUnivSort(s); setUnivPage(1); }}
-                    className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
-                      univSort === s
-                        ? "bg-dream text-white border-dream"
-                        : "text-gray-400 border-gray-200 hover:border-dream hover:text-dream"
-                    }`}
-                    data-testid={`btn-sort-${s}-${major.id}`}
-                  >
-                    {s}순
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Region filter chips — show when ≥4 regions */}
@@ -530,28 +502,6 @@ function MajorCard({ major }: { major: Major }) {
                       <span className="truncate">{u.univName}</span>
                       {u.region && <span className="text-gray-400 font-normal flex-shrink-0">({u.region})</span>}
                     </span>
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                      {u.competitionRate != null && u.competitionRate > 0 && (
-                        <span
-                          className="text-orange-500 font-medium flex items-center gap-0.5"
-                          title="대학 전체 신입생 경쟁률 기준 (학과별 수치 아님)"
-                        >
-                          <TrendingUp className="w-3 h-3" />
-                          {u.competitionRate.toFixed(1)}:1
-                          <span className="text-[9px] text-orange-300 font-normal ml-0.5">전체</span>
-                        </span>
-                      )}
-                      {u.employmentRate != null && u.employmentRate > 0 && (
-                        <span
-                          className="text-blue-600 font-medium flex items-center gap-0.5"
-                          title="대학 전체 취업률 기준 (학과별 수치 아님)"
-                        >
-                          <Award className="w-3 h-3" />
-                          {u.employmentRate.toFixed(0)}%
-                          <span className="text-[9px] text-blue-300 font-normal ml-0.5">전체</span>
-                        </span>
-                      )}
-                    </div>
                   </div>
                 ))}
               </div>
@@ -578,19 +528,8 @@ function MajorCard({ major }: { major: Major }) {
               )}
 
               {/* Footer summary */}
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50 text-xs text-gray-500">
-                {avgEmp && Number(avgEmp) > 0 && (
-                  <span
-                    className="flex items-center gap-1"
-                    title="개설 대학들의 학교 전체 취업률 평균 (학과별 수치 아님)"
-                  >
-                    <TrendingUp className="w-3 h-3 text-emerald-500" />
-                    개설 대학 평균 취업률&nbsp;
-                    <strong className="text-emerald-600">{avgEmp}%</strong>
-                    <span className="text-[9px] text-gray-400">(대학 전체 기준)</span>
-                  </span>
-                )}
-                <span className="flex items-center gap-1 ml-auto">
+              <div className="flex items-center justify-end mt-2 pt-2 border-t border-gray-50 text-xs text-gray-500">
+                <span className="flex items-center gap-1">
                   <GraduationCap className="w-3 h-3 text-dream" />
                   총 <strong className="text-dream">{univs.length}</strong>개 대학
                 </span>
