@@ -614,18 +614,17 @@ function MajorCard({ major }: { major: Major }) {
 
             {showMore && (
               <div className="mt-2 space-y-1.5 text-xs text-gray-600 pl-1">
-                {/* 학과별 취업률 (CareerNet 직접 조회) */}
+                {/* 학과별 취업률 — source: careernet */}
                 {major.employmentRate != null && major.employmentRate > 0 && (
                   <div className="flex items-center gap-1.5">
                     <Award className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
                     <span>
                       <span className="font-medium text-emerald-600">학과 취업률: </span>
                       <span className="font-semibold text-emerald-700">{major.employmentRate.toFixed(0)}%</span>
-                      <span className="text-gray-400 ml-1">(커리어넷 학과 기준)</span>
                     </span>
                   </div>
                 )}
-                {/* 학과별 평균 급여 (CareerNet 직접 조회) */}
+                {/* 학과별 평균 급여 — source: careernet */}
                 {major.avgSalaryDistribution?.avg_monthly_wan != null &&
                   major.avgSalaryDistribution.avg_monthly_wan > 0 && (
                   <div className="flex items-center gap-1.5">
@@ -635,11 +634,10 @@ function MajorCard({ major }: { major: Major }) {
                       <span className="font-semibold text-amber-700">
                         월 {major.avgSalaryDistribution.avg_monthly_wan.toFixed(0)}만원
                       </span>
-                      <span className="text-gray-400 ml-1">(커리어넷 학과 기준)</span>
                     </span>
                   </div>
                 )}
-                {/* 관련 직업 기준 급여·전망 (CareerNet 직접 데이터 없는 경우) */}
+                {/* 관련 직업 기준 급여·전망 — source: careernet (cached_jobs) */}
                 {(!major.employmentRate || !major.avgSalaryDistribution?.avg_monthly_wan) &&
                   jobStats && (jobStats.avgSalaryWan || jobStats.dominantGrowth) && (
                   <div className="space-y-1">
@@ -652,7 +650,7 @@ function MajorCard({ major }: { major: Major }) {
                             연 {jobStats.avgSalaryWan.toLocaleString()}만원
                           </span>
                           <span className="text-gray-400 ml-1">
-                            (관련 직업 {jobStats.jobsWithSalary}개 기준)
+                            (직업 {jobStats.jobsWithSalary}개 평균)
                           </span>
                         </span>
                       </div>
@@ -672,12 +670,12 @@ function MajorCard({ major }: { major: Major }) {
                             jobStats.dominantGrowth.includes("증가") ? "text-emerald-600" :
                             jobStats.dominantGrowth.includes("감소") ? "text-red-500" : "text-gray-600"
                           }`}>{jobStats.dominantGrowth}</span>
-                          <span className="text-gray-400 ml-1">(관련 직업 기준)</span>
                         </span>
                       </div>
                     )}
                   </div>
                 )}
+                {/* 홀랜드 코드 — source: careernet */}
                 {major.hollandCode && hollandExpand(major.hollandCode) && (
                   <div className="space-y-1">
                     <div className="flex items-start gap-1.5">
@@ -689,22 +687,29 @@ function MajorCard({ major }: { major: Major }) {
                     </div>
                     <div className="text-gray-400 text-[10px] leading-relaxed pl-0.5">
                       홀랜드 코드는 직업심리학자 존 홀랜드(John Holland)가 개발한 직업 흥미 유형 분류 체계로,
-                      6가지 유형(R실재형, I탐구형, A예술형, S사회형, E진취형, C관습형)의 조합으로 해당 학과/직업의 특성을 나타냅니다. 출처: 커리어넷
+                      6가지 유형(R실재형, I탐구형, A예술형, S사회형, E진취형, C관습형)의 조합으로 해당 학과/직업의 특성을 나타냅니다.
                     </div>
                   </div>
                 )}
+                {/* 수요전망 — source: ai */}
                 {major.demand && (
                   <div>
                     <span className="font-medium text-gold">수요전망: </span>{major.demand}
-                    <span className="text-gray-400 ml-1">(AI 예측 — 참고용)</span>
+                    <span className="text-gray-400 ml-1">(AI 예측)</span>
                   </div>
                 )}
+                {/* 관련 과목 — source: careernet */}
                 {parseSubjects(major.relatedSubjects) && (
                   <div>
-                    <span className="font-medium">관련 과목 <span className="font-normal text-gray-400">(출처: 커리어넷)</span>: </span>
+                    <span className="font-medium">관련 과목: </span>
                     {parseSubjects(major.relatedSubjects)}
                   </div>
                 )}
+
+                {/* 공통 출처 — 섹션 하단에 한 번만 표시 */}
+                <div className="pt-1 border-t border-gray-100 text-[10px] text-gray-400">
+                  출처: 커리어넷{major.demand ? " | 수요전망은 AI 예측" : ""}
+                </div>
               </div>
             )}
           </div>
