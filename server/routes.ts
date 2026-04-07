@@ -5842,16 +5842,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/explore/categories - 카테고리 목록
   app.get('/api/explore/categories', async (req, res) => {
     try {
-      const majCats = await db.selectDistinct({ category: cachedMajors.category })
-        .from(cachedMajors).orderBy(asc(cachedMajors.category));
-      const jobFields = await db.selectDistinct({ field: cachedJobs.field })
-        .from(cachedJobs).orderBy(asc(cachedJobs.field));
-      const regions = await db.selectDistinct({ region: universityInfo.region })
-        .from(universityInfo).orderBy(asc(universityInfo.region));
+      const [majCats, jobFields, regions, majorNames] = await Promise.all([
+        db.selectDistinct({ category: cachedMajors.category })
+          .from(cachedMajors).orderBy(asc(cachedMajors.category)),
+        db.selectDistinct({ field: cachedJobs.field })
+          .from(cachedJobs).orderBy(asc(cachedJobs.field)),
+        db.selectDistinct({ region: universityInfo.region })
+          .from(universityInfo).orderBy(asc(universityInfo.region)),
+        db.select({ name: cachedMajors.majorName })
+          .from(cachedMajors).orderBy(asc(cachedMajors.majorName)),
+      ]);
       res.json({
         majorCategories: majCats.map(r => r.category).filter(Boolean),
         jobFields: jobFields.map(r => r.field).filter(Boolean),
         regions: regions.map(r => r.region).filter(Boolean),
+        majorNames: majorNames.map(r => r.name).filter(Boolean),
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -5889,7 +5894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/explore/jobs
   app.get('/api/explore/jobs', async (req, res) => {
     try {
-      const { search = '', field = '', page = '1', limit = '20' } = req.query as Record<string, string>;
+      const { search = '', field = '', major = '', page = '1', limit = '20' } = req.query as Record<string, string>;
       const pageNum = Math.max(1, parseInt(page));
       const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
@@ -5897,6 +5902,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const conditions = [];
       if (search) conditions.push(ilike(cachedJobs.jobName, `%${search}%`));
       if (field) conditions.push(eq(cachedJobs.field, field));
+      // related_majors @> '["전공명"]'::jsonb — DB에 있는 데이터만 필터, LLM 생성 금지
+      if (major) conditions.push(sqlExpr`${cachedJobs.relatedMajors} @> ${JSON.stringify([major])}::jsonb`);
 
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 

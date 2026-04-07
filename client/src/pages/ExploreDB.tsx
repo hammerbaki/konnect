@@ -17,7 +17,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, ChevronDown, ChevronUp, GraduationCap, Briefcase, Building2,
   TrendingUp, TrendingDown, Minus, BookOpen, Award, MapPin, Banknote,
-  Database, Wifi, Sparkles, Home, Users, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight
+  Database, Wifi, Sparkles, Home, Users, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight,
+  ExternalLink
 } from "lucide-react";
 
 // ---- Types ----
@@ -70,6 +71,7 @@ interface Job {
   growth: string | null;
   qualifications: string[];
   hollandCode: string | null;
+  jobSeq: string | null;
 }
 
 interface University {
@@ -100,6 +102,7 @@ interface Categories {
   majorCategories: string[];
   jobFields: string[];
   regions: string[];
+  majorNames: string[];
 }
 
 interface AptitudeResult {
@@ -721,19 +724,38 @@ function MajorCard({ major }: { major: Major }) {
 }
 
 // ---- Job Card ----
-function JobCard({ job }: { job: Job }) {
+function JobCard({
+  job,
+  validMajors,
+  onMajorClick,
+}: {
+  job: Job;
+  validMajors: Set<string>;
+  onMajorClick: (name: string) => void;
+}) {
   const [open, setOpen] = useState(false);
+  // DB에 있는 related_majors만 표시. LLM 생성 금지.
   const majors: string[] = Array.isArray(job.relatedMajors) ? job.relatedMajors : [];
   const quals: string[] = Array.isArray(job.qualifications) ? job.qualifications : [];
+  const PREVIEW = 3;
+  const previewMajors = majors.slice(0, PREVIEW);
+  const extraCount = majors.length - PREVIEW;
+
+  const careerNetUrl = job.jobSeq
+    ? `https://www.career.go.kr/cnet/front/base/job/jobView.do?SEQ=${job.jobSeq}`
+    : null;
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow border border-gray-100"
+      className="hover:shadow-md transition-shadow border border-gray-100"
       data-testid={`card-job-${job.id}`}
-      onClick={() => setOpen(o => !o)}
     >
       <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-2">
+        {/* ── 헤더 (항상 표시) ── */}
+        <div
+          className="flex items-start justify-between gap-2 cursor-pointer"
+          onClick={() => setOpen(o => !o)}
+        >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <h3 className="font-semibold text-ink text-sm" data-testid={`text-job-name-${job.id}`}>
@@ -746,8 +768,10 @@ function JobCard({ job }: { job: Job }) {
               )}
             </div>
             <p className="text-xs text-gray-500 line-clamp-2">{truncate(job.description, 100)}</p>
+
+            {/* 급여 + 성장전망 (데이터 있을 때만) */}
             <div className="flex items-center gap-3 mt-2 flex-wrap">
-              {job.salary && (
+              {job.salary != null && job.salary > 0 && (
                 <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
                   <Banknote className="w-3.5 h-3.5" />
                   월평균 {Math.round(job.salary / 10000).toLocaleString()}만원
@@ -755,40 +779,130 @@ function JobCard({ job }: { job: Job }) {
               )}
               <GrowthBadge growth={job.growth} />
             </div>
+
+            {/* 관련 전공 미리보기 (최대 3개 + +N) */}
+            {majors.length > 0 && (
+              <div className="flex items-center gap-1 mt-2 flex-wrap">
+                <GraduationCap className="w-3 h-3 text-dream flex-shrink-0" />
+                {previewMajors.map((m, i) => (
+                  <button
+                    key={i}
+                    data-testid={`btn-major-link-${job.id}-${i}`}
+                    onClick={e => { e.stopPropagation(); onMajorClick(m); }}
+                    className={`text-xs px-1.5 py-0.5 rounded-full transition-colors ${
+                      validMajors.has(m)
+                        ? "bg-dream/10 text-dream hover:bg-dream/20 cursor-pointer"
+                        : "bg-gray-100 text-gray-500 cursor-default"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+                {extraCount > 0 && (
+                  <span className="text-xs text-gray-400">(+{extraCount})</span>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex-shrink-0 text-gray-400 mt-1">
             {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </div>
         </div>
 
+        {/* ── 펼친 상태 ── */}
         {open && (
-          <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-3 text-xs">
             {job.description && (
-              <p className="text-xs text-gray-600 leading-relaxed">{job.description}</p>
+              <p className="text-gray-600 leading-relaxed">{job.description}</p>
             )}
-            {majors.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                  <GraduationCap className="w-3.5 h-3.5 text-dream" /> 관련 학과
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {majors.map((m, i) => (
-                    <span key={i} className="text-xs bg-dream/10 text-dream rounded-full px-2 py-0.5">{m}</span>
-                  ))}
-                </div>
+
+            {/* 급여 상세 */}
+            {job.salary != null && job.salary > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Banknote className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="text-gray-600">
+                  <span className="font-medium">월평균: </span>
+                  <span className="font-semibold text-emerald-700">
+                    {Math.round(job.salary / 10000).toLocaleString()}만원
+                  </span>
+                </span>
               </div>
             )}
+
+            {/* 수요전망 */}
+            {job.growth && (
+              <div className="flex items-center gap-1.5">
+                {job.growth.includes("증가") ? (
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                ) : job.growth.includes("감소") ? (
+                  <TrendingDown className="w-3.5 h-3.5 text-red-400" />
+                ) : (
+                  <Minus className="w-3.5 h-3.5 text-gray-400" />
+                )}
+                <span className="text-gray-600">
+                  <span className="font-medium">수요전망: </span>
+                  <span className={`font-semibold ${
+                    job.growth.includes("증가") ? "text-emerald-600" :
+                    job.growth.includes("감소") ? "text-red-500" : "text-gray-600"
+                  }`}>{job.growth}</span>
+                </span>
+              </div>
+            )}
+
+            {/* 관련 전공 전체 목록 */}
+            {majors.length > 0 && (
+              <div>
+                <p className="font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
+                  <GraduationCap className="w-3.5 h-3.5 text-dream" /> 관련 전공
+                </p>
+                <ul className="space-y-1 pl-1">
+                  {majors.map((m, i) => (
+                    <li key={i} className="flex items-center gap-1.5">
+                      <span className="text-gray-400">•</span>
+                      {validMajors.has(m) ? (
+                        <button
+                          data-testid={`btn-major-detail-${job.id}-${i}`}
+                          onClick={() => onMajorClick(m)}
+                          className="text-dream hover:underline text-left"
+                        >
+                          {m} <span className="text-gray-400 text-[10px]">→ 전공 상세보기</span>
+                        </button>
+                      ) : (
+                        <span className="text-gray-600">{m}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* 자격증 */}
             {quals.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
+                <p className="font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
                   <Award className="w-3.5 h-3.5 text-gold" /> 필요 자격증
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {quals.map((q, i) => (
-                    <span key={i} className="text-xs bg-gold/10 text-gold rounded-full px-2 py-0.5">{q}</span>
+                    <span key={i} className="bg-gold/10 text-gold rounded-full px-2 py-0.5">{q}</span>
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* 커리어넷 링크 */}
+            {careerNetUrl && (
+              <a
+                href={careerNetUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid={`link-careernet-${job.id}`}
+                onClick={e => e.stopPropagation()}
+                className="flex items-center gap-1 text-dream hover:underline mt-1"
+              >
+                <ExternalLink className="w-3 h-3" />
+                커리어넷에서 더 보기
+              </a>
             )}
           </div>
         )}
@@ -1007,6 +1121,7 @@ export default function ExploreDB() {
   const [searchInput, setSearchInput] = useState("");
   const [category, setCategory] = useState("all");
   const [field, setField] = useState("all");
+  const [majorFilter, setMajorFilter] = useState("all");
   const [region, setRegion] = useState("all");
   const [sort, setSort] = useState("competition");
   const [page, setPage] = useState(1);
@@ -1044,15 +1159,19 @@ export default function ExploreDB() {
   });
 
   const jobsQuery = useQuery<ApiResponse<Job>>({
-    queryKey: ["/api/explore/jobs", search, field, page],
+    queryKey: ["/api/explore/jobs", search, field, majorFilter, page],
     queryFn: () => {
       const params = new URLSearchParams({ page: String(page), limit: "20" });
       if (search) params.set("search", search);
       if (field && field !== "all") params.set("field", field);
+      if (majorFilter && majorFilter !== "all") params.set("major", majorFilter);
       return fetch(`/api/explore/jobs?${params}`).then(r => r.json());
     },
     enabled: tab === "jobs",
   });
+
+  // DB에 있는 전공명 Set — 직업 카드에서 링크 활성화 여부 결정용
+  const validMajors = new Set<string>(categories?.majorNames ?? []);
 
   const handleSearch = useCallback(() => {
     setSearch(searchInput);
@@ -1064,12 +1183,22 @@ export default function ExploreDB() {
     setSearch("");
     setSearchInput("");
     setPage(1);
+    setField("all");
+    setMajorFilter("all");
   };
 
   const handleFilter = (value: string, setter: (v: string) => void) => {
     setter(value);
     setPage(1);
   };
+
+  // 직업 카드에서 전공명 클릭 → 전공 탭으로 이동 후 검색
+  const navigateToMajor = useCallback((majorName: string) => {
+    setTab("majors");
+    setSearch(majorName);
+    setSearchInput(majorName);
+    setPage(1);
+  }, []);
 
   const majorTotal = 235;
   const jobTotal = 443;
@@ -1253,8 +1382,8 @@ export default function ExploreDB() {
 
         {/* ===== 직업 탭 ===== */}
         <TabsContent value="jobs" className="mt-4 space-y-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
+          <div className="flex flex-wrap gap-2">
+            <div className="relative flex-1 min-w-40">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 data-testid="input-search-job"
@@ -1266,13 +1395,24 @@ export default function ExploreDB() {
               />
             </div>
             <Select value={field} onValueChange={v => handleFilter(v, setField)} data-testid="select-field">
-              <SelectTrigger className="w-44" data-testid="select-trigger-field">
+              <SelectTrigger className="w-40" data-testid="select-trigger-field">
                 <SelectValue placeholder="직업 분야 전체" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">직업 분야 전체</SelectItem>
                 {categories?.jobFields.map(f => (
                   <SelectItem key={f} value={f}>{f}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={majorFilter} onValueChange={v => handleFilter(v, setMajorFilter)} data-testid="select-major-filter">
+              <SelectTrigger className="w-40" data-testid="select-trigger-major-filter">
+                <SelectValue placeholder="관련 전공 전체" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                <SelectItem value="all">관련 전공 전체</SelectItem>
+                {(categories?.majorNames ?? []).map(m => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1289,7 +1429,7 @@ export default function ExploreDB() {
             <>
               <div className="space-y-3">
                 {(jobsQuery.data?.data ?? []).map(j => (
-                  <JobCard key={j.id} job={j} />
+                  <JobCard key={j.id} job={j} validMajors={validMajors} onMajorClick={navigateToMajor} />
                 ))}
               </div>
               <Pagination
