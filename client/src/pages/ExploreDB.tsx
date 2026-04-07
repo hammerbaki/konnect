@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, ChevronDown, ChevronUp, GraduationCap, Briefcase, Building2,
   TrendingUp, TrendingDown, Minus, BookOpen, Award, MapPin, Banknote,
-  Database, Wifi, Sparkles, Home, Users, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight
+  Database, Sparkles, Home, Users, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight
 } from "lucide-react";
 
 // ---- Types ----
@@ -1264,11 +1264,6 @@ export default function ExploreDB() {
           <p className="text-sm text-gray-500 mt-1">대학·전공·직업 정보를 탐색하고 나에게 맞는 진로를 찾아보세요</p>
         </div>
         <div className="flex flex-wrap gap-2 items-center" data-testid="api-status-bar">
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full">
-            <Wifi className="w-3 h-3" />
-            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-            API 연동됨
-          </span>
           <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-dream/8 text-dream border border-dream/20 px-3 py-1.5 rounded-full">
             <Database className="w-3 h-3" />
             대학 {univsQuery.data?.total ?? 489} · 전공 {majorTotal} · 직업 {jobTotal}
