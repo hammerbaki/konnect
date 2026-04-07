@@ -859,9 +859,9 @@ function JobCard({
                   {job.jobName}
                 </h3>
                 {job.field && (
-                  <Badge variant="secondary" className="bg-coral/10 text-coral text-xs px-2 py-0 h-5">
+                  <span className="text-[10px] text-gray-400 font-normal leading-none" data-testid={`text-job-field-${job.id}`}>
                     {job.field}
-                  </Badge>
+                  </span>
                 )}
               </div>
               {/* 설명: 말줄임 없이 전체 표시 */}
