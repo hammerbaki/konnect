@@ -56,3 +56,7 @@ integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.
 [userenv.shared]
 CAREERNET_API_KEY = "d0b761c825e0a9e4b163e05c50d0bad8"
 PUBLIC_DATA_API_KEY = "EPAKlDet6MXK1vhdVCgpJFD8a25+J2szibvuzPKyVB/S7h/PlcfAtNdKoQtYNh3aW+UUsVHUkl8Xb3aSbmQLCA=="
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 120000
