@@ -448,7 +448,7 @@ export const DEFAULT_PAGE_CONFIGS: Record<string, { title: string; defaultRoles:
   '/interview': { title: '면접 준비', defaultRoles: ['user', 'staff', 'admin'] },
   '/explorer': { title: '직업 탐색', defaultRoles: ['user', 'staff', 'admin'] },
   '/explore': { title: '학과·직업·대학 탐색', defaultRoles: ['user', 'staff', 'admin'] },
-  '/aptitude': { title: '전공 적성 분석', defaultRoles: ['user', 'staff', 'admin'] },
+  '/aptitude': { title: '진로 흥미 분석', defaultRoles: ['user', 'staff', 'admin'] },
   '/settings': { title: '설정', defaultRoles: ['user', 'staff', 'admin'] },
   '/recharge': { title: '진로분석 학습권', defaultRoles: ['user', 'staff', 'admin'] },
   '/admin': { title: '관리자', defaultRoles: ['staff', 'admin'], isLocked: true },

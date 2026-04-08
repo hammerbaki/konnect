@@ -170,7 +170,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
           </div>
           <div>
             <p className="text-sm font-semibold text-ink">
-              진로 흥미 탐색
+              진로 흥미 분석
               {result && (
                 <span className="ml-2 text-xs font-normal text-gray-400">
                   설문 기반 AI 분석 · {analyzedDate}
@@ -179,8 +179,8 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
             </p>
             <p className="text-xs text-gray-500 mt-0.5">
               {result
-                ? "흥미·적성 설문 점수를 AI가 분석하여 추천 전공과 진로를 제안합니다"
-                : "30문항의 간편 설문으로 나의 흥미와 강점을 파악하고, 커리어넷 직업·학과 데이터를 기반으로 맞춤 전공과 직업을 탐색해 보세요."}
+                ? "흥미 분석 점수를 AI가 분석하여 추천 학과와 진로를 제안합니다"
+                : "30문항의 간편 설문으로 나의 흥미와 강점을 파악하고, 커리어넷 직업·학과 데이터를 기반으로 맞춤 학과와 직업을 탐색해 보세요."}
             </p>
           </div>
         </div>
@@ -202,7 +202,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
             data-testid="btn-go-aptitude"
           >
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-            흥미 탐색 시작
+            흥미 분석 시작
           </Button>
         )}
       </div>
@@ -214,7 +214,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
             <div className="flex items-start justify-between">
               <h3 className="text-sm font-semibold text-ink">AI 맞춤 추천 결과</h3>
               <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
-                흥미·적성 설문 기반
+                흥미 분석 기반
               </span>
             </div>
             {result.summary && (
@@ -274,7 +274,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
                 설문 재응시
               </Button>
               <p className="text-xs text-gray-400">
-                * 더 정확한 추천을 위해 적성 설문을 다시 응시할 수 있습니다
+                * 더 정확한 추천을 위해 흥미 분석을 다시 진행할 수 있습니다
               </p>
             </div>
           </CardContent>
@@ -1443,9 +1443,9 @@ export default function ExploreDB() {
         <div>
           <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-dream" />
-            전공/진로 탐색
+            학과/직업 탐색
           </h1>
-          <p className="text-sm text-gray-500 mt-1">대학·전공·직업 정보를 탐색하고 나에게 맞는 진로를 찾아보세요</p>
+          <p className="text-sm text-gray-500 mt-1">대학·학과·직업 정보를 탐색하고 나에게 맞는 진로를 찾아보세요</p>
         </div>
       </div>
 

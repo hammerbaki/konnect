@@ -104,7 +104,7 @@ function StartScreen({ onStart, latestResult }: { onStart: () => void; latestRes
         <div className="w-16 h-16 bg-dream/10 rounded-2xl flex items-center justify-center mx-auto">
           <Brain className="w-8 h-8 text-dream" />
         </div>
-        <h1 className="text-2xl font-bold text-ink">전공 적성 분석</h1>
+        <h1 className="text-2xl font-bold text-ink">진로 흥미 분석</h1>
         <p className="text-gray-500 text-sm leading-relaxed">
           30개의 문항으로 나의 흥미와 적성을 파악하고<br />
           AI가 맞춤 직업·학과를 추천해드립니다.
@@ -289,7 +289,7 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-ink">적성 분석 결과</h1>
+          <h1 className="text-xl font-bold text-ink">진로 흥미 분석 결과</h1>
           <p className="text-xs text-gray-400 mt-0.5">
             {new Date(result.createdAt).toLocaleDateString("ko-KR")}
           </p>
