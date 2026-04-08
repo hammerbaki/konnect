@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -633,7 +633,7 @@ export default function Aptitude() {
     staleTime: Infinity,
   });
 
-  const { data: latestResult } = useQuery<AptitudeResult | null>({
+  const { data: latestResult, isLoading: latestLoading } = useQuery<AptitudeResult | null>({
     queryKey: ["/api/aptitude/latest"],
     staleTime: 1000 * 60 * 5,
   });
@@ -659,6 +659,15 @@ export default function Aptitude() {
       setStage("result");
     },
   });
+
+  // 마운트 시 최근 결과가 있으면 결과 화면 자동 표시 (한 번만)
+  const hasAutoShownResult = useRef(false);
+  useEffect(() => {
+    if (!hasAutoShownResult.current && !latestLoading && latestResult && stage === "start") {
+      hasAutoShownResult.current = true;
+      setStage("result");
+    }
+  }, [latestResult, latestLoading, stage]);
 
   const handleStart = () => {
     setAnswers({});
@@ -730,6 +739,15 @@ export default function Aptitude() {
   const displayResult = localResult || latestResult || null;
 
   if (stage === "start") {
+    // 최근 결과 로딩 중: 깜빡임 방지를 위해 스피너 표시
+    if (latestLoading) {
+      return (
+        <div className="max-w-lg mx-auto px-4 py-24 flex flex-col items-center text-center space-y-4">
+          <span className="w-10 h-10 border-4 border-dream border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-500">이전 결과를 불러오는 중...</p>
+        </div>
+      );
+    }
     return (
       <StartScreen
         onStart={handleStart}
