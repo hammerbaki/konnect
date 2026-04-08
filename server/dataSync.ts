@@ -485,14 +485,39 @@ export async function enrichMajorCareerNetData(
   const allMajors = await db.select({ id: cachedMajors.id, majorName: cachedMajors.majorName })
     .from(cachedMajors);
 
+  // DEBUG: log first 10 CareerNet mClass samples
+  const cnSample = careerNetList.slice(0, 10).map(m => m.mClass);
+  onProgress?.(`[DEBUG] CareerNet mClass 샘플 10개: ${JSON.stringify(cnSample)}`);
+  console.log('[DEBUG][enrichMajorCareerNetData] CareerNet mClass 샘플 10개:', cnSample);
+
+  // DEBUG: log first 10 DB major_name samples
+  const dbSample = allMajors.slice(0, 10).map(m => m.majorName);
+  onProgress?.(`[DEBUG] DB cached_majors.major_name 샘플 10개: ${JSON.stringify(dbSample)}`);
+  console.log('[DEBUG][enrichMajorCareerNetData] DB major_name 샘플 10개:', dbSample);
+
   let updated = 0;
   let matched = 0;
   let errors = 0;
+  let debugLogCount = 0;
 
   for (const major of allMajors) {
     const dbName = major.majorName ?? '';
     // Try: exact → DB name + 과 (e.g. "간호학" → "간호학과" stripped = "간호학" ✓)
     const majorSeq = nameToSeq.get(dbName) || nameToSeq.get(dbName + '과');
+
+    // DEBUG: log normalization comparison for first 5 attempts
+    if (debugLogCount < 5) {
+      const exact = nameToSeq.get(dbName);
+      const withGwa = nameToSeq.get(dbName + '과');
+      const dbStripped = dbName.endsWith('과') ? dbName.slice(0, -1) : dbName;
+      const fromStripped = nameToSeq.get(dbStripped);
+      const result = majorSeq ? `매칭됨(seq=${majorSeq})` : '매칭 실패';
+      const debugMsg = `[DEBUG] DB "${dbName}" → exact="${exact ?? 'X'}" +과="${withGwa ?? 'X'}" stripped="${dbStripped}"→"${fromStripped ?? 'X'}" => ${result}`;
+      onProgress?.(debugMsg);
+      console.log('[DEBUG][enrichMajorCareerNetData]', debugMsg);
+      debugLogCount++;
+    }
+
     if (!majorSeq) continue; // no match — skip
     matched++;
 
