@@ -206,7 +206,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
             </p>
             <p className="text-xs text-gray-500 mt-0.5">
               {result
-                ? "흥미 분석 점수를 AI가 분석하여 추천 학과와 진로를 제안합니다"
+                ? "나의 흥미 · 역량을 552개 직업 · 510개 학과 데이터와 매칭하여 추천 학과와 진로를 제안합니다."
                 : "30문항의 간편 설문으로 나의 흥미와 강점을 파악하고, 커리어넷 직업·학과 데이터를 기반으로 맞춤 학과와 직업을 탐색해 보세요."}
             </p>
           </div>
