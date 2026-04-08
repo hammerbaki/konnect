@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -194,6 +194,11 @@ export default function Dashboard() {
     staleTime: 1000 * 60 * 5,
     enabled: !!user,
   });
+
+  // 추천 직업/학과 펼치기 상태
+  const [showAllJobs, setShowAllJobs] = useState(false);
+  const [showAllMajors, setShowAllMajors] = useState(false);
+  const REC_INITIAL = 3;
 
   // 찜 목록 (낙관적 업데이트 포함)
   const { bookmarkList, removeBookmark: removeBm } = useBookmarks({ enabled: !!user });
@@ -487,12 +492,15 @@ export default function Dashboard() {
                     </p>
                   </div>
                 )}
-                {/* 추천 직업 — 클릭 이동 */}
+                {/* 추천 직업 — 인라인 펼치기 */}
                 {latestAptitude.recommendedJobs?.length > 0 && (
                   <div>
                     <p className="text-xs text-gray-500 mb-1 font-medium">추천 직업</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {latestAptitude.recommendedJobs.slice(0, 3).map((j, i) => (
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {(showAllJobs
+                        ? latestAptitude.recommendedJobs
+                        : latestAptitude.recommendedJobs.slice(0, REC_INITIAL)
+                      ).map((j, i) => (
                         <button
                           key={i}
                           onClick={() => navigate(`/explore?tab=jobs&q=${encodeURIComponent(j.name)}&from=dashboard`)}
@@ -502,24 +510,36 @@ export default function Dashboard() {
                           {j.name}
                         </button>
                       ))}
-                      {latestAptitude.recommendedJobs.length > 3 && (
+                      {latestAptitude.recommendedJobs.length > REC_INITIAL && !showAllJobs && (
                         <button
-                          onClick={() => navigate("/aptitude")}
-                          className="text-xs text-[#320e9d] self-center underline hover:text-[#320e9d]/70 transition-colors"
+                          onClick={() => setShowAllJobs(true)}
+                          className="text-xs text-gray-400 self-center underline hover:text-gray-600 transition-colors"
                           data-testid="btn-rec-jobs-more"
                         >
-                          외 {latestAptitude.recommendedJobs.length - 3}개
+                          외 {latestAptitude.recommendedJobs.length - REC_INITIAL}개
+                        </button>
+                      )}
+                      {showAllJobs && latestAptitude.recommendedJobs.length > REC_INITIAL && (
+                        <button
+                          onClick={() => setShowAllJobs(false)}
+                          className="text-xs text-gray-400 self-center underline hover:text-gray-600 transition-colors"
+                          data-testid="btn-rec-jobs-collapse"
+                        >
+                          접기
                         </button>
                       )}
                     </div>
                   </div>
                 )}
-                {/* 추천 학과 — 클릭 이동 */}
+                {/* 추천 학과 — 인라인 펼치기 */}
                 {latestAptitude.recommendedMajors?.length > 0 && (
                   <div>
                     <p className="text-xs text-gray-500 mb-1 font-medium">추천 학과</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {latestAptitude.recommendedMajors.slice(0, 3).map((m, i) => (
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {(showAllMajors
+                        ? latestAptitude.recommendedMajors
+                        : latestAptitude.recommendedMajors.slice(0, REC_INITIAL)
+                      ).map((m, i) => (
                         <button
                           key={i}
                           onClick={() => navigate(`/explore?tab=majors&q=${encodeURIComponent(m.name)}&from=dashboard`)}
@@ -529,13 +549,22 @@ export default function Dashboard() {
                           {m.name}
                         </button>
                       ))}
-                      {latestAptitude.recommendedMajors.length > 3 && (
+                      {latestAptitude.recommendedMajors.length > REC_INITIAL && !showAllMajors && (
                         <button
-                          onClick={() => navigate("/aptitude")}
-                          className="text-xs text-[#320e9d] self-center underline hover:text-[#320e9d]/70 transition-colors"
+                          onClick={() => setShowAllMajors(true)}
+                          className="text-xs text-gray-400 self-center underline hover:text-gray-600 transition-colors"
                           data-testid="btn-rec-majors-more"
                         >
-                          외 {latestAptitude.recommendedMajors.length - 3}개
+                          외 {latestAptitude.recommendedMajors.length - REC_INITIAL}개
+                        </button>
+                      )}
+                      {showAllMajors && latestAptitude.recommendedMajors.length > REC_INITIAL && (
+                        <button
+                          onClick={() => setShowAllMajors(false)}
+                          className="text-xs text-gray-400 self-center underline hover:text-gray-600 transition-colors"
+                          data-testid="btn-rec-majors-collapse"
+                        >
+                          접기
                         </button>
                       )}
                     </div>
