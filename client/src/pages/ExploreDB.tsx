@@ -1752,7 +1752,7 @@ export default function ExploreDB() {
 
           {/* Count */}
           {!univsQuery.isLoading && (
-            <p className="text-xs text-gray-400">총 {univsQuery.data?.total ?? 0}개 대학</p>
+            <p className="text-xs text-gray-400">총 {univTotal}개 대학</p>
           )}
 
           {/* Grid */}
