@@ -743,10 +743,10 @@ export async function refillEmptyRelatedMajors(
 // ---- Sync career_major_seq from CareerNet MAJOR API ----
 export async function syncCareerMajorSeq(
   onProgress?: (msg: string) => void
-): Promise<{ total: number; mapped: number; unmatched: number }> {
+): Promise<{ total: number; mapped: number; unmatched: number; unmatchedNames: string[] }> {
   if (!CAREERNET_KEY) {
     onProgress?.('CAREERNET_API_KEY 미설정 — career_major_seq 동기화 건너뜀');
-    return { total: 0, mapped: 0, unmatched: 0 };
+    return { total: 0, mapped: 0, unmatched: 0, unmatchedNames: [] };
   }
 
   onProgress?.('커리어넷 MAJOR API 목록 수집 중...');
