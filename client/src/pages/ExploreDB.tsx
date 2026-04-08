@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, type ReactNode } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
+import { useBookmarks } from "@/hooks/useBookmarks";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1490,39 +1490,8 @@ export default function ExploreDB() {
   const [page, setPage] = useState(1);
   const [fromSource, setFromSource] = useState<string | null>(null);
 
-  const queryClient = useQueryClient();
-
-  // 북마크 상태
-  const { data: bookmarkList = [] } = useQuery<BookmarkItem[]>({
-    queryKey: ["/api/bookmarks"],
-    staleTime: 1000 * 60 * 2,
-  });
-
-  const addBookmarkMutation = useMutation({
-    mutationFn: async (data: { bookmarkType: string; targetId: number; targetName: string }) => {
-      const res = await apiRequest("POST", "/api/bookmarks", data);
-      if (res.status === 409) return null;
-      return res.json();
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] }),
-  });
-
-  const removeBookmarkMutation = useMutation({
-    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/bookmarks/${id}`); },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] }),
-  });
-
-  const getBookmark = (type: string, name: string) =>
-    bookmarkList.find(b => b.bookmarkType === type && b.targetName === name);
-
-  const toggleBookmark = (type: string, targetId: number, name: string) => {
-    const existing = getBookmark(type, name);
-    if (existing) {
-      removeBookmarkMutation.mutate(existing.id);
-    } else {
-      addBookmarkMutation.mutate({ bookmarkType: type, targetId, targetName: name });
-    }
-  };
+  // 북마크 상태 (낙관적 업데이트 포함)
+  const { bookmarkList, getBookmark, toggleBookmark } = useBookmarks();
 
   const { data: categories } = useQuery<Categories>({
     queryKey: ["/api/explore/categories"],

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/AuthContext";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useBookmarks } from "@/hooks/useBookmarks";
 import { apiRequest } from "@/lib/queryClient";
 import { 
   User, 
@@ -187,8 +188,6 @@ function calculateProfileCompleteness(profile: any): { percentage: number; fille
 export default function Dashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
-  const queryClient = useQueryClient();
-
   // 진로 흥미 분석 최신 결과
   const { data: latestAptitude } = useQuery<AptitudeResult | null>({
     queryKey: ["/api/aptitude/latest"],
@@ -196,17 +195,8 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  // 찜 목록
-  const { data: bookmarkList = [] } = useQuery<BookmarkItem[]>({
-    queryKey: ["/api/bookmarks"],
-    staleTime: 1000 * 60 * 2,
-    enabled: !!user,
-  });
-
-  const removeBm = useMutation({
-    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/bookmarks/${id}`); },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] }),
-  });
+  // 찜 목록 (낙관적 업데이트 포함)
+  const { bookmarkList, removeBookmark: removeBm } = useBookmarks();
 
   const handleRemoveBm = (id: number, name: string) => {
     if (window.confirm(`"${name}"을(를) 관심 목록에서 제거하시겠습니까?`)) {

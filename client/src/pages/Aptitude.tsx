@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useBookmarks } from "@/hooks/useBookmarks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -417,34 +418,9 @@ interface BookmarkItem {
 
 function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: () => void }) {
   const [, navigate] = useLocation();
-  const qc = useQueryClient();
-
-  // 북마크 상태
-  const { data: bookmarkList = [] } = useQuery<BookmarkItem[]>({
-    queryKey: ["/api/bookmarks"],
-    staleTime: 1000 * 60 * 2,
-  });
-
-  const addBm = useMutation({
-    mutationFn: async (data: { bookmarkType: string; targetId: number; targetName: string }) => {
-      const res = await apiRequest("POST", "/api/bookmarks", data);
-      if (res.status === 409) return null;
-      return res.json();
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/bookmarks"] }),
-  });
-
-  const removeBm = useMutation({
-    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/bookmarks/${id}`); },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/bookmarks"] }),
-  });
-
-  const getBm = (type: string, name: string) => bookmarkList.find(b => b.bookmarkType === type && b.targetName === name);
-  const toggleBm = (type: string, name: string) => {
-    const ex = getBm(type, name);
-    if (ex) removeBm.mutate(ex.id);
-    else addBm.mutate({ bookmarkType: type, targetId: 0, targetName: name });
-  };
+  // 북마크 상태 (낙관적 업데이트 포함)
+  const { getBookmark: getBm, toggleBookmark } = useBookmarks();
+  const toggleBm = (type: string, name: string) => toggleBookmark(type, 0, name);
 
   const goToExplore = (tab: "jobs" | "majors", q: string) => {
     navigate(`/explore?tab=${tab}&q=${encodeURIComponent(q)}&from=analysis`);
