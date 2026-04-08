@@ -331,6 +331,12 @@ function hollandExpand(code: string | null): string | null {
   return parts.map(c => `${c}=${hollandLabel[c].name}`).join(', ');
 }
 
+/** HTML 태그를 제거하는 헬퍼 */
+function stripHtml(str: string | null | undefined): string {
+  if (!str) return '';
+  return str.replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
+
 /** JSON 배열 또는 쉼표 구분 문자열로 저장된 관련 과목을 읽기 좋게 변환 */
 function parseSubjects(raw: string | null): string | null {
   if (!raw) return null;
@@ -341,17 +347,20 @@ function parseSubjects(raw: string | null): string | null {
       if (parsed.length > 0 && typeof parsed[0] === 'object' && parsed[0] !== null) {
         return parsed
           .map((item: { subject_name?: string; subject_description?: string }) => {
-            const name = item.subject_name ?? '';
-            const desc = item.subject_description ?? '';
+            const name = stripHtml(item.subject_name ?? '');
+            const desc = stripHtml(item.subject_description ?? '');
+            // 출처 항목 필터링 ([출처 : ...] 패턴)
+            if (name.startsWith('[출처')) return '';
             return desc ? `[${name}] ${desc}` : name;
           })
           .filter(Boolean)
           .join(' / ');
       }
-      return parsed.join(', ');
+      return parsed.map((s: unknown) => stripHtml(typeof s === 'string' ? s : String(s))).filter(Boolean).join(', ');
     }
   } catch {}
-  return raw;
+  // 평문 문자열인 경우에도 HTML 태그 제거
+  return stripHtml(raw);
 }
 
 // ---- Demand Badge ----
