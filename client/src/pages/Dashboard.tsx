@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -188,7 +188,6 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
-  const [bmTab, setBmTab] = useState<"university" | "major" | "job">("university");
 
   // 진로 흥미 분석 최신 결과
   const { data: latestAptitude } = useQuery<AptitudeResult | null>({
@@ -357,11 +356,87 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* ======= 핵심 기능 영역: 흥미 분석 결과 + 관심 목록 ======= */}
+        {/* ======= 핵심 기능 영역: 관심 목록 (좌) + 흥미 분석 결과 (우) ======= */}
         <div className="grid gap-4 md:grid-cols-2">
+
+          {/* ★ 관심 목록 카드 — 탭 없이 학교/학과/직업 세로 나열 */}
+          <Card className="toss-card p-5 flex flex-col" data-testid="card-bookmarks">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-[#191F28] flex items-center gap-2">
+                <Star className="h-5 w-5 text-[#c79e41] fill-current" /> 관심 목록
+              </h3>
+            </div>
+            {bookmarkList.length === 0 ? (
+              <div className="flex flex-col gap-3 flex-1 items-center justify-center text-center py-6">
+                <Star className="h-8 w-8 text-gray-200" />
+                <p className="text-sm text-[#8B95A1]">탐색 페이지에서 ☆ 버튼을 눌러<br/>관심 항목을 저장하세요.</p>
+                <Button size="sm" variant="outline" className="border-[#320e9d] text-[#320e9d] font-semibold rounded-xl text-xs" onClick={() => navigate("/explore")} data-testid="btn-go-explore">
+                  학과/직업 탐색 바로가기 <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 flex-1">
+                {/* 관심 학교 */}
+                {bookmarkList.filter(b => b.bookmarkType === "university").length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-0.5">
+                      <Building2 className="h-3 w-3" /> 관심 학교
+                    </p>
+                    {bookmarkList.filter(b => b.bookmarkType === "university").slice(0, 5).map(bm => (
+                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=universities&q=${encodeURIComponent(bm.targetName)}`)} data-testid={`bm-item-${bm.id}`}>
+                        <span className="text-sm text-[#191F28] font-medium truncate">{bm.targetName}</span>
+                        <button onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }} className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" data-testid={`btn-bm-remove-${bm.id}`}><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ))}
+                    {bookmarkList.filter(b => b.bookmarkType === "university").length > 5 && (
+                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore")}>+{bookmarkList.filter(b => b.bookmarkType === "university").length - 5}개 더보기</button>
+                    )}
+                  </div>
+                )}
+                {/* 관심 학과 */}
+                {bookmarkList.filter(b => b.bookmarkType === "major").length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-0.5">
+                      <GraduationCap className="h-3 w-3" /> 관심 학과
+                    </p>
+                    {bookmarkList.filter(b => b.bookmarkType === "major").slice(0, 5).map(bm => (
+                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=majors&q=${encodeURIComponent(bm.targetName)}`)} data-testid={`bm-item-${bm.id}`}>
+                        <span className="text-sm text-[#191F28] font-medium truncate">{bm.targetName}</span>
+                        <button onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }} className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" data-testid={`btn-bm-remove-${bm.id}`}><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ))}
+                    {bookmarkList.filter(b => b.bookmarkType === "major").length > 5 && (
+                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore")}>+{bookmarkList.filter(b => b.bookmarkType === "major").length - 5}개 더보기</button>
+                    )}
+                  </div>
+                )}
+                {/* 관심 직업 */}
+                {bookmarkList.filter(b => b.bookmarkType === "job").length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-0.5">
+                      <Briefcase className="h-3 w-3" /> 관심 직업
+                    </p>
+                    {bookmarkList.filter(b => b.bookmarkType === "job").slice(0, 5).map(bm => (
+                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=jobs&q=${encodeURIComponent(bm.targetName)}`)} data-testid={`bm-item-${bm.id}`}>
+                        <span className="text-sm text-[#191F28] font-medium truncate">{bm.targetName}</span>
+                        <button onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }} className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" data-testid={`btn-bm-remove-${bm.id}`}><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ))}
+                    {bookmarkList.filter(b => b.bookmarkType === "job").length > 5 && (
+                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore")}>+{bookmarkList.filter(b => b.bookmarkType === "job").length - 5}개 더보기</button>
+                    )}
+                  </div>
+                )}
+                <Button size="sm" variant="ghost" className="mt-auto text-[#320e9d] text-xs self-start px-0 hover:bg-transparent" onClick={() => navigate("/explore")}>
+                  학과/직업 탐색 바로가기 <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+              </div>
+            )}
+          </Card>
+
           {/* 🧠 진로 흥미 분석 결과 요약 카드 */}
           <Card className="toss-card p-5 flex flex-col" data-testid="card-aptitude-summary">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-[#191F28] flex items-center gap-2">
                 <Brain className="h-5 w-5 text-[#320e9d]" /> 나의 흥미 분석 결과
               </h3>
@@ -394,39 +469,53 @@ export default function Dashboard() {
                     </p>
                   </div>
                 )}
-                {/* 추천 직업/학과 */}
+                {/* 추천 직업 — 클릭 이동 */}
                 {latestAptitude.recommendedJobs?.length > 0 && (
                   <div>
                     <p className="text-xs text-gray-500 mb-1 font-medium">추천 직업</p>
-                    <p className="text-sm text-[#191F28]">
-                      {latestAptitude.recommendedJobs.slice(0, 3).map(j => j.name).join(', ')}{latestAptitude.recommendedJobs.length > 3 ? ` 외 ${latestAptitude.recommendedJobs.length - 3}개` : ''}
-                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {latestAptitude.recommendedJobs.slice(0, 3).map((j, i) => (
+                        <button
+                          key={i}
+                          onClick={() => navigate(`/explore?tab=jobs&q=${encodeURIComponent(j.name)}`)}
+                          className="text-xs px-2.5 py-1 rounded-full bg-coral/10 text-coral font-semibold hover:bg-coral/20 transition-colors"
+                          data-testid={`btn-rec-job-${i}`}
+                        >
+                          {j.name}
+                        </button>
+                      ))}
+                      {latestAptitude.recommendedJobs.length > 3 && (
+                        <span className="text-xs text-gray-400 self-center">외 {latestAptitude.recommendedJobs.length - 3}개</span>
+                      )}
+                    </div>
                   </div>
                 )}
+                {/* 추천 학과 — 클릭 이동 */}
                 {latestAptitude.recommendedMajors?.length > 0 && (
                   <div>
                     <p className="text-xs text-gray-500 mb-1 font-medium">추천 학과</p>
-                    <p className="text-sm text-[#191F28]">
-                      {latestAptitude.recommendedMajors.slice(0, 3).map(m => m.name).join(', ')}{latestAptitude.recommendedMajors.length > 3 ? ` 외 ${latestAptitude.recommendedMajors.length - 3}개` : ''}
-                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {latestAptitude.recommendedMajors.slice(0, 3).map((m, i) => (
+                        <button
+                          key={i}
+                          onClick={() => navigate(`/explore?tab=majors&q=${encodeURIComponent(m.name)}`)}
+                          className="text-xs px-2.5 py-1 rounded-full bg-[#320e9d]/10 text-[#320e9d] font-semibold hover:bg-[#320e9d]/20 transition-colors"
+                          data-testid={`btn-rec-major-${i}`}
+                        >
+                          {m.name}
+                        </button>
+                      ))}
+                      {latestAptitude.recommendedMajors.length > 3 && (
+                        <span className="text-xs text-gray-400 self-center">외 {latestAptitude.recommendedMajors.length - 3}개</span>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div className="flex gap-2 mt-auto pt-2">
-                  <Button
-                    size="sm"
-                    className="flex-1 bg-[#320e9d] text-white font-bold rounded-xl text-xs h-8"
-                    onClick={() => navigate("/aptitude")}
-                    data-testid="btn-view-aptitude-result"
-                  >
+                  <Button size="sm" className="flex-1 bg-[#320e9d] text-white font-bold rounded-xl text-xs h-8" onClick={() => navigate("/aptitude")} data-testid="btn-view-aptitude-result">
                     상세 결과 보기 <ArrowRight className="h-3 w-3 ml-1" />
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 border-[#320e9d] text-[#320e9d] font-bold rounded-xl text-xs h-8"
-                    onClick={() => { navigate("/aptitude"); }}
-                    data-testid="btn-retake-aptitude"
-                  >
+                  <Button size="sm" variant="outline" className="flex-1 border-[#320e9d] text-[#320e9d] font-bold rounded-xl text-xs h-8" onClick={() => navigate("/aptitude")} data-testid="btn-retake-aptitude">
                     다시 분석하기
                   </Button>
                 </div>
@@ -437,81 +526,11 @@ export default function Dashboard() {
                   <p className="text-sm text-[#8B95A1] mb-2">아직 흥미 분석을 하지 않았습니다.</p>
                   <p className="text-xs text-[#8B95A1]">30문항 · 약 5분이면 나에게 맞는 학과와 직업을 찾을 수 있습니다.</p>
                 </div>
-                <Button
-                  className="w-full bg-[#320e9d] text-white font-bold rounded-xl text-sm h-9"
-                  onClick={() => navigate("/aptitude")}
-                  data-testid="btn-start-aptitude"
-                >
+                <Button className="w-full bg-[#320e9d] text-white font-bold rounded-xl text-sm h-9" onClick={() => navigate("/aptitude")} data-testid="btn-start-aptitude">
                   분석 시작 <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
             )}
-          </Card>
-
-          {/* ★ 관심 목록 카드 */}
-          <Card className="toss-card p-5 flex flex-col" data-testid="card-bookmarks">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-bold text-[#191F28] flex items-center gap-2">
-                <Star className="h-5 w-5 text-[#c79e41] fill-current" /> 관심 목록
-              </h3>
-            </div>
-            {/* 탭 */}
-            {(() => {
-              const univs = bookmarkList.filter(b => b.bookmarkType === "university");
-              const majors = bookmarkList.filter(b => b.bookmarkType === "major");
-              const jobs = bookmarkList.filter(b => b.bookmarkType === "job");
-              const activeList = bmTab === "university" ? univs : bmTab === "major" ? majors : jobs;
-              return (
-                <div className="flex flex-col gap-3 flex-1">
-                  <div className="flex gap-1 bg-[#F2F4F6] rounded-xl p-1">
-                    {([["university", "학교", univs.length, Building2], ["major", "학과", majors.length, GraduationCap], ["job", "직업", jobs.length, Briefcase]] as const).map(([type, label, count, Icon]) => (
-                      <button
-                        key={type}
-                        onClick={() => setBmTab(type)}
-                        className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${bmTab === type ? 'bg-white text-[#320e9d] shadow-sm' : 'text-[#8B95A1]'}`}
-                        data-testid={`btn-bm-tab-${type}`}
-                      >
-                        <Icon className="h-3 w-3" /> {label} {count > 0 && <span className="text-[10px]">({count})</span>}
-                      </button>
-                    ))}
-                  </div>
-                  {activeList.length > 0 ? (
-                    <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto max-h-48">
-                      {activeList.map(bm => (
-                        <div
-                          key={bm.id}
-                          className="flex items-center justify-between gap-2 px-3 py-2 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group"
-                          onClick={() => navigate(`/explore?tab=${bmTab === "university" ? "universities" : bmTab === "major" ? "majors" : "jobs"}&q=${encodeURIComponent(bm.targetName)}`)}
-                          data-testid={`bm-item-${bm.id}`}
-                        >
-                          <span className="text-sm text-[#191F28] font-medium truncate">{bm.targetName}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }}
-                            className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors"
-                            data-testid={`btn-bm-remove-${bm.id}`}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-3 flex-1 items-center justify-center text-center py-4">
-                      <p className="text-sm text-[#8B95A1]">학과/직업 탐색에서 ☆ 버튼을 눌러<br/>관심 있는 항목을 저장하세요.</p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-[#320e9d] text-[#320e9d] font-semibold rounded-xl text-xs"
-                        onClick={() => navigate("/explore")}
-                        data-testid="btn-go-explore"
-                      >
-                        학과/직업 탐색 바로가기 <ArrowRight className="h-3 w-3 ml-1" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
           </Card>
         </div>
 
