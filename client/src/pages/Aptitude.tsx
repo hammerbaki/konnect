@@ -130,9 +130,9 @@ function StartScreen({ onStart, latestResult, stats }: {
         </div>
 
         <p className="text-sm text-gray-600 leading-relaxed">
-          커리어넷 <span className="font-semibold text-dream">{jobCount.toLocaleString()}개 직업</span>,{" "}
-          <span className="font-semibold text-dream">{majorCount.toLocaleString()}개 학과</span> 데이터를 기반으로
-          나에게 맞는 학과와 직업을 찾아보세요.
+          커리어넷 <span className="font-semibold text-dream">{jobCount.toLocaleString()}개 직업</span> · <span className="font-semibold text-dream">{majorCount.toLocaleString()}개 학과</span> 데이터와<br />
+          나의 흥미 · 역량을 매칭하여<br />
+          가장 잘 맞는 학과와 직업을 추천해 드립니다.
         </p>
 
         <Button
@@ -203,11 +203,6 @@ function StartScreen({ onStart, latestResult, stats }: {
                 ))}
               </div>
             </div>
-
-            <p className="text-xs text-gray-400 flex items-start gap-1.5 pt-2 border-t border-gray-100">
-              <span className="mt-0.5 flex-shrink-0">ℹ️</span>
-              <span>본 분석은 간편 흥미 탐색용입니다. 보다 정밀한 진로적성검사는 커리어넷에서 이용하실 수 있습니다.</span>
-            </p>
           </div>
         )}
       </div>
