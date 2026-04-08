@@ -6323,7 +6323,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const decodedName = decodeURIComponent(majorName);
       const normalizedName = normalizeMajorName(decodedName);
 
-      // 1) majorUniversityMap 에서 조회 (정확 매칭 우선, 퍼지 보완)
+      type MajorUnivResult = {
+        id: number;
+        majorName: string | null;
+        univName: string | null;
+        region: string | null;
+        area: string | null;
+        campus_nm: string | null;
+        schoolURL: string | null;
+        quota: number | null;
+        competitionRate: number | null;
+        employmentRate: number | null;
+        year: number | null;
+        division: string | null;
+        universityType: string | null;
+        establishment: string | null;
+        hasUnivInfo: boolean;
+        univInfoId: number | null;
+      };
+
+      const toRegionShort = (area: string) => area.replace(/특별시|광역시|특별자치시|도$|특별자치도$/, '').trim().slice(0, 2);
+
+      // 1) cached_majors.universities JSON — 1차 데이터 소스 (CareerNet MAJOR_VIEW, 항상 존재)
+      const cmRows = await db.execute(sqlExpr`
+        SELECT universities FROM cached_majors
+        WHERE major_name = ${decodedName}
+          AND universities IS NOT NULL
+          AND jsonb_array_length(universities) > 0
+        LIMIT 1
+      `);
+      type CmUnivEntry = { area: string; schoolName: string; majorName?: string; campus_nm?: string; schoolURL?: string };
+      const univsJson: CmUnivEntry[] = (cmRows as any).rows?.[0]?.universities ?? [];
+
+      // cached_majors 기반 기본 맵 (univName → entry)
+      const cmBaseMap = new Map<string, MajorUnivResult>();
+      univsJson.forEach((u, idx) => {
+        const name = u.schoolName;
+        if (name && !cmBaseMap.has(name)) {
+          cmBaseMap.set(name, {
+            id: 2000000 + idx,
+            majorName: u.majorName ?? decodedName,
+            univName: name,
+            region: toRegionShort(u.area ?? ''),
+            area: u.area ?? null,
+            campus_nm: u.campus_nm ?? null,
+            schoolURL: u.schoolURL ?? null,
+            quota: null,
+            competitionRate: null,
+            employmentRate: null,
+            year: null,
+            division: null,
+            universityType: null,
+            establishment: null,
+            hasUnivInfo: false,
+            univInfoId: null,
+          });
+        }
+      });
+
+      // 2) majorUniversityMap 에서 보조 통계 조회 (경쟁률 등)
       let mapRows = await db.select().from(majorUniversityMap)
         .where(eq(majorUniversityMap.majorName, decodedName))
         .orderBy(desc(majorUniversityMap.competitionRate), asc(majorUniversityMap.univName));
@@ -6334,7 +6392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .orderBy(desc(majorUniversityMap.competitionRate), asc(majorUniversityMap.univName));
       }
 
-      // 2) university_majors 에서 정확 일치 우선, 포함 관계 보조
+      // 3) university_majors 에서 정확 일치 우선, 포함 관계 보조
       const exactRows = await db.select().from(universityMajors)
         .where(eq(universityMajors.majorName, decodedName));
 
@@ -6345,95 +6403,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const umRows = exactRows.length > 0 ? exactRows : likeRows;
 
-      // 3) university_info 에서 대학 세부 정보 조회 (for competitionRate, employmentRate links)
-      const univNames = [...new Set(umRows.map(r => r.universityName))];
+      // 4) university_info 에서 대학 세부 통계 조회
+      const allUnivNames = Array.from(new Set([
+        ...mapRows.map(r => r.univName),
+        ...umRows.map(r => r.universityName),
+      ].filter(Boolean) as string[]));
+
       let univInfoMap: Record<string, { id: number; competitionRate: number | null; employmentRate: number | null }> = {};
-      if (univNames.length > 0) {
+      if (allUnivNames.length > 0) {
         const univInfoRows = await db.select({
           id: universityInfo.id,
           univName: universityInfo.univName,
           competitionRate: universityInfo.competitionRate,
           employmentRate: universityInfo.employmentRate,
         }).from(universityInfo)
-          .where(or(...univNames.map(n => eq(universityInfo.univName, n!))));
+          .where(or(...allUnivNames.map(n => eq(universityInfo.univName, n))));
         for (const ui of univInfoRows) {
           if (ui.univName) univInfoMap[ui.univName] = { id: ui.id, competitionRate: ui.competitionRate, employmentRate: ui.employmentRate };
         }
       }
 
-      // 4) university_majors 결과를 MajorUnivEntry 형태로 변환 및 dedup
-      const existingUnivNames = new Set(mapRows.map(r => r.univName));
-      const umMapped = umRows
-        .filter(r => !existingUnivNames.has(r.universityName))
-        .map(r => {
-          const info = univInfoMap[r.universityName ?? ''];
-          return {
+      // 5) 보조 통계를 cmBaseMap에 병합하고, cmBaseMap에 없는 대학도 추가
+      const resultMap = new Map<string, MajorUnivResult>(cmBaseMap);
+
+      // majorUniversityMap 데이터 병합
+      mapRows.forEach((r, idx) => {
+        const name = r.univName ?? '';
+        if (!name) return;
+        const existing = resultMap.get(name);
+        if (existing) {
+          // 기존 cached_majors 항목에 통계 보완
+          existing.competitionRate = r.competitionRate ?? existing.competitionRate;
+          existing.employmentRate = r.employmentRate ?? existing.employmentRate;
+          existing.quota = r.quota ?? existing.quota;
+          existing.year = r.year ?? existing.year;
+          existing.hasUnivInfo = true;
+        } else {
+          // cached_majors에 없는 대학 추가
+          const info = univInfoMap[name];
+          resultMap.set(name, {
+            id: r.id,
+            majorName: r.majorName,
+            univName: name,
+            region: r.region ?? null,
+            area: null,
+            campus_nm: null,
+            schoolURL: null,
+            quota: r.quota ?? null,
+            competitionRate: r.competitionRate ?? info?.competitionRate ?? null,
+            employmentRate: r.employmentRate ?? info?.employmentRate ?? null,
+            year: r.year ?? null,
+            division: null,
+            universityType: null,
+            establishment: null,
+            hasUnivInfo: true,
+            univInfoId: info?.id ?? null,
+          });
+        }
+      });
+
+      // university_majors 데이터 병합
+      const seenUmNames = new Set<string>();
+      umRows.forEach((r, idx) => {
+        const name = r.universityName ?? '';
+        if (!name || seenUmNames.has(name)) return;
+        seenUmNames.add(name);
+        const existing = resultMap.get(name);
+        if (existing) {
+          // 기존 항목에 division/establishment/universityType 보완
+          existing.division = existing.division ?? r.division ?? null;
+          existing.universityType = existing.universityType ?? r.universityType ?? null;
+          existing.establishment = existing.establishment ?? r.establishment ?? null;
+          if (!existing.region) existing.region = r.region ?? r.location ?? null;
+          const info = univInfoMap[name];
+          if (info && !existing.hasUnivInfo) {
+            existing.hasUnivInfo = true;
+            existing.univInfoId = info.id;
+            existing.competitionRate = existing.competitionRate ?? info.competitionRate;
+            existing.employmentRate = existing.employmentRate ?? info.employmentRate;
+          }
+        } else {
+          // cached_majors에 없는 대학 추가
+          const info = univInfoMap[name];
+          resultMap.set(name, {
             id: r.id + 1000000,
             majorName: r.majorName,
-            univName: r.universityName,
+            univName: name,
             region: r.region ?? r.location ?? null,
-            quota: null as number | null,
+            area: null,
+            campus_nm: null,
+            schoolURL: null,
+            quota: null,
             competitionRate: info?.competitionRate ?? null,
             employmentRate: info?.employmentRate ?? null,
-            year: null as number | null,
+            year: null,
             division: r.division ?? null,
             universityType: r.universityType ?? null,
             establishment: r.establishment ?? null,
             hasUnivInfo: !!info,
             univInfoId: info?.id ?? null,
-          };
-        });
-
-      // Remove dedupes within umMapped (same university name)
-      const seenUmNames = new Set<string>();
-      const umDeduped = umMapped.filter(r => {
-        if (seenUmNames.has(r.univName ?? '')) return false;
-        seenUmNames.add(r.univName ?? '');
-        return true;
+          });
+        }
       });
 
-      // 5) mapRows 에도 division, establishment, hasUnivInfo 추가
-      const mapRowsEnriched = mapRows.map(r => ({
-        ...r,
-        division: null as string | null,
-        establishment: null as string | null,
-        hasUnivInfo: true,
-        univInfoId: null as number | null,
-      }));
-
-      let combined = [...mapRowsEnriched, ...umDeduped];
-
-      // 5-extra) combined가 비어있으면 cached_majors.universities JSONB 필드 사용 (CareerNet MAJOR_VIEW 데이터)
-      if (combined.length === 0) {
-        const cmRows = await db.execute(sqlExpr`
-          SELECT universities FROM cached_majors
-          WHERE major_name = ${decodedName}
-            AND universities IS NOT NULL
-            AND jsonb_array_length(universities) > 0
-          LIMIT 1
-        `);
-        const univsJson: Array<{ area: string; schoolName: string; majorName: string }> =
-          (cmRows as any).rows?.[0]?.universities ?? [];
-        // 시·도 단위 추출 (예: "서울특별시" → "서울")
-        const toRegionShort = (area: string) => area.replace(/특별시|광역시|특별자치시|도$|특별자치도$/, '').trim().slice(0, 2);
-        const cmMapped = univsJson.map((u, idx) => ({
-          id: 2000000 + idx,
-          majorName: u.majorName ?? decodedName,
-          univName: u.schoolName,
-          region: toRegionShort(u.area ?? ''),
-          quota: null as number | null,
-          competitionRate: null as number | null,
-          employmentRate: null as number | null,
-          year: null as number | null,
-          division: null as string | null,
-          universityType: null as string | null,
-          establishment: null as string | null,
-          hasUnivInfo: false,
-          univInfoId: null as number | null,
-        }));
-        combined = cmMapped;
-      }
-
+      const combined: MajorUnivResult[] = Array.from(resultMap.values());
       combined.sort((a, b) => (b.competitionRate ?? 0) - (a.competitionRate ?? 0) || (a.univName ?? '').localeCompare(b.univName ?? '', 'ko'));
 
       res.json({ data: combined, total: combined.length });

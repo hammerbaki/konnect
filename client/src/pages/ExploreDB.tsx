@@ -65,6 +65,9 @@ interface MajorUnivEntry {
   majorName: string;
   univName: string;
   region: string | null;
+  area: string | null;
+  campus_nm: string | null;
+  schoolURL: string | null;
   quota: number | null;
   competitionRate: number | null;
   employmentRate: number | null;
@@ -385,23 +388,44 @@ function DemandBadge({ demand }: { demand: string | null }) {
 }
 
 // ---- University Inline Detail Panel ----
-function UnivDetailInline({ entry, onClose }: {
+function UnivDetailInline({ entry, onClose, majorName, onNavigateToUniversity, univTabAvailable }: {
   entry: MajorUnivEntry;
   onClose: () => void;
+  majorName?: string;
+  onNavigateToUniversity?: (univName: string) => void;
+  univTabAvailable?: boolean;
 }) {
+  const [, navigate] = useLocation();
+
+  // 보조 조회: university_info에서 등록금/기숙사/재학생 등 추가 통계
   const { data, isLoading } = useQuery<{ data: University[]; total: number }>({
     queryKey: ['univ-detail-inline', entry.univName],
     queryFn: () =>
       fetch(`/api/explore/universities?search=${encodeURIComponent(entry.univName ?? '')}&limit=5`)
         .then(r => r.json()),
-    enabled: entry.hasUnivInfo,
     staleTime: 5 * 60 * 1000,
   });
 
   const univ = data?.data?.find(u => u.univName === entry.univName) ?? data?.data?.[0];
+
+  // 경쟁률/취업률: entry(major_university_map) → univ(university_info) 순으로 우선순위
+  const competitionRate = entry.competitionRate ?? univ?.competitionRate ?? null;
+  const employmentRate = entry.employmentRate ?? univ?.employmentRate ?? null;
+
+  // 등록금/기숙사/재학생/입학정원/장학금: university_info에서만 제공
   const tuitionWan = univ?.avgTuition && univ.avgTuition > 0 ? Math.round(univ.avgTuition / 10) : null;
   const scholarshipWan = univ?.scholarshipPerStudent && univ.scholarshipPerStudent > 0
     ? Math.round(univ.scholarshipPerStudent / 10000) : null;
+
+  const hasAnyStats = (
+    (competitionRate && competitionRate > 0) ||
+    (employmentRate && employmentRate > 0) ||
+    tuitionWan ||
+    (univ?.dormitoryRate && univ.dormitoryRate > 0) ||
+    (univ?.studentCount && univ.studentCount > 0) ||
+    (univ?.admissionQuota && univ.admissionQuota > 0) ||
+    scholarshipWan
+  );
 
   return (
     <div
@@ -423,11 +447,16 @@ function UnivDetailInline({ entry, onClose }: {
         </button>
       </div>
 
-      {/* 기본 배지 (MajorUnivEntry에서) */}
+      {/* 기본 배지 (MajorUnivEntry에서 항상 표시) */}
       <div className="flex flex-wrap gap-1 mb-2.5">
-        {entry.region && (
+        {(entry.area || entry.region) && (
           <span className="inline-flex items-center gap-0.5 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
-            <MapPin className="w-2.5 h-2.5" />{entry.region}
+            <MapPin className="w-2.5 h-2.5" />{entry.area ?? entry.region}
+          </span>
+        )}
+        {entry.campus_nm && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-600 font-medium">
+            {entry.campus_nm}
           </span>
         )}
         {entry.establishment && (
@@ -449,76 +478,98 @@ function UnivDetailInline({ entry, onClose }: {
         )}
       </div>
 
-      {/* 통계 (university_info 보유 시) */}
-      {entry.hasUnivInfo ? (
-        isLoading ? (
-          <div className="flex items-center gap-1 text-[10px] text-gray-400">
-            <Skeleton className="h-3 w-24 rounded" />
-            <Skeleton className="h-3 w-20 rounded" />
-          </div>
-        ) : univ ? (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-            {univ.competitionRate && univ.competitionRate > 0 && (
-              <div className="flex items-baseline gap-1">
-                <span className="text-gray-400">경쟁률</span>
-                <span className="font-bold text-coral">{univ.competitionRate.toFixed(1)}:1</span>
-                <span className="text-[9px] text-gray-400">(학교 전체)</span>
-              </div>
-            )}
-            {univ.employmentRate && univ.employmentRate > 0 && (
-              <div className="flex items-baseline gap-1">
-                <span className="text-gray-400">취업률</span>
-                <span className="font-bold text-emerald-600">{univ.employmentRate.toFixed(1)}%</span>
-                <span className="text-[9px] text-gray-400">(학교 전체)</span>
-              </div>
-            )}
-            {tuitionWan && (
-              <div className="flex items-baseline gap-1">
-                <span className="text-gray-400">등록금</span>
-                <span className="font-bold text-gold">{tuitionWan.toLocaleString()}만원/년</span>
-              </div>
-            )}
-            {univ.dormitoryRate && univ.dormitoryRate > 0 && (
-              <div className="flex items-baseline gap-1">
-                <span className="text-gray-400">기숙사</span>
-                <span className="font-bold text-dream">{univ.dormitoryRate.toFixed(1)}%</span>
-              </div>
-            )}
-            {univ.studentCount && univ.studentCount > 0 && (
-              <div className="flex items-baseline gap-1">
-                <span className="text-gray-400">재학생</span>
-                <span className="font-bold text-ink">{univ.studentCount.toLocaleString()}명</span>
-              </div>
-            )}
-            {univ.admissionQuota && univ.admissionQuota > 0 && (
-              <div className="flex items-baseline gap-1">
-                <span className="text-gray-400">입학정원</span>
-                <span className="font-bold text-ink">{univ.admissionQuota.toLocaleString()}명</span>
-              </div>
-            )}
-            {scholarshipWan && (
-              <div className="flex items-baseline gap-1">
-                <span className="text-gray-400">1인당 장학금</span>
-                <span className="font-bold text-amber-600">{scholarshipWan.toLocaleString()}만원</span>
-              </div>
-            )}
-          </div>
+      {/* 통계: entry 기본값 + university_info 보조 (없어도 기본 정보는 항상 표시됨) */}
+      {isLoading && !hasAnyStats ? (
+        <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-2">
+          <Skeleton className="h-3 w-24 rounded" />
+          <Skeleton className="h-3 w-20 rounded" />
+        </div>
+      ) : hasAnyStats ? (
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mb-2">
+          {competitionRate && competitionRate > 0 && (
+            <div className="flex items-baseline gap-1">
+              <span className="text-gray-400">경쟁률</span>
+              <span className="font-bold text-coral">{competitionRate.toFixed(1)}:1</span>
+              <span className="text-[9px] text-gray-400">(학교 전체)</span>
+            </div>
+          )}
+          {employmentRate && employmentRate > 0 && (
+            <div className="flex items-baseline gap-1">
+              <span className="text-gray-400">취업률</span>
+              <span className="font-bold text-emerald-600">{employmentRate.toFixed(1)}%</span>
+              <span className="text-[9px] text-gray-400">(학교 전체)</span>
+            </div>
+          )}
+          {tuitionWan && (
+            <div className="flex items-baseline gap-1">
+              <span className="text-gray-400">등록금</span>
+              <span className="font-bold text-gold">{tuitionWan.toLocaleString()}만원/년</span>
+            </div>
+          )}
+          {univ?.dormitoryRate && univ.dormitoryRate > 0 && (
+            <div className="flex items-baseline gap-1">
+              <span className="text-gray-400">기숙사</span>
+              <span className="font-bold text-dream">{univ.dormitoryRate.toFixed(1)}%</span>
+            </div>
+          )}
+          {univ?.studentCount && univ.studentCount > 0 && (
+            <div className="flex items-baseline gap-1">
+              <span className="text-gray-400">재학생</span>
+              <span className="font-bold text-ink">{univ.studentCount.toLocaleString()}명</span>
+            </div>
+          )}
+          {univ?.admissionQuota && univ.admissionQuota > 0 && (
+            <div className="flex items-baseline gap-1">
+              <span className="text-gray-400">입학정원</span>
+              <span className="font-bold text-ink">{univ.admissionQuota.toLocaleString()}명</span>
+            </div>
+          )}
+          {scholarshipWan && (
+            <div className="flex items-baseline gap-1">
+              <span className="text-gray-400">1인당 장학금</span>
+              <span className="font-bold text-amber-600">{scholarshipWan.toLocaleString()}만원</span>
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* 자세히 보기 버튼 */}
+      <div className="mt-1.5 pt-1.5 border-t border-dream/10">
+        {univTabAvailable !== false ? (
+          <button
+            className="text-[10px] text-dream hover:text-dream/80 flex items-center gap-0.5 font-medium transition-colors"
+            onClick={() => {
+              if (onNavigateToUniversity) {
+                onNavigateToUniversity(entry.univName ?? '');
+              } else {
+                navigate(`/explore?tab=universities&q=${encodeURIComponent(entry.univName ?? '')}`);
+              }
+            }}
+            data-testid={`btn-univ-detail-link-${entry.univName}`}
+          >
+            대학 정보 탭에서 자세히 보기 →
+          </button>
         ) : (
-          <p className="text-[10px] text-gray-400">상세 데이터를 찾을 수 없습니다.</p>
-        )
-      ) : (
-        <p className="text-[10px] text-gray-400">이 대학의 세부 통계 데이터가 없습니다.</p>
-      )}
+          <button
+            className="text-[10px] text-dream hover:text-dream/80 flex items-center gap-0.5 font-medium transition-colors"
+            onClick={() => navigate(`/explore?tab=majors&q=${encodeURIComponent(majorName ?? entry.majorName ?? '')}`)}
+            data-testid={`btn-major-detail-link-${entry.univName}`}
+          >
+            전공 탭에서 자세히 보기 →
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
 // ---- Major Card ----
-function MajorCard({ major, onNavigateToUniversity, isBookmarked, onToggleBookmark }: {
+function MajorCard({ major, onNavigateToUniversity, isBookmarked, onToggleBookmark, univTabAvailable }: {
   major: Major;
   onNavigateToUniversity?: (univName: string) => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  univTabAvailable?: boolean;
 }) {
   const [showMore, setShowMore] = useState(false);
   const [showAllJobs, setShowAllJobs] = useState(false);
@@ -736,6 +787,9 @@ function MajorCard({ major, onNavigateToUniversity, isBookmarked, onToggleBookma
                         <UnivDetailInline
                           entry={u}
                           onClose={() => setExpandedUniv(null)}
+                          majorName={major.majorName}
+                          onNavigateToUniversity={onNavigateToUniversity}
+                          univTabAvailable={univTabAvailable}
                         />
                       )}
                     </div>
@@ -1837,6 +1891,7 @@ export default function ExploreDB() {
                     onNavigateToUniversity={navigateToUniversity}
                     isBookmarked={!!getBookmark("major", m.majorName)}
                     onToggleBookmark={() => toggleBookmark("major", m.id, m.majorName)}
+                    univTabAvailable={univTotal > 0}
                   />
                 ))}
               </div>
