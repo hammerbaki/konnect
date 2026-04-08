@@ -1,0 +1,139 @@
+# 개설 대학 클릭 시 상세 정보 미표시 버그 수정 지시서
+
+## 현상
+
+1. 학과 상세 페이지(예: IT융합학과)에서 "개설 대학" 목록의 대학(예: 경북대학교)을 클릭하면 팝업이 열리지만 **"이 대학의 세부 통계 데이터가 없습니다"**라고만 표시됩니다.
+2. 반면, **직업 상세에서 "관련 전공"을 클릭하면** 학과 설명, 관련 직업, 연평균 급여, "전공 탭에서 자세히 보기" 버튼까지 풍부한 정보가 잘 표시됩니다 (스크린샷 참조: 3D 프린팅 전문가 → 컴퓨터공학과).
+
+## 원인 분석
+
+CareerNet API 전수 재수집으로 개설 대학 데이터가 `cached_majors.university` JSON 필드에 저장되었습니다. 이 데이터의 구조는 아래와 같습니다:
+
+```json
+{
+  "area": "경상",
+  "schoolName": "경북대학교",
+  "majorName": "IT융합학과",
+  "schoolURL": "http://www.knu.ac.kr",
+  "campus_nm": "제1캠퍼스",
+  "totalCount": ""
+}
+```
+
+그러나 대학 클릭 시 상세 정보를 가져오는 코드는 아마도 `major_university_map` 테이블이나 `university_info` 테이블에서 조회하고 있을 것입니다. 새로 수집된 대학 데이터와 기존 테이블 간 매칭이 안 되거나, 해당 학과-대학 조합이 기존 테이블에 없어서 "데이터 없음"이 표시됩니다.
+
+## 수정 방향
+
+### 핵심 원칙: 직업→전공 팝업의 패턴을 따를 것
+
+직업 상세에서 "관련 전공" 칩(예: 컴퓨터공학과)을 클릭하면:
+- 학과 설명 표시
+- 관련 직업 칩 나열
+- 연평균 급여 범위 표시
+- **"전공 탭에서 자세히 보기 →"** 버튼으로 해당 학과 상세 페이지 이동
+
+**대학 클릭도 동일한 패턴을 적용합니다.** 팝업에 대학 기본 정보를 표시하고, 외부 학교 홈페이지가 아닌 **사이트 내 대학 정보 페이지로 이동하는 버튼**을 제공합니다.
+
+### 데이터 소스 정리
+
+#### 소스 1: `cached_majors.university` JSON (CareerNet API 원본)
+- **모든 학과-대학 조합**에 대해 데이터 존재 (지금 개설 대학 목록 자체가 여기서 나옴)
+- 포함 정보: 지역(area), 학교명(schoolName), 학교URL(schoolURL), 캠퍼스(campus_nm)
+- 미포함: 경쟁률, 취업률 등 통계
+
+#### 소스 2: `major_university_map` 테이블 (기존 API 수집분)
+- 2,319건만 존재 (일부 학과-대학 조합만 커버)
+- 포함 정보: 경쟁률, 취업률 (단, 학교 전체 수치)
+- 매칭 실패 가능: 학교명/학과명 표기 차이
+
+## 구체적 구현
+
+### 대학 클릭 시 팝업 내용
+
+```typescript
+// 1단계: cached_majors.university JSON에서 해당 대학 정보 추출 (항상 있음)
+const uniInfo = majorUniversities.find(u => u.schoolName === selectedSchool);
+
+// 2단계: major_university_map에서 추가 통계 조회 시도 (있으면 표시, 없으면 스킵)
+const extraStats = await getFromMajorUniversityMap(majorName, selectedSchool);
+
+// 3단계: 해당 대학이 개설한 다른 학과들 조회 (선택사항 — 있으면 풍부한 정보 제공)
+// cached_majors 테이블에서 university JSON에 해당 대학명이 포함된 학과들을 검색
+
+// 4단계: 팝업 렌더링
+return (
+  <div>
+    <h3>{uniInfo.schoolName}</h3>
+    <p>📍 {uniInfo.area} {uniInfo.campus_nm && `· ${uniInfo.campus_nm}`}</p>
+    
+    {/* 해당 대학에서의 학과명이 다를 경우 표시 */}
+    {uniInfo.majorName && uniInfo.majorName !== currentMajorName && (
+      <p>이 대학의 학과명: {uniInfo.majorName}</p>
+    )}
+    
+    {/* 추가 통계가 있으면 표시 */}
+    {extraStats && (
+      <>
+        {extraStats.competitionRate && <p>경쟁률: {extraStats.competitionRate} (학교 전체)</p>}
+        {extraStats.employmentRate && <p>취업률: {extraStats.employmentRate} (학교 전체)</p>}
+      </>
+    )}
+    
+    {/* ★ 핵심: 사이트 내 이동 버튼 */}
+    <button 
+      onClick={() => navigate(`/explore?tab=universities&q=${encodeURIComponent(uniInfo.schoolName)}`)}
+      className="w-full mt-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+    >
+      대학 정보 탭에서 자세히 보기 →
+    </button>
+  </div>
+);
+```
+
+### 이동 경로 설명
+
+"대학 정보 탭에서 자세히 보기 →" 버튼 클릭 시:
+- 학과/직업 탐색 페이지의 **대학 탭**으로 이동
+- 해당 대학명으로 검색/필터된 상태로 표시
+- URL 예: `/explore?tab=universities&q=경북대학교`
+
+만약 사이트에 대학 전용 탭이나 페이지가 아직 없다면, 대학 탭이 있는지 먼저 확인하고:
+- **있는 경우**: 위 방식대로 이동
+- **없는 경우**: "전공 탭에서 자세히 보기 →" 버튼으로 대체하여 현재 보고 있는 학과의 상세 페이지로 이동 (`/explore?tab=majors&q=IT융합학과`)
+
+## "데이터 없음" 메시지 제거
+
+대학 목록에 표시되는 대학은 `cached_majors.university`에 반드시 존재하므로 "이 대학의 세부 통계 데이터가 없습니다" 메시지가 나올 수 없도록 수정합니다. 기본 정보(지역, 캠퍼스)는 항상 표시되고, 통계는 있으면 추가로 보여주는 구조입니다.
+
+## 수정 대상 파일
+
+1. **`ExploreDB.tsx`** — 대학 클릭 팝업 렌더링 부분
+2. **대학 상세 API** (있다면) — `cached_majors.university` 데이터를 반환하도록 수정
+
+## 기대 결과
+
+경북대학교 클릭 시:
+```
+┌──────────────────────────────────┐
+│ 🏫 경북대학교                ✕    │
+│ 📍 경상 · 제1캠퍼스               │
+│                                  │
+│ ┌──────────────────────────────┐ │
+│ │  대학 정보 탭에서 자세히 보기 → │ │
+│ └──────────────────────────────┘ │
+└──────────────────────────────────┘
+```
+
+추가 통계가 있는 대학의 경우:
+```
+┌──────────────────────────────────┐
+│ 🏫 고려대학교                ✕    │
+│ 📍 서울 · 세종캠퍼스              │
+│ 경쟁률: 14.7:1 (학교 전체)        │
+│ 취업률: 65.3% (학교 전체)         │
+│                                  │
+│ ┌──────────────────────────────┐ │
+│ │  대학 정보 탭에서 자세히 보기 → │ │
+│ └──────────────────────────────┘ │
+└──────────────────────────────────┘
+```

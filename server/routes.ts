@@ -31,6 +31,7 @@ import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, inArray, sql a
 import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap, universityMajors, bookmarks, insertBookmarkSchema } from "@shared/schema";
 import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData, enrichMajorAptitudeData, refillEmptyRelatedMajors, syncCareerMajorSeq, normalizeMajorName, syncJobsFromCareerNetNew, syncMajorsFromCareerNetNew } from "./dataSync";
 import { syncUniversityApi } from "./universityApiSync";
+import { APTITUDE_QUESTIONS, computeScores } from "./aptitudeConstants";
 
 // Helper functions for profile defaults
 function getProfileTitle(type: string): string {
@@ -6152,89 +6153,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // APTITUDE API (전공 적성 분석)
   // ===========================
 
-  const APTITUDE_QUESTIONS = [
-    // 흥미 문항 (1~18) - SCI/ENG/MED/BIZ/LAW/EDU/ART/IT/SOC 각 2개
-    { id: 1, text: "자연현상이나 과학적 원리에 호기심이 많다", category: "interest", key: "SCI" },
-    { id: 2, text: "실험이나 탐구 활동을 즐긴다", category: "interest", key: "SCI" },
-    { id: 3, text: "기계나 장치가 어떻게 작동하는지 알고 싶다", category: "interest", key: "ENG" },
-    { id: 4, text: "수학·물리를 활용한 문제 해결에 흥미가 있다", category: "interest", key: "ENG" },
-    { id: 5, text: "사람들의 건강과 질병에 관심이 많다", category: "interest", key: "MED" },
-    { id: 6, text: "아픈 사람을 돌보거나 치료하는 일에 보람을 느낀다", category: "interest", key: "MED" },
-    { id: 7, text: "경제나 경영 분야 뉴스에 관심이 있다", category: "interest", key: "BIZ" },
-    { id: 8, text: "어떤 일을 효율적으로 기획하고 조직하는 걸 좋아한다", category: "interest", key: "BIZ" },
-    { id: 9, text: "규칙·제도·법에 관심이 있고 공정함을 중시한다", category: "interest", key: "LAW" },
-    { id: 10, text: "토론이나 논쟁에서 내 주장을 논리적으로 펼치는 걸 좋아한다", category: "interest", key: "LAW" },
-    { id: 11, text: "지식을 전달하거나 가르치는 것이 즐겁다", category: "interest", key: "EDU" },
-    { id: 12, text: "어린이나 청소년의 성장과 발달에 관심이 많다", category: "interest", key: "EDU" },
-    { id: 13, text: "그림·음악·글쓰기 등 예술적 표현 활동을 즐긴다", category: "interest", key: "ART" },
-    { id: 14, text: "새로운 디자인이나 아이디어를 만들어내는 것이 좋다", category: "interest", key: "ART" },
-    { id: 15, text: "프로그래밍이나 디지털 기술에 흥미가 있다", category: "interest", key: "IT" },
-    { id: 16, text: "데이터나 알고리즘으로 문제를 해결하는 게 재미있다", category: "interest", key: "IT" },
-    { id: 17, text: "사회 문제나 불평등에 관심이 많고 변화를 만들고 싶다", category: "interest", key: "SOC" },
-    { id: 18, text: "봉사·복지·상담 등 사람을 돕는 활동에 보람을 느낀다", category: "interest", key: "SOC" },
-    // 적성 문항 (19~30) - VERBAL/MATH/SPATIAL/CREATIVE/SOCIAL/SELF 각 2개
-    { id: 19, text: "글쓰기나 말하기로 내 생각을 잘 표현할 수 있다", category: "aptitude", key: "VERBAL" },
-    { id: 20, text: "책이나 글에서 핵심 내용을 빠르게 파악한다", category: "aptitude", key: "VERBAL" },
-    { id: 21, text: "수학 계산이나 논리적 추론이 어렵지 않다", category: "aptitude", key: "MATH" },
-    { id: 22, text: "통계나 숫자 데이터를 분석하는 게 잘 맞는다", category: "aptitude", key: "MATH" },
-    { id: 23, text: "지도나 도면을 보고 공간 구조를 머릿속에 그릴 수 있다", category: "aptitude", key: "SPATIAL" },
-    { id: 24, text: "복잡한 도형이나 입체적 구조를 잘 이해한다", category: "aptitude", key: "SPATIAL" },
-    { id: 25, text: "새로운 아이디어나 해결책을 자주 떠올린다", category: "aptitude", key: "CREATIVE" },
-    { id: 26, text: "틀에 박히지 않은 방식으로 생각하는 걸 즐긴다", category: "aptitude", key: "CREATIVE" },
-    { id: 27, text: "다른 사람의 말을 잘 듣고 감정을 이해한다", category: "aptitude", key: "SOCIAL" },
-    { id: 28, text: "여러 사람과 협력하거나 갈등을 조율하는 데 자신 있다", category: "aptitude", key: "SOCIAL" },
-    { id: 29, text: "목표를 세우고 스스로 계획적으로 실행할 수 있다", category: "aptitude", key: "SELF" },
-    { id: 30, text: "어려운 상황에서도 침착하게 자기 관리를 잘 한다", category: "aptitude", key: "SELF" },
-  ];
-
-  // 흥미 카테고리 → cached_jobs.field 매핑 (실제 DB 값 기준)
-  const JOB_FIELD_MAPPING: Record<string, string[]> = {
-    SCI: ['연구직 및 공학 기술직'],
-    ENG: ['연구직 및 공학 기술직', '건설·채굴직', '설치·정비·생산직'],
-    MED: ['보건·의료직'],
-    BIZ: ['경영·사무·금융·보험직', '영업·판매·운전·운송직'],
-    LAW: ['교육·법률·사회복지·경찰·소방직 및 군인'],
-    EDU: ['교육·법률·사회복지·경찰·소방직 및 군인'],
-    ART: ['예술·디자인·방송·스포츠직'],
-    IT:  ['연구직 및 공학 기술직'],
-    SOC: ['교육·법률·사회복지·경찰·소방직 및 군인', '미용·여행·숙박·음식·경비·청소직'],
-  };
-
-  // 같은 field를 공유하는 카테고리 구분용 키워드 필터
-  // 적용 방식: 해당 field에서 키워드 매칭 직업을 우선 정렬, 비매칭은 후순위
-  const KEYWORD_FILTER: Record<string, string[]> = {
-    // SCI/IT/ENG → '연구직 및 공학 기술직' 공유 (ENG는 추가 field도 보유)
-    SCI: ['연구', '과학', '물리', '화학', '생물', '수학', '통계', '천문', '지질', '해양', '환경'],
-    IT:  ['프로그래', '소프트웨어', '웹', '앱', '데이터', '정보보안', 'AI', '인공지능', '시스템', '네트워크', '클라우드', 'IT', '컴퓨터'],
-    ENG: ['기계', '건설', '토목', '전기', '전자', '제조', '화공', '재료', '설계', '엔지니어', '기술자', '기사'],
-    // LAW/EDU/SOC → '교육·법률·사회복지·경찰·소방직 및 군인' 공유
-    LAW: ['법', '변호', '검사', '판사', '행정', '공무원', '경찰', '소방', '세무', '관세', '외교'],
-    EDU: ['교사', '교수', '강사', '상담', '복지', '보육', '특수교육', '사서'],
-    SOC: ['기자', '작가', '통역', '번역', '큐레이터', '사회', '심리', '문화', '여행', '미용'],
-  };
-
-  // 공유 field에서 활성 카테고리 키워드로 우선순위 정렬 (하드 필터가 아닌 정렬)
-  function prioritizeByKeywords(
-    jobs: Array<{ jobName: string | null; field: string | null; salary: number | null; growth: string | null; relatedMajors: unknown; description: string | null }>,
-    activeCats: string[], // top3에 있는 공유그룹 카테고리들
-    sharedField: string
-  ) {
-    const allKws = activeCats.flatMap(c => KEYWORD_FILTER[c] || []);
-    if (allKws.length === 0) return jobs;
-    const matched: typeof jobs = [];
-    const unmatched: typeof jobs = [];
-    for (const j of jobs) {
-      if (j.field === sharedField && allKws.some(kw => j.jobName?.includes(kw))) {
-        matched.push(j);
-      } else {
-        unmatched.push(j);
-      }
-    }
-    return [...matched, ...unmatched];
-  }
-
   // GET /api/aptitude/questions
-  app.get('/api/aptitude/questions', (req, res) => {
+  app.get('/api/aptitude/questions', (_req, res) => {
     res.json(APTITUDE_QUESTIONS);
   });
 
@@ -6268,17 +6188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const INTEREST_LABELS_KR: Record<string, string> = {
-    SCI: "과학·탐구", ENG: "공학·기술", MED: "의료·보건",
-    BIZ: "경영·경제", LAW: "법률·행정", EDU: "교육·상담",
-    ART: "예술·디자인", IT: "IT·정보통신", SOC: "사회·문화",
-  };
-  const APTITUDE_LABELS_KR: Record<string, string> = {
-    VERBAL: "언어능력", MATH: "수리·논리력", SPATIAL: "공간·시각능력",
-    CREATIVE: "창의력", SOCIAL: "대인관계능력", SELF: "자기관리능력",
-  };
-
-  // POST /api/aptitude/analyze
+  // POST /api/aptitude/analyze — 큐 기반 비동기 처리 (jobId 즉시 반환)
   app.post('/api/aptitude/analyze', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId || req.user?.id;
@@ -6288,251 +6198,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "30개 문항 답변이 필요합니다." });
       }
 
-      // ── 1. 점수 계산 ──────────────────────────────────────────────
-      const interestKeys = ["SCI", "ENG", "MED", "BIZ", "LAW", "EDU", "ART", "IT", "SOC"];
-      const aptitudeKeys = ["VERBAL", "MATH", "SPATIAL", "CREATIVE", "SOCIAL", "SELF"];
-      const interestScores: Record<string, number> = {};
-      const aptitudeScores: Record<string, number> = {};
-      for (const key of interestKeys) interestScores[key] = 0;
-      for (const key of aptitudeKeys) aptitudeScores[key] = 0;
+      // ── 1. 점수 계산 (빠른 연산, DB/LLM 없음) ────────────────────
+      const { interestScores, aptitudeScores, top3 } = computeScores(answers);
 
-      for (const answer of answers) {
-        const question = APTITUDE_QUESTIONS.find(q => q.id === answer.questionId);
-        if (!question) continue;
-        const score = Math.min(5, Math.max(1, answer.score));
-        if (question.category === "interest") {
-          interestScores[question.key] = (interestScores[question.key] || 0) + score;
-        } else {
-          aptitudeScores[question.key] = (aptitudeScores[question.key] || 0) + score;
-        }
-      }
-      for (const k of interestKeys) interestScores[k] = Math.round((interestScores[k] / 10) * 100);
-      for (const k of aptitudeKeys) aptitudeScores[k] = Math.round((aptitudeScores[k] / 10) * 100);
-
-      // ── 2. 흥미 상위 3개 카테고리 → 타겟 field 목록 ────────────────
-      const top3 = Object.entries(interestScores)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(([k]) => k);
-
-      const targetFields = [...new Set(top3.flatMap(cat => JOB_FIELD_MAPPING[cat] || []))];
-
-      // ── 3. DB에서 해당 field 직업 전체 조회 ─────────────────────────
-      let jobCandidates = await db.select({
-        jobName: cachedJobs.jobName,
-        field: cachedJobs.field,
-        salary: cachedJobs.salary,
-        growth: cachedJobs.growth,
-        relatedMajors: cachedJobs.relatedMajors,
-        description: cachedJobs.description,
-      }).from(cachedJobs)
-        .where(inArray(cachedJobs.field, targetFields));
-
-      // ── 4. 키워드 우선순위 정렬 (공유 field 카테고리 항상 적용) ─────────
-      // 조건 무관하게 항상 정렬: top3에 있는 카테고리 키워드 매칭 직업을 앞으로
-      const TECH_FIELD = '연구직 및 공학 기술직';
-      const EDU_FIELD = '교육·법률·사회복지·경찰·소방직 및 군인';
-
-      // 공학/IT/과학 그룹: SCI, IT는 TECH_FIELD 공유
-      // ENG는 TECH_FIELD 외 다른 field도 있으므로 해당 field 내에서 정렬
-      const techGroupCatsInTop3 = top3.filter(c => ['SCI', 'IT', 'ENG'].includes(c));
-      if (techGroupCatsInTop3.length > 0) {
-        jobCandidates = prioritizeByKeywords(jobCandidates, techGroupCatsInTop3, TECH_FIELD);
-      }
-
-      // 교육/법/사회 그룹: LAW, EDU, SOC 모두 EDU_FIELD 공유
-      const eduGroupCatsInTop3 = top3.filter(c => ['LAW', 'EDU', 'SOC'].includes(c));
-      if (eduGroupCatsInTop3.length > 0) {
-        jobCandidates = prioritizeByKeywords(jobCandidates, eduGroupCatsInTop3, EDU_FIELD);
-      }
-
-      // ── 5. 관련 학과 목록 수집 (related_majors → cached_majors 조회) ──
-      const allMajorNames = [...new Set(
-        jobCandidates.flatMap(j => Array.isArray(j.relatedMajors) ? (j.relatedMajors as string[]) : [])
-      )];
-
-      let majorCandidates: Array<{
-        majorName: string | null;
-        category: string | null;
-        description: string | null;
-        relatedJobs: unknown;
-      }> = [];
-
-      if (allMajorNames.length > 0) {
-        majorCandidates = await db.select({
-          majorName: cachedMajors.majorName,
-          category: cachedMajors.category,
-          description: cachedMajors.description,
-          relatedJobs: cachedMajors.relatedJobs,
-        }).from(cachedMajors)
-          .where(inArray(cachedMajors.majorName, allMajorNames.slice(0, 80)));
-
-        // Fuzzy fallback: for names not found by exact match, try normalized LIKE query
-        const foundNames = new Set(majorCandidates.map(m => m.majorName));
-        const notFound = allMajorNames.filter(n => !foundNames.has(n)).slice(0, 40);
-        if (notFound.length > 0) {
-          const fuzzyResults = await db.select({
-            majorName: cachedMajors.majorName,
-            category: cachedMajors.category,
-            description: cachedMajors.description,
-            relatedJobs: cachedMajors.relatedJobs,
-          }).from(cachedMajors)
-            .where(or(...notFound.map(n => ilike(cachedMajors.majorName, `%${normalizeMajorName(n)}%`))));
-          const existingNames = new Set(majorCandidates.map(m => m.majorName));
-          for (const r of fuzzyResults) {
-            if (!existingNames.has(r.majorName)) {
-              majorCandidates.push(r);
-              existingNames.add(r.majorName ?? '');
-            }
-          }
-          console.log(`[AptitudeAnalyze] 퍼지 매칭: ${notFound.length}개 미매칭 → ${fuzzyResults.length}개 보완`);
-        }
-      }
-
-      // 학과 후보 부족 시 전체에서 보충
-      if (majorCandidates.length < 10) {
-        const extra = await db.select({
-          majorName: cachedMajors.majorName,
-          category: cachedMajors.category,
-          description: cachedMajors.description,
-          relatedJobs: cachedMajors.relatedJobs,
-        }).from(cachedMajors).limit(40);
-        const existingNames = new Set(majorCandidates.map(m => m.majorName));
-        majorCandidates = [...majorCandidates, ...extra.filter(m => !existingNames.has(m.majorName))];
-      }
-
-      // ── 6. LLM 프롬프트 구성 ─────────────────────────────────────
-      const top3Desc = top3.map(k => `${INTEREST_LABELS_KR[k]}(${interestScores[k]}점)`).join(', ');
-      const topAptDesc = Object.entries(aptitudeScores).sort((a, b) => b[1] - a[1]).slice(0, 3)
-        .map(([k, v]) => `${APTITUDE_LABELS_KR[k]}(${v}점)`).join(', ');
-
-      const jobListStr = jobCandidates.slice(0, 60).map(j =>
-        `- ${j.jobName}(분류:${j.field}${j.salary ? ',연봉:' + Math.round(j.salary / 10000) + '만원' : ''})`
-      ).join('\n');
-
-      const majorListStr = majorCandidates.slice(0, 40).map(m =>
-        `- ${m.majorName}(${m.category || ''})`
-      ).join('\n');
-
-      const prompt = `당신은 진로 상담 전문가입니다. 아래 학생의 적성검사 결과와 실제 데이터를 기반으로 추천 사유를 작성해주세요.
-
-[학생 검사 결과]
-흥미 상위 3개: ${top3Desc}
-적성 강점: ${topAptDesc}
-
-[추천 후보 직업 목록 - 실제 DB 데이터]
-${jobListStr}
-
-[추천 후보 학과 목록 - 실제 DB 데이터]
-${majorListStr}
-
-위 목록에서 학생의 흥미와 적성에 가장 적합한 직업 5개, 학과 5개를 선택하고,
-각각에 대해 50자 이내의 추천 사유를 작성해주세요.
-
-⚠️ 규칙:
-- 위 목록에 없는 직업이나 학과를 추천하지 마세요
-- 급여, 취업률, 전망 등 수치를 생성하지 마세요
-- 추천 사유만 작성하세요
-
-JSON 형식으로만 응답하세요:
-{
-  "recommendedJobs": [{"name": "직업명", "reason": "추천 사유"}],
-  "recommendedMajors": [{"name": "학과명", "reason": "추천 사유"}],
-  "summary": "전체 분석 요약 (200자 이내)"
-}`;
-
-      // ── 7. GPT-4o-mini 호출 ─────────────────────────────────────
-      const { default: OpenAI } = await import('openai');
-      const openaiClient = new OpenAI({
-        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-      });
-
-      const completion = await openaiClient.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-        temperature: 0.5,
-      });
-
-      const aiResult = JSON.parse(completion.choices[0].message.content || '{}');
-      const llmJobs: Array<{ name: string; reason: string }> = aiResult.recommendedJobs || [];
-      const llmMajors: Array<{ name: string; reason: string }> = aiResult.recommendedMajors || [];
-
-      // ── 8. LLM 추천명 → DB 실제 데이터 매핑 (수치는 DB 값만 사용) ──
-      const jobMap = new Map(jobCandidates.map(j => [j.jobName, j]));
-      const finalJobs = llmJobs
-        .map(({ name, reason }) => {
-          const dbJob = jobMap.get(name);
-          return {
-            name,
-            reason,
-            salary: dbJob?.salary ?? null,   // DB 실제 연봉 (원 단위)
-            field: dbJob?.field ?? null,      // DB 실제 분류
-            growth: dbJob?.growth ?? null,    // DB 실제 고용전망
-          };
-        })
-        .filter(j => j.name);
-
-      const majorMap = new Map(majorCandidates.map(m => [m.majorName, m]));
-
-      // LLM 추천 학과의 related_jobs에서 급여 범위 계산
-      const recMajorRelatedJobNames = llmMajors.flatMap(({ name }) => {
-        const dbMajor = majorMap.get(name);
-        return Array.isArray(dbMajor?.relatedJobs) ? (dbMajor.relatedJobs as string[]) : [];
-      });
-      let majorJobSalaryMap: Map<string, { min: number; max: number }> = new Map();
-      if (recMajorRelatedJobNames.length > 0) {
-        const uniqueJobNames = [...new Set(recMajorRelatedJobNames)];
-        const jobSalaryRows = await db.select({
-          jobName: cachedJobs.jobName,
-          salary: cachedJobs.salary,
-        }).from(cachedJobs)
-          .where(inArray(cachedJobs.jobName, uniqueJobNames.slice(0, 60)));
-        // 학과별 급여 범위 계산 (jobName → salary 맵 먼저 구성)
-        const jobSalaryLookup = new Map(jobSalaryRows.map(j => [j.jobName, j.salary]));
-        for (const { name } of llmMajors) {
-          const dbMajor = majorMap.get(name);
-          const relJobs = Array.isArray(dbMajor?.relatedJobs) ? (dbMajor.relatedJobs as string[]) : [];
-          const salaries = relJobs.map(jn => jobSalaryLookup.get(jn)).filter((s): s is number => s != null && s > 0);
-          if (salaries.length > 0) {
-            majorJobSalaryMap.set(name, {
-              min: Math.min(...salaries),
-              max: Math.max(...salaries),
-            });
-          }
-        }
-      }
-
-      const finalMajors = llmMajors
-        .map(({ name, reason }) => {
-          const dbMajor = majorMap.get(name);
-          const salaryRange = majorJobSalaryMap.get(name);
-          return {
-            name,
-            reason,
-            category: dbMajor?.category ?? null,                   // DB 실제 계열
-            description: dbMajor?.description ?? null,             // DB 실제 설명
-            salaryMin: salaryRange ? salaryRange.min : null,       // DB 관련직업 최소연봉
-            salaryMax: salaryRange ? salaryRange.max : null,       // DB 관련직업 최대연봉
-          };
-        })
-        .filter(m => m.name);
-
-      // ── 9. DB 저장 ───────────────────────────────────────────────
-      const inserted = await db.insert(aptitudeAnalyses).values({
+      // ── 2. 큐에 작업 등록 (userId도 payload에 포함) ───────────────
+      const { jobId, status } = await submitQueuedJob(userId, null, 'aptitude_analysis', {
         userId,
         interestScores,
         aptitudeScores,
-        recommendedJobs: finalJobs,
-        recommendedMajors: finalMajors,
-        summary: aiResult.summary || '',
-      }).returning();
+        top3,
+      });
 
-      res.json(inserted[0]);
+      res.json({ jobId, status });
     } catch (error: any) {
       console.error("Aptitude analyze error:", error?.message);
       res.status(500).json({ message: "분석 중 오류가 발생했습니다: " + error.message });
+    }
+  });
+
+  // GET /api/aptitude/job/:jobId — 폴링 엔드포인트
+  app.get('/api/aptitude/job/:jobId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const { jobId } = req.params;
+
+      const job = await storage.getAiJob(jobId);
+      if (!job) {
+        return res.status(404).json({ message: "분석 작업을 찾을 수 없습니다." });
+      }
+      if (job.userId !== userId) {
+        return res.status(403).json({ message: "접근 권한이 없습니다." });
+      }
+
+      const progress = estimateProgress(job);
+
+      if (job.status === 'completed' && job.result) {
+        return res.json({ status: 'completed', progress: 100, data: job.result });
+      }
+      if (job.status === 'failed') {
+        return res.json({ status: 'failed', progress: 0, error: job.error || '분석 중 오류가 발생했습니다.' });
+      }
+
+      res.json({ status: job.status, progress });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 

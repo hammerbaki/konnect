@@ -16,6 +16,7 @@ const memoryQueues: Record<string, string[]> = {
   "ai:queue:goal": [],
   "ai:queue:essay": [],
   "ai:queue:analysis": [],
+  "ai:queue:aptitude_analysis": [],
 };
 const memoryProcessing: Record<string, string> = {};
 
@@ -25,9 +26,10 @@ if (isDevelopment) {
 
 const QUEUE_KEYS: Record<AiJobType, string> = {
   goal: "ai:queue:goal",
-  essay: "ai:queue:essay", 
-  essay_revision: "ai:queue:essay", // Share queue with essay
+  essay: "ai:queue:essay",
+  essay_revision: "ai:queue:essay",
   analysis: "ai:queue:analysis",
+  aptitude_analysis: "ai:queue:aptitude_analysis",
 };
 
 const PROCESSING_KEY = "ai:processing";
@@ -35,8 +37,9 @@ const PROCESSING_KEY = "ai:processing";
 export const CONCURRENCY_LIMITS: Record<AiJobType, number> = {
   goal: 6,
   essay: 2,
-  essay_revision: 2, // Share limit with essay
+  essay_revision: 2,
   analysis: 2,
+  aptitude_analysis: 4,
 };
 
 export const GLOBAL_LIMIT = 8;
@@ -46,6 +49,7 @@ export interface QueueStats {
   essay: { queued: number; processing: number };
   essay_revision: { queued: number; processing: number };
   analysis: { queued: number; processing: number };
+  aptitude_analysis: { queued: number; processing: number };
   totalProcessing: number;
 }
 
@@ -130,12 +134,13 @@ export async function getProcessingCount(type?: AiJobType): Promise<number> {
 }
 
 export async function getQueueStats(): Promise<QueueStats> {
-  const [goalQueued, essayQueued, analysisQueued] = await Promise.all([
+  const [goalQueued, essayQueued, analysisQueued, aptitudeQueued] = await Promise.all([
     getQueueLength("goal"),
     getQueueLength("essay"),
     getQueueLength("analysis"),
+    getQueueLength("aptitude_analysis"),
   ]);
-  
+
   let processing: Record<string, string>;
   if (isDevelopment) {
     processing = memoryProcessing;
@@ -143,10 +148,9 @@ export async function getQueueStats(): Promise<QueueStats> {
     processing = await redis!.hgetall<Record<string, string>>(PROCESSING_KEY) || {};
   }
   const processingTypes = Object.values(processing);
-  
-  // Count essay_revision in the essay processing count since they share the same queue
+
   const essayProcessing = processingTypes.filter(t => t === "essay" || t === "essay_revision").length;
-  
+
   return {
     goal: {
       queued: goalQueued,
@@ -157,12 +161,16 @@ export async function getQueueStats(): Promise<QueueStats> {
       processing: essayProcessing,
     },
     essay_revision: {
-      queued: essayQueued, // Shares queue with essay
+      queued: essayQueued,
       processing: essayProcessing,
     },
     analysis: {
       queued: analysisQueued,
       processing: processingTypes.filter(t => t === "analysis").length,
+    },
+    aptitude_analysis: {
+      queued: aptitudeQueued,
+      processing: processingTypes.filter(t => t === "aptitude_analysis").length,
     },
     totalProcessing: processingTypes.length,
   };

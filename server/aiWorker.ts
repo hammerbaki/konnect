@@ -20,6 +20,193 @@ import {
   type GoalLevel 
 } from "./ai";
 import type { AiJobType, AiJob, NotificationType } from "@shared/schema";
+import { db } from "./db";
+import { cachedJobs, cachedMajors, aptitudeAnalyses } from "@shared/schema";
+import { inArray, ilike, or } from "drizzle-orm";
+import {
+  JOB_FIELD_MAPPING, INTEREST_LABELS_KR, APTITUDE_LABELS_KR,
+  prioritizeByKeywords,
+} from "./aptitudeConstants";
+
+// Local helper: normalizeMajorName (re-export from dataSync not available here)
+function normalizeMajorName(name: string): string {
+  return name.replace(/[^가-힣a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+async function processAptitudeAnalysis(payload: any): Promise<any> {
+  const { interestScores, aptitudeScores, top3 } = payload as {
+    interestScores: Record<string, number>;
+    aptitudeScores: Record<string, number>;
+    top3: string[];
+    userId: string;
+  };
+
+  // ── 1. 타겟 field 목록 ─────────────────────────────────────────────
+  const targetFields = [...new Set(top3.flatMap(cat => JOB_FIELD_MAPPING[cat] || []))];
+
+  // ── 2. DB에서 해당 field 직업 전체 조회 ─────────────────────────
+  let jobCandidates = await db.select({
+    jobName: cachedJobs.jobName,
+    field: cachedJobs.field,
+    salary: cachedJobs.salary,
+    growth: cachedJobs.growth,
+    relatedMajors: cachedJobs.relatedMajors,
+    description: cachedJobs.description,
+  }).from(cachedJobs).where(inArray(cachedJobs.field, targetFields));
+
+  // ── 3. 키워드 우선순위 정렬 ───────────────────────────────────────
+  const TECH_FIELD = '연구직 및 공학 기술직';
+  const EDU_FIELD  = '교육·법률·사회복지·경찰·소방직 및 군인';
+  const techGroupCatsInTop3 = top3.filter(c => ['SCI', 'IT', 'ENG'].includes(c));
+  if (techGroupCatsInTop3.length > 0) {
+    jobCandidates = prioritizeByKeywords(jobCandidates, techGroupCatsInTop3, TECH_FIELD);
+  }
+  const eduGroupCatsInTop3 = top3.filter(c => ['LAW', 'EDU', 'SOC'].includes(c));
+  if (eduGroupCatsInTop3.length > 0) {
+    jobCandidates = prioritizeByKeywords(jobCandidates, eduGroupCatsInTop3, EDU_FIELD);
+  }
+
+  // ── 4. 관련 학과 목록 수집 ────────────────────────────────────────
+  const allMajorNames = [...new Set(
+    jobCandidates.flatMap(j => Array.isArray(j.relatedMajors) ? (j.relatedMajors as string[]) : [])
+  )];
+
+  let majorCandidates: Array<{
+    majorName: string | null; category: string | null;
+    description: string | null; relatedJobs: unknown;
+  }> = [];
+
+  if (allMajorNames.length > 0) {
+    majorCandidates = await db.select({
+      majorName: cachedMajors.majorName, category: cachedMajors.category,
+      description: cachedMajors.description, relatedJobs: cachedMajors.relatedJobs,
+    }).from(cachedMajors).where(inArray(cachedMajors.majorName, allMajorNames.slice(0, 80)));
+
+    const foundNames = new Set(majorCandidates.map(m => m.majorName));
+    const notFound   = allMajorNames.filter(n => !foundNames.has(n)).slice(0, 40);
+    if (notFound.length > 0) {
+      const fuzzyResults = await db.select({
+        majorName: cachedMajors.majorName, category: cachedMajors.category,
+        description: cachedMajors.description, relatedJobs: cachedMajors.relatedJobs,
+      }).from(cachedMajors)
+        .where(or(...notFound.map(n => ilike(cachedMajors.majorName, `%${normalizeMajorName(n)}%`))));
+      const existingNames = new Set(majorCandidates.map(m => m.majorName));
+      for (const r of fuzzyResults) {
+        if (!existingNames.has(r.majorName)) { majorCandidates.push(r); existingNames.add(r.majorName ?? ''); }
+      }
+    }
+  }
+  if (majorCandidates.length < 10) {
+    const extra = await db.select({
+      majorName: cachedMajors.majorName, category: cachedMajors.category,
+      description: cachedMajors.description, relatedJobs: cachedMajors.relatedJobs,
+    }).from(cachedMajors).limit(40);
+    const existingNames = new Set(majorCandidates.map(m => m.majorName));
+    majorCandidates = [...majorCandidates, ...extra.filter(m => !existingNames.has(m.majorName))];
+  }
+
+  // ── 5. LLM 프롬프트 구성 ──────────────────────────────────────────
+  const top3Desc   = top3.map(k => `${INTEREST_LABELS_KR[k]}(${interestScores[k]}점)`).join(', ');
+  const topAptDesc = Object.entries(aptitudeScores).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    .map(([k, v]) => `${APTITUDE_LABELS_KR[k]}(${v}점)`).join(', ');
+  const jobListStr   = jobCandidates.slice(0, 60).map(j =>
+    `- ${j.jobName}(분류:${j.field}${j.salary ? ',연봉:' + Math.round(j.salary / 10000) + '만원' : ''})`).join('\n');
+  const majorListStr = majorCandidates.slice(0, 40).map(m => `- ${m.majorName}(${m.category || ''})`).join('\n');
+
+  const prompt = `당신은 진로 상담 전문가입니다. 아래 학생의 적성검사 결과와 실제 데이터를 기반으로 추천 사유를 작성해주세요.
+
+[학생 검사 결과]
+흥미 상위 3개: ${top3Desc}
+적성 강점: ${topAptDesc}
+
+[추천 후보 직업 목록 - 실제 DB 데이터]
+${jobListStr}
+
+[추천 후보 학과 목록 - 실제 DB 데이터]
+${majorListStr}
+
+위 목록에서 학생의 흥미와 적성에 가장 적합한 직업 5개, 학과 5개를 선택하고,
+각각에 대해 50자 이내의 추천 사유를 작성해주세요.
+
+⚠️ 규칙:
+- 위 목록에 없는 직업이나 학과를 추천하지 마세요
+- 급여, 취업률, 전망 등 수치를 생성하지 마세요
+- 추천 사유만 작성하세요
+
+JSON 형식으로만 응답하세요:
+{
+  "recommendedJobs": [{"name": "직업명", "reason": "추천 사유"}],
+  "recommendedMajors": [{"name": "학과명", "reason": "추천 사유"}],
+  "summary": "전체 분석 요약 (200자 이내)"
+}`;
+
+  // ── 6. GPT-4o-mini 호출 ───────────────────────────────────────────
+  const { default: OpenAI } = await import('openai');
+  const openaiClient = new OpenAI({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  });
+  const completion = await openaiClient.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [{ role: 'user', content: prompt }],
+    response_format: { type: 'json_object' },
+    temperature: 0.5,
+  });
+  const aiResult = JSON.parse(completion.choices[0].message.content || '{}');
+  const llmJobs:   Array<{ name: string; reason: string }> = aiResult.recommendedJobs   || [];
+  const llmMajors: Array<{ name: string; reason: string }> = aiResult.recommendedMajors || [];
+
+  // ── 7. LLM 추천명 → DB 실제 데이터 매핑 ──────────────────────────
+  const jobMap  = new Map(jobCandidates.map(j => [j.jobName, j]));
+  const finalJobs = llmJobs.map(({ name, reason }) => {
+    const dbJob = jobMap.get(name);
+    return { name, reason, salary: dbJob?.salary ?? null, field: dbJob?.field ?? null, growth: dbJob?.growth ?? null };
+  }).filter(j => j.name);
+
+  const majorMap = new Map(majorCandidates.map(m => [m.majorName, m]));
+  const recMajorRelatedJobNames = llmMajors.flatMap(({ name }) => {
+    const dbMajor = majorMap.get(name);
+    return Array.isArray(dbMajor?.relatedJobs) ? (dbMajor.relatedJobs as string[]) : [];
+  });
+  let majorJobSalaryMap: Map<string, { min: number; max: number }> = new Map();
+  if (recMajorRelatedJobNames.length > 0) {
+    const uniqueJobNames = [...new Set(recMajorRelatedJobNames)];
+    const jobSalaryRows = await db.select({ jobName: cachedJobs.jobName, salary: cachedJobs.salary })
+      .from(cachedJobs).where(inArray(cachedJobs.jobName, uniqueJobNames.slice(0, 60)));
+    const jobSalaryLookup = new Map(jobSalaryRows.map(j => [j.jobName, j.salary]));
+    for (const { name } of llmMajors) {
+      const dbMajor = majorMap.get(name);
+      const relJobs  = Array.isArray(dbMajor?.relatedJobs) ? (dbMajor.relatedJobs as string[]) : [];
+      const salaries = relJobs.map(jn => jobSalaryLookup.get(jn)).filter((s): s is number => s != null && s > 0);
+      if (salaries.length > 0) {
+        majorJobSalaryMap.set(name, { min: Math.min(...salaries), max: Math.max(...salaries) });
+      }
+    }
+  }
+  const finalMajors = llmMajors.map(({ name, reason }) => {
+    const dbMajor    = majorMap.get(name);
+    const salaryRange = majorJobSalaryMap.get(name);
+    return {
+      name, reason,
+      category: dbMajor?.category ?? null,
+      description: dbMajor?.description ?? null,
+      salaryMin: salaryRange ? salaryRange.min : null,
+      salaryMax: salaryRange ? salaryRange.max : null,
+    };
+  }).filter(m => m.name);
+
+  // ── 8. DB 저장 ────────────────────────────────────────────────────
+  const inserted = await db.insert(aptitudeAnalyses).values({
+    userId: payload.userId,
+    interestScores,
+    aptitudeScores,
+    recommendedJobs:    finalJobs,
+    recommendedMajors:  finalMajors,
+    summary: aiResult.summary || '',
+  }).returning();
+
+  return inserted[0];
+}
 
 function getNotificationDetails(
   type: AiJobType, 
@@ -336,6 +523,15 @@ export async function processJob(job: AiJob): Promise<any> {
         );
         break;
       }
+      case "aptitude_analysis": {
+        console.log(`[AI Worker] Processing aptitude_analysis for job ${job.id}...`);
+        await storage.updateAiJobStatus(job.id, "processing", 20);
+        result = await withProcessingTimeout(
+          processAptitudeAnalysis(payload),
+          job.id
+        );
+        break;
+      }
       default:
         throw new Error(`Unknown job type: ${type}`);
     }
@@ -384,7 +580,7 @@ async function processNextJob(queueType: AiJobType): Promise<ProcessResult> {
   const stats = await getQueueStats();
   
   // Check if there's any work in the system (queued or processing)
-  const hasQueuedJobs = stats.goal.queued > 0 || stats.essay.queued > 0 || stats.analysis.queued > 0;
+  const hasQueuedJobs = stats.goal.queued > 0 || stats.essay.queued > 0 || stats.analysis.queued > 0 || stats.aptitude_analysis.queued > 0;
   const hasProcessingJobs = stats.totalProcessing > 0;
   const sawWork = hasQueuedJobs || hasProcessingJobs;
   
@@ -430,7 +626,7 @@ async function processNextJob(queueType: AiJobType): Promise<ProcessResult> {
 async function workerLoop(): Promise<{ didWork: boolean; hasActiveWork: boolean }> {
   // Note: essay_revision shares queue with essay, so only process unique queues
   // When we dequeue from essay queue, we check the actual job type for proper handling
-  const types: AiJobType[] = ["goal", "essay", "analysis"];
+  const types: AiJobType[] = ["goal", "essay", "analysis", "aptitude_analysis"];
   let didWork = false;
   let sawWork = false;
   

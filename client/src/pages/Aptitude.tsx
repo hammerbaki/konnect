@@ -765,6 +765,8 @@ export default function Aptitude() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [localResult, setLocalResult] = useState<AptitudeResult | null>(null);
   const [analyzeError, setAnalyzeError] = useState(false);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [pollProgress, setPollProgress] = useState(0);
 
   const { data: questions = [] } = useQuery<Question[]>({
     queryKey: ["/api/aptitude/questions"],
@@ -781,16 +783,55 @@ export default function Aptitude() {
     staleTime: Infinity,
   });
 
+  // ── 폴링 쿼리 ─────────────────────────────────────────────────────
+  const { data: pollData } = useQuery<{
+    status: string;
+    progress: number;
+    data?: AptitudeResult;
+    error?: string;
+  }>({
+    queryKey: ["/api/aptitude/job", activeJobId],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/aptitude/job/${activeJobId}`);
+      return res.json();
+    },
+    enabled: !!activeJobId,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (!data) return 2000;
+      if (data.status === "completed" || data.status === "failed") return false;
+      return 2000;
+    },
+    staleTime: 0,
+  });
+
+  // 폴링 결과 처리
+  useEffect(() => {
+    if (!pollData) return;
+    setPollProgress(pollData.progress || 0);
+    if (pollData.status === "completed" && pollData.data) {
+      setLocalResult(pollData.data);
+      setAnalyzeError(false);
+      setActiveJobId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/aptitude/latest"] });
+    } else if (pollData.status === "failed") {
+      setAnalyzeError(true);
+      setActiveJobId(null);
+    }
+  }, [pollData, queryClient]);
+
+  const isPolling = !!activeJobId;
+
   const analyzeMutation = useMutation({
     mutationFn: async (payload: { answers: { questionId: number; score: number }[] }) => {
       const res = await apiRequest("POST", "/api/aptitude/analyze", payload);
-      return res.json();
+      return res.json() as Promise<{ jobId: string; status: string }>;
     },
-    onSuccess: (data: AptitudeResult) => {
-      setLocalResult(data);
+    onSuccess: ({ jobId }) => {
       setAnalyzeError(false);
+      setPollProgress(5);
+      setActiveJobId(jobId);
       setStage("result");
-      queryClient.invalidateQueries({ queryKey: ["/api/aptitude/latest"] });
     },
     onError: () => {
       setAnalyzeError(true);
@@ -871,6 +912,8 @@ export default function Aptitude() {
     setCurrentIdx(0);
     setLocalResult(null);
     setAnalyzeError(false);
+    setActiveJobId(null);
+    setPollProgress(0);
     setStage("start");
   };
 
@@ -913,23 +956,42 @@ export default function Aptitude() {
         onPrev={handlePrev}
         onNext={handleNext}
         onSubmit={handleSubmit}
-        isSubmitting={analyzeMutation.isPending}
+        isSubmitting={analyzeMutation.isPending || isPolling}
       />
     );
   }
 
   if (stage === "result") {
-    if (analyzeError || (!displayResult && !analyzeMutation.isPending)) {
+    if (analyzeError || (!displayResult && !analyzeMutation.isPending && !isPolling)) {
       return <ResultFallback onRetake={handleRetake} />;
     }
     if (displayResult) {
       return <ResultScreen result={displayResult} onRetake={handleRetake} />;
     }
-    // Still loading
+    // 큐/처리 중 로딩 화면 (진행률 바 포함)
+    const loadingProgress = isPolling ? pollProgress : 5;
+    const loadingMsg = analyzeMutation.isPending
+      ? "분석을 시작하는 중입니다..."
+      : pollProgress < 30
+        ? "AI가 나의 흥미·적성을 분석하고 있어요..."
+        : pollProgress < 70
+          ? "직업 · 학과 데이터와 매칭 중입니다..."
+          : "추천 결과를 정리하고 있습니다...";
     return (
-      <div className="max-w-lg mx-auto px-4 py-16 flex flex-col items-center text-center space-y-4">
-        <span className="w-10 h-10 border-4 border-dream border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-gray-500">AI가 결과를 분석하고 있습니다...</p>
+      <div className="max-w-lg mx-auto px-4 py-16 flex flex-col items-center text-center space-y-6">
+        <span className="w-12 h-12 border-4 border-dream border-t-transparent rounded-full animate-spin" />
+        <div className="w-full max-w-xs space-y-2">
+          <div className="h-2 w-full rounded-full bg-gray-100 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-dream transition-all duration-700"
+              style={{ width: `${Math.max(5, loadingProgress)}%` }}
+            />
+          </div>
+          <p className="text-sm text-gray-500">{loadingMsg}</p>
+          {isPolling && (
+            <p className="text-xs text-gray-400">{loadingProgress}% 완료</p>
+          )}
+        </div>
       </div>
     );
   }

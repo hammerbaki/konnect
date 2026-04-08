@@ -298,7 +298,7 @@ export const insertAiJobSchema = createInsertSchema(aiJobs).omit({
 
 export type InsertAiJob = z.infer<typeof insertAiJobSchema>;
 export type AiJob = typeof aiJobs.$inferSelect;
-export type AiJobType = 'analysis' | 'essay' | 'essay_revision' | 'goal';
+export type AiJobType = 'analysis' | 'essay' | 'essay_revision' | 'goal' | 'aptitude_analysis';
 export type AiJobStatus = 'queued' | 'processing' | 'completed' | 'failed';
 
 // ===== K-JOBS ASSESSMENTS TABLE =====
