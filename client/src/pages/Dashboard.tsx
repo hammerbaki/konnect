@@ -312,28 +312,30 @@ export default function Dashboard() {
               className="w-full h-44 sm:h-56 lg:h-72 object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/30 to-transparent" />
-            <div className="absolute bottom-5 left-5 sm:bottom-8 sm:left-8 right-5 sm:right-8">
+            <div className="absolute bottom-6 left-6 sm:bottom-10 sm:left-10 right-6 sm:right-10">
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.55 }}
               >
-                <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-semibold">
+                <span className="text-[10px] uppercase tracking-[0.25em] text-gold font-semibold">
                   Konnect
                 </span>
-                <h1 className="editorial-heading text-2xl sm:text-4xl text-white mt-1 leading-tight">KONNECT, 나와 꿈을 연결한다</h1>
-                <p className="text-white/70 text-xs sm:text-sm mt-1.5 max-w-md">
+                <h1 className="editorial-heading text-2xl sm:text-[2.25rem] text-white mt-2 leading-tight">
+                  KONNECT, 나와 꿈을 연결한다
+                </h1>
+                <p className="text-white/65 text-xs sm:text-sm mt-3 max-w-md leading-relaxed">
                   어떤 인강을 들을지 묻기 전에, 왜 공부하는지를 먼저 묻는다.
                 </p>
-                <div className="flex items-center gap-2 mt-3">
+                <div className="flex items-center gap-3 mt-5">
                   <Link href="/explore">
-                    <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-dream text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-dream/90 transition-colors">
+                    <span className="inline-flex items-center gap-2 px-4 py-2.5 bg-dream text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-dream/90 transition-colors shadow-sm">
                       <Star size={14} />
                       학과·직업 탐색
                     </span>
                   </Link>
                   <Link href="/aptitude">
-                    <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 text-white text-xs sm:text-sm font-medium rounded-lg backdrop-blur-sm hover:bg-white/20 transition-colors">
+                    <span className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/15 text-white text-xs sm:text-sm font-medium rounded-lg backdrop-blur-sm border border-white/20 hover:bg-white/25 transition-colors">
                       진로 흥미 분석
                     </span>
                   </Link>
