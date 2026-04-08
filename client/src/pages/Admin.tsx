@@ -11,7 +11,8 @@ import {
   RefreshCw, Search, Shield, User, Crown,
   BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
   ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download, Users2, X,
-  Briefcase, GraduationCap, FileText, Target, Mic, ClipboardList, ChevronRight, Calendar, MapPin
+  Briefcase, GraduationCap, FileText, Target, Mic, ClipboardList, ChevronRight, Calendar, MapPin,
+  Database
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
@@ -1656,6 +1657,26 @@ export default function Admin() {
     }
   };
 
+  const [isSyncingAptitude, setIsSyncingAptitude] = useState(false);
+  const [aptitudeSyncResult, setAptitudeSyncResult] = useState<{
+    matched: number; updated: number; skipped: number; errors: number;
+  } | null>(null);
+
+  const handleSyncAptitude = async () => {
+    setIsSyncingAptitude(true);
+    setAptitudeSyncResult(null);
+    try {
+      const res = await apiRequest('POST', '/api/admin/sync-aptitude', {});
+      const data = await res.json();
+      setAptitudeSyncResult({ matched: data.matched, updated: data.updated, skipped: data.skipped, errors: data.errors });
+      toast({ title: "적성 데이터 동기화 완료", description: `매칭: ${data.matched}개, 업데이트: ${data.updated}개, 건너뜀: ${data.skipped}개, 오류: ${data.errors}개` });
+    } catch (err: any) {
+      toast({ title: "동기화 오류", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSyncingAptitude(false);
+    }
+  };
+
   const searchFilteredUsers = filteredUsers.filter(user => 
     user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -2409,6 +2430,41 @@ export default function Admin() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Aptitude Data Sync Card */}
+            {isAdmin && (
+              <Card className="toss-card">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Database className="h-5 w-5 text-[#3182F6]" />
+                    적성 데이터 동기화
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-[#8B95A1] mb-4">
+                    커리어넷 MAJOR_VIEW API에서 학과별 적성 데이터(lstMiddleAptd, lstHighAptd)를 수집합니다. 이미 데이터가 있는 학과는 건너뜁니다.
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <Button
+                      onClick={handleSyncAptitude}
+                      disabled={isSyncingAptitude}
+                      className="bg-[#3182F6] hover:bg-[#1B64DA] text-white rounded-xl"
+                      data-testid="button-sync-aptitude"
+                    >
+                      {isSyncingAptitude ? "동기화 중..." : "적성 데이터 동기화"}
+                    </Button>
+                    {aptitudeSyncResult && (
+                      <div className="flex gap-4 text-sm" data-testid="aptitude-sync-result">
+                        <span className="text-[#191F28]">매칭: <strong>{aptitudeSyncResult.matched}</strong>개</span>
+                        <span className="text-green-600">업데이트: <strong>{aptitudeSyncResult.updated}</strong>개</span>
+                        <span className="text-amber-600">건너뜀: <strong>{aptitudeSyncResult.skipped}</strong>개</span>
+                        <span className="text-red-600">오류: <strong>{aptitudeSyncResult.errors}</strong>개</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="tokens" className="space-y-6">

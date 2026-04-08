@@ -29,7 +29,7 @@ import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, inArray, sql as sqlExpr } from "drizzle-orm";
 import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap, universityMajors } from "@shared/schema";
-import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData } from "./dataSync";
+import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData, enrichMajorAptitudeData } from "./dataSync";
 import { syncUniversityApi } from "./universityApiSync";
 
 // Helper functions for profile defaults
@@ -6016,6 +6016,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         logs.push('기존 학과별 데이터 초기화 완료 (force mode)');
       }
       const result = await enrichMajorCareerNetData((msg) => logs.push(msg));
+      res.json({ ...result, logs });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/admin/sync-aptitude — CareerNet 학과별 적성 데이터 동기화
+  app.post('/api/admin/sync-aptitude', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
+      const logs: string[] = [];
+      const result = await enrichMajorAptitudeData((msg) => logs.push(msg));
       res.json({ ...result, logs });
     } catch (error: any) {
       res.status(500).json({ message: error.message });

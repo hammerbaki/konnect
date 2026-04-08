@@ -21,6 +21,11 @@ import {
 } from "lucide-react";
 
 // ---- Types ----
+interface AptitudeItem {
+  popular: string[];
+  bookmark: string[];
+}
+
 interface Major {
   id: number;
   majorName: string;
@@ -38,6 +43,8 @@ interface Major {
     raw_salary?: string | null;
     source?: string;
   } | null;
+  aptitudeMiddle: AptitudeItem[] | null;
+  aptitudeHigh: AptitudeItem[] | null;
 }
 
 interface UnivEntry {
@@ -710,6 +717,51 @@ function MajorCard({ major, onNavigateToUniversity }: { major: Major; onNavigate
             </>
           )}
         </div>
+
+        {/* ── 적성 정보 (커리어넷 API 원본) ── */}
+        {(major.aptitudeMiddle || major.aptitudeHigh) && (() => {
+          const middlePopular = major.aptitudeMiddle?.flatMap(a => a.popular ?? []).filter(Boolean) ?? [];
+          const middleBookmark = major.aptitudeMiddle?.flatMap(a => a.bookmark ?? []).filter(Boolean) ?? [];
+          const highPopular = major.aptitudeHigh?.flatMap(a => a.popular ?? []).filter(Boolean) ?? [];
+          const highBookmark = major.aptitudeHigh?.flatMap(a => a.bookmark ?? []).filter(Boolean) ?? [];
+          const hasData = middlePopular.length > 0 || middleBookmark.length > 0 || highPopular.length > 0 || highBookmark.length > 0;
+          if (!hasData) return null;
+          return (
+            <div className="border-t border-gray-100 pt-3">
+              <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                <Award className="w-3.5 h-3.5 text-dream" />
+                적성 정보
+                <span className="text-gray-400 font-normal ml-1">(커리어넷)</span>
+              </p>
+              <div className="space-y-1.5 text-xs">
+                {middlePopular.length > 0 && (
+                  <div data-testid={`aptitude-middle-popular-${major.id}`}>
+                    <span className="font-medium text-gray-600">중학교 인기 적성: </span>
+                    <span className="text-gray-500">{middlePopular.join(', ')}</span>
+                  </div>
+                )}
+                {middleBookmark.length > 0 && (
+                  <div data-testid={`aptitude-middle-bookmark-${major.id}`}>
+                    <span className="font-medium text-gray-600">중학교 즐겨찾기 적성: </span>
+                    <span className="text-gray-500">{middleBookmark.join(', ')}</span>
+                  </div>
+                )}
+                {highPopular.length > 0 && (
+                  <div data-testid={`aptitude-high-popular-${major.id}`}>
+                    <span className="font-medium text-gray-600">고등학교 인기 적성: </span>
+                    <span className="text-gray-500">{highPopular.join(', ')}</span>
+                  </div>
+                )}
+                {highBookmark.length > 0 && (
+                  <div data-testid={`aptitude-high-bookmark-${major.id}`}>
+                    <span className="font-medium text-gray-600">고등학교 즐겨찾기 적성: </span>
+                    <span className="text-gray-500">{highBookmark.join(', ')}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── 더 보기 토글 ── */}
         {(major.demand || major.relatedSubjects || major.hollandCode) && (

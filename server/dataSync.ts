@@ -546,6 +546,105 @@ export async function enrichMajorCareerNetData(
   return { updated, matched, errors };
 }
 
+// ---- CareerNet: enrich per-major aptitude data (lstMiddleAptd, lstHighAptd) ----
+export async function enrichMajorAptitudeData(
+  onProgress?: (msg: string) => void
+): Promise<{ matched: number; updated: number; skipped: number; errors: number }> {
+  if (!CAREERNET_KEY) {
+    onProgress?.('CAREERNET_API_KEY 미설정 — 적성 데이터 동기화 건너뜀');
+    return { matched: 0, updated: 0, skipped: 0, errors: 0 };
+  }
+
+  onProgress?.('CareerNet 학과 목록 로드 중...');
+
+  // Fetch all CareerNet major list
+  const CAREERNET_URL = 'https://www.career.go.kr/cnet/openapi/getOpenApi';
+  const careerNetList: Array<{ mClass: string; majorSeq: string }> = [];
+  let page = 1;
+  while (true) {
+    const url = `${CAREERNET_URL}?apiKey=${CAREERNET_KEY}&svcType=api&svcCode=MAJOR&contentType=json&gubun=univ_list&pageIndex=${page}&pageCount=20`;
+    const res = await fetch(url);
+    if (!res.ok) break;
+    const data = await res.json();
+    const items: Array<{ mClass: string; majorSeq: string; totalCount?: string }> =
+      data?.dataSearch?.content ?? [];
+    if (items.length === 0) break;
+    careerNetList.push(...items);
+    const total = parseInt(items[0]?.totalCount ?? '0');
+    if (careerNetList.length >= total) break;
+    page++;
+    if (page > 60) break;
+    await new Promise(r => setTimeout(r, 100));
+  }
+  onProgress?.(`CareerNet 학과 목록: ${careerNetList.length}개 로드됨`);
+
+  // Build name → majorSeq lookup
+  const nameToSeq = new Map<string, string>();
+  for (const m of careerNetList) {
+    const key = m.mClass?.trim();
+    if (!key || !m.majorSeq) continue;
+    if (!nameToSeq.has(key)) nameToSeq.set(key, m.majorSeq);
+    const stripped = key.endsWith('과') ? key.slice(0, -1) : key;
+    if (!nameToSeq.has(stripped)) nameToSeq.set(stripped, m.majorSeq);
+  }
+
+  // Get all cached_majors
+  const allMajors = await db.select({
+    id: cachedMajors.id,
+    majorName: cachedMajors.majorName,
+    aptitudeMiddle: cachedMajors.aptitudeMiddle,
+    aptitudeHigh: cachedMajors.aptitudeHigh,
+  }).from(cachedMajors);
+
+  let matched = 0;
+  let updated = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (const major of allMajors) {
+    const dbName = major.majorName ?? '';
+    const majorSeq = nameToSeq.get(dbName) || nameToSeq.get(dbName + '과');
+    if (!majorSeq) continue;
+    matched++;
+
+    // Skip if already has data (either column set means the API was already called)
+    if (major.aptitudeMiddle !== null || major.aptitudeHigh !== null) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      const url = `${CAREERNET_URL}?apiKey=${CAREERNET_KEY}&svcType=api&svcCode=MAJOR_VIEW&contentType=json&gubun=univ_list&majorSeq=${majorSeq}`;
+      const res = await fetch(url);
+      if (!res.ok) { errors++; continue; }
+      const data = await res.json();
+      const content = data?.dataSearch?.content?.[0];
+      if (!content) { errors++; continue; }
+
+      const aptMiddle = content.lstMiddleAptd ?? null;
+      const aptHigh = content.lstHighAptd ?? null;
+
+      await db.update(cachedMajors)
+        .set({
+          aptitudeMiddle: aptMiddle as any,
+          aptitudeHigh: aptHigh as any,
+          syncedAt: new Date(),
+        })
+        .where(eq(cachedMajors.id, major.id));
+
+      updated++;
+      if (updated % 20 === 0) onProgress?.(`  진행중: ${updated}개 완료 (${matched}개 매칭 중)`);
+      await new Promise(r => setTimeout(r, 120));
+    } catch (e: any) {
+      onProgress?.(`  오류 [${major.majorName}]: ${e.message}`);
+      errors++;
+    }
+  }
+
+  onProgress?.(`적성 데이터 동기화 완료 — 매칭: ${matched}개, 업데이트: ${updated}개, 건너뜀: ${skipped}개, 오류: ${errors}개`);
+  return { matched, updated, skipped, errors };
+}
+
 // ---- Data quality report ----
 export async function getDataQualityReport() {
   const [majorStats, jobStats, univStats] = await Promise.all([
