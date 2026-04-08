@@ -11,7 +11,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from "recharts";
 import {
-  Brain, ChevronLeft, ChevronRight, ChevronDown, RotateCcw, Sparkles,
+  Brain, ChevronLeft, ChevronRight, RotateCcw, Sparkles,
   Briefcase, GraduationCap, Wifi, ArrowRight,
   AlertCircle, Layers, Zap
 } from "lucide-react";
@@ -111,7 +111,6 @@ function StartScreen({ onStart, latestResult, stats }: {
   latestResult: AptitudeResult | null;
   stats: AptitudeStats | null;
 }) {
-  const [showDetail, setShowDetail] = useState(false);
   const jobCount = stats?.jobCount ?? 443;
   const majorCount = stats?.majorCount ?? 235;
 
@@ -140,7 +139,7 @@ function StartScreen({ onStart, latestResult, stats }: {
           data-testid="btn-start-aptitude"
           className="w-full bg-dream hover:bg-dream/90 text-white py-5 text-base font-semibold rounded-xl"
         >
-          <Sparkles className="w-5 h-5 mr-2" /> 흥미 분석 시작
+          <Sparkles className="w-5 h-5 mr-2" /> 분석 시작
         </Button>
 
         {latestResult && (
@@ -150,61 +149,50 @@ function StartScreen({ onStart, latestResult, stats }: {
         )}
       </div>
 
-      {/* 접힌 상태의 검사 구성 상세 */}
-      <div className="border border-gray-100 rounded-2xl overflow-hidden">
-        <button
-          onClick={() => setShowDetail(v => !v)}
-          data-testid="btn-toggle-detail"
-          className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-        >
-          <span>검사 구성 자세히 보기</span>
-          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showDetail ? "rotate-180" : ""}`} />
-        </button>
+      {/* 검사 구성 상세 — 항상 표시 */}
+      <div className="border border-gray-100 rounded-2xl px-5 py-5 space-y-4">
+        <h3 className="text-sm font-semibold text-ink">검사 구성</h3>
 
-        {showDetail && (
-          <div className="px-5 pb-5 space-y-4 border-t border-gray-100">
-            {/* 1단계: 흥미 분야 */}
-            <div className="pt-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-dream/10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs text-dream font-bold">1</span>
-                </div>
-                <span className="text-sm font-medium text-ink flex items-center gap-1">
-                  <Layers className="w-3.5 h-3.5 text-dream" />
-                  흥미 검사 · 18문항 — 9개 관심 분야
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5 ml-8">
-                {Object.entries(INTEREST_LABELS).map(([key, label]) => (
-                  <div key={key} className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 rounded-lg px-2 py-1.5">
-                    <span>{INTEREST_ICONS[key]}</span>
-                    <span>{label}</span>
-                  </div>
-                ))}
-              </div>
+        {/* 1단계: 흥미 분야 */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 bg-dream/10 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-xs text-dream font-bold">1</span>
             </div>
-
-            {/* 2단계: 역량 */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs text-coral font-bold">2</span>
-                </div>
-                <span className="text-sm font-medium text-ink flex items-center gap-1">
-                  <Zap className="w-3.5 h-3.5 text-coral" />
-                  역량 검사 · 12문항 — 6개 역량
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5 ml-8">
-                {Object.values(APTITUDE_LABELS).map((label) => (
-                  <div key={label} className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 rounded-lg px-2 py-1.5">
-                    <span>{label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <span className="text-sm font-medium text-ink flex items-center gap-1">
+              <Layers className="w-3.5 h-3.5 text-dream" />
+              흥미 검사 · 18문항 — 9개 관심 분야
+            </span>
           </div>
-        )}
+          <div className="grid grid-cols-3 gap-1.5 ml-8">
+            {Object.entries(INTEREST_LABELS).map(([key, label]) => (
+              <div key={key} className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 rounded-lg px-2 py-1.5">
+                <span>{INTEREST_ICONS[key]}</span>
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 2단계: 역량 */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-xs text-coral font-bold">2</span>
+            </div>
+            <span className="text-sm font-medium text-ink flex items-center gap-1">
+              <Zap className="w-3.5 h-3.5 text-coral" />
+              역량 검사 · 12문항 — 6개 역량
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 ml-8">
+            {Object.values(APTITUDE_LABELS).map((label) => (
+              <div key={label} className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 rounded-lg px-2 py-1.5">
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
