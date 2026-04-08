@@ -328,12 +328,142 @@ function DemandBadge({ demand }: { demand: string | null }) {
   );
 }
 
+// ---- University Inline Detail Panel ----
+function UnivDetailInline({ entry, onClose }: {
+  entry: MajorUnivEntry;
+  onClose: () => void;
+}) {
+  const { data, isLoading } = useQuery<{ data: University[]; total: number }>({
+    queryKey: ['univ-detail-inline', entry.univName],
+    queryFn: () =>
+      fetch(`/api/explore/universities?search=${encodeURIComponent(entry.univName ?? '')}&limit=5`)
+        .then(r => r.json()),
+    enabled: entry.hasUnivInfo,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const univ = data?.data?.find(u => u.univName === entry.univName) ?? data?.data?.[0];
+  const tuitionWan = univ?.avgTuition && univ.avgTuition > 0 ? Math.round(univ.avgTuition / 10) : null;
+  const scholarshipWan = univ?.scholarshipPerStudent && univ.scholarshipPerStudent > 0
+    ? Math.round(univ.scholarshipPerStudent / 10000) : null;
+
+  return (
+    <div
+      className="mt-1 mb-1.5 p-3 bg-dream/5 border border-dream/15 rounded-lg text-xs animate-in fade-in slide-in-from-top-1 duration-150"
+      data-testid={`panel-univ-detail-${entry.univName}`}
+    >
+      {/* 헤더 */}
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-1.5 font-semibold text-dream text-[11px]">
+          <Building2 className="w-3 h-3" />
+          {entry.univName}
+        </div>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 text-base leading-none"
+          data-testid={`btn-close-univ-detail-${entry.univName}`}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* 기본 배지 (MajorUnivEntry에서) */}
+      <div className="flex flex-wrap gap-1 mb-2.5">
+        {entry.region && (
+          <span className="inline-flex items-center gap-0.5 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+            <MapPin className="w-2.5 h-2.5" />{entry.region}
+          </span>
+        )}
+        {entry.establishment && (
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+            entry.establishment.includes("국립") ? "bg-blue-50 text-blue-600" :
+            entry.establishment.includes("사립") ? "bg-amber-50 text-amber-600" :
+            "bg-gray-50 text-gray-500"
+          }`}>{entry.establishment}</span>
+        )}
+        {entry.universityType && entry.universityType !== "대학교" && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
+            {entry.universityType.replace("사이버대학(대학)", "사이버대학").replace("사이버대학(전문대학)", "사이버전문대")}
+          </span>
+        )}
+        {entry.division && entry.division !== "본교" && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600">
+            {entry.division}
+          </span>
+        )}
+      </div>
+
+      {/* 통계 (university_info 보유 시) */}
+      {entry.hasUnivInfo ? (
+        isLoading ? (
+          <div className="flex items-center gap-1 text-[10px] text-gray-400">
+            <Skeleton className="h-3 w-24 rounded" />
+            <Skeleton className="h-3 w-20 rounded" />
+          </div>
+        ) : univ ? (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            {univ.competitionRate && univ.competitionRate > 0 && (
+              <div className="flex items-baseline gap-1">
+                <span className="text-gray-400">경쟁률</span>
+                <span className="font-bold text-coral">{univ.competitionRate.toFixed(1)}:1</span>
+                <span className="text-[9px] text-gray-400">(학교 전체)</span>
+              </div>
+            )}
+            {univ.employmentRate && univ.employmentRate > 0 && (
+              <div className="flex items-baseline gap-1">
+                <span className="text-gray-400">취업률</span>
+                <span className="font-bold text-emerald-600">{univ.employmentRate.toFixed(1)}%</span>
+                <span className="text-[9px] text-gray-400">(학교 전체)</span>
+              </div>
+            )}
+            {tuitionWan && (
+              <div className="flex items-baseline gap-1">
+                <span className="text-gray-400">등록금</span>
+                <span className="font-bold text-gold">{tuitionWan.toLocaleString()}만원/년</span>
+              </div>
+            )}
+            {univ.dormitoryRate && univ.dormitoryRate > 0 && (
+              <div className="flex items-baseline gap-1">
+                <span className="text-gray-400">기숙사</span>
+                <span className="font-bold text-dream">{univ.dormitoryRate.toFixed(1)}%</span>
+              </div>
+            )}
+            {univ.studentCount && univ.studentCount > 0 && (
+              <div className="flex items-baseline gap-1">
+                <span className="text-gray-400">재학생</span>
+                <span className="font-bold text-ink">{univ.studentCount.toLocaleString()}명</span>
+              </div>
+            )}
+            {univ.admissionQuota && univ.admissionQuota > 0 && (
+              <div className="flex items-baseline gap-1">
+                <span className="text-gray-400">입학정원</span>
+                <span className="font-bold text-ink">{univ.admissionQuota.toLocaleString()}명</span>
+              </div>
+            )}
+            {scholarshipWan && (
+              <div className="flex items-baseline gap-1">
+                <span className="text-gray-400">1인당 장학금</span>
+                <span className="font-bold text-amber-600">{scholarshipWan.toLocaleString()}만원</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-[10px] text-gray-400">상세 데이터를 찾을 수 없습니다.</p>
+        )
+      ) : (
+        <p className="text-[10px] text-gray-400">이 대학의 세부 통계 데이터가 없습니다.</p>
+      )}
+    </div>
+  );
+}
+
 // ---- Major Card ----
 function MajorCard({ major, onNavigateToUniversity }: { major: Major; onNavigateToUniversity?: (univName: string) => void }) {
   const [showMore, setShowMore] = useState(false);
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [univPage, setUnivPage] = useState(1);
   const [univRegion, setUnivRegion] = useState<string>("전체");
+  const [expandedUniv, setExpandedUniv] = useState<string | null>(null);
   const UNIV_PER_PAGE = 6;
 
   const jobs: string[] = Array.isArray(major.relatedJobs) ? major.relatedJobs : [];
@@ -495,49 +625,58 @@ function MajorCard({ major, onNavigateToUniversity }: { major: Major; onNavigate
             <p className="text-xs text-gray-400 py-2">해당 지역에 개설된 대학이 없습니다.</p>
           ) : (
             <>
-              <div className="space-y-1">
-                {visibleUnivs.map((u, i) => (
-                  <div
-                    key={u.id}
-                    className="flex items-center justify-between text-xs py-1.5 border-b border-gray-50 last:border-0"
-                    data-testid={`row-univ-${major.id}-${i}`}
-                  >
-                    <span className="font-medium text-ink flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
-                      <MapPin className="w-3 h-3 text-gray-300 flex-shrink-0" />
-                      {u.hasUnivInfo && onNavigateToUniversity ? (
-                        <button
-                          className="truncate text-dream hover:underline text-left"
-                          onClick={() => onNavigateToUniversity(u.univName ?? '')}
-                          data-testid={`link-univ-${major.id}-${i}`}
-                        >
-                          {u.univName}
-                        </button>
-                      ) : (
-                        <span className="truncate">{u.univName}</span>
-                      )}
-                      {u.region && <span className="text-gray-400 font-normal flex-shrink-0 ml-0.5">({u.region})</span>}
-                      {u.universityType && u.universityType !== "대학교" && (
-                        <span className="flex-shrink-0 text-[9px] px-1 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium ml-0.5">
-                          {u.universityType.replace("사이버대학(대학)", "사이버대학").replace("사이버대학(전문대학)", "사이버전문대")}
+              <div className="space-y-0.5">
+                {visibleUnivs.map((u, i) => {
+                  const isExpanded = expandedUniv === u.univName;
+                  return (
+                    <div key={u.id} data-testid={`row-univ-${major.id}-${i}`}>
+                      {/* 대학 행 */}
+                      <button
+                        className={`w-full flex items-center justify-between text-xs py-1.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 rounded px-1 -mx-1 transition-colors text-left group ${isExpanded ? "bg-dream/5 border-dream/20" : ""}`}
+                        onClick={() => setExpandedUniv(isExpanded ? null : (u.univName ?? ''))}
+                        data-testid={`btn-univ-expand-${major.id}-${i}`}
+                      >
+                        <span className="font-medium text-ink flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
+                          <MapPin className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                          <span className={`truncate ${isExpanded ? "text-dream" : "group-hover:text-dream"} transition-colors`}>
+                            {u.univName}
+                          </span>
+                          {u.region && <span className="text-gray-400 font-normal flex-shrink-0 ml-0.5">({u.region})</span>}
+                          {u.universityType && u.universityType !== "대학교" && (
+                            <span className="flex-shrink-0 text-[9px] px-1 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium ml-0.5">
+                              {u.universityType.replace("사이버대학(대학)", "사이버대학").replace("사이버대학(전문대학)", "사이버전문대")}
+                            </span>
+                          )}
+                          {u.division && u.division !== "본교" && (
+                            <span className="flex-shrink-0 text-[9px] px-1 py-0.5 rounded bg-purple-50 text-purple-600 font-medium ml-0.5">
+                              {u.division}
+                            </span>
+                          )}
+                          {u.establishment && (
+                            <span className={`flex-shrink-0 text-[9px] px-1 py-0.5 rounded font-medium ml-0.5 ${
+                              u.establishment.includes("국립") ? "bg-blue-50 text-blue-600" :
+                              u.establishment.includes("사립") ? "bg-amber-50 text-amber-600" :
+                              "bg-gray-50 text-gray-500"
+                            }`}>
+                              {u.establishment}
+                            </span>
+                          )}
                         </span>
-                      )}
-                      {u.division && u.division !== "본교" && (
-                        <span className="flex-shrink-0 text-[9px] px-1 py-0.5 rounded bg-purple-50 text-purple-600 font-medium ml-0.5">
-                          {u.division}
+                        <span className={`flex-shrink-0 ml-1.5 text-[10px] transition-colors ${isExpanded ? "text-dream" : "text-gray-300 group-hover:text-dream"}`}>
+                          {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         </span>
+                      </button>
+
+                      {/* 인라인 대학 상세 패널 */}
+                      {isExpanded && (
+                        <UnivDetailInline
+                          entry={u}
+                          onClose={() => setExpandedUniv(null)}
+                        />
                       )}
-                      {u.establishment && (
-                        <span className={`flex-shrink-0 text-[9px] px-1 py-0.5 rounded font-medium ml-0.5 ${
-                          u.establishment.includes("국립") ? "bg-blue-50 text-blue-600" :
-                          u.establishment.includes("사립") ? "bg-amber-50 text-amber-600" :
-                          "bg-gray-50 text-gray-500"
-                        }`}>
-                          {u.establishment}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Load more */}
