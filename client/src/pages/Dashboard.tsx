@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -378,7 +378,7 @@ export default function Dashboard() {
               <div className="flex flex-col gap-3 flex-1">
                 {/* 관심 학교 */}
                 {bookmarkList.filter(b => b.bookmarkType === "university").length > 0 && (
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1" data-testid="bm-section-university">
                     <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-0.5">
                       <Building2 className="h-3 w-3" /> 관심 학교
                     </p>
@@ -395,7 +395,7 @@ export default function Dashboard() {
                 )}
                 {/* 관심 학과 */}
                 {bookmarkList.filter(b => b.bookmarkType === "major").length > 0 && (
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1" data-testid="bm-section-major">
                     <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-0.5">
                       <GraduationCap className="h-3 w-3" /> 관심 학과
                     </p>
@@ -412,7 +412,7 @@ export default function Dashboard() {
                 )}
                 {/* 관심 직업 */}
                 {bookmarkList.filter(b => b.bookmarkType === "job").length > 0 && (
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1" data-testid="bm-section-job">
                     <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-0.5">
                       <Briefcase className="h-3 w-3" /> 관심 직업
                     </p>
