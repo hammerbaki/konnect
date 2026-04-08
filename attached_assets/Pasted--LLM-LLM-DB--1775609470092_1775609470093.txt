@@ -1,0 +1,94 @@
+지시사항: 적성검사 추천 파이프라인 수정
+⚠️ 핵심 원칙: 추천 결과에 LLM이 생성한 수치/분류 데이터가 포함되면 안 된다. LLM은 이미 필터링된 DB 데이터를 해석/설명하는 역할만 한다.
+
+1. jobCategoryMapping 구현
+먼저 DB에서 실제 직업분류 목록을 확인해라:
+sqlSELECT DISTINCT job_category FROM cached_jobs ORDER BY job_category;
+이 결과를 사용하여 9개 흥미 카테고리 → job_category 매핑을 구현해라:
+javascriptconst JOB_CATEGORY_MAPPING = {
+  SCI: ['연구직 및 공학 기술직'],
+  ENG: ['연구직 및 공학 기술직', '건설·채굴직', '설치·정비·생산직'],
+  MED: ['보건·의료직'],
+  BIZ: ['경영·사무·금융·보험직', '영업·판매·운전·운송직'],
+  LAW: ['교육·법률·사회복지·경찰·소방직 및 군인'],
+  EDU: ['교육·법률·사회복지·경찰·소방직 및 군인'],
+  ART: ['예술·디자인·방송·스포츠직'],
+  IT:  ['연구직 및 공학 기술직'],
+  SOC: ['미용·여행·숙박·음식·경비·청소직', '교육·법률·사회복지·경찰·소방직 및 군인']
+};
+⚠️ 위 매핑은 예시이다. 실제 DISTINCT job_category 결과를 보고 각 카테고리에 적합한 분류를 매핑해라. LAW와 EDU가 같은 job_category에 매핑될 수 있다. 이 경우 직업명에 포함된 키워드로 2차 필터링해라:
+
+LAW: 직업명에 '법', '변호', '검사', '판사', '행정', '공무원', '경찰', '소방' 포함
+EDU: 직업명에 '교사', '교수', '강사', '상담', '복지' 포함
+
+2. 추천 로직 수정 (server/routes.ts POST /analyze)
+현재 로직을 다음으로 교체해라:
+기존: DB에서 직업 20개 (필터링 없이 LIMIT 20) → LLM이 선택 + 수치 생성
+변경: 흥미 상위 3개 → jobCategoryMapping → DB 필터링 → 실제 데이터로 LLM 호출
+javascript// 의사 코드
+async function getRecommendations(interestScores, aptitudeScores) {
+  // 1. 흥미 상위 3개 카테고리
+  const top3 = getTop3Categories(interestScores);
+  
+  // 2. 해당 카테고리의 job_category 목록
+  const targetCategories = top3.flatMap(cat => JOB_CATEGORY_MAPPING[cat]);
+  
+  // 3. DB에서 해당 분류의 직업 필터링
+  const filteredJobs = await db.select()
+    .from(cached_jobs)
+    .where(inArray(cached_jobs.job_category, targetCategories));
+  
+  // 4. 필터링된 직업의 related_majors 수집
+  const majorNames = [...new Set(filteredJobs.flatMap(j => j.related_majors || []))];
+  
+  // 5. cached_majors에서 학과 정보 조회
+  const filteredMajors = await db.select()
+    .from(cached_majors)
+    .where(inArray(cached_majors.name, majorNames));
+  
+  // 6. LLM에 전달 — 필터링된 실제 데이터만
+  // 7. LLM 응답에서 추천 사유만 사용, 수치는 DB 값 사용
+}
+3. LLM 프롬프트 수정
+LLM에게 전달하는 프롬프트를 다음으로 교체해라:
+당신은 진로 상담 전문가입니다. 아래 학생의 적성검사 결과와 실제 데이터를 기반으로 추천 사유를 작성해주세요.
+
+[학생 검사 결과]
+흥미 상위 3개: {top3 카테고리명과 점수}
+적성 강점: {상위 3개 능력과 점수}
+
+[추천 후보 직업 목록 - 실제 DB 데이터]
+{필터링된 직업 목록: 이름, 분류, 급여(있으면), related_majors}
+
+[추천 후보 학과 목록 - 실제 DB 데이터]
+{필터링된 학과 목록: 이름, 설명(있으면), related_jobs}
+
+위 목록에서 학생의 흥미와 적성에 가장 적합한 직업 5개, 학과 5개를 선택하고,
+각각에 대해 50자 이내의 추천 사유를 작성해주세요.
+
+⚠️ 규칙:
+- 위 목록에 없는 직업이나 학과를 추천하지 마세요
+- 급여, 취업률, 전망 등 수치를 생성하지 마세요
+- 추천 사유만 작성하세요
+
+JSON 형식으로 응답:
+{
+  "recommendedJobs": [{"name": "직업명", "reason": "추천 사유"}],
+  "recommendedMajors": [{"name": "학과명", "reason": "추천 사유"}],
+  "summary": "전체 분석 요약 (200자 이내)"
+}
+4. 결과 데이터 조합
+LLM이 반환한 직업명/학과명으로 DB에서 실제 데이터를 조회하여 결과를 조합해라:
+
+LLM이 추천한 직업명 → cached_jobs에서 salary, job_category 조회 → 실제 값으로 결과 구성
+LLM이 추천한 학과명 → cached_majors에서 description, related_jobs 조회 → 실제 값으로 결과 구성
+LLM이 반환한 salaryRange, outlook 등 자유 생성 필드는 모두 무시하고 제거해라
+
+5. 완료 후 보고
+다음을 보고해 줘:
+
+jobCategoryMapping 최종 매핑 결과 (9개 카테고리 → 어떤 job_category에 매핑했는지)
+테스트: 흥미 SCI=90, IT=85, ENG=80 (나머지 50) 일 때 추천되는 직업/학과 목록
+테스트: 흥미 MED=95, EDU=80, SOC=75 (나머지 50) 일 때 추천되는 직업/학과 목록
+각 테스트에서 추천된 직업의 급여가 DB 실제 값인지 확인
+

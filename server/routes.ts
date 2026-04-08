@@ -27,7 +27,7 @@ import { startWorker, submitQueuedJob } from "./aiWorker";
 import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
-import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, sql as sqlExpr } from "drizzle-orm";
+import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, inArray, sql as sqlExpr } from "drizzle-orm";
 import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap, universityMajors } from "@shared/schema";
 import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData } from "./dataSync";
 import { syncUniversityApi } from "./universityApiSync";
@@ -6109,6 +6109,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     { id: 30, text: "어려운 상황에서도 침착하게 자기 관리를 잘 한다", category: "aptitude", key: "SELF" },
   ];
 
+  // 흥미 카테고리 → cached_jobs.field 매핑 (실제 DB 값 기준)
+  const JOB_FIELD_MAPPING: Record<string, string[]> = {
+    SCI: ['연구직 및 공학 기술직'],
+    ENG: ['연구직 및 공학 기술직', '건설·채굴직', '설치·정비·생산직'],
+    MED: ['보건·의료직'],
+    BIZ: ['경영·사무·금융·보험직', '영업·판매·운전·운송직'],
+    LAW: ['교육·법률·사회복지·경찰·소방직 및 군인'],
+    EDU: ['교육·법률·사회복지·경찰·소방직 및 군인'],
+    ART: ['예술·디자인·방송·스포츠직'],
+    IT:  ['연구직 및 공학 기술직'],
+    SOC: ['교육·법률·사회복지·경찰·소방직 및 군인', '미용·여행·숙박·음식·경비·청소직'],
+  };
+
+  // 같은 field를 공유하는 카테고리 구분용 2차 키워드
+  const SECONDARY_KEYWORDS: Record<string, string[]> = {
+    // SCI/ENG/IT 모두 '연구직 및 공학 기술직' 공유
+    SCI: ['연구원', '과학', '화학', '생물', '물리', '기상', '분석', '지질', '환경연구'],
+    IT:  ['IT', '소프트웨어', '프로그래', '개발자', '개발원', '데이터', '컴퓨터', '정보보호', '보안', '네트워크', '인공지능', '시스템'],
+    ENG: ['기계', '건설', '토목', '전기', '전자', '제조', '화공', '재료', '설계', '엔지니어', '기술자', '기사'],
+    // LAW/EDU/SOC 모두 '교육·법률·사회복지...' 공유
+    LAW: ['법', '변호', '검사', '판사', '행정', '공무원', '경찰', '소방', '군', '국회'],
+    EDU: ['교사', '교수', '강사', '보육', '훈련교사', '코치', '취업알선', '직업능력'],
+    SOC: ['복지', '다문화', '카운슬러', '케어', '보호사', '성직', '재능기부', '상담원'],
+  };
+
   // GET /api/aptitude/questions
   app.get('/api/aptitude/questions', (req, res) => {
     res.json(APTITUDE_QUESTIONS);
@@ -6128,6 +6153,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  const INTEREST_LABELS_KR: Record<string, string> = {
+    SCI: "자연과학", ENG: "공학·기술", MED: "의료·보건",
+    BIZ: "경영·경제", LAW: "법·행정", EDU: "교육",
+    ART: "예술·디자인", IT: "IT·정보", SOC: "사회·복지",
+  };
+  const APTITUDE_LABELS_KR: Record<string, string> = {
+    VERBAL: "언어능력", MATH: "수리능력", SPATIAL: "공간지각",
+    CREATIVE: "창의성", SOCIAL: "대인관계", SELF: "자기관리",
+  };
+
   // POST /api/aptitude/analyze
   app.post('/api/aptitude/analyze', isAuthenticated, async (req: any, res) => {
     try {
@@ -6138,12 +6173,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "30개 문항 답변이 필요합니다." });
       }
 
-      // 흥미 점수 계산
+      // ── 1. 점수 계산 ──────────────────────────────────────────────
       const interestKeys = ["SCI", "ENG", "MED", "BIZ", "LAW", "EDU", "ART", "IT", "SOC"];
       const aptitudeKeys = ["VERBAL", "MATH", "SPATIAL", "CREATIVE", "SOCIAL", "SELF"];
       const interestScores: Record<string, number> = {};
       const aptitudeScores: Record<string, number> = {};
-
       for (const key of interestKeys) interestScores[key] = 0;
       for (const key of aptitudeKeys) aptitudeScores[key] = 0;
 
@@ -6157,66 +6191,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
           aptitudeScores[question.key] = (aptitudeScores[question.key] || 0) + score;
         }
       }
-      // 각 항목 2문항이므로 최대 10점 → 100점으로 정규화
       for (const k of interestKeys) interestScores[k] = Math.round((interestScores[k] / 10) * 100);
       for (const k of aptitudeKeys) aptitudeScores[k] = Math.round((aptitudeScores[k] / 10) * 100);
 
-      // RAG: 상위 직업/학과 20개 조회
-      const topJobsRaw = await db.select({ jobName: cachedJobs.jobName, field: cachedJobs.field, salary: cachedJobs.salary, growth: cachedJobs.growth })
-        .from(cachedJobs).limit(20);
-      const topMajorsRaw = await db.select({ majorName: cachedMajors.majorName, category: cachedMajors.category })
-        .from(cachedMajors).limit(20);
+      // ── 2. 흥미 상위 3개 카테고리 → 타겟 field 목록 ────────────────
+      const top3 = Object.entries(interestScores)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([k]) => k);
 
-      const jobContext = topJobsRaw.map(j => `${j.jobName}(${j.field}, 연봉${j.salary ? Math.round(j.salary/10000)+'만원' : '미상'})`).join(', ');
-      const majorContext = topMajorsRaw.map(m => `${m.majorName}(${m.category})`).join(', ');
+      const targetFields = [...new Set(top3.flatMap(cat => JOB_FIELD_MAPPING[cat] || []))];
 
-      const interestDesc = Object.entries(interestScores).sort((a,b) => b[1]-a[1]).slice(0,3)
-        .map(([k,v]) => `${k}:${v}`).join(', ');
-      const aptitudeDesc = Object.entries(aptitudeScores).sort((a,b) => b[1]-a[1]).slice(0,3)
-        .map(([k,v]) => `${k}:${v}`).join(', ');
+      // ── 3. DB에서 해당 field 직업 전체 조회 ─────────────────────────
+      let jobCandidates = await db.select({
+        jobName: cachedJobs.jobName,
+        field: cachedJobs.field,
+        salary: cachedJobs.salary,
+        growth: cachedJobs.growth,
+        relatedMajors: cachedJobs.relatedMajors,
+        description: cachedJobs.description,
+      }).from(cachedJobs)
+        .where(inArray(cachedJobs.field, targetFields));
 
-      // GPT-4o-mini 호출
+      // ── 4. 2차 키워드 필터 (같은 field를 공유하는 카테고리 구분) ──────
+      // '연구직 및 공학 기술직' 공유 그룹에서 단일 카테고리만 top3인 경우
+      const techGroup = ['SCI', 'ENG', 'IT'];
+      const techInTop3 = top3.filter(c => techGroup.includes(c));
+      if (techInTop3.length === 1) {
+        const cat = techInTop3[0];
+        const kws = SECONDARY_KEYWORDS[cat] || [];
+        if (cat === 'SCI' || cat === 'IT') {
+          // ENG는 다른 field도 포함하므로 연구직 field만 필터 적용
+          jobCandidates = jobCandidates.filter(j =>
+            j.field !== '연구직 및 공학 기술직' || kws.some(kw => j.jobName?.includes(kw))
+          );
+        }
+      }
+
+      // '교육·법률·사회복지...' 공유 그룹에서 단일 카테고리만 top3인 경우
+      const eduGroup = ['LAW', 'EDU', 'SOC'];
+      const eduInTop3 = top3.filter(c => eduGroup.includes(c));
+      if (eduInTop3.length === 1) {
+        const cat = eduInTop3[0];
+        const kws = SECONDARY_KEYWORDS[cat] || [];
+        jobCandidates = jobCandidates.filter(j =>
+          j.field !== '교육·법률·사회복지·경찰·소방직 및 군인' || kws.some(kw => j.jobName?.includes(kw))
+        );
+      }
+
+      // ── 5. 관련 학과 목록 수집 (related_majors → cached_majors 조회) ──
+      const allMajorNames = [...new Set(
+        jobCandidates.flatMap(j => Array.isArray(j.relatedMajors) ? (j.relatedMajors as string[]) : [])
+      )];
+
+      let majorCandidates: Array<{
+        majorName: string | null;
+        category: string | null;
+        description: string | null;
+      }> = [];
+
+      if (allMajorNames.length > 0) {
+        majorCandidates = await db.select({
+          majorName: cachedMajors.majorName,
+          category: cachedMajors.category,
+          description: cachedMajors.description,
+        }).from(cachedMajors)
+          .where(inArray(cachedMajors.majorName, allMajorNames.slice(0, 80)));
+      }
+
+      // 학과 후보 부족 시 전체에서 보충
+      if (majorCandidates.length < 10) {
+        const extra = await db.select({
+          majorName: cachedMajors.majorName,
+          category: cachedMajors.category,
+          description: cachedMajors.description,
+        }).from(cachedMajors).limit(40);
+        const existingNames = new Set(majorCandidates.map(m => m.majorName));
+        majorCandidates = [...majorCandidates, ...extra.filter(m => !existingNames.has(m.majorName))];
+      }
+
+      // ── 6. LLM 프롬프트 구성 ─────────────────────────────────────
+      const top3Desc = top3.map(k => `${INTEREST_LABELS_KR[k]}(${interestScores[k]}점)`).join(', ');
+      const topAptDesc = Object.entries(aptitudeScores).sort((a, b) => b[1] - a[1]).slice(0, 3)
+        .map(([k, v]) => `${APTITUDE_LABELS_KR[k]}(${v}점)`).join(', ');
+
+      const jobListStr = jobCandidates.slice(0, 60).map(j =>
+        `- ${j.jobName}(분류:${j.field}${j.salary ? ',연봉:' + Math.round(j.salary / 10000) + '만원' : ''})`
+      ).join('\n');
+
+      const majorListStr = majorCandidates.slice(0, 40).map(m =>
+        `- ${m.majorName}(${m.category || ''})`
+      ).join('\n');
+
+      const prompt = `당신은 진로 상담 전문가입니다. 아래 학생의 적성검사 결과와 실제 데이터를 기반으로 추천 사유를 작성해주세요.
+
+[학생 검사 결과]
+흥미 상위 3개: ${top3Desc}
+적성 강점: ${topAptDesc}
+
+[추천 후보 직업 목록 - 실제 DB 데이터]
+${jobListStr}
+
+[추천 후보 학과 목록 - 실제 DB 데이터]
+${majorListStr}
+
+위 목록에서 학생의 흥미와 적성에 가장 적합한 직업 5개, 학과 5개를 선택하고,
+각각에 대해 50자 이내의 추천 사유를 작성해주세요.
+
+⚠️ 규칙:
+- 위 목록에 없는 직업이나 학과를 추천하지 마세요
+- 급여, 취업률, 전망 등 수치를 생성하지 마세요
+- 추천 사유만 작성하세요
+
+JSON 형식으로만 응답하세요:
+{
+  "recommendedJobs": [{"name": "직업명", "reason": "추천 사유"}],
+  "recommendedMajors": [{"name": "학과명", "reason": "추천 사유"}],
+  "summary": "전체 분석 요약 (200자 이내)"
+}`;
+
+      // ── 7. GPT-4o-mini 호출 ─────────────────────────────────────
       const { default: OpenAI } = await import('openai');
       const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-      const prompt = `당신은 한국 고등학생을 위한 전공 적성 진로 상담사입니다.
-
-학생의 흥미 점수 (상위 3): ${interestDesc}
-학생의 적성 점수 (상위 3): ${aptitudeDesc}
-
-참고 가능한 직업 목록: ${jobContext}
-참고 가능한 학과 목록: ${majorContext}
-
-위 목록에서 이 학생에게 가장 적합한 직업 3개와 학과 3개를 추천해주세요.
-반드시 아래 JSON 형식으로만 응답하세요:
-{
-  "summary": "학생의 흥미와 적성에 대한 2-3문장 요약",
-  "recommendedJobs": [
-    {"name": "직업명", "reason": "추천 이유 (1문장)", "salaryRange": "예상 연봉 범위", "outlook": "전망"},
-    ...
-  ],
-  "recommendedMajors": [
-    {"name": "학과명", "category": "계열", "reason": "추천 이유 (1문장)"},
-    ...
-  ]
-}`;
 
       const completion = await openaiClient.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
         response_format: { type: 'json_object' },
-        temperature: 0.7,
+        temperature: 0.5,
       });
 
       const aiResult = JSON.parse(completion.choices[0].message.content || '{}');
+      const llmJobs: Array<{ name: string; reason: string }> = aiResult.recommendedJobs || [];
+      const llmMajors: Array<{ name: string; reason: string }> = aiResult.recommendedMajors || [];
 
-      // DB 저장
+      // ── 8. LLM 추천명 → DB 실제 데이터 매핑 (수치는 DB 값만 사용) ──
+      const jobMap = new Map(jobCandidates.map(j => [j.jobName, j]));
+      const finalJobs = llmJobs
+        .map(({ name, reason }) => {
+          const dbJob = jobMap.get(name);
+          return {
+            name,
+            reason,
+            salary: dbJob?.salary ?? null,   // DB 실제 연봉 (원 단위)
+            field: dbJob?.field ?? null,      // DB 실제 분류
+            growth: dbJob?.growth ?? null,    // DB 실제 고용전망
+          };
+        })
+        .filter(j => j.name);
+
+      const majorMap = new Map(majorCandidates.map(m => [m.majorName, m]));
+      const finalMajors = llmMajors
+        .map(({ name, reason }) => {
+          const dbMajor = majorMap.get(name);
+          return {
+            name,
+            reason,
+            category: dbMajor?.category ?? null,       // DB 실제 계열
+            description: dbMajor?.description ?? null, // DB 실제 설명
+          };
+        })
+        .filter(m => m.name);
+
+      // ── 9. DB 저장 ───────────────────────────────────────────────
       const inserted = await db.insert(aptitudeAnalyses).values({
         userId,
         interestScores,
         aptitudeScores,
-        recommendedJobs: aiResult.recommendedJobs || [],
-        recommendedMajors: aiResult.recommendedMajors || [],
+        recommendedJobs: finalJobs,
+        recommendedMajors: finalMajors,
         summary: aiResult.summary || '',
       }).returning();
 

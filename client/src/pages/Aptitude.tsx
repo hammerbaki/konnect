@@ -25,14 +25,16 @@ interface Question {
 interface RecommendedJob {
   name: string;
   reason: string;
-  salaryRange: string;
-  outlook: string;
+  salary: number | null;     // DB 실제 연봉 (원 단위, null이면 미상)
+  field: string | null;      // DB 실제 직업 분류
+  growth: string | null;     // DB 실제 고용전망
 }
 
 interface RecommendedMajor {
   name: string;
-  category: string;
+  category: string | null;
   reason: string;
+  description?: string | null; // DB 실제 학과 설명
 }
 
 interface AptitudeResult {
@@ -370,11 +372,13 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
                   <h3 className="font-semibold text-ink text-sm leading-tight">{job.name}</h3>
                 </div>
                 <p className="text-xs text-gray-500 leading-relaxed">{job.reason}</p>
-                {job.salaryRange && (
-                  <p className="text-xs font-medium text-emerald-600">💰 {job.salaryRange}</p>
+                {job.salary != null && (
+                  <p className="text-xs font-medium text-emerald-600" data-testid={`text-job-salary-${job.name}`}>
+                    💰 평균 연봉 {Math.round(job.salary / 10000).toLocaleString()}만원
+                  </p>
                 )}
-                {job.outlook && (
-                  <Badge variant="outline" className="text-xs border-coral/30 text-coral">{job.outlook}</Badge>
+                {job.field && (
+                  <Badge variant="outline" className="text-xs border-gray-200 text-gray-500">{job.field}</Badge>
                 )}
               </CardContent>
             </Card>
