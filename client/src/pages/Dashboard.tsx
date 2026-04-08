@@ -196,7 +196,7 @@ export default function Dashboard() {
   });
 
   // 찜 목록 (낙관적 업데이트 포함)
-  const { bookmarkList, removeBookmark: removeBm } = useBookmarks();
+  const { bookmarkList, removeBookmark: removeBm } = useBookmarks({ enabled: !!user });
 
   const handleRemoveBm = (id: number, name: string) => {
     if (window.confirm(`"${name}"을(를) 관심 목록에서 제거하시겠습니까?`)) {

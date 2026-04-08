@@ -12,12 +12,17 @@ export interface BookmarkItem {
 
 const QUERY_KEY = ["/api/bookmarks"] as const;
 
-export function useBookmarks() {
+interface UseBookmarksOptions {
+  enabled?: boolean;
+}
+
+export function useBookmarks({ enabled = true }: UseBookmarksOptions = {}) {
   const queryClient = useQueryClient();
 
   const { data: bookmarkList = [] } = useQuery<BookmarkItem[]>({
     queryKey: QUERY_KEY,
     staleTime: 1000 * 60 * 2,
+    enabled,
   });
 
   const addBookmark = useMutation<
@@ -60,6 +65,7 @@ export function useBookmarks() {
     { previous: BookmarkItem[] }
   >({
     mutationFn: async (id) => {
+      if (id < 0) return;
       await apiRequest("DELETE", `/api/bookmarks/${id}`);
     },
     onMutate: async (id) => {
@@ -85,7 +91,14 @@ export function useBookmarks() {
   const toggleBookmark = (type: string, targetId: number, name: string) => {
     const existing = getBookmark(type, name);
     if (existing) {
-      removeBookmark.mutate(existing.id);
+      if (existing.id < 0) {
+        queryClient.setQueryData<BookmarkItem[]>(
+          QUERY_KEY,
+          (old) => (old ?? []).filter((b) => !(b.bookmarkType === type && b.targetName === name)),
+        );
+      } else {
+        removeBookmark.mutate(existing.id);
+      }
     } else {
       addBookmark.mutate({ bookmarkType: type, targetId, targetName: name });
     }
