@@ -163,7 +163,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
           </div>
           <div>
             <p className="text-sm font-semibold text-ink">
-              AI 맞춤 추천
+              진로 흥미 탐색
               {result && (
                 <span className="ml-2 text-xs font-normal text-gray-400">
                   설문 기반 AI 분석 · {analyzedDate}
@@ -173,7 +173,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
             <p className="text-xs text-gray-500 mt-0.5">
               {result
                 ? "흥미·적성 설문 점수를 AI가 분석하여 추천 전공과 진로를 제안합니다"
-                : "30문항 적성 설문을 완료하면 학생의 흥미·능력 기반으로 AI가 맞춤 전공과 진로를 추천해 드립니다"}
+                : "30문항의 간편 설문으로 나의 흥미와 강점을 파악하고, 커리어넷 직업·학과 데이터를 기반으로 맞춤 전공과 직업을 탐색해 보세요."}
             </p>
           </div>
         </div>
@@ -195,7 +195,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
             data-testid="btn-go-aptitude"
           >
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-            적성 설문 시작
+            흥미 탐색 시작
           </Button>
         )}
       </div>
