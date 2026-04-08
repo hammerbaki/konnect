@@ -438,8 +438,8 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
     color: APTITUDE_COLORS[i] || "#320e9d",
   }));
 
-  const jobs = Array.isArray(result.recommendedJobs) ? result.recommendedJobs.slice(0, 3) : [];
-  const majors = Array.isArray(result.recommendedMajors) ? result.recommendedMajors.slice(0, 3) : [];
+  const jobs = Array.isArray(result.recommendedJobs) ? result.recommendedJobs : [];
+  const majors = Array.isArray(result.recommendedMajors) ? result.recommendedMajors : [];
 
   const hasJobs = jobs.length > 0;
   const hasMajors = majors.length > 0;
@@ -548,47 +548,96 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
           <Briefcase className="w-4 h-4 text-coral" /> 추천 직업
         </h2>
         {hasJobs ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {jobs.map((job, i) => (
-              <Card key={i} className="border-coral/20 hover:shadow-md transition-shadow flex flex-col" data-testid={`card-rec-job-${i}`}>
-                <CardContent className="p-4 flex flex-col gap-2 flex-1">
-                  <div className="flex items-start justify-between gap-1">
-                    <div className="flex items-start gap-2 flex-1 min-w-0">
-                      <div className="w-7 h-7 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-xs font-bold text-coral">{i + 1}</span>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {jobs.slice(0, 3).map((job, i) => (
+                <Card key={i} className="border-coral/20 hover:shadow-md transition-shadow flex flex-col" data-testid={`card-rec-job-${i}`}>
+                  <CardContent className="p-4 flex flex-col gap-2 flex-1">
+                    <div className="flex items-start justify-between gap-1">
+                      <div className="flex items-start gap-2 flex-1 min-w-0">
+                        <div className="w-7 h-7 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-xs font-bold text-coral">{i + 1}</span>
+                        </div>
+                        <h3 className="font-semibold text-ink text-sm leading-tight">{job.name}</h3>
                       </div>
-                      <h3 className="font-semibold text-ink text-sm leading-tight">{job.name}</h3>
+                      <button
+                        onClick={() => toggleBm("job", job.name)}
+                        className={`flex-shrink-0 transition-colors p-1 rounded-full ${getBm("job", job.name) ? 'text-gold' : 'text-gray-300 hover:text-gold'}`}
+                        title={getBm("job", job.name) ? "찜 해제" : "찜하기"}
+                        data-testid={`btn-bookmark-rec-job-${i}`}
+                      >
+                        <Star className={`w-4 h-4 ${getBm("job", job.name) ? 'fill-current' : ''}`} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => toggleBm("job", job.name)}
-                      className={`flex-shrink-0 transition-colors p-1 rounded-full ${getBm("job", job.name) ? 'text-gold' : 'text-gray-300 hover:text-gold'}`}
-                      title={getBm("job", job.name) ? "찜 해제" : "찜하기"}
-                      data-testid={`btn-bookmark-rec-job-${i}`}
+                    {job.field && (
+                      <Badge variant="outline" className="text-xs border-gray-200 text-gray-400 w-fit">{job.field}</Badge>
+                    )}
+                    {job.salary != null && job.salary > 0 && (
+                      <p className="text-xs font-semibold text-emerald-600" data-testid={`text-job-salary-${job.name}`}>
+                        연평균 {Math.round(job.salary / 10000).toLocaleString()}만원
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 leading-relaxed flex-1">"{job.reason}"</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full mt-1 text-coral border border-coral/20 hover:bg-coral/5 text-xs h-7 gap-1"
+                      data-testid={`btn-job-detail-${i}`}
+                      onClick={() => goToExplore("jobs", job.name)}
                     >
-                      <Star className={`w-4 h-4 ${getBm("job", job.name) ? 'fill-current' : ''}`} />
-                    </button>
-                  </div>
-                  {job.field && (
-                    <Badge variant="outline" className="text-xs border-gray-200 text-gray-400 w-fit">{job.field}</Badge>
-                  )}
-                  {job.salary != null && job.salary > 0 && (
-                    <p className="text-xs font-semibold text-emerald-600" data-testid={`text-job-salary-${job.name}`}>
-                      연평균 {Math.round(job.salary / 10000).toLocaleString()}만원
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500 leading-relaxed flex-1">"{job.reason}"</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full mt-1 text-coral border border-coral/20 hover:bg-coral/5 text-xs h-7 gap-1"
-                    data-testid={`btn-job-detail-${i}`}
-                    onClick={() => goToExplore("jobs", job.name)}
-                  >
-                    직업 상세보기 <ArrowRight className="w-3 h-3" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                      직업 상세보기 <ArrowRight className="w-3 h-3" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            {jobs.length > 3 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {jobs.slice(3).map((job, idx) => {
+                  const i = idx + 3;
+                  return (
+                    <Card key={i} className="border-coral/20 hover:shadow-md transition-shadow flex flex-col" data-testid={`card-rec-job-${i}`}>
+                      <CardContent className="p-4 flex flex-col gap-2 flex-1">
+                        <div className="flex items-start justify-between gap-1">
+                          <div className="flex items-start gap-2 flex-1 min-w-0">
+                            <div className="w-7 h-7 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-xs font-bold text-coral">{i + 1}</span>
+                            </div>
+                            <h3 className="font-semibold text-ink text-sm leading-tight">{job.name}</h3>
+                          </div>
+                          <button
+                            onClick={() => toggleBm("job", job.name)}
+                            className={`flex-shrink-0 transition-colors p-1 rounded-full ${getBm("job", job.name) ? 'text-gold' : 'text-gray-300 hover:text-gold'}`}
+                            title={getBm("job", job.name) ? "찜 해제" : "찜하기"}
+                            data-testid={`btn-bookmark-rec-job-${i}`}
+                          >
+                            <Star className={`w-4 h-4 ${getBm("job", job.name) ? 'fill-current' : ''}`} />
+                          </button>
+                        </div>
+                        {job.field && (
+                          <Badge variant="outline" className="text-xs border-gray-200 text-gray-400 w-fit">{job.field}</Badge>
+                        )}
+                        {job.salary != null && job.salary > 0 && (
+                          <p className="text-xs font-semibold text-emerald-600" data-testid={`text-job-salary-${job.name}`}>
+                            연평균 {Math.round(job.salary / 10000).toLocaleString()}만원
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500 leading-relaxed flex-1">"{job.reason}"</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full mt-1 text-coral border border-coral/20 hover:bg-coral/5 text-xs h-7 gap-1"
+                          data-testid={`btn-job-detail-${i}`}
+                          onClick={() => goToExplore("jobs", job.name)}
+                        >
+                          직업 상세보기 <ArrowRight className="w-3 h-3" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl text-sm text-gray-500">
@@ -604,47 +653,96 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
           <GraduationCap className="w-4 h-4 text-dream" /> 추천 학과
         </h2>
         {hasMajors ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {majors.map((major, i) => (
-              <Card key={i} className="border-dream/20 hover:shadow-md transition-shadow flex flex-col" data-testid={`card-rec-major-${i}`}>
-                <CardContent className="p-4 flex flex-col gap-2 flex-1">
-                  <div className="flex items-start justify-between gap-1">
-                    <div className="flex items-start gap-2 flex-1 min-w-0">
-                      <div className="w-7 h-7 bg-dream/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-xs font-bold text-dream">{i + 1}</span>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {majors.slice(0, 3).map((major, i) => (
+                <Card key={i} className="border-dream/20 hover:shadow-md transition-shadow flex flex-col" data-testid={`card-rec-major-${i}`}>
+                  <CardContent className="p-4 flex flex-col gap-2 flex-1">
+                    <div className="flex items-start justify-between gap-1">
+                      <div className="flex items-start gap-2 flex-1 min-w-0">
+                        <div className="w-7 h-7 bg-dream/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-xs font-bold text-dream">{i + 1}</span>
+                        </div>
+                        <h3 className="font-semibold text-ink text-sm leading-tight">{major.name}</h3>
                       </div>
-                      <h3 className="font-semibold text-ink text-sm leading-tight">{major.name}</h3>
+                      <button
+                        onClick={() => toggleBm("major", major.name)}
+                        className={`flex-shrink-0 transition-colors p-1 rounded-full ${getBm("major", major.name) ? 'text-gold' : 'text-gray-300 hover:text-gold'}`}
+                        title={getBm("major", major.name) ? "찜 해제" : "찜하기"}
+                        data-testid={`btn-bookmark-rec-major-${i}`}
+                      >
+                        <Star className={`w-4 h-4 ${getBm("major", major.name) ? 'fill-current' : ''}`} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => toggleBm("major", major.name)}
-                      className={`flex-shrink-0 transition-colors p-1 rounded-full ${getBm("major", major.name) ? 'text-gold' : 'text-gray-300 hover:text-gold'}`}
-                      title={getBm("major", major.name) ? "찜 해제" : "찜하기"}
-                      data-testid={`btn-bookmark-rec-major-${i}`}
+                    {major.category && (
+                      <Badge variant="secondary" className="text-xs bg-dream/10 text-dream w-fit">{major.category}</Badge>
+                    )}
+                    {major.salaryMin != null && major.salaryMax != null && (
+                      <p className="text-xs font-semibold text-emerald-600" data-testid={`text-major-salary-${major.name}`}>
+                        관련 직업 연평균 {Math.round(major.salaryMin / 10000).toLocaleString()}~{Math.round(major.salaryMax / 10000).toLocaleString()}만원
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 leading-relaxed flex-1">"{major.reason}"</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full mt-1 text-dream border border-dream/20 hover:bg-dream/5 text-xs h-7 gap-1"
+                      data-testid={`btn-major-detail-${i}`}
+                      onClick={() => goToExplore("majors", major.name)}
                     >
-                      <Star className={`w-4 h-4 ${getBm("major", major.name) ? 'fill-current' : ''}`} />
-                    </button>
-                  </div>
-                  {major.category && (
-                    <Badge variant="secondary" className="text-xs bg-dream/10 text-dream w-fit">{major.category}</Badge>
-                  )}
-                  {major.salaryMin != null && major.salaryMax != null && (
-                    <p className="text-xs font-semibold text-emerald-600" data-testid={`text-major-salary-${major.name}`}>
-                      관련 직업 연평균 {Math.round(major.salaryMin / 10000).toLocaleString()}~{Math.round(major.salaryMax / 10000).toLocaleString()}만원
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500 leading-relaxed flex-1">"{major.reason}"</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full mt-1 text-dream border border-dream/20 hover:bg-dream/5 text-xs h-7 gap-1"
-                    data-testid={`btn-major-detail-${i}`}
-                    onClick={() => goToExplore("majors", major.name)}
-                  >
-                    전공 상세보기 <ArrowRight className="w-3 h-3" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                      전공 상세보기 <ArrowRight className="w-3 h-3" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            {majors.length > 3 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {majors.slice(3).map((major, idx) => {
+                  const i = idx + 3;
+                  return (
+                    <Card key={i} className="border-dream/20 hover:shadow-md transition-shadow flex flex-col" data-testid={`card-rec-major-${i}`}>
+                      <CardContent className="p-4 flex flex-col gap-2 flex-1">
+                        <div className="flex items-start justify-between gap-1">
+                          <div className="flex items-start gap-2 flex-1 min-w-0">
+                            <div className="w-7 h-7 bg-dream/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-xs font-bold text-dream">{i + 1}</span>
+                            </div>
+                            <h3 className="font-semibold text-ink text-sm leading-tight">{major.name}</h3>
+                          </div>
+                          <button
+                            onClick={() => toggleBm("major", major.name)}
+                            className={`flex-shrink-0 transition-colors p-1 rounded-full ${getBm("major", major.name) ? 'text-gold' : 'text-gray-300 hover:text-gold'}`}
+                            title={getBm("major", major.name) ? "찜 해제" : "찜하기"}
+                            data-testid={`btn-bookmark-rec-major-${i}`}
+                          >
+                            <Star className={`w-4 h-4 ${getBm("major", major.name) ? 'fill-current' : ''}`} />
+                          </button>
+                        </div>
+                        {major.category && (
+                          <Badge variant="secondary" className="text-xs bg-dream/10 text-dream w-fit">{major.category}</Badge>
+                        )}
+                        {major.salaryMin != null && major.salaryMax != null && (
+                          <p className="text-xs font-semibold text-emerald-600" data-testid={`text-major-salary-${major.name}`}>
+                            관련 직업 연평균 {Math.round(major.salaryMin / 10000).toLocaleString()}~{Math.round(major.salaryMax / 10000).toLocaleString()}만원
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500 leading-relaxed flex-1">"{major.reason}"</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full mt-1 text-dream border border-dream/20 hover:bg-dream/5 text-xs h-7 gap-1"
+                          data-testid={`btn-major-detail-${i}`}
+                          onClick={() => goToExplore("majors", major.name)}
+                        >
+                          전공 상세보기 <ArrowRight className="w-3 h-3" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl text-sm text-gray-500">

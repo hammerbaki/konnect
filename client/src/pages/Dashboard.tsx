@@ -475,7 +475,13 @@ export default function Dashboard() {
                         </button>
                       ))}
                       {latestAptitude.recommendedJobs.length > 3 && (
-                        <span className="text-xs text-gray-400 self-center">외 {latestAptitude.recommendedJobs.length - 3}개</span>
+                        <button
+                          onClick={() => navigate("/aptitude")}
+                          className="text-xs text-[#320e9d] self-center underline hover:text-[#320e9d]/70 transition-colors"
+                          data-testid="btn-rec-jobs-more"
+                        >
+                          외 {latestAptitude.recommendedJobs.length - 3}개
+                        </button>
                       )}
                     </div>
                   </div>
@@ -496,7 +502,13 @@ export default function Dashboard() {
                         </button>
                       ))}
                       {latestAptitude.recommendedMajors.length > 3 && (
-                        <span className="text-xs text-gray-400 self-center">외 {latestAptitude.recommendedMajors.length - 3}개</span>
+                        <button
+                          onClick={() => navigate("/aptitude")}
+                          className="text-xs text-[#320e9d] self-center underline hover:text-[#320e9d]/70 transition-colors"
+                          data-testid="btn-rec-majors-more"
+                        >
+                          외 {latestAptitude.recommendedMajors.length - 3}개
+                        </button>
                       )}
                     </div>
                   </div>

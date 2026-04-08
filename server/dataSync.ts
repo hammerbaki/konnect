@@ -824,7 +824,8 @@ export async function syncJobsFromCareerNetNew(
   onProgress?: (msg: string) => void
 ): Promise<{ upserted: number; inserted: number; noWage: number; errors: number }> {
   const log = (msg: string) => { onProgress?.(msg); console.log("[syncJobsNew]", msg); };
-  const key = CAREERNET_KEY || "d0b761c825e0a9e4b163e05c50d0bad8";
+  const key = CAREERNET_KEY;
+  if (!key) { log("CAREERNET_API_KEY 환경변수가 설정되지 않았습니다."); return { upserted: 0, inserted: 0, noWage: 0, errors: 0 }; }
   const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
   // ── 1. 목록 전수 수집 (56 pages × 10) ──
@@ -946,7 +947,8 @@ export async function syncMajorsFromCareerNetNew(
   onProgress?: (msg: string) => void
 ): Promise<{ upserted: number; inserted: number; errors: number }> {
   const log = (msg: string) => { onProgress?.(msg); console.log("[syncMajorsNew]", msg); };
-  const key = CAREERNET_KEY || "d0b761c825e0a9e4b163e05c50d0bad8";
+  const key = CAREERNET_KEY;
+  if (!key) { log("CAREERNET_API_KEY 환경변수가 설정되지 않았습니다."); return { upserted: 0, inserted: 0, errors: 0 }; }
   const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
   // ── 1. 목록 전수 수집 (3 pages × 200) ──
