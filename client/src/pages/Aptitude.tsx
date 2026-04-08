@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import {
   Brain, ChevronLeft, ChevronRight, RotateCcw, Sparkles,
-  Briefcase, GraduationCap, Clock, Database, Wifi, ArrowRight,
+  Briefcase, GraduationCap, Wifi, ArrowRight,
   AlertCircle, Layers, Zap
 } from "lucide-react";
 
@@ -173,11 +173,6 @@ function StartScreen({ onStart, latestResult, stats }: {
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 text-xs text-gray-500 pt-1 border-t border-gray-100">
-          <Clock className="w-3.5 h-3.5 text-gray-400" />
-          <span>예상 소요 시간: 약 5분 / 총 30문항</span>
         </div>
       </div>
 
