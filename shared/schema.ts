@@ -1252,6 +1252,7 @@ export const cachedMajors = pgTable("cached_majors", {
   jobSatisfaction: jsonb("job_satisfaction"),
   aptitudeMiddle: jsonb("aptitude_middle"),
   aptitudeHigh: jsonb("aptitude_high"),
+  careerMajorSeq: integer("career_major_seq"),
 });
 
 export const insertCachedMajorSchema = createInsertSchema(cachedMajors).omit({ id: true });

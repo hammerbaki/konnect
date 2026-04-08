@@ -4,7 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import helmet from "helmet";
 import compression from "compression";
-import { generateMajorDescriptions, generateJobDescriptions, enrichMajorRelatedData, enrichMajorCareerNetData } from "./dataSync";
+import { generateMajorDescriptions, generateJobDescriptions, enrichMajorRelatedData, enrichMajorCareerNetData, refillEmptyRelatedMajors, syncCareerMajorSeq } from "./dataSync";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
 
@@ -290,6 +290,18 @@ app.use((req, res, next) => {
               (m) => console.log('[DataSync CareerNet]', m)
             );
             console.log('[DataSync] CareerNet major data result:', careerNetResult);
+
+            // Refill empty related_majors for jobs (Stage 2)
+            const refillResult = await refillEmptyRelatedMajors(
+              (m) => console.log('[DataSync RefillMajors]', m)
+            );
+            console.log('[DataSync] Refill related_majors result:', refillResult);
+
+            // Sync career_major_seq for cached_majors (Stage 3)
+            const seqResult = await syncCareerMajorSeq(
+              (m) => console.log('[DataSync CareerMajorSeq]', m)
+            );
+            console.log('[DataSync] career_major_seq sync result:', seqResult);
           } catch (e) {
             console.error('[DataSync] Background sync error:', e);
           }

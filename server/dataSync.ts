@@ -645,6 +645,164 @@ export async function enrichMajorAptitudeData(
   return { matched, updated, skipped, errors };
 }
 
+// ---- Normalize major name: strip trailing suffixes ----
+export function normalizeMajorName(name: string): string {
+  return name.replace(/(학과|학부|전공|과|부)$/, '').trim();
+}
+
+// ---- Refill empty related_majors for jobs using CareerNet JOB API ----
+export async function refillEmptyRelatedMajors(
+  onProgress?: (msg: string) => void
+): Promise<{ checked: number; filled: number; unchanged: number }> {
+  if (!CAREERNET_KEY) {
+    onProgress?.('CAREERNET_API_KEY 미설정 — related_majors 재수집 건너뜀');
+    return { checked: 0, filled: 0, unchanged: 0 };
+  }
+
+  // Find jobs with NULL or empty related_majors
+  const emptyJobs = await db.execute(sql`
+    SELECT id, job_name, job_seq
+    FROM cached_jobs
+    WHERE related_majors IS NULL
+       OR related_majors = '[]'::jsonb
+       OR jsonb_array_length(related_majors) = 0
+    ORDER BY id
+  `);
+  const items: Array<{ id: number; job_name: string; job_seq: string | null }> =
+    (emptyJobs as any).rows ?? [];
+  onProgress?.(`related_majors 빈 직업: ${items.length}개`);
+
+  if (items.length === 0) return { checked: 0, filled: 0, unchanged: 0 };
+
+  // Build jobdicSeq → related_majors map by fetching all pages from CareerNet JOB API
+  onProgress?.('커리어넷 JOB API 전체 페이지 수집 중...');
+  const seqToMajors = new Map<string, string[]>();
+  let page = 1;
+  let totalFetched = 0;
+  while (true) {
+    const url = `${CAREERNET_BASE}?apiKey=${CAREERNET_KEY}&svcType=api&svcCode=JOB&contentType=json&gubun=job&pageIndex=${page}&pageCount=100`;
+    const res = await fetch(url);
+    if (!res.ok) break;
+    const data = await res.json();
+    const cnItems: any[] = data?.dataSearch?.content ?? [];
+    if (cnItems.length === 0) break;
+
+    for (const j of cnItems) {
+      const seq = String(j.jobdicSeq ?? '').trim();
+      if (!seq) continue;
+      const majors: string[] = Array.isArray(j.relatedMajor)
+        ? j.relatedMajor
+        : typeof j.relatedMajor === 'string' && j.relatedMajor.trim()
+          ? j.relatedMajor.split(/[,，、]+/).map((s: string) => s.trim()).filter(Boolean)
+          : [];
+      if (!seqToMajors.has(seq)) seqToMajors.set(seq, majors);
+    }
+
+    totalFetched += cnItems.length;
+    const total = parseInt(cnItems[0]?.totalCount ?? '0');
+    if (totalFetched >= total) break;
+    page++;
+    if (page > 100) break;
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  onProgress?.(`커리어넷 JOB API 매핑 완료: ${seqToMajors.size}개 직업`);
+
+  let filled = 0;
+  let unchanged = 0;
+
+  for (const item of items) {
+    const seq = String(item.job_seq ?? '').trim();
+    const majors = seq ? (seqToMajors.get(seq) ?? []) : [];
+    if (majors.length > 0) {
+      await db.execute(sql`
+        UPDATE cached_jobs
+        SET related_majors = ${JSON.stringify(majors)}::jsonb, synced_at = NOW()
+        WHERE id = ${item.id}
+      `);
+      filled++;
+    } else {
+      unchanged++;
+    }
+  }
+
+  onProgress?.(`related_majors 재수집 완료: ${filled}개 채워짐, ${unchanged}개 API에도 빈값`);
+  return { checked: items.length, filled, unchanged };
+}
+
+// ---- Sync career_major_seq from CareerNet MAJOR API ----
+export async function syncCareerMajorSeq(
+  onProgress?: (msg: string) => void
+): Promise<{ total: number; mapped: number; unmatched: number }> {
+  if (!CAREERNET_KEY) {
+    onProgress?.('CAREERNET_API_KEY 미설정 — career_major_seq 동기화 건너뜀');
+    return { total: 0, mapped: 0, unmatched: 0 };
+  }
+
+  onProgress?.('커리어넷 MAJOR API 목록 수집 중...');
+  const CAREERNET_URL = 'https://www.career.go.kr/cnet/openapi/getOpenApi';
+  const cnList: Array<{ mClass: string; majorSeq: string }> = [];
+  let page = 1;
+  while (true) {
+    const url = `${CAREERNET_URL}?apiKey=${CAREERNET_KEY}&svcType=api&svcCode=MAJOR&contentType=json&gubun=univ_list&pageIndex=${page}&pageCount=20`;
+    const res = await fetch(url);
+    if (!res.ok) break;
+    const data = await res.json();
+    const items: Array<{ mClass: string; majorSeq: string; totalCount?: string }> =
+      data?.dataSearch?.content ?? [];
+    if (items.length === 0) break;
+    cnList.push(...items);
+    const total = parseInt(items[0]?.totalCount ?? '0');
+    if (cnList.length >= total) break;
+    page++;
+    if (page > 60) break;
+    await new Promise(r => setTimeout(r, 500));
+  }
+  onProgress?.(`커리어넷 MAJOR 목록: ${cnList.length}개 로드됨`);
+
+  // Build multi-key lookup: original, normalized, original+과, normalized+과
+  const nameToSeq = new Map<string, number>();
+  for (const m of cnList) {
+    const key = m.mClass?.trim();
+    if (!key || !m.majorSeq) continue;
+    const seq = parseInt(m.majorSeq);
+    if (!nameToSeq.has(key)) nameToSeq.set(key, seq);
+    const norm = normalizeMajorName(key);
+    if (!nameToSeq.has(norm)) nameToSeq.set(norm, seq);
+    if (!nameToSeq.has(key + '과')) nameToSeq.set(key + '과', seq);
+    if (!nameToSeq.has(norm + '과')) nameToSeq.set(norm + '과', seq);
+  }
+
+  const allMajors = await db.select({
+    id: cachedMajors.id,
+    majorName: cachedMajors.majorName,
+  }).from(cachedMajors);
+
+  let mapped = 0;
+  let unmatched = 0;
+
+  for (const major of allMajors) {
+    const dbName = (major.majorName ?? '').trim();
+    const norm = normalizeMajorName(dbName);
+    const seq =
+      nameToSeq.get(dbName) ??
+      nameToSeq.get(norm) ??
+      nameToSeq.get(dbName + '과') ??
+      nameToSeq.get(norm + '과');
+
+    if (seq != null) {
+      await db.execute(sql`
+        UPDATE cached_majors SET career_major_seq = ${seq} WHERE id = ${major.id}
+      `);
+      mapped++;
+    } else {
+      unmatched++;
+    }
+  }
+
+  onProgress?.(`career_major_seq 매핑 완료: ${allMajors.length}개 중 ${mapped}개 매핑됨, ${unmatched}개 미매칭`);
+  return { total: allMajors.length, mapped, unmatched };
+}
+
 // ---- Data quality report ----
 export async function getDataQualityReport() {
   const [majorStats, jobStats, univStats] = await Promise.all([

@@ -29,7 +29,7 @@ import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, inArray, sql as sqlExpr } from "drizzle-orm";
 import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap, universityMajors, bookmarks, insertBookmarkSchema } from "@shared/schema";
-import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData, enrichMajorAptitudeData } from "./dataSync";
+import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData, enrichMajorAptitudeData, refillEmptyRelatedMajors, syncCareerMajorSeq, normalizeMajorName } from "./dataSync";
 import { syncUniversityApi } from "./universityApiSync";
 
 // Helper functions for profile defaults
@@ -6082,6 +6082,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/admin/refill-related-majors — 빈 related_majors 재수집
+  app.post('/api/admin/refill-related-majors', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
+      const logs: string[] = [];
+      const result = await refillEmptyRelatedMajors((msg) => logs.push(msg));
+      res.json({ ...result, logs });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/admin/sync-career-major-seq — career_major_seq 매핑
+  app.post('/api/admin/sync-career-major-seq', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
+      const logs: string[] = [];
+      const result = await syncCareerMajorSeq((msg) => logs.push(msg));
+      res.json({ ...result, logs });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // ===========================
   // APTITUDE API (전공 적성 분석)
   // ===========================
@@ -6300,6 +6324,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           relatedJobs: cachedMajors.relatedJobs,
         }).from(cachedMajors)
           .where(inArray(cachedMajors.majorName, allMajorNames.slice(0, 80)));
+
+        // Fuzzy fallback: for names not found by exact match, try normalized LIKE query
+        const foundNames = new Set(majorCandidates.map(m => m.majorName));
+        const notFound = allMajorNames.filter(n => !foundNames.has(n)).slice(0, 40);
+        if (notFound.length > 0) {
+          const fuzzyResults = await db.select({
+            majorName: cachedMajors.majorName,
+            category: cachedMajors.category,
+            description: cachedMajors.description,
+            relatedJobs: cachedMajors.relatedJobs,
+          }).from(cachedMajors)
+            .where(or(...notFound.map(n => ilike(cachedMajors.majorName, `%${normalizeMajorName(n)}%`))));
+          const existingNames = new Set(majorCandidates.map(m => m.majorName));
+          for (const r of fuzzyResults) {
+            if (!existingNames.has(r.majorName)) {
+              majorCandidates.push(r);
+              existingNames.add(r.majorName ?? '');
+            }
+          }
+          console.log(`[AptitudeAnalyze] 퍼지 매칭: ${notFound.length}개 미매칭 → ${fuzzyResults.length}개 보완`);
+        }
       }
 
       // 학과 후보 부족 시 전체에서 보충
@@ -6453,40 +6498,60 @@ JSON 형식으로만 응답하세요:
   app.get('/api/explore/majors/:majorName/job-stats', async (req, res) => {
     try {
       const majorName = decodeURIComponent(req.params.majorName);
-      const result = await db.execute(sqlExpr`
-        SELECT
-          ROUND(AVG(cj.salary)::numeric / 10000, 0)::int AS avg_salary_wan,
-          ROUND(MIN(cj.salary)::numeric / 10000, 0)::int AS min_salary_wan,
-          ROUND(MAX(cj.salary)::numeric / 10000, 0)::int AS max_salary_wan,
-          COUNT(DISTINCT cj.job_name)::int AS job_count,
-          COUNT(DISTINCT cj.job_name) FILTER (WHERE cj.salary > 0)::int AS jobs_with_salary,
-          (
-            SELECT growth_kw FROM (
-              SELECT
-                CASE
-                  WHEN growth ILIKE '%감소%' THEN '감소'
-                  WHEN growth ILIKE '%유지%' THEN '유지'
-                  WHEN growth ILIKE '%증가%' THEN '증가'
-                  ELSE NULL
-                END AS growth_kw,
-                COUNT(*) as cnt
-              FROM cached_jobs cj2
-              WHERE cj2.job_name = ANY(
-                SELECT jsonb_array_elements_text(cm2.related_jobs)
-                FROM cached_majors cm2 WHERE cm2.major_name = ${majorName}
-              ) AND cj2.growth IS NOT NULL
-              GROUP BY growth_kw ORDER BY cnt DESC LIMIT 1
-            ) g
-            WHERE growth_kw IS NOT NULL
-          ) AS dominant_growth
-        FROM cached_majors cm
-        JOIN cached_jobs cj ON cj.job_name = ANY(
-          SELECT jsonb_array_elements_text(cm.related_jobs)
-        )
-        WHERE cm.major_name = ${majorName}
-          AND cj.salary > 0
-      `);
-      const row = (result as any).rows?.[0] ?? {};
+
+      // Helper: run job-stats query for a resolved major name
+      const runJobStatsQuery = async (name: string) => {
+        return db.execute(sqlExpr`
+          SELECT
+            ROUND(AVG(cj.salary)::numeric / 10000, 0)::int AS avg_salary_wan,
+            ROUND(MIN(cj.salary)::numeric / 10000, 0)::int AS min_salary_wan,
+            ROUND(MAX(cj.salary)::numeric / 10000, 0)::int AS max_salary_wan,
+            COUNT(DISTINCT cj.job_name)::int AS job_count,
+            COUNT(DISTINCT cj.job_name) FILTER (WHERE cj.salary > 0)::int AS jobs_with_salary,
+            (
+              SELECT growth_kw FROM (
+                SELECT
+                  CASE
+                    WHEN growth ILIKE '%감소%' THEN '감소'
+                    WHEN growth ILIKE '%유지%' THEN '유지'
+                    WHEN growth ILIKE '%증가%' THEN '증가'
+                    ELSE NULL
+                  END AS growth_kw,
+                  COUNT(*) as cnt
+                FROM cached_jobs cj2
+                WHERE cj2.job_name = ANY(
+                  SELECT jsonb_array_elements_text(cm2.related_jobs)
+                  FROM cached_majors cm2 WHERE cm2.major_name = ${name}
+                ) AND cj2.growth IS NOT NULL
+                GROUP BY growth_kw ORDER BY cnt DESC LIMIT 1
+              ) g
+              WHERE growth_kw IS NOT NULL
+            ) AS dominant_growth
+          FROM cached_majors cm
+          JOIN cached_jobs cj ON cj.job_name = ANY(
+            SELECT jsonb_array_elements_text(cm.related_jobs)
+          )
+          WHERE cm.major_name = ${name}
+            AND cj.salary > 0
+        `);
+      }
+
+      let result = await runJobStatsQuery(majorName);
+      let row = (result as any).rows?.[0] ?? {};
+
+      // Fuzzy fallback: if no data, try normalized LIKE search
+      if (!row.job_count || Number(row.job_count) === 0) {
+        const norm = normalizeMajorName(majorName);
+        const fuzzyMatch = await db.select({ majorName: cachedMajors.majorName })
+          .from(cachedMajors)
+          .where(ilike(cachedMajors.majorName, `%${norm}%`))
+          .limit(1);
+        if (fuzzyMatch.length > 0 && fuzzyMatch[0].majorName !== majorName) {
+          result = await runJobStatsQuery(fuzzyMatch[0].majorName!);
+          row = (result as any).rows?.[0] ?? {};
+        }
+      }
+
       res.json({
         avgSalaryWan: row.avg_salary_wan ? Number(row.avg_salary_wan) : null,
         minSalaryWan: row.min_salary_wan ? Number(row.min_salary_wan) : null,
@@ -6505,11 +6570,18 @@ JSON 형식으로만 응답하세요:
     try {
       const { majorName } = req.params;
       const decodedName = decodeURIComponent(majorName);
+      const normalizedName = normalizeMajorName(decodedName);
 
-      // 1) majorUniversityMap 에서 조회
-      const mapRows = await db.select().from(majorUniversityMap)
+      // 1) majorUniversityMap 에서 조회 (정확 매칭 우선, 퍼지 보완)
+      let mapRows = await db.select().from(majorUniversityMap)
         .where(eq(majorUniversityMap.majorName, decodedName))
         .orderBy(desc(majorUniversityMap.competitionRate), asc(majorUniversityMap.univName));
+
+      if (mapRows.length === 0 && normalizedName !== decodedName) {
+        mapRows = await db.select().from(majorUniversityMap)
+          .where(ilike(majorUniversityMap.majorName, `%${normalizedName}%`))
+          .orderBy(desc(majorUniversityMap.competitionRate), asc(majorUniversityMap.univName));
+      }
 
       // 2) university_majors 에서 정확 일치 우선, 포함 관계 보조
       const exactRows = await db.select().from(universityMajors)
@@ -6517,7 +6589,7 @@ JSON 형식으로만 응답하세요:
 
       const likeRows = exactRows.length === 0
         ? await db.select().from(universityMajors)
-            .where(ilike(universityMajors.majorName, `%${decodedName}%`))
+            .where(ilike(universityMajors.majorName, `%${normalizedName}%`))
         : [];
 
       const umRows = exactRows.length > 0 ? exactRows : likeRows;
