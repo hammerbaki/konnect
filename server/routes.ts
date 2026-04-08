@@ -6172,6 +6172,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(APTITUDE_QUESTIONS);
   });
 
+  // GET /api/aptitude/stats — 직업 수·학과 수 통계
+  app.get('/api/aptitude/stats', async (_req, res) => {
+    try {
+      const [jobRow, majorRow] = await Promise.all([
+        db.select({ count: sqlExpr<number>`COUNT(*)::int` }).from(cachedJobs),
+        db.select({ count: sqlExpr<number>`COUNT(*)::int` }).from(cachedMajors),
+      ]);
+      res.json({
+        jobCount: Number(jobRow[0]?.count ?? 443),
+        majorCount: Number(majorRow[0]?.count ?? 235),
+      });
+    } catch (error: any) {
+      res.json({ jobCount: 443, majorCount: 235 });
+    }
+  });
+
   // GET /api/aptitude/latest
   app.get('/api/aptitude/latest', isAuthenticated, async (req: any, res) => {
     try {
@@ -6187,13 +6203,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const INTEREST_LABELS_KR: Record<string, string> = {
-    SCI: "자연과학", ENG: "공학·기술", MED: "의료·보건",
-    BIZ: "경영·경제", LAW: "법·행정", EDU: "교육",
-    ART: "예술·디자인", IT: "IT·정보", SOC: "사회·복지",
+    SCI: "과학·탐구", ENG: "공학·기술", MED: "의료·보건",
+    BIZ: "경영·경제", LAW: "법률·행정", EDU: "교육·상담",
+    ART: "예술·디자인", IT: "IT·정보통신", SOC: "사회·문화",
   };
   const APTITUDE_LABELS_KR: Record<string, string> = {
-    VERBAL: "언어능력", MATH: "수리능력", SPATIAL: "공간지각",
-    CREATIVE: "창의성", SOCIAL: "대인관계", SELF: "자기관리",
+    VERBAL: "언어능력", MATH: "수리·논리력", SPATIAL: "공간·시각능력",
+    CREATIVE: "창의력", SOCIAL: "대인관계능력", SELF: "자기관리능력",
   };
 
   // POST /api/aptitude/analyze
