@@ -11,7 +11,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from "recharts";
 import {
-  Brain, ChevronLeft, ChevronRight, RotateCcw, Sparkles,
+  Brain, ChevronLeft, ChevronRight, ChevronDown, RotateCcw, Sparkles,
   Briefcase, GraduationCap, Wifi, ArrowRight,
   AlertCircle, Layers, Zap
 } from "lucide-react";
@@ -111,84 +111,106 @@ function StartScreen({ onStart, latestResult, stats }: {
   latestResult: AptitudeResult | null;
   stats: AptitudeStats | null;
 }) {
+  const [showDetail, setShowDetail] = useState(false);
   const jobCount = stats?.jobCount ?? 443;
   const majorCount = stats?.majorCount ?? 235;
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-10 space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-3">
-        <div className="w-16 h-16 bg-dream/10 rounded-2xl flex items-center justify-center mx-auto">
-          <Brain className="w-8 h-8 text-dream" />
+    <div className="max-w-xl mx-auto px-4 py-8 space-y-4">
+      {/* Hero Section — CTA 버튼이 스크롤 없이 바로 보임 */}
+      <div className="bg-dream/5 border border-dream/15 rounded-2xl p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-dream/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <Brain className="w-6 h-6 text-dream" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-ink">진로 흥미 분석</h1>
+            <p className="text-xs text-gray-500 mt-0.5">약 5분 · 총 30문항</p>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold text-ink">진로 흥미 분석</h1>
-        <p className="text-gray-500 text-sm leading-relaxed">
+
+        <p className="text-sm text-gray-600 leading-relaxed">
           커리어넷 <span className="font-semibold text-dream">{jobCount.toLocaleString()}개 직업</span>,{" "}
-          <span className="font-semibold text-dream">{majorCount.toLocaleString()}개 학과</span> 데이터를 기반으로<br />
-          AI가 나의 흥미와 적성에 맞는 진로를 추천해드립니다.
+          <span className="font-semibold text-dream">{majorCount.toLocaleString()}개 학과</span> 데이터를 기반으로
+          나에게 맞는 학과와 직업을 찾아보세요.
         </p>
+
+        <Button
+          onClick={onStart}
+          data-testid="btn-start-aptitude"
+          className="w-full bg-dream hover:bg-dream/90 text-white py-5 text-base font-semibold rounded-xl"
+        >
+          <Sparkles className="w-5 h-5 mr-2" /> 흥미 분석 시작
+        </Button>
+
+        {latestResult && (
+          <p className="text-xs text-center text-gray-400">
+            마지막 검사: {new Date(latestResult.createdAt).toLocaleDateString("ko-KR")}
+          </p>
+        )}
       </div>
 
-      {/* 검사 안내 */}
-      <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
-        <h3 className="text-sm font-semibold text-ink">검사 구성 · 약 5분 / 총 30문항</h3>
+      {/* 접힌 상태의 검사 구성 상세 */}
+      <div className="border border-gray-100 rounded-2xl overflow-hidden">
+        <button
+          onClick={() => setShowDetail(v => !v)}
+          data-testid="btn-toggle-detail"
+          className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+        >
+          <span>검사 구성 자세히 보기</span>
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showDetail ? "rotate-180" : ""}`} />
+        </button>
 
-        {/* 1단계: 흥미 분야 */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 bg-dream/10 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-xs text-dream font-bold">1</span>
-            </div>
-            <span className="text-sm font-medium text-ink flex items-center gap-1">
-              <Layers className="w-3.5 h-3.5 text-dream" />
-              흥미 검사 · 18문항 — 9개 관심 분야
-            </span>
-          </div>
-          <div className="grid grid-cols-3 gap-1.5 ml-8">
-            {Object.entries(INTEREST_LABELS).map(([key, label]) => (
-              <div key={key} className="flex items-center gap-1 text-xs text-gray-600 bg-white rounded-lg px-2 py-1.5 border border-gray-100">
-                <span>{INTEREST_ICONS[key]}</span>
-                <span>{label}</span>
+        {showDetail && (
+          <div className="px-5 pb-5 space-y-4 border-t border-gray-100">
+            {/* 1단계: 흥미 분야 */}
+            <div className="pt-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 bg-dream/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs text-dream font-bold">1</span>
+                </div>
+                <span className="text-sm font-medium text-ink flex items-center gap-1">
+                  <Layers className="w-3.5 h-3.5 text-dream" />
+                  흥미 검사 · 18문항 — 9개 관심 분야
+                </span>
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="grid grid-cols-3 gap-1.5 ml-8">
+                {Object.entries(INTEREST_LABELS).map(([key, label]) => (
+                  <div key={key} className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 rounded-lg px-2 py-1.5">
+                    <span>{INTEREST_ICONS[key]}</span>
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-        {/* 2단계: 역량 */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-xs text-coral font-bold">2</span>
-            </div>
-            <span className="text-sm font-medium text-ink flex items-center gap-1">
-              <Zap className="w-3.5 h-3.5 text-coral" />
-              역량 검사 · 12문항 — 6개 역량
-            </span>
-          </div>
-          <div className="grid grid-cols-3 gap-1.5 ml-8">
-            {Object.entries(APTITUDE_LABELS).map(([key, label]) => (
-              <div key={key} className="flex items-center gap-1 text-xs text-gray-600 bg-white rounded-lg px-2 py-1.5 border border-gray-100">
-                <span className="font-mono text-[10px] text-gray-400">{key.slice(0, 2)}</span>
-                <span>{label}</span>
+            {/* 2단계: 역량 */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs text-coral font-bold">2</span>
+                </div>
+                <span className="text-sm font-medium text-ink flex items-center gap-1">
+                  <Zap className="w-3.5 h-3.5 text-coral" />
+                  역량 검사 · 12문항 — 6개 역량
+                </span>
               </div>
-            ))}
+              <div className="grid grid-cols-3 gap-1.5 ml-8">
+                {Object.values(APTITUDE_LABELS).map((label) => (
+                  <div key={label} className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 rounded-lg px-2 py-1.5">
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 flex items-start gap-1.5 pt-2 border-t border-gray-100">
+              <span className="mt-0.5 flex-shrink-0">ℹ️</span>
+              <span>본 분석은 간편 흥미 탐색용입니다. 보다 정밀한 진로적성검사는 커리어넷에서 이용하실 수 있습니다.</span>
+            </p>
           </div>
-        </div>
+        )}
       </div>
-
-      <Button
-        onClick={onStart}
-        data-testid="btn-start-aptitude"
-        className="w-full bg-dream hover:bg-dream/90 text-white py-6 text-base font-semibold rounded-2xl"
-      >
-        <Sparkles className="w-5 h-5 mr-2" /> 흥미 분석 시작
-      </Button>
-
-      {latestResult && (
-        <p className="text-xs text-center text-gray-400">
-          마지막 검사: {new Date(latestResult.createdAt).toLocaleDateString("ko-KR")}
-        </p>
-      )}
     </div>
   );
 }
