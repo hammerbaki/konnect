@@ -4,8 +4,8 @@
  * 보완 보고서: "학생 프로필은 모든 AI 기능의 개인화 기초 데이터"
  * 3안 차별점: 프로필 + 보드 자동 배정 → 보드 맥락화 도구의 기반
  */
-import { useState } from "react";
-import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Star,
@@ -31,8 +31,41 @@ import {
   LayoutGrid,
   Brain,
   CheckCircle2,
+  Plus,
+  Loader2,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { generateLightTree, VisionGoal } from "@/lib/mockData";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+/* ─── Kompass Types (mirrors Goals.tsx) ─── */
+interface KompassItem {
+  id: string;
+  profileId: string;
+  targetYear: number;
+  startMonth?: number;
+  visionData: VisionGoal;
+  progress: number;
+  profileTitle?: string;
+}
+
+interface ImportedCareerData {
+  title: string;
+  actions: { portfolio: string[]; networking: string[]; mindset: string[] };
+  strengths: string[];
+  weaknesses: string[];
+  profileId?: string;
+}
+
+interface Profile { id: string; title: string; type: string; }
 
 /* ─── Profile Data Types ─── */
 type AdmissionType = "수시" | "정시" | "미정";
@@ -130,12 +163,104 @@ function getAutoBoards(profile: ProfileData) {
 }
 
 export default function Dream() {
+  const [_, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+
+  /* ── Dream declaration state ── */
   const [dreamText, setDreamText] = useState("서울대 의대에서 희귀질환을 연구하겠다");
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<ProfileData>(defaultProfile);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editProfile, setEditProfile] = useState<ProfileData>(defaultProfile);
   const [showProfileDetail, setShowProfileDetail] = useState(false);
+
+  /* ── Kompass (goal management) state ── */
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newTargetYear, setNewTargetYear] = useState(String(new Date().getFullYear() + 2));
+  const [newDescription, setNewDescription] = useState("");
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
+  const [importedData, setImportedData] = useState<ImportedCareerData | null>(null);
+  const [deletingKompassId, setDeletingKompassId] = useState<string | null>(null);
+
+  /* ── Kompass queries ── */
+  const { data: kompassList = [], isLoading: isLoadingKompass } = useQuery<KompassItem[]>({
+    queryKey: ['/api/kompass'],
+  });
+
+  const { data: profileList = [] } = useQuery<Profile[]>({
+    queryKey: ['/api/profiles'],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  /* ── Kompass mutations ── */
+  const createKompassMutation = useMutation({
+    mutationFn: async (data: { profileId: string; targetYear: number; startMonth: number; visionData?: VisionGoal; title?: string; description?: string; useAI?: boolean }) => {
+      if (data.useAI) {
+        const response = await apiRequest('POST', `/api/profiles/${data.profileId}/kompass/generate`, {
+          title: data.title,
+          targetYear: data.targetYear,
+          description: data.description,
+        });
+        return { ...(await response.json()), _usedAI: true };
+      } else {
+        const response = await apiRequest('POST', `/api/profiles/${data.profileId}/kompass`, {
+          targetYear: data.targetYear,
+          startMonth: data.startMonth,
+          visionData: data.visionData,
+          progress: 0,
+        });
+        return { ...(await response.json()), _usedAI: false };
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/kompass'] });
+      setIsCreateModalOpen(false);
+      setNewTitle(""); setNewDescription(""); setSelectedProfileId(""); setImportedData(null);
+      toast.success(data._usedAI ? "AI가 연간/월별/주별/일별 목표를 생성했습니다!" : "꿈 목표가 저장되었습니다.");
+      setLocation(`/goals/${data.id}`);
+    },
+    onError: () => toast.error("목표 생성 중 오류가 발생했습니다."),
+  });
+
+  const deleteKompassMutation = useMutation({
+    mutationFn: async (kompassId: string) => {
+      await apiRequest('DELETE', `/api/kompass/${kompassId}`);
+    },
+    onMutate: async (kompassId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['/api/kompass'] });
+      const prev = queryClient.getQueryData(['/api/kompass']);
+      queryClient.setQueryData(['/api/kompass'], (old: any[]) => old?.filter(k => k.id !== kompassId) ?? []);
+      return { prev };
+    },
+    onSuccess: () => toast.success("목표가 삭제되었습니다."),
+    onError: (_err, _id, context) => {
+      if (context?.prev) queryClient.setQueryData(['/api/kompass'], context.prev);
+      toast.error("삭제 중 오류가 발생했습니다.");
+    },
+    onSettled: () => {
+      setDeletingKompassId(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/kompass'] });
+    },
+  });
+
+  useEffect(() => {
+    if (profileList.length > 0 && !selectedProfileId) {
+      setSelectedProfileId(profileList[0].id);
+    }
+  }, [profileList, selectedProfileId]);
+
+  const handleSubmit = () => {
+    if (!newTitle || !newTargetYear) { toast.error("목표 제목과 달성 연도를 입력해주세요."); return; }
+    if (!selectedProfileId) { toast.error("프로필을 먼저 생성해주세요."); return; }
+    const targetYear = parseInt(newTargetYear);
+    if (importedData) {
+      const visionData = generateLightTree(`temp-${Date.now()}`, newTitle, targetYear, newDescription, 1);
+      createKompassMutation.mutate({ profileId: selectedProfileId, targetYear, startMonth: 1, visionData });
+    } else {
+      createKompassMutation.mutate({ profileId: selectedProfileId, targetYear, startMonth: 1, title: newTitle, description: newDescription, useAI: true });
+    }
+  };
 
   const autoBoards = getAutoBoards(profile);
 
@@ -420,6 +545,127 @@ export default function Dream() {
             </motion.div>
           </section>
 
+          {/* ═══ 나의 꿈 목표 (Kompass) ═══ */}
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="editorial-heading text-lg flex items-center gap-2">
+                  <Compass size={18} className="text-dream" />
+                  나의 꿈 목표
+                </h2>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  연간 → 반기 → 월별 → 주별 → 일별 목표를 체계적으로 관리합니다
+                </p>
+              </div>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-dream text-white text-xs font-semibold rounded-lg hover:bg-dream/90 transition-colors"
+                data-testid="button-create-dream-kompass"
+              >
+                <Plus size={13} /> 새 목표
+              </button>
+            </div>
+            <hr className="editorial-divider-thick mt-0 mb-4" />
+
+            {isLoadingKompass ? (
+              <div className="space-y-3">
+                {[1, 2].map((i) => (
+                  <Skeleton key={i} className="h-24 w-full rounded-xl" />
+                ))}
+              </div>
+            ) : kompassList.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="dream-card p-6 text-center cursor-pointer group"
+                onClick={() => setIsCreateModalOpen(true)}
+              >
+                <div className="w-12 h-12 bg-dream/10 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                  <Plus size={20} className="text-dream" />
+                </div>
+                <p className="editorial-heading text-base text-dream mb-1">첫 번째 꿈 목표를 선언하세요</p>
+                <p className="text-xs text-muted-foreground">
+                  AI가 연간·반기·월별·주별·일별 목표를 자동으로 생성합니다
+                </p>
+              </motion.div>
+            ) : (
+              <div className="space-y-3">
+                {kompassList.map((kompass, i) => {
+                  const vision = kompass.visionData;
+                  return (
+                    <motion.div
+                      key={kompass.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.06 }}
+                      className="group relative ink-card p-4 hover:border-dream/40 hover:shadow-md transition-all cursor-pointer"
+                      onClick={() => setLocation(`/goals/${kompass.id}`)}
+                      data-testid={`card-dream-kompass-${kompass.id}`}
+                    >
+                      {/* Delete button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (deletingKompassId) return;
+                          if (window.confirm(`"${vision.title}" 목표를 삭제하시겠습니까?`)) {
+                            setDeletingKompassId(kompass.id);
+                            deleteKompassMutation.mutate(kompass.id);
+                          }
+                        }}
+                        className="absolute top-3 right-3 p-1.5 rounded-lg text-muted-foreground/40 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                        data-testid={`button-delete-dream-kompass-${kompass.id}`}
+                      >
+                        {deletingKompassId === kompass.id
+                          ? <Loader2 size={13} className="animate-spin" />
+                          : <Trash2 size={13} />
+                        }
+                      </button>
+
+                      <div className="flex items-start gap-3 pr-8">
+                        <div className="w-10 h-10 bg-dream/10 rounded-lg flex items-center justify-center shrink-0">
+                          <Target size={18} className="text-dream" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="text-[10px] bg-dream/10 text-dream px-2 py-0.5 rounded-full font-semibold">
+                              목표 {kompass.targetYear}년
+                            </span>
+                            {kompass.profileTitle && (
+                              <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+                                {kompass.profileTitle}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm font-semibold text-foreground line-clamp-1 mb-1">
+                            {vision.title}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground line-clamp-1 mb-2">
+                            {vision.description}
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <Progress value={kompass.progress} className="h-1.5 flex-1" indicatorClassName="bg-dream" />
+                            <span className="text-xs font-bold text-dream shrink-0">{kompass.progress}%</span>
+                          </div>
+                        </div>
+                        <ChevronRight size={15} className="text-muted-foreground/40 group-hover:text-dream transition-colors shrink-0 mt-1" />
+                      </div>
+
+                      {/* Goal levels hint */}
+                      <div className="flex items-center gap-1 mt-3 pl-13">
+                        {["연간", "반기", "월별", "주별", "일별"].map((level) => (
+                          <span key={level} className="text-[9px] bg-secondary text-muted-foreground px-1.5 py-0.5 rounded-full">
+                            {level}
+                          </span>
+                        ))}
+                        <span className="text-[9px] text-muted-foreground ml-1">목표 →</span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
           {/* 꿈의 여정 타임라인 */}
           <section className="mb-8">
             <h2 className="editorial-heading text-lg mb-4 flex items-center gap-2">
@@ -657,6 +903,99 @@ export default function Dream() {
           </div>
         </aside>
       </div>
+
+      {/* ═══ Kompass 생성 Dialog ═══ */}
+      <Dialog open={isCreateModalOpen} onOpenChange={(open) => { setIsCreateModalOpen(open); if (!open) setImportedData(null); }}>
+        <DialogContent className="sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <DialogTitle className="editorial-heading text-xl text-dream">
+                새 꿈 목표 만들기
+              </DialogTitle>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-dream/10 text-dream px-2 py-0.5 rounded-full">
+                <Sparkles size={10} /> AI 생성
+              </span>
+            </div>
+            <DialogDescription className="text-sm text-muted-foreground">
+              AI가 연간 → 반기 → 월별 → 주별 → 일별 목표를 자동으로 생성합니다
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* 목표 제목 */}
+            <div className="space-y-2">
+              <Label htmlFor="dream-goal-title" className="text-sm font-semibold text-foreground">
+                목표 제목
+              </Label>
+              <Input
+                id="dream-goal-title"
+                placeholder="예: 서울대 의대 합격"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className="h-11 rounded-xl border-dream/20 focus-visible:ring-dream"
+                data-testid="input-dream-kompass-title"
+              />
+            </div>
+
+            {/* 달성 연도 */}
+            <div className="space-y-2">
+              <Label htmlFor="dream-goal-year" className="text-sm font-semibold text-foreground">
+                달성 목표 연도
+              </Label>
+              <Input
+                id="dream-goal-year"
+                type="number"
+                placeholder="예: 2027"
+                value={newTargetYear}
+                onChange={(e) => setNewTargetYear(e.target.value)}
+                className="h-11 rounded-xl border-dream/20 focus-visible:ring-dream"
+                data-testid="input-dream-target-year"
+              />
+            </div>
+
+            {/* 설명 */}
+            <div className="space-y-2">
+              <Label htmlFor="dream-goal-desc" className="text-sm font-semibold text-foreground">
+                꿈의 이유 <span className="font-normal text-muted-foreground">(선택 — AI 개인화에 활용됩니다)</span>
+              </Label>
+              <Textarea
+                id="dream-goal-desc"
+                placeholder="이 꿈을 이루고 싶은 이유, 현재 상황, 강점 등을 자유롭게 적어주세요."
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                className="min-h-[100px] rounded-xl border-dream/20 focus-visible:ring-dream resize-none text-sm"
+                data-testid="input-dream-description"
+              />
+            </div>
+
+            {/* AI 생성 안내 */}
+            <div className="bg-dream/5 border border-dream/20 rounded-xl p-3">
+              <div className="flex items-start gap-2">
+                <Sparkles size={14} className="text-dream shrink-0 mt-0.5" />
+                <div className="text-xs text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-dream">AI가 자동으로 생성합니다:</span>{" "}
+                  연간 목표 → 반기 목표 → 월별 세부 목표 → 주별 액션 → 일별 태스크 전체 계층을 한 번에 만들어줍니다.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <button
+              onClick={handleSubmit}
+              disabled={createKompassMutation.isPending || !selectedProfileId}
+              className="w-full h-12 bg-dream text-white font-bold rounded-xl text-base hover:bg-dream/90 disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
+              data-testid="button-submit-dream-kompass"
+            >
+              {createKompassMutation.isPending ? (
+                <><Loader2 size={18} className="animate-spin" /> AI가 목표를 생성하고 있어요...</>
+              ) : (
+                <><Sparkles size={18} /> 꿈 목표 생성하기</>
+              )}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
