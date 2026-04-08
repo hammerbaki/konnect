@@ -129,19 +129,6 @@ function StartScreen({ onStart, latestResult, stats }: {
         </p>
       </div>
 
-      {/* API 상태 배지 */}
-      <div className="flex justify-center gap-2 flex-wrap" data-testid="aptitude-api-status">
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full">
-          <Wifi className="w-3 h-3" />
-          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-          API 연동됨
-        </span>
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-dream/8 text-dream border border-dream/20 px-3 py-1.5 rounded-full">
-          <Database className="w-3 h-3" />
-          GPT-4o-mini · DB 연동 추천
-        </span>
-      </div>
-
       {/* 검사 안내 */}
       <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
         <h3 className="text-sm font-semibold text-ink">검사 구성 · 약 5분 / 총 30문항</h3>
