@@ -321,9 +321,7 @@ export default function Dashboard() {
                 <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-semibold">
                   Konnect
                 </span>
-                <h1 className="editorial-heading text-2xl sm:text-4xl text-white mt-1 leading-tight">
-                  꿈을 잇다.
-                </h1>
+                <h1 className="editorial-heading text-2xl sm:text-4xl text-white mt-1 leading-tight">KONNECT, 꿈을 잇다.</h1>
                 <p className="text-white/70 text-xs sm:text-sm mt-1.5 max-w-md">
                   어떤 인강을 들을지 묻기 전에, 왜 공부하는지를 먼저 묻는다.
                 </p>
