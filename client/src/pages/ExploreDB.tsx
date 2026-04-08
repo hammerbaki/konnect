@@ -1403,13 +1403,25 @@ function StatRow({ icon, label, value, color = "text-ink" }: {
 }
 
 // ---- University Majors Panel (개설 학과 — lazy loaded on expand) ----
-function UnivMajorsPanel({ univName }: { univName: string }) {
+function UnivMajorsPanel({
+  univName,
+  onNoMajors,
+  onMajorClick,
+}: {
+  univName: string;
+  onNoMajors: () => void;
+  onMajorClick: (name: string) => void;
+}) {
   const { data, isLoading } = useQuery<{ majors: string[] }>({
     queryKey: [`/api/explore/universities/${encodeURIComponent(univName)}/majors`],
     staleTime: 1000 * 60 * 10,
   });
 
-  const [, navigate] = useLocation();
+  useEffect(() => {
+    if (!isLoading && data && data.majors.length === 0) {
+      onNoMajors();
+    }
+  }, [isLoading, data, onNoMajors]);
 
   if (isLoading) {
     return (
@@ -1422,9 +1434,7 @@ function UnivMajorsPanel({ univName }: { univName: string }) {
   }
 
   const majors = data?.majors ?? [];
-  if (majors.length === 0) {
-    return <p className="text-xs text-gray-400 pt-1">학과 데이터가 없습니다.</p>;
-  }
+  if (majors.length === 0) return null;
 
   return (
     <div className="flex flex-wrap gap-1.5 pt-1">
@@ -1434,7 +1444,7 @@ function UnivMajorsPanel({ univName }: { univName: string }) {
           data-testid={`chip-major-${name}`}
           onClick={e => {
             e.stopPropagation();
-            navigate(`/explore?tab=majors&q=${encodeURIComponent(name)}`);
+            onMajorClick(name);
           }}
           className="text-xs px-2.5 py-1 rounded-full bg-dream/10 text-dream hover:bg-dream/20 transition-colors cursor-pointer border border-dream/20"
         >
@@ -1446,12 +1456,15 @@ function UnivMajorsPanel({ univName }: { univName: string }) {
 }
 
 // ---- University Card (2-column grid style) ----
-function UniversityCard({ univ, isBookmarked, onToggleBookmark }: {
+function UniversityCard({ univ, isBookmarked, onToggleBookmark, onMajorClick }: {
   univ: University;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  onMajorClick?: (name: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  // null = 아직 모름, true = 학과 있음, false = 학과 없음
+  const [hasMajors, setHasMajors] = useState<boolean | null>(null);
   const tuitionWan = univ.avgTuition && univ.avgTuition > 0 ? Math.round(univ.avgTuition / 10) : null;
   const scholarshipWan = univ.scholarshipPerStudent && univ.scholarshipPerStudent > 0
     ? Math.round(univ.scholarshipPerStudent / 10000)
@@ -1538,21 +1551,30 @@ function UniversityCard({ univ, isBookmarked, onToggleBookmark }: {
           />
         </div>
 
-        {/* 개설 학과 토글 버튼 */}
-        <button
-          data-testid={`btn-expand-majors-${univ.id}`}
-          onClick={() => setExpanded(v => !v)}
-          className="mt-3 w-full flex items-center justify-center gap-1 text-xs text-dream hover:text-dream/80 transition-colors py-1 border-t border-gray-100"
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          개설 학과 보기
-          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-        </button>
+        {/* 개설 학과 토글 버튼 — hasMajors===false(데이터 없음 확인)이면 숨김 */}
+        {hasMajors !== false && (
+          <button
+            data-testid={`btn-expand-majors-${univ.id}`}
+            onClick={() => setExpanded(v => !v)}
+            className="mt-3 w-full flex items-center justify-center gap-1 text-xs text-dream hover:text-dream/80 transition-colors py-1 border-t border-gray-100"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            개설 학과 보기
+            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+        )}
 
         {/* 개설 학과 목록 (확장 시 표시) */}
         {expanded && (
           <div className="mt-2">
-            <UnivMajorsPanel univName={univ.univName} />
+            <UnivMajorsPanel
+              univName={univ.univName}
+              onNoMajors={() => {
+                setHasMajors(false);
+                setExpanded(false);
+              }}
+              onMajorClick={name => onMajorClick?.(name)}
+            />
           </div>
         )}
       </CardContent>
@@ -1914,6 +1936,7 @@ export default function ExploreDB() {
                     univ={u}
                     isBookmarked={!!getBookmark("university", u.univName)}
                     onToggleBookmark={() => toggleBookmark("university", u.id, u.univName)}
+                    onMajorClick={navigateToMajor}
                   />
                 ))}
               </div>
