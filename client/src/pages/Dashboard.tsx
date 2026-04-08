@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,6 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  Coins,
   Brain,
   Star,
   X,
@@ -59,19 +59,8 @@ function DashboardSkeleton() {
   return (
     <>
       <div className="space-y-5 sm:space-y-8 pb-6 sm:pb-10">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
-          <div>
-            <Skeleton className="h-7 sm:h-8 w-48 mb-2" />
-            <Skeleton className="h-5 w-64" />
-          </div>
-          <Card className="hidden md:flex toss-card px-5 py-4 items-center gap-3 w-fit">
-            <Skeleton className="h-10 w-10 rounded-xl" />
-            <div>
-              <Skeleton className="h-4 w-16 mb-1" />
-              <Skeleton className="h-6 w-12" />
-            </div>
-          </Card>
-        </div>
+        {/* Hero skeleton */}
+        <Skeleton className="w-full h-44 sm:h-56 lg:h-72 rounded-xl" />
 
         <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
@@ -209,16 +198,6 @@ export default function Dashboard() {
     }
   };
 
-  // Fetch user identity for credits
-  const { data: userIdentity } = useQuery({
-    queryKey: ['/api/user-identity'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/user-identity');
-      return response.json();
-    },
-    enabled: !!user,
-  });
-
   // Fetch profiles - cache for 5 minutes to reduce API calls
   const { data: profiles, isLoading: isLoadingProfiles } = useQuery({
     queryKey: ['/api/profiles'],
@@ -266,11 +245,6 @@ export default function Dashboard() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const userName = user?.displayName 
-    || (user?.lastName && user?.firstName ? `${user.lastName}${user.firstName}` : null)
-    || user?.firstName || user?.lastName || user?.email?.split('@')[0] || '사용자';
-
-  const credits = user?.credits ?? 1000;
   const profileCount = profiles?.length ?? 0;
   const analysisCount = analyses?.length ?? 0;
   const essayCount = essays?.length ?? 0;
@@ -329,27 +303,47 @@ export default function Dashboard() {
   return (
     <>
       <div className="space-y-5 sm:space-y-8 pb-6 sm:pb-10">
-        {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
-          <div>
-            <h2 className="text-xl sm:text-[28px] font-bold text-[#191F28]">
-              안녕하세요, {userName}님
-            </h2>
-            <p className="text-[#8B95A1] mt-0.5 sm:mt-1 text-sm sm:text-lg">
-              오늘도 커리어 성장을 위한 한 걸음을 시작해보세요.
-            </p>
+        {/* Hero Banner */}
+        <section>
+          <div className="relative overflow-hidden rounded-xl">
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663433131621/A3XszkVKVy7WNitpyWDbEe/v3-hero-dream-kSVtSQjiGKaTguFYwP6Y5v.webp"
+              alt="꿈을 잇다"
+              className="w-full h-44 sm:h-56 lg:h-72 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/30 to-transparent" />
+            <div className="absolute bottom-5 left-5 sm:bottom-8 sm:left-8 right-5 sm:right-8">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55 }}
+              >
+                <span className="text-[10px] uppercase tracking-[0.2em] text-gold font-semibold">
+                  Konnect
+                </span>
+                <h1 className="editorial-heading text-2xl sm:text-4xl text-white mt-1 leading-tight">
+                  꿈을 잇다.
+                </h1>
+                <p className="text-white/70 text-xs sm:text-sm mt-1.5 max-w-md">
+                  어떤 인강을 들을지 묻기 전에, 왜 공부하는지를 먼저 묻는다.
+                </p>
+                <div className="flex items-center gap-2 mt-3">
+                  <Link href="/explore">
+                    <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-dream text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-dream/90 transition-colors">
+                      <Star size={14} />
+                      학과·직업 탐색
+                    </span>
+                  </Link>
+                  <Link href="/aptitude">
+                    <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/10 text-white text-xs sm:text-sm font-medium rounded-lg backdrop-blur-sm hover:bg-white/20 transition-colors">
+                      진로 흥미 분석
+                    </span>
+                  </Link>
+                </div>
+              </motion.div>
+            </div>
           </div>
-          
-          <Card className="hidden md:flex toss-card px-5 py-4 items-center gap-3 w-fit">
-            <div className="p-2.5 bg-amber-50 rounded-xl">
-              <Coins className="h-5 w-5 text-[#FFB300]" />
-            </div>
-            <div>
-              <p className="text-sm text-[#8B95A1] font-medium">보유 학습권</p>
-              <p className="text-xl font-bold text-[#191F28]">{credits}개</p>
-            </div>
-          </Card>
-        </div>
+        </section>
 
         {/* ======= 핵심 기능 영역: 관심 목록 (좌) + 흥미 분석 결과 (우) ======= */}
         <div className="grid gap-4 md:grid-cols-2">
