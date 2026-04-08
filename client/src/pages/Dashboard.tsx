@@ -365,58 +365,86 @@ export default function Dashboard() {
                 </Button>
               </div>
             ) : (
-              <div className="flex flex-col gap-3 flex-1">
+              <div className="flex flex-col gap-4 flex-1">
+
                 {/* 관심 학교 */}
                 {bookmarkList.filter(b => b.bookmarkType === "university").length > 0 && (
-                  <div className="flex flex-col gap-1" data-testid="bm-section-university">
-                    <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-0.5">
+                  <div data-testid="bm-section-university">
+                    <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-2">
                       <Building2 className="h-3 w-3" /> 관심 학교
                     </p>
-                    {bookmarkList.filter(b => b.bookmarkType === "university").slice(0, 5).map(bm => (
-                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=universities&q=${encodeURIComponent(bm.targetName)}&from=dashboard`)} data-testid={`bm-item-${bm.id}`}>
-                        <span className="text-sm text-[#191F28] font-medium truncate">{bm.targetName}</span>
-                        <button onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }} className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" data-testid={`btn-bm-remove-${bm.id}`}><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ))}
-                    {bookmarkList.filter(b => b.bookmarkType === "university").length > 5 && (
-                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore?from=dashboard")}>+{bookmarkList.filter(b => b.bookmarkType === "university").length - 5}개 더보기</button>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {bookmarkList.filter(b => b.bookmarkType === "university").map(bm => (
+                        <span
+                          key={bm.id}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 cursor-pointer transition-colors"
+                          onClick={() => navigate(`/explore?tab=universities&q=${encodeURIComponent(bm.targetName)}&from=dashboard`)}
+                          data-testid={`bm-item-${bm.id}`}
+                        >
+                          {bm.targetName}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }}
+                            className="inline-flex items-center justify-center w-4 h-4 rounded-full text-gray-400 hover:bg-red-500 hover:text-white transition-all text-xs leading-none"
+                            data-testid={`btn-bm-remove-${bm.id}`}
+                          >×</button>
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
+
                 {/* 관심 학과 */}
                 {bookmarkList.filter(b => b.bookmarkType === "major").length > 0 && (
-                  <div className="flex flex-col gap-1" data-testid="bm-section-major">
-                    <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-0.5">
+                  <div data-testid="bm-section-major">
+                    <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-2">
                       <GraduationCap className="h-3 w-3" /> 관심 학과
                     </p>
-                    {bookmarkList.filter(b => b.bookmarkType === "major").slice(0, 5).map(bm => (
-                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=majors&q=${encodeURIComponent(bm.targetName)}&from=dashboard`)} data-testid={`bm-item-${bm.id}`}>
-                        <span className="text-sm text-[#191F28] font-medium truncate">{bm.targetName}</span>
-                        <button onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }} className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" data-testid={`btn-bm-remove-${bm.id}`}><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ))}
-                    {bookmarkList.filter(b => b.bookmarkType === "major").length > 5 && (
-                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore?from=dashboard")}>+{bookmarkList.filter(b => b.bookmarkType === "major").length - 5}개 더보기</button>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {bookmarkList.filter(b => b.bookmarkType === "major").map(bm => (
+                        <span
+                          key={bm.id}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 cursor-pointer transition-colors"
+                          onClick={() => navigate(`/explore?tab=majors&q=${encodeURIComponent(bm.targetName)}&from=dashboard`)}
+                          data-testid={`bm-item-${bm.id}`}
+                        >
+                          {bm.targetName}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }}
+                            className="inline-flex items-center justify-center w-4 h-4 rounded-full text-gray-400 hover:bg-red-500 hover:text-white transition-all text-xs leading-none"
+                            data-testid={`btn-bm-remove-${bm.id}`}
+                          >×</button>
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
+
                 {/* 관심 직업 */}
                 {bookmarkList.filter(b => b.bookmarkType === "job").length > 0 && (
-                  <div className="flex flex-col gap-1" data-testid="bm-section-job">
-                    <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-0.5">
+                  <div data-testid="bm-section-job">
+                    <p className="text-xs font-semibold text-[#8B95A1] flex items-center gap-1 mb-2">
                       <Briefcase className="h-3 w-3" /> 관심 직업
                     </p>
-                    {bookmarkList.filter(b => b.bookmarkType === "job").slice(0, 5).map(bm => (
-                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=jobs&q=${encodeURIComponent(bm.targetName)}&from=dashboard`)} data-testid={`bm-item-${bm.id}`}>
-                        <span className="text-sm text-[#191F28] font-medium truncate">{bm.targetName}</span>
-                        <button onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }} className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" data-testid={`btn-bm-remove-${bm.id}`}><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ))}
-                    {bookmarkList.filter(b => b.bookmarkType === "job").length > 5 && (
-                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore?from=dashboard")}>+{bookmarkList.filter(b => b.bookmarkType === "job").length - 5}개 더보기</button>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {bookmarkList.filter(b => b.bookmarkType === "job").map(bm => (
+                        <span
+                          key={bm.id}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 cursor-pointer transition-colors"
+                          onClick={() => navigate(`/explore?tab=jobs&q=${encodeURIComponent(bm.targetName)}&from=dashboard`)}
+                          data-testid={`bm-item-${bm.id}`}
+                        >
+                          {bm.targetName}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }}
+                            className="inline-flex items-center justify-center w-4 h-4 rounded-full text-gray-400 hover:bg-red-500 hover:text-white transition-all text-xs leading-none"
+                            data-testid={`btn-bm-remove-${bm.id}`}
+                          >×</button>
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
+
                 <Button size="sm" variant="ghost" className="mt-auto text-[#320e9d] text-xs self-start px-0 hover:bg-transparent" onClick={() => navigate("/explore?from=dashboard")}>
                   학과/직업 탐색 바로가기 <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>

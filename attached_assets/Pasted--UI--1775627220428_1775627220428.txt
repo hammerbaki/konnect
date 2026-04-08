@@ -1,0 +1,165 @@
+대시보드 관심 목록 UI 개선 지시서
+현재 문제
+대시보드의 "관심 목록" 섹션에서 각 항목(학교/학과/직업)이 전체 너비를 차지하는 큰 카드 형태로 되어 있어, 항목이 추가될수록 세로로 끝없이 늘어납니다. 오른쪽 "나의 흥미 분석 결과"의 추천 직업/학과 태그와 비교하면 시각적으로 균형이 맞지 않습니다.
+변경 목표
+
+관심 목록 항목을 Removable Chip(제거 가능한 칩/태그) 스타일로 변경
+오른쪽 "추천 직업/학과" 태그와 시각적 통일감 유지
+관심 항목은 x 버튼으로 제거 가능하다는 점에서 추천 태그와 차별화
+flex-wrap 레이아웃으로 가로 공간을 활용하여 세로 길이 대폭 축소
+
+구체적 구현 사항
+1. 칩 디자인 — 추천 태그 vs 관심 태그
+추천 태그 (오른쪽, 기존 유지):
+┌─────────────┐
+│ 물리학연구원  │  ← 보라색 배경, 흰색 텍스트, x 없음
+└─────────────┘
+
+관심 태그 (왼쪽, 새로 변경):
+┌───────────────┐
+│ 경제학과    ×  │  ← 연한 회색 배경, 어두운 텍스트, x 버튼 포함
+└───────────────┘
+2. 관심 칩 스타일
+css/* 관심 칩 기본 스타일 */
+.bookmark-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;        /* pill 형태 */
+  background-color: #f3f4f6;    /* gray-100 */
+  color: #374151;               /* gray-700 */
+  font-size: 0.875rem;          /* 14px */
+  line-height: 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+}
+
+.bookmark-chip:hover {
+  background-color: #e5e7eb;    /* gray-200 */
+}
+
+/* x 버튼 */
+.bookmark-chip .remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: transparent;
+  color: #9ca3af;               /* gray-400 */
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.bookmark-chip .remove-btn:hover {
+  background-color: #ef4444;    /* red-500 */
+  color: white;
+}
+Tailwind CSS 버전:
+칩 컨테이너: inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 cursor-pointer transition-colors
+x 버튼: inline-flex items-center justify-center w-4 h-4 rounded-full text-gray-400 hover:bg-red-500 hover:text-white transition-all text-xs
+3. 카테고리별 레이아웃
+tsx{/* 관심 목록 전체 컨테이너 */}
+<div className="space-y-4">
+  
+  {/* 카테고리: 관심 학교 */}
+  <div>
+    <p className="text-sm text-gray-500 mb-2">관심 학교</p>
+    <div className="flex flex-wrap gap-2">
+      {bookmarkedSchools.map(school => (
+        <span key={school.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 cursor-pointer transition-colors">
+          {school.name}
+          <button
+            onClick={(e) => { e.stopPropagation(); removeBookmark(school.id); }}
+            className="inline-flex items-center justify-center w-4 h-4 rounded-full text-gray-400 hover:bg-red-500 hover:text-white transition-all"
+          >
+            ×
+          </button>
+        </span>
+      ))}
+    </div>
+  </div>
+
+  {/* 카테고리: 관심 학과 */}
+  <div>
+    <p className="text-sm text-gray-500 mb-2">관심 학과</p>
+    <div className="flex flex-wrap gap-2">
+      {bookmarkedMajors.map(major => (
+        {/* 동일한 칩 구조 */}
+      ))}
+    </div>
+  </div>
+
+  {/* 카테고리: 관심 직업 */}
+  <div>
+    <p className="text-sm text-gray-500 mb-2">관심 직업</p>
+    <div className="flex flex-wrap gap-2">
+      {bookmarkedJobs.map(job => (
+        {/* 동일한 칩 구조 */}
+      ))}
+    </div>
+  </div>
+
+</div>
+4. 칩 클릭 동작
+
+칩 본체 클릭: 해당 항목의 상세 페이지로 이동 (기존 카드 클릭과 동일한 동작)
+× 버튼 클릭: 해당 항목을 관심 목록에서 제거 (e.stopPropagation()으로 상세 이동 방지)
+
+5. 카테고리별 아이콘 (선택사항)
+카테고리 라벨 옆에 작은 아이콘을 추가하면 시인성이 좋아집니다:
+
+관심 학교: 🏫 또는 Building 아이콘
+관심 학과: 📚 또는 BookOpen 아이콘
+관심 직업: 💼 또는 Briefcase 아이콘
+
+기존 코드에서 아이콘을 사용하고 있다면 동일한 아이콘 라이브러리(lucide-react 등)를 사용하세요.
+6. 빈 상태 처리
+각 카테고리에 항목이 없을 때:
+tsx{bookmarkedSchools.length === 0 && (
+  <p className="text-sm text-gray-400">아직 관심 학교가 없습니다</p>
+)}
+변경 전후 비교
+변경 전 (현재)
+관심 학교
+┌──────────────────────────────┐
+│  가톨릭관동대학교               │  ← 한 줄에 1개, 높이 ~48px
+└──────────────────────────────┘
+┌──────────────────────────────┐
+│  가야대학교(김해)               │
+└──────────────────────────────┘
+┌──────────────────────────────┐
+│  ICT폴리텍대학                 │
+└──────────────────────────────┘
+관심 학과
+┌──────────────────────────────┐
+│  경제학과                      │
+└──────────────────────────────┘
+... (9개 항목 = 세로 ~432px+)
+변경 후
+관심 학교
+[가톨릭관동대학교 ×] [가야대학교(김해) ×] [ICT폴리텍대학 ×]
+
+관심 학과
+[경제학과 ×] [시스템경영공학과 ×] [간호학과 ×] [가족복지과 ×]
+
+관심 직업
+[물리학연구원 ×] [IT컨설턴트 ×]
+
+... (9개 항목 = 세로 ~160px)
+세로 공간 약 60~70% 절감 예상
+수정 대상 파일
+
+client/src/pages/Dashboard.tsx — 관심 목록 렌더링 부분
+필요 시 관련 CSS/컴포넌트 파일
+
+주의사항
+
+기존 제거(x) 기능의 API 호출 로직은 그대로 유지 — UI만 변경
+오른쪽 "추천 직업/학과" 태그의 크기(font-size, padding)와 맞출 것
+"학과/직업 탐색 바로가기 →" 링크는 하단에 유지
+칩 클릭 시 상세 페이지 이동이 기존에 구현되어 있다면 동일하게 유지
