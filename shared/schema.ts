@@ -1221,6 +1221,7 @@ export const cachedJobs = pgTable("cached_jobs", {
   description: text("description"),
   relatedMajors: jsonb("related_majors").default([]),
   salary: integer("salary"),
+  wageSource: text("wage_source"),
   growth: text("growth"),
   qualifications: jsonb("qualifications").default([]),
   hollandCode: text("holland_code"),

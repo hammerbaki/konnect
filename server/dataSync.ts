@@ -11,6 +11,7 @@ import { eq, isNull, or, sql } from "drizzle-orm";
 
 const CAREERNET_KEY = process.env.CAREERNET_API_KEY || "";
 const CAREERNET_BASE = "https://www.career.go.kr/cnet/openapi/getOpenApi.json";
+const CAREERNET_NEW_BASE = "https://www.career.go.kr/cnet/front/openapi";
 
 // ---- CareerNet: fetch job list (gubun=job) ----
 export async function fetchCareerNetJobs(): Promise<CareerNetJob[]> {
@@ -817,6 +818,283 @@ export async function syncCareerMajorSeq(
 }
 
 // ---- Data quality report ----
+// ---- [NEW] CareerNet 신규 API: 직업 전수 재수집 (552개) ----
+// /front/openapi/jobs.json 목록 + /front/openapi/job.json 상세
+export async function syncJobsFromCareerNetNew(
+  onProgress?: (msg: string) => void
+): Promise<{ upserted: number; inserted: number; noWage: number; errors: number }> {
+  const log = (msg: string) => { onProgress?.(msg); console.log("[syncJobsNew]", msg); };
+  const key = CAREERNET_KEY || "d0b761c825e0a9e4b163e05c50d0bad8";
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+  // ── 1. 목록 전수 수집 (56 pages × 10) ──
+  log("직업 목록 수집 시작 (56 페이지)");
+  const allJobs: Array<{ job_cd: number; job_nm: string; wage: string; job_category?: string; seq: number; work?: string; top_nm?: string }> = [];
+  for (let page = 1; page <= 56; page++) {
+    try {
+      const url = `${CAREERNET_NEW_BASE}/jobs.json?apiKey=${key}&pageIndex=${page}&pageSize=10`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      const data = await res.json();
+      const jobs = data.jobs ?? [];
+      if (jobs.length === 0) break;
+      allJobs.push(...jobs);
+      if (page % 10 === 0) log(`  목록 수집: ${page}페이지 완료, 누적 ${allJobs.length}개`);
+      await sleep(150);
+    } catch (e) {
+      log(`  목록 ${page}페이지 오류: ${e}`);
+      await sleep(500);
+    }
+  }
+  log(`목록 수집 완료: ${allJobs.length}개 직업`);
+
+  // ── 2. 기존 DB job_name 목록 로드 (매칭용) ──
+  const existingRows = await db.execute(sql`SELECT id, job_name, salary FROM cached_jobs`);
+  const existingByName = new Map<string, { id: number; salary: number | null }>();
+  for (const row of (existingRows as any).rows ?? []) {
+    existingByName.set((row.job_name as string).trim(), { id: row.id as number, salary: row.salary as number | null });
+  }
+  const maxIdRow = await db.execute(sql`SELECT COALESCE(MAX(id), 0) as max_id FROM cached_jobs`);
+  let nextId = ((maxIdRow as any).rows?.[0]?.max_id as number ?? 0) + 1;
+
+  // ── 3. 상세 수집 + Upsert ──
+  let upserted = 0, inserted = 0, noWage = 0, errors = 0;
+  log(`상세 수집 + DB 저장 시작 (${allJobs.length}개)`);
+
+  for (let i = 0; i < allJobs.length; i++) {
+    const job = allJobs[i];
+    try {
+      const detailUrl = `${CAREERNET_NEW_BASE}/job.json?apiKey=${key}&seq=${job.job_cd}`;
+      const detailRes = await fetch(detailUrl, { signal: AbortSignal.timeout(15000) });
+      const detail = await detailRes.json();
+      const baseInfo = detail.baseInfo ?? {};
+
+      // 급여 파싱: "3,833" → 38,330,000원
+      const wageRaw = (baseInfo.wage ?? "").trim();
+      let salary: number | null = null;
+      if (wageRaw && wageRaw !== "0") {
+        const wageNum = parseInt(wageRaw.replace(/,/g, ""), 10);
+        if (!isNaN(wageNum) && wageNum > 0) salary = wageNum * 10000;
+      }
+      if (!salary) noWage++;
+
+      // 관련 학과: departList → 학과명 배열
+      const relatedMajors = (detail.departList ?? []).map((d: any) => d.depart_name as string).filter(Boolean);
+
+      // 설명: job.json baseInfo에는 summary/work 없음 → 목록 API의 job.work 사용
+      const description = (job.work ?? "").trim() || null;
+      const wageSource = (baseInfo.wage_source ?? "").slice(0, 500) || null;
+
+      const jobName = (job.job_nm ?? "").trim();
+      const field = (job.job_category ?? job.top_nm ?? "").trim() || null;
+      const now = new Date();
+
+      const existing = existingByName.get(jobName);
+      if (existing) {
+        // UPDATE
+        await db.execute(sql`
+          UPDATE cached_jobs SET
+            salary = ${salary},
+            wage_source = ${wageSource},
+            description = COALESCE(NULLIF(${description}, ''), description),
+            field = COALESCE(${field}, field),
+            related_majors = ${JSON.stringify(relatedMajors)}::jsonb,
+            job_seq = ${String(job.job_cd)},
+            synced_at = ${now}
+          WHERE id = ${existing.id}
+        `);
+        upserted++;
+      } else {
+        // INSERT
+        await db.execute(sql`
+          INSERT INTO cached_jobs (id, job_seq, job_name, field, description, related_majors, salary, wage_source, growth, qualifications, holland_code, synced_at)
+          VALUES (
+            ${nextId},
+            ${String(job.job_cd)},
+            ${jobName},
+            ${field},
+            ${description},
+            ${JSON.stringify(relatedMajors)}::jsonb,
+            ${salary},
+            ${wageSource},
+            NULL,
+            '[]'::jsonb,
+            NULL,
+            ${now}
+          )
+        `);
+        existingByName.set(jobName, { id: nextId, salary });
+        nextId++;
+        inserted++;
+      }
+
+      if ((i + 1) % 50 === 0) log(`  상세 처리: ${i + 1}/${allJobs.length} (저장: ${upserted + inserted}개, 급여없음: ${noWage}개)`);
+      await sleep(200);
+    } catch (e) {
+      log(`  오류 (${job.job_nm}): ${e}`);
+      errors++;
+      await sleep(300);
+    }
+  }
+
+  log(`완료: 업데이트=${upserted}, 신규=${inserted}, 급여없음=${noWage}, 오류=${errors}`);
+  return { upserted, inserted, noWage, errors };
+}
+
+// ---- [NEW] CareerNet 신규 파라미터: 학과 전수 재수집 (501개) ----
+// MAJOR API: thisPage/perPage=200  + MAJOR_VIEW: gubun=univ_list
+export async function syncMajorsFromCareerNetNew(
+  onProgress?: (msg: string) => void
+): Promise<{ upserted: number; inserted: number; errors: number }> {
+  const log = (msg: string) => { onProgress?.(msg); console.log("[syncMajorsNew]", msg); };
+  const key = CAREERNET_KEY || "d0b761c825e0a9e4b163e05c50d0bad8";
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+  // ── 1. 목록 전수 수집 (3 pages × 200) ──
+  log("학과 목록 수집 시작 (3 페이지)");
+  const allMajors: Array<{ majorSeq: string; mClass: string; lClass: string }> = [];
+  for (let page = 1; page <= 3; page++) {
+    try {
+      const url = `${CAREERNET_BASE}?apiKey=${key}&svcType=api&svcCode=MAJOR&contentType=json&gubun=univ_list&thisPage=${page}&perPage=200`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      const data = await res.json();
+      const items = data.dataSearch?.content ?? [];
+      allMajors.push(...items);
+      log(`  페이지 ${page}: ${items.length}개 수집, 누적 ${allMajors.length}개`);
+      await sleep(200);
+    } catch (e) {
+      log(`  목록 ${page}페이지 오류: ${e}`);
+    }
+  }
+  log(`목록 수집 완료: ${allMajors.length}개 학과`);
+
+  // ── 2. 기존 DB 로드 (매칭용) ──
+  const existingRows = await db.execute(sql`SELECT id, major_name, career_major_seq FROM cached_majors`);
+  const existingBySeq = new Map<number, number>(); // careerMajorSeq → id
+  const existingByName = new Map<string, number>(); // majorName → id
+  for (const row of (existingRows as any).rows ?? []) {
+    if (row.career_major_seq) existingBySeq.set(row.career_major_seq as number, row.id as number);
+    existingByName.set((row.major_name as string).trim(), row.id as number);
+  }
+  const maxIdRow = await db.execute(sql`SELECT COALESCE(MAX(id), 0) as max_id FROM cached_majors`);
+  let nextId = ((maxIdRow as any).rows?.[0]?.max_id as number ?? 0) + 1;
+
+  // ── 3. 상세 수집 + Upsert ──
+  let upserted = 0, inserted = 0, errors = 0;
+  log(`상세 수집 + DB 저장 시작 (${allMajors.length}개)`);
+
+  for (let i = 0; i < allMajors.length; i++) {
+    const major = allMajors[i];
+    const seqNum = parseInt(major.majorSeq, 10);
+    try {
+      const detailUrl = `${CAREERNET_BASE}?apiKey=${key}&svcType=api&svcCode=MAJOR_VIEW&contentType=json&majorSeq=${major.majorSeq}&gubun=univ_list`;
+      const detailRes = await fetch(detailUrl, { signal: AbortSignal.timeout(20000) });
+      const detailData = await detailRes.json();
+      const d = detailData.dataSearch?.content?.[0];
+      if (!d) {
+        log(`  데이터 없음: ${major.mClass} (seq=${major.majorSeq})`);
+        errors++;
+        await sleep(200);
+        continue;
+      }
+
+      // 취업률 파싱: "<strong>60</strong> % 이상" → 60
+      const employmentText = d.employment ?? "";
+      const empMatch = employmentText.match(/(\d+(?:\.\d+)?)/);
+      const employmentRate = empMatch ? parseFloat(empMatch[1]) : null;
+
+      // 초임 월급여: "186.9" 만원 → 그대로 저장 (avgSalaryDistribution에 {initial: 186.9} 형태)
+      const initSalaryRaw = (d.salary ?? "").toString().trim();
+      const initSalary = initSalaryRaw ? parseFloat(initSalaryRaw) : null;
+      const avgSalaryDistribution = initSalary ? { initial: initSalary, unit: "만원/월" } : null;
+
+      // 홀랜드 흥미 유형
+      const hollandCode = (d.interest ?? "").trim() || null;
+
+      // 관련 고교 과목 (JSON → text)
+      const relatedSubjects = d.relate_subject ? JSON.stringify(d.relate_subject) : null;
+
+      // 개설 대학 (JSON 배열)
+      const universities = d.university ? d.university : null;
+
+      // 적성 데이터
+      const aptitudeHigh = d.lstHighAptd ?? null;
+      const aptitudeMiddle = d.lstMiddleAptd ?? null;
+
+      // 설명
+      const description = (d.summary ?? "").trim() || null;
+
+      const now = new Date();
+      const majorName = (major.mClass ?? "").trim();
+      const category = (major.lClass ?? d.lClass ?? "").trim() || null;
+
+      // 매칭: careerMajorSeq → majorName 순
+      const existingId = existingBySeq.get(seqNum) ?? existingByName.get(majorName);
+
+      if (existingId) {
+        // UPDATE
+        await db.execute(sql`
+          UPDATE cached_majors SET
+            major_name = ${majorName},
+            category = COALESCE(${category}, category),
+            description = COALESCE(NULLIF(${description}, ''), description),
+            related_subjects = ${relatedSubjects},
+            universities = ${universities ? JSON.stringify(universities) : null}::jsonb,
+            holland_code = COALESCE(${hollandCode}, holland_code),
+            employment_rate = COALESCE(${employmentRate}, employment_rate),
+            avg_salary_distribution = ${avgSalaryDistribution ? JSON.stringify(avgSalaryDistribution) : null}::jsonb,
+            aptitude_high = ${aptitudeHigh ? JSON.stringify(aptitudeHigh) : null}::jsonb,
+            aptitude_middle = ${aptitudeMiddle ? JSON.stringify(aptitudeMiddle) : null}::jsonb,
+            career_major_seq = ${seqNum},
+            synced_at = ${now}
+          WHERE id = ${existingId}
+        `);
+        upserted++;
+      } else {
+        // INSERT
+        await db.execute(sql`
+          INSERT INTO cached_majors (
+            id, major_seq, major_name, category, description, related_jobs, related_subjects,
+            universities, holland_code, demand, synced_at, data_source,
+            employment_rate, avg_salary_distribution, aptitude_high, aptitude_middle, career_major_seq
+          ) VALUES (
+            ${nextId},
+            ${major.majorSeq},
+            ${majorName},
+            ${category},
+            ${description},
+            '[]'::jsonb,
+            ${relatedSubjects},
+            ${universities ? JSON.stringify(universities) : null}::jsonb,
+            ${hollandCode},
+            NULL,
+            ${now},
+            'CareerNet',
+            ${employmentRate},
+            ${avgSalaryDistribution ? JSON.stringify(avgSalaryDistribution) : null}::jsonb,
+            ${aptitudeHigh ? JSON.stringify(aptitudeHigh) : null}::jsonb,
+            ${aptitudeMiddle ? JSON.stringify(aptitudeMiddle) : null}::jsonb,
+            ${seqNum}
+          )
+        `);
+        existingByName.set(majorName, nextId);
+        existingBySeq.set(seqNum, nextId);
+        nextId++;
+        inserted++;
+      }
+
+      if ((i + 1) % 50 === 0) log(`  처리: ${i + 1}/${allMajors.length} (업데이트=${upserted}, 신규=${inserted})`);
+      await sleep(200);
+    } catch (e) {
+      log(`  오류 (${major.mClass}): ${e}`);
+      errors++;
+      await sleep(300);
+    }
+  }
+
+  log(`완료: 업데이트=${upserted}, 신규=${inserted}, 오류=${errors}`);
+  return { upserted, inserted, errors };
+}
+
 export async function getDataQualityReport() {
   const [majorStats, jobStats, univStats] = await Promise.all([
     db.execute(sql`

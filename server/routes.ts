@@ -29,7 +29,7 @@ import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, inArray, sql as sqlExpr } from "drizzle-orm";
 import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap, universityMajors, bookmarks, insertBookmarkSchema } from "@shared/schema";
-import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData, enrichMajorAptitudeData, refillEmptyRelatedMajors, syncCareerMajorSeq, normalizeMajorName } from "./dataSync";
+import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData, enrichMajorAptitudeData, refillEmptyRelatedMajors, syncCareerMajorSeq, normalizeMajorName, syncJobsFromCareerNetNew, syncMajorsFromCareerNetNew } from "./dataSync";
 import { syncUniversityApi } from "./universityApiSync";
 
 // Helper functions for profile defaults
@@ -6100,6 +6100,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const logs: string[] = [];
       const result = await syncCareerMajorSeq((msg) => logs.push(msg));
+      res.json({ ...result, logs });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/admin/sync-jobs-new — 신규 CareerNet API로 직업 552개 전수 재수집 + salary 교체
+  app.post('/api/admin/sync-jobs-new', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
+      const logs: string[] = [];
+      const result = await syncJobsFromCareerNetNew((msg) => logs.push(msg));
+      res.json({ ...result, logs });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/admin/sync-majors-new — 신규 파라미터로 학과 501개 전수 재수집
+  app.post('/api/admin/sync-majors-new', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
+      const logs: string[] = [];
+      const result = await syncMajorsFromCareerNetNew((msg) => logs.push(msg));
       res.json({ ...result, logs });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
