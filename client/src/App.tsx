@@ -36,6 +36,13 @@ const MyTest = lazy(() => import("./pages/MyTest"));
 const Interview = lazy(() => import("./pages/Interview"));
 const GroupDashboard = lazy(() => import("./pages/GroupDashboard"));
 const GroupMemberDetail = lazy(() => import("./pages/GroupMemberDetail"));
+const Dream = lazy(() => import("./pages/Dream"));
+const DreamBoards = lazy(() => import("./pages/DreamBoards"));
+const BoardDetail = lazy(() => import("./pages/BoardDetail"));
+const Stories = lazy(() => import("./pages/Stories"));
+const ReConnect = lazy(() => import("./pages/ReConnect"));
+const Journey = lazy(() => import("./pages/Journey"));
+const Growth = lazy(() => import("./pages/Growth"));
 
 function LoadingSpinner() {
   return (
@@ -192,6 +199,28 @@ function AuthenticatedRoutes() {
         </Route>
         <Route path="/group/:groupId/member/:memberId">
           {(params) => <ProtectedRoute component={GroupMemberDetail} {...params} />}
+        </Route>
+        {/* v3 커뮤니티 & 성장 페이지 */}
+        <Route path="/dream">
+          {(params) => <ProtectedRoute component={Dream} params={params} />}
+        </Route>
+        <Route path="/boards">
+          {(params) => <ProtectedRoute component={DreamBoards} params={params} />}
+        </Route>
+        <Route path="/boards/:slug">
+          {(params) => <ProtectedRoute component={BoardDetail} {...params} />}
+        </Route>
+        <Route path="/stories">
+          {(params) => <ProtectedRoute component={Stories} params={params} />}
+        </Route>
+        <Route path="/reconnect">
+          {(params) => <ProtectedRoute component={ReConnect} params={params} />}
+        </Route>
+        <Route path="/journey">
+          {(params) => <ProtectedRoute component={Journey} params={params} />}
+        </Route>
+        <Route path="/growth">
+          {(params) => <ProtectedRoute component={Growth} params={params} />}
         </Route>
         <Route component={NotFound} />
       </Switch>

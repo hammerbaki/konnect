@@ -23,6 +23,12 @@ import {
   Brain,
   Mic,
   Users,
+  Star,
+  LayoutGrid,
+  PenLine,
+  Sunrise,
+  TrendingUp,
+  Route,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
@@ -135,6 +141,16 @@ export function Sidebar() {
 
   const exploreNavItems = [
     { href: "/explorer", slug: "/explorer", icon: Search, label: "직업 탐색" },
+  ];
+
+  // v3 꿈을 잇다 — 별도 섹션 (프론트만 있는 신규 페이지들)
+  const v3NavItems = [
+    { href: "/dream", icon: Star, label: "꿈 선언" },
+    { href: "/boards", icon: LayoutGrid, label: "꿈 보드" },
+    { href: "/stories", icon: PenLine, label: "스토리" },
+    { href: "/reconnect", icon: Sunrise, label: "다시, 잇다" },
+    { href: "/journey", icon: Route, label: "나의 여정" },
+    { href: "/growth", icon: TrendingUp, label: "성장 대시보드" },
   ];
 
   const allBottomItems = [
@@ -362,6 +378,38 @@ export function Sidebar() {
             </div>
           </div>
         )}
+
+        {/* v3 꿈을 잇다 section */}
+        <div>
+          <div className="flex items-center gap-1.5 px-3 mb-1.5">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-gold">꿈을 잇다</p>
+            <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-gold text-white px-1.5 py-0.5 rounded-full leading-none">
+              v3
+            </span>
+          </div>
+          <div className="space-y-0.5">
+            {v3NavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location === item.href || location.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
+                    isActive
+                      ? "bg-gold text-white font-semibold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  )}
+                  data-testid={`link-v3-${item.href.replace("/", "")}`}
+                >
+                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Managed Groups section */}
         {managedGroups.length > 0 && (
