@@ -992,6 +992,100 @@ function MajorDetailModal({
   );
 }
 
+// ---- Major Detail Inline ----
+function MajorDetailInline({ majorName, onClose, onNavigate }: {
+  majorName: string;
+  onClose: () => void;
+  onNavigate: (name: string) => void;
+}) {
+  const { data, isLoading } = useQuery<{ data: Major[]; total: number }>({
+    queryKey: ['major-inline', majorName],
+    queryFn: () =>
+      fetch(`/api/explore/majors?search=${encodeURIComponent(majorName)}&limit=10`)
+        .then(r => r.json()),
+    staleTime: 5 * 60 * 1000,
+  });
+  const major = data?.data?.find(m => m.majorName === majorName) ?? data?.data?.[0] ?? null;
+
+  const { data: jobStats } = useQuery<{
+    minSalaryWan: number | null;
+    maxSalaryWan: number | null;
+    jobsWithSalary: number;
+  }>({
+    queryKey: ['major-inline-job-stats', majorName],
+    queryFn: () =>
+      fetch(`/api/explore/majors/${encodeURIComponent(majorName)}/job-stats`)
+        .then(r => r.json()),
+    enabled: !!major,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return (
+    <div
+      className="mt-1 mb-1.5 p-3 bg-dream/5 border border-dream/15 rounded-lg text-xs animate-in fade-in slide-in-from-top-1 duration-150"
+      data-testid={`panel-major-detail-${majorName}`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1.5 font-semibold text-dream text-[11px]">
+          <GraduationCap className="w-3 h-3" />
+          {majorName}
+          {major?.category && (
+            <span className="text-[10px] text-gray-400 font-normal">{major.category}</span>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 text-base leading-none"
+          data-testid={`btn-close-major-detail-${majorName}`}
+        >
+          ✕
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center gap-1 text-[10px] text-gray-400">
+          <Skeleton className="h-3 w-32 rounded" />
+        </div>
+      ) : major ? (
+        <div className="space-y-2">
+          {major.description && (
+            <p className="text-[11px] text-gray-600 leading-relaxed">{major.description}</p>
+          )}
+          {Array.isArray(major.relatedJobs) && major.relatedJobs.length > 0 && (
+            <div>
+              <p className="text-[10px] text-gray-500 font-semibold mb-1">관련 직업</p>
+              <div className="flex flex-wrap gap-1">
+                {major.relatedJobs.slice(0, 5).map((j: string, i: number) => (
+                  <span key={i} className="bg-coral/10 text-coral rounded-full px-1.5 py-0.5 text-[10px]">{j}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {jobStats && jobStats.jobsWithSalary > 0 &&
+            jobStats.minSalaryWan != null && jobStats.maxSalaryWan != null && (
+            <div className="text-[11px] text-emerald-600 font-semibold">
+              연평균 {jobStats.minSalaryWan.toLocaleString()}만원
+              {jobStats.minSalaryWan !== jobStats.maxSalaryWan && (
+                <> ~ {jobStats.maxSalaryWan.toLocaleString()}만원</>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-[10px] text-gray-400">이 전공의 상세 정보는 아직 준비 중입니다.</p>
+      )}
+
+      <button
+        data-testid={`btn-major-navigate-${majorName}`}
+        onClick={() => { onNavigate(majorName); onClose(); }}
+        className="mt-2.5 w-full text-[10px] bg-dream/10 text-dream rounded-lg py-1.5 hover:bg-dream/20 transition-colors font-medium"
+      >
+        {major ? '전공 탭에서 자세히 보기 →' : '전공 탭에서 검색하기 →'}
+      </button>
+    </div>
+  );
+}
+
 // ---- Job Card ----
 function JobCard({
   job,
@@ -1003,20 +1097,13 @@ function JobCard({
   onMajorClick: (name: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [modalMajor, setModalMajor] = useState<string | null>(null);
+  const [expandedMajor, setExpandedMajor] = useState<string | null>(null);
   // DB에 있는 related_majors만 표시. LLM 생성 금지.
   const majors: string[] = Array.isArray(job.relatedMajors) ? job.relatedMajors : [];
   const hasExtra = !!(job.growth || majors.length > 0);
 
   return (
     <>
-      {modalMajor && (
-        <MajorDetailModal
-          majorName={modalMajor}
-          onClose={() => setModalMajor(null)}
-          onNavigate={name => { onMajorClick(name); setModalMajor(null); }}
-        />
-      )}
       <Card
         className="hover:shadow-md transition-shadow border border-gray-100"
         data-testid={`card-job-${job.id}`}
@@ -1081,29 +1168,49 @@ function JobCard({
                 </div>
               )}
 
-              {/* 관련 전공 전체 목록 (모달로 열기) */}
+              {/* 관련 전공 전체 목록 (인라인 아코디언) */}
               {majors.length > 0 && (
                 <div>
                   <p className="font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
                     <GraduationCap className="w-3.5 h-3.5 text-dream" /> 관련 전공
                   </p>
-                  <ul className="space-y-1 pl-1">
-                    {majors.map((m, i) => (
-                      <li key={i} className="flex items-center gap-1.5">
-                        <span className="text-gray-400">•</span>
-                        {validMajors.has(m) ? (
-                          <button
-                            data-testid={`btn-major-detail-${job.id}-${i}`}
-                            onClick={() => setModalMajor(m)}
-                            className="text-dream hover:underline text-left"
-                          >
-                            {m} <span className="text-gray-400 text-[10px]">→ 전공 상세보기</span>
-                          </button>
-                        ) : (
-                          <span className="text-gray-600">{m}</span>
-                        )}
-                      </li>
-                    ))}
+                  <ul className="space-y-0.5 pl-1">
+                    {majors.map((m, i) => {
+                      const isExpanded = expandedMajor === m;
+                      return (
+                        <li key={i}>
+                          {validMajors.has(m) ? (
+                            <>
+                              <button
+                                data-testid={`btn-major-detail-${job.id}-${i}`}
+                                onClick={() => setExpandedMajor(isExpanded ? null : m)}
+                                className={`w-full flex items-center justify-between py-1 px-1 -mx-1 rounded hover:bg-dream/5 transition-colors text-left group ${isExpanded ? "bg-dream/5" : ""}`}
+                              >
+                                <span className={`flex items-center gap-1.5 text-xs ${isExpanded ? "text-dream font-medium" : "text-dream group-hover:text-dream/80"}`}>
+                                  <span className="text-gray-400">•</span>
+                                  {m}
+                                </span>
+                                <span className={`flex-shrink-0 transition-colors ${isExpanded ? "text-dream" : "text-gray-300 group-hover:text-dream"}`}>
+                                  {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                </span>
+                              </button>
+                              {isExpanded && (
+                                <MajorDetailInline
+                                  majorName={m}
+                                  onClose={() => setExpandedMajor(null)}
+                                  onNavigate={onMajorClick}
+                                />
+                              )}
+                            </>
+                          ) : (
+                            <div className="flex items-center gap-1.5 py-1 text-xs">
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-600">{m}</span>
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
