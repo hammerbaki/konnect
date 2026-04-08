@@ -6261,6 +6261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         majorName: string | null;
         category: string | null;
         description: string | null;
+        relatedJobs: unknown;
       }> = [];
 
       if (allMajorNames.length > 0) {
@@ -6268,6 +6269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           majorName: cachedMajors.majorName,
           category: cachedMajors.category,
           description: cachedMajors.description,
+          relatedJobs: cachedMajors.relatedJobs,
         }).from(cachedMajors)
           .where(inArray(cachedMajors.majorName, allMajorNames.slice(0, 80)));
       }
@@ -6278,6 +6280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           majorName: cachedMajors.majorName,
           category: cachedMajors.category,
           description: cachedMajors.description,
+          relatedJobs: cachedMajors.relatedJobs,
         }).from(cachedMajors).limit(40);
         const existingNames = new Set(majorCandidates.map(m => m.majorName));
         majorCandidates = [...majorCandidates, ...extra.filter(m => !existingNames.has(m.majorName))];
@@ -6354,14 +6357,46 @@ JSON 형식으로만 응답하세요:
         .filter(j => j.name);
 
       const majorMap = new Map(majorCandidates.map(m => [m.majorName, m]));
+
+      // LLM 추천 학과의 related_jobs에서 급여 범위 계산
+      const recMajorRelatedJobNames = llmMajors.flatMap(({ name }) => {
+        const dbMajor = majorMap.get(name);
+        return Array.isArray(dbMajor?.relatedJobs) ? (dbMajor.relatedJobs as string[]) : [];
+      });
+      let majorJobSalaryMap: Map<string, { min: number; max: number }> = new Map();
+      if (recMajorRelatedJobNames.length > 0) {
+        const uniqueJobNames = [...new Set(recMajorRelatedJobNames)];
+        const jobSalaryRows = await db.select({
+          jobName: cachedJobs.jobName,
+          salary: cachedJobs.salary,
+        }).from(cachedJobs)
+          .where(inArray(cachedJobs.jobName, uniqueJobNames.slice(0, 60)));
+        // 학과별 급여 범위 계산 (jobName → salary 맵 먼저 구성)
+        const jobSalaryLookup = new Map(jobSalaryRows.map(j => [j.jobName, j.salary]));
+        for (const { name } of llmMajors) {
+          const dbMajor = majorMap.get(name);
+          const relJobs = Array.isArray(dbMajor?.relatedJobs) ? (dbMajor.relatedJobs as string[]) : [];
+          const salaries = relJobs.map(jn => jobSalaryLookup.get(jn)).filter((s): s is number => s != null && s > 0);
+          if (salaries.length > 0) {
+            majorJobSalaryMap.set(name, {
+              min: Math.min(...salaries),
+              max: Math.max(...salaries),
+            });
+          }
+        }
+      }
+
       const finalMajors = llmMajors
         .map(({ name, reason }) => {
           const dbMajor = majorMap.get(name);
+          const salaryRange = majorJobSalaryMap.get(name);
           return {
             name,
             reason,
-            category: dbMajor?.category ?? null,       // DB 실제 계열
-            description: dbMajor?.description ?? null, // DB 실제 설명
+            category: dbMajor?.category ?? null,                   // DB 실제 계열
+            description: dbMajor?.description ?? null,             // DB 실제 설명
+            salaryMin: salaryRange ? salaryRange.min : null,       // DB 관련직업 최소연봉
+            salaryMax: salaryRange ? salaryRange.max : null,       // DB 관련직업 최대연봉
           };
         })
         .filter(m => m.name);

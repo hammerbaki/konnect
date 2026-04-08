@@ -1,4 +1,4 @@
-import { useState, useCallback, type ReactNode } from "react";
+import { useState, useCallback, useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
@@ -1331,6 +1331,24 @@ export default function ExploreDB() {
     setSearch(searchInput);
     setPage(1);
   }, [searchInput]);
+
+  // 적성분석 결과 카드에서 직접 이동: ?tab=jobs&q=직업명
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get("tab") as "universities" | "majors" | "jobs" | null;
+    const qParam = params.get("q");
+    if (tabParam && ["universities", "majors", "jobs"].includes(tabParam)) {
+      setTab(tabParam);
+    }
+    if (qParam) {
+      setSearch(qParam);
+      setSearchInput(qParam);
+    }
+    // URL에서 파라미터 정리 (히스토리 push 없이)
+    if (tabParam || qParam) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   const handleTabChange = (t: string) => {
     setTab(t as any);

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -11,7 +12,7 @@ import {
 } from "recharts";
 import {
   Brain, ChevronLeft, ChevronRight, RotateCcw, Sparkles,
-  Briefcase, GraduationCap, Clock, Database, Wifi
+  Briefcase, GraduationCap, Clock, Database, Wifi, ArrowRight
 } from "lucide-react";
 
 // ---- Types ----
@@ -34,7 +35,9 @@ interface RecommendedMajor {
   name: string;
   category: string | null;
   reason: string;
-  description?: string | null; // DB 실제 학과 설명
+  description?: string | null;
+  salaryMin?: number | null;   // DB 관련직업 최소연봉 (원 단위)
+  salaryMax?: number | null;   // DB 관련직업 최대연봉 (원 단위)
 }
 
 interface AptitudeResult {
@@ -260,6 +263,13 @@ function QuestionScreen({
 
 // ---- Result Screen ----
 function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: () => void }) {
+  const [, navigate] = useLocation();
+
+  const goToExplore = (tab: "jobs" | "majors", q: string) => {
+    const url = `/explore?tab=${tab}&q=${encodeURIComponent(q)}`;
+    navigate(url);
+  };
+
   const interestData = Object.entries(result.interestScores).map(([k, v]) => ({
     subject: INTEREST_LABELS[k] || k,
     value: v,
@@ -363,23 +373,32 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {jobs.map((job, i) => (
-            <Card key={i} className="border-coral/20 hover:shadow-md transition-shadow" data-testid={`card-rec-job-${i}`}>
-              <CardContent className="p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0">
+            <Card key={i} className="border-coral/20 hover:shadow-md transition-shadow flex flex-col" data-testid={`card-rec-job-${i}`}>
+              <CardContent className="p-4 flex flex-col gap-2 flex-1">
+                <div className="flex items-start gap-2">
+                  <div className="w-7 h-7 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-coral">{i + 1}</span>
                   </div>
                   <h3 className="font-semibold text-ink text-sm leading-tight">{job.name}</h3>
                 </div>
-                <p className="text-xs text-gray-500 leading-relaxed">{job.reason}</p>
+                {job.field && (
+                  <Badge variant="outline" className="text-xs border-gray-200 text-gray-400 w-fit">{job.field}</Badge>
+                )}
                 {job.salary != null && (
-                  <p className="text-xs font-medium text-emerald-600" data-testid={`text-job-salary-${job.name}`}>
-                    💰 평균 연봉 {Math.round(job.salary / 10000).toLocaleString()}만원
+                  <p className="text-xs font-semibold text-emerald-600" data-testid={`text-job-salary-${job.name}`}>
+                    연평균 {Math.round(job.salary / 10000).toLocaleString()}만원
                   </p>
                 )}
-                {job.field && (
-                  <Badge variant="outline" className="text-xs border-gray-200 text-gray-500">{job.field}</Badge>
-                )}
+                <p className="text-xs text-gray-500 leading-relaxed flex-1">"{job.reason}"</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-1 text-coral border border-coral/20 hover:bg-coral/5 text-xs h-7 gap-1"
+                  data-testid={`btn-job-detail-${i}`}
+                  onClick={() => goToExplore("jobs", job.name)}
+                >
+                  직업 상세보기 <ArrowRight className="w-3 h-3" />
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -393,18 +412,32 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {majors.map((major, i) => (
-            <Card key={i} className="border-dream/20 hover:shadow-md transition-shadow" data-testid={`card-rec-major-${i}`}>
-              <CardContent className="p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 bg-dream/10 rounded-full flex items-center justify-center flex-shrink-0">
+            <Card key={i} className="border-dream/20 hover:shadow-md transition-shadow flex flex-col" data-testid={`card-rec-major-${i}`}>
+              <CardContent className="p-4 flex flex-col gap-2 flex-1">
+                <div className="flex items-start gap-2">
+                  <div className="w-7 h-7 bg-dream/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-dream">{i + 1}</span>
                   </div>
                   <h3 className="font-semibold text-ink text-sm leading-tight">{major.name}</h3>
                 </div>
                 {major.category && (
-                  <Badge variant="secondary" className="text-xs bg-dream/10 text-dream">{major.category}</Badge>
+                  <Badge variant="secondary" className="text-xs bg-dream/10 text-dream w-fit">{major.category}</Badge>
                 )}
-                <p className="text-xs text-gray-500 leading-relaxed">{major.reason}</p>
+                {major.salaryMin != null && major.salaryMax != null && (
+                  <p className="text-xs font-semibold text-emerald-600" data-testid={`text-major-salary-${major.name}`}>
+                    관련 직업 연평균 {Math.round(major.salaryMin / 10000).toLocaleString()}~{Math.round(major.salaryMax / 10000).toLocaleString()}만원
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 leading-relaxed flex-1">"{major.reason}"</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-1 text-dream border border-dream/20 hover:bg-dream/5 text-xs h-7 gap-1"
+                  data-testid={`btn-major-detail-${i}`}
+                  onClick={() => goToExplore("majors", major.name)}
+                >
+                  전공 상세보기 <ArrowRight className="w-3 h-3" />
+                </Button>
               </CardContent>
             </Card>
           ))}
