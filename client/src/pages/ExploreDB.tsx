@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +18,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, ChevronDown, ChevronUp, GraduationCap, Briefcase, Building2,
   TrendingUp, TrendingDown, Minus, BookOpen, Award, MapPin, Banknote,
-  Database, Sparkles, Home, Users, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight
+  Database, Sparkles, Home, Users, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight,
+  Star
 } from "lucide-react";
 
 // ---- Types ----
@@ -122,6 +124,29 @@ interface AptitudeResult {
   recommendedJobs: Array<{ name: string; reason: string }>;
   recommendedMajors: Array<{ name: string; reason: string }>;
   createdAt: string;
+}
+
+interface BookmarkItem {
+  id: number;
+  bookmarkType: string;
+  targetId: number;
+  targetName: string;
+  memo?: string | null;
+  createdAt: string;
+}
+
+// ---- Bookmark Star Button ----
+function BookmarkStar({ isBookmarked, onToggle, testId }: { isBookmarked: boolean; onToggle: () => void; testId?: string }) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      className={`flex-shrink-0 transition-colors p-1 rounded-full ${isBookmarked ? 'text-gold' : 'text-gray-300 hover:text-gold'}`}
+      title={isBookmarked ? "찜 해제" : "찜하기"}
+      data-testid={testId ?? "btn-bookmark"}
+    >
+      <Star className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+    </button>
+  );
 }
 
 // ---- Helpers ----
@@ -465,7 +490,12 @@ function UnivDetailInline({ entry, onClose }: {
 }
 
 // ---- Major Card ----
-function MajorCard({ major, onNavigateToUniversity }: { major: Major; onNavigateToUniversity?: (univName: string) => void }) {
+function MajorCard({ major, onNavigateToUniversity, isBookmarked, onToggleBookmark }: {
+  major: Major;
+  onNavigateToUniversity?: (univName: string) => void;
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
+}) {
   const [showMore, setShowMore] = useState(false);
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [univPage, setUnivPage] = useState(1);
@@ -540,6 +570,9 @@ function MajorCard({ major, onNavigateToUniversity }: { major: Major; onNavigate
               </span>
             )}
             <DemandBadge demand={major.demand} />
+            {onToggleBookmark && (
+              <BookmarkStar isBookmarked={!!isBookmarked} onToggle={onToggleBookmark} testId={`btn-bookmark-major-${major.id}`} />
+            )}
           </div>
         </div>
 
@@ -1091,10 +1124,14 @@ function JobCard({
   job,
   validMajors,
   onMajorClick,
+  isBookmarked,
+  onToggleBookmark,
 }: {
   job: Job;
   validMajors: Set<string>;
   onMajorClick: (name: string) => void;
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [expandedMajor, setExpandedMajor] = useState<string | null>(null);
@@ -1136,7 +1173,11 @@ function JobCard({
                 </div>
               )}
             </div>
-            {/* 우측 상단 chevron (추가 정보 있을 때만) */}
+            {/* 우측 상단: 찜 버튼 + chevron */}
+            <div className="flex items-start gap-1 flex-shrink-0">
+              {onToggleBookmark && (
+                <BookmarkStar isBookmarked={!!isBookmarked} onToggle={onToggleBookmark} testId={`btn-bookmark-job-${job.id}`} />
+              )}
             {hasExtra && (
               <button
                 className="flex-shrink-0 text-gray-400 mt-1 hover:text-gray-600"
@@ -1146,6 +1187,7 @@ function JobCard({
                 {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
             )}
+            </div>
           </div>
 
           {/* ── 펼침 영역 (수요전망 + 관련 전공만, 접힌 내용 반복 금지) ── */}
@@ -1256,7 +1298,11 @@ function StatRow({ icon, label, value, color = "text-ink" }: {
 }
 
 // ---- University Card (2-column grid style) ----
-function UniversityCard({ univ }: { univ: University }) {
+function UniversityCard({ univ, isBookmarked, onToggleBookmark }: {
+  univ: University;
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
+}) {
   const tuitionWan = univ.avgTuition && univ.avgTuition > 0 ? Math.round(univ.avgTuition / 10) : null;
   const scholarshipWan = univ.scholarshipPerStudent && univ.scholarshipPerStudent > 0
     ? Math.round(univ.scholarshipPerStudent / 10000)
@@ -1276,7 +1322,7 @@ function UniversityCard({ univ }: { univ: University }) {
               <p className="text-xs text-gray-400 mt-0.5">{univ.campusType}</p>
             )}
           </div>
-          <div className="flex gap-1.5 flex-shrink-0 flex-wrap justify-end">
+          <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
             {univ.region && (
               <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                 <MapPin className="w-2.5 h-2.5" /> {univ.region}
@@ -1286,6 +1332,9 @@ function UniversityCard({ univ }: { univ: University }) {
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                 {univ.foundationType}
               </span>
+            )}
+            {onToggleBookmark && (
+              <BookmarkStar isBookmarked={!!isBookmarked} onToggle={onToggleBookmark} testId={`btn-bookmark-univ-${univ.id}`} />
             )}
           </div>
         </div>
@@ -1440,6 +1489,40 @@ export default function ExploreDB() {
   const [sort, setSort] = useState("name");
   const [page, setPage] = useState(1);
   const [fromResult, setFromResult] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  // 북마크 상태
+  const { data: bookmarkList = [] } = useQuery<BookmarkItem[]>({
+    queryKey: ["/api/bookmarks"],
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const addBookmarkMutation = useMutation({
+    mutationFn: async (data: { bookmarkType: string; targetId: number; targetName: string }) => {
+      const res = await apiRequest("POST", "/api/bookmarks", data);
+      if (res.status === 409) return null;
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] }),
+  });
+
+  const removeBookmarkMutation = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/bookmarks/${id}`); },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] }),
+  });
+
+  const getBookmark = (type: string, name: string) =>
+    bookmarkList.find(b => b.bookmarkType === type && b.targetName === name);
+
+  const toggleBookmark = (type: string, targetId: number, name: string) => {
+    const existing = getBookmark(type, name);
+    if (existing) {
+      removeBookmarkMutation.mutate(existing.id);
+    } else {
+      addBookmarkMutation.mutate({ bookmarkType: type, targetId, targetName: name });
+    }
+  };
 
   const { data: categories } = useQuery<Categories>({
     queryKey: ["/api/explore/categories"],
@@ -1651,7 +1734,12 @@ export default function ExploreDB() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(univsQuery.data?.data ?? []).map(u => (
-                  <UniversityCard key={u.id} univ={u} />
+                  <UniversityCard
+                    key={u.id}
+                    univ={u}
+                    isBookmarked={!!getBookmark("university", u.univName)}
+                    onToggleBookmark={() => toggleBookmark("university", u.id, u.univName)}
+                  />
                 ))}
               </div>
               <Pagination
@@ -1706,7 +1794,13 @@ export default function ExploreDB() {
             <>
               <div className="space-y-3">
                 {(majorsQuery.data?.data ?? []).map(m => (
-                  <MajorCard key={m.id} major={m} onNavigateToUniversity={navigateToUniversity} />
+                  <MajorCard
+                    key={m.id}
+                    major={m}
+                    onNavigateToUniversity={navigateToUniversity}
+                    isBookmarked={!!getBookmark("major", m.majorName)}
+                    onToggleBookmark={() => toggleBookmark("major", m.id, m.majorName)}
+                  />
                 ))}
               </div>
               <Pagination
@@ -1768,7 +1862,14 @@ export default function ExploreDB() {
             <>
               <div className="space-y-3">
                 {(jobsQuery.data?.data ?? []).map(j => (
-                  <JobCard key={j.id} job={j} validMajors={validMajors} onMajorClick={navigateToMajor} />
+                  <JobCard
+                    key={j.id}
+                    job={j}
+                    validMajors={validMajors}
+                    onMajorClick={navigateToMajor}
+                    isBookmarked={!!getBookmark("job", j.jobName)}
+                    onToggleBookmark={() => toggleBookmark("job", j.id, j.jobName)}
+                  />
                 ))}
               </div>
               <Pagination

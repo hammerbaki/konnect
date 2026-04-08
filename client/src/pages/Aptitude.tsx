@@ -13,7 +13,7 @@ import {
 import {
   Brain, ChevronLeft, ChevronRight, RotateCcw, Sparkles,
   Briefcase, GraduationCap, Wifi, ArrowRight,
-  AlertCircle, Layers, Zap
+  AlertCircle, Layers, Zap, Star
 } from "lucide-react";
 
 // ---- Types ----
@@ -407,8 +407,44 @@ function ResultFallback({ onRetake }: { onRetake: () => void }) {
 }
 
 // ---- Result Screen ----
+interface BookmarkItem {
+  id: number;
+  bookmarkType: string;
+  targetId: number;
+  targetName: string;
+  createdAt: string;
+}
+
 function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: () => void }) {
   const [, navigate] = useLocation();
+  const qc = useQueryClient();
+
+  // 북마크 상태
+  const { data: bookmarkList = [] } = useQuery<BookmarkItem[]>({
+    queryKey: ["/api/bookmarks"],
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const addBm = useMutation({
+    mutationFn: async (data: { bookmarkType: string; targetId: number; targetName: string }) => {
+      const res = await apiRequest("POST", "/api/bookmarks", data);
+      if (res.status === 409) return null;
+      return res.json();
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/bookmarks"] }),
+  });
+
+  const removeBm = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/bookmarks/${id}`); },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/bookmarks"] }),
+  });
+
+  const getBm = (type: string, name: string) => bookmarkList.find(b => b.bookmarkType === type && b.targetName === name);
+  const toggleBm = (type: string, name: string) => {
+    const ex = getBm(type, name);
+    if (ex) removeBm.mutate(ex.id);
+    else addBm.mutate({ bookmarkType: type, targetId: 0, targetName: name });
+  };
 
   const goToExplore = (tab: "jobs" | "majors", q: string) => {
     const url = `/explore?tab=${tab}&q=${encodeURIComponent(q)}`;
@@ -532,11 +568,21 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
             {jobs.map((job, i) => (
               <Card key={i} className="border-coral/20 hover:shadow-md transition-shadow flex flex-col" data-testid={`card-rec-job-${i}`}>
                 <CardContent className="p-4 flex flex-col gap-2 flex-1">
-                  <div className="flex items-start gap-2">
-                    <div className="w-7 h-7 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-coral">{i + 1}</span>
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <div className="w-7 h-7 bg-coral/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-xs font-bold text-coral">{i + 1}</span>
+                      </div>
+                      <h3 className="font-semibold text-ink text-sm leading-tight">{job.name}</h3>
                     </div>
-                    <h3 className="font-semibold text-ink text-sm leading-tight">{job.name}</h3>
+                    <button
+                      onClick={() => toggleBm("job", job.name)}
+                      className={`flex-shrink-0 transition-colors p-1 rounded-full ${getBm("job", job.name) ? 'text-gold' : 'text-gray-300 hover:text-gold'}`}
+                      title={getBm("job", job.name) ? "찜 해제" : "찜하기"}
+                      data-testid={`btn-bookmark-rec-job-${i}`}
+                    >
+                      <Star className={`w-4 h-4 ${getBm("job", job.name) ? 'fill-current' : ''}`} />
+                    </button>
                   </div>
                   {job.field && (
                     <Badge variant="outline" className="text-xs border-gray-200 text-gray-400 w-fit">{job.field}</Badge>
@@ -578,11 +624,21 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
             {majors.map((major, i) => (
               <Card key={i} className="border-dream/20 hover:shadow-md transition-shadow flex flex-col" data-testid={`card-rec-major-${i}`}>
                 <CardContent className="p-4 flex flex-col gap-2 flex-1">
-                  <div className="flex items-start gap-2">
-                    <div className="w-7 h-7 bg-dream/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-dream">{i + 1}</span>
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <div className="w-7 h-7 bg-dream/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-xs font-bold text-dream">{i + 1}</span>
+                      </div>
+                      <h3 className="font-semibold text-ink text-sm leading-tight">{major.name}</h3>
                     </div>
-                    <h3 className="font-semibold text-ink text-sm leading-tight">{major.name}</h3>
+                    <button
+                      onClick={() => toggleBm("major", major.name)}
+                      className={`flex-shrink-0 transition-colors p-1 rounded-full ${getBm("major", major.name) ? 'text-gold' : 'text-gray-300 hover:text-gold'}`}
+                      title={getBm("major", major.name) ? "찜 해제" : "찜하기"}
+                      data-testid={`btn-bookmark-rec-major-${i}`}
+                    >
+                      <Star className={`w-4 h-4 ${getBm("major", major.name) ? 'fill-current' : ''}`} />
+                    </button>
                   </div>
                   {major.category && (
                     <Badge variant="secondary" className="text-xs bg-dream/10 text-dream w-fit">{major.category}</Badge>

@@ -28,7 +28,7 @@ import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, inArray, sql as sqlExpr } from "drizzle-orm";
-import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap, universityMajors } from "@shared/schema";
+import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap, universityMajors, bookmarks, insertBookmarkSchema } from "@shared/schema";
 import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData, enrichMajorAptitudeData } from "./dataSync";
 import { syncUniversityApi } from "./universityApiSync";
 
@@ -6632,6 +6632,85 @@ JSON 형식으로만 응답하세요:
 
       const inserted = await db.insert(majorUniversityMap).values(rows).returning();
       res.json({ inserted: inserted.length, message: `${inserted.length}개 데이터가 추가되었습니다.` });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ===== BOOKMARKS API =====
+
+  // GET /api/bookmarks — 내 찜 목록 (type 필터 가능)
+  app.get('/api/bookmarks', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const type = req.query.type as string | undefined;
+      const conditions = [eq(bookmarks.userId, userId)];
+      if (type && ['university', 'major', 'job'].includes(type)) {
+        conditions.push(eq(bookmarks.bookmarkType, type));
+      }
+      const rows = await db.select().from(bookmarks)
+        .where(and(...conditions))
+        .orderBy(desc(bookmarks.createdAt));
+      res.json(rows);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/bookmarks — 찜 추가
+  app.post('/api/bookmarks', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const { bookmarkType, targetId = 0, targetName, memo } = req.body;
+      if (!bookmarkType || !targetName) {
+        return res.status(400).json({ message: 'bookmarkType, targetName 필수' });
+      }
+      // 중복 확인
+      const existing = await db.select().from(bookmarks)
+        .where(and(
+          eq(bookmarks.userId, userId),
+          eq(bookmarks.bookmarkType, bookmarkType),
+          eq(bookmarks.targetName, targetName),
+        ))
+        .limit(1);
+      if (existing.length > 0) {
+        return res.status(409).json({ message: '이미 찜한 항목입니다.', bookmark: existing[0] });
+      }
+      const [created] = await db.insert(bookmarks).values({
+        userId, bookmarkType, targetId, targetName, memo: memo ?? null,
+      }).returning();
+      res.status(201).json(created);
+    } catch (error: any) {
+      if (error.code === '23505') {
+        return res.status(409).json({ message: '이미 찜한 항목입니다.' });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // DELETE /api/bookmarks/:id — 찜 해제
+  app.delete('/api/bookmarks/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const id = parseInt(req.params.id);
+      await db.delete(bookmarks).where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)));
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // PATCH /api/bookmarks/:id — 메모 수정
+  app.patch('/api/bookmarks/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const id = parseInt(req.params.id);
+      const { memo } = req.body;
+      const [updated] = await db.update(bookmarks)
+        .set({ memo })
+        .where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)))
+        .returning();
+      res.json(updated);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

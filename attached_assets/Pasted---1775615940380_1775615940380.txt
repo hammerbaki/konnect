@@ -1,0 +1,81 @@
+심각한 상황은 아닙니다. 핵심 데이터(직업 급여, 분류)는 정확하게 작동하고 있고, 사용자에게 잘못된 수치가 표시되는 문제는 없습니다. 다만 구조적 보완이 필요한 항목들이 있습니다.
+등급별로 정리하겠습니다.
+
+✅ 정상 작동 (보완 불필요)
+
+직업 salary, field — DB와 분석 결과 완전 일치
+학과 category — 일치
+공공데이터포털 — 489개 반영 완료
+LLM reason 필드 — 이것은 원래 LLM이 생성하도록 설계한 것이므로 정상
+
+⚠️ 보완 필요하지만 긴급하지 않음 (2순위)
+
+학과 salaryMin/Max가 파생 계산값인 점 — 관련 직업의 급여에서 계산한 것이므로 로직 자체는 합리적. 다만 "DB 원본"이 아니라는 점을 인지해두면 됨
+공공데이터포털 1회만 동기화 — 정기 동기화 설정 필요하지만 당장 데이터가 틀린 것은 아님
+
+🔴 구조적 보완 필요 (1순위)
+
+related_majors와 cached_majors 간 학과명 불일치 (약학부, 대기과학과 등)
+major_seq가 커리어넷 원본 ID가 아니어서 API 대조 불가
+추천 직업 5개 중 3개의 related_majors가 비어있거나 추천 학과와 연결 안 됨
+
+
+보완 프로세스 — 우선순위 순서
+
+Replit 지시사항: 데이터 연동 보완 (1순위)
+
+1. related_majors와 cached_majors 간 학과명 불일치 해소
+cached_jobs의 related_majors에 있지만 cached_majors에 없는 학과명이 다수 있다. 이것의 규모를 먼저 파악해라:
+sql-- cached_jobs의 related_majors에 있는 모든 학과명 추출 후
+-- cached_majors.name과 매칭되지 않는 학과명 목록과 수를 보고해라
+
+-- 1) 전체 related_majors에 등장하는 고유 학과명 수
+-- 2) 그 중 cached_majors에 존재하는 수
+-- 3) 존재하지 않는 학과명 전체 목록
+매칭되지 않는 학과가 많다면, 다음 방법으로 보완해라:
+방법 A: 유사 학과명 매칭
+
+"약학부" → cached_majors에 "약학과"가 있는지 확인
+"대기과학과" → "대기과학" 또는 "지구환경과학과" 등으로 매칭 가능한지 확인
+학과명에서 "과", "학과", "부", "전공" 등 접미사를 제거하고 비교하는 퍼지 매칭을 시도해라
+
+방법 B: cached_majors에 누락된 학과 추가
+
+유사 매칭이 안 되는 학과는 커리어넷 MAJOR API에서 해당 학과 정보를 가져와서 cached_majors에 추가해라
+API에서 가져올 수 없는 학과는 related_majors에 남겨두되, 탐색 탭에서 링크 없이 텍스트만 표시해라
+
+⚠️ LLM으로 학과 정보를 생성하지 마라. API에서 가져오거나 매칭되는 것만 연결해라.
+2. major_seq 커리어넷 원본 ID 매핑
+현재 cached_majors의 major_seq가 ENG001, SOC002 같은 내부 생성 ID이다. 커리어넷 API와 대조하려면 실제 majorSeq 번호가 필요하다.
+- 커리어넷 MAJOR API (svcCode=MAJOR)를 호출하여 학과 목록을 가져와라
+- 응답의 majorSeq 값과 cached_majors의 학과명을 매칭해라
+- 매칭된 majorSeq를 cached_majors에 새 컬럼(career_major_seq)으로 저장해라
+- 이전에 MAJOR API가 빈 응답을 반환한 적이 있다. 여전히 빈 응답이면 이 작업은 스킵하고 보고해라.
+3. related_majors가 비어있는 직업 보완
+sql-- related_majors가 NULL이거나 빈 배열인 직업 수와 목록
+SELECT COUNT(*) FROM cached_jobs 
+WHERE related_majors IS NULL OR related_majors = '[]' OR related_majors = '';
+
+-- 상위 20개 목록
+SELECT name, job_category FROM cached_jobs 
+WHERE related_majors IS NULL OR related_majors = '[]' OR related_majors = ''
+ORDER BY name LIMIT 20;
+비어있는 직업에 대해:
+
+커리어넷 직업 상세 API를 호출하여 related_majors 필드를 재수집해라
+API에서도 비어있으면 그대로 유지해라
+
+4. description 출처 통일
+현재 학과 description이 일부는 커리어넷 원본, 일부는 GPT 생성이다. data_source 필드로 구분 가능하다면:
+sql-- data_source별 학과 수 확인
+SELECT data_source, COUNT(*) FROM cached_majors GROUP BY data_source;
+GPT 생성 description은 당장 문제가 되지 않지만, 장기적으로 커리어넷 원본으로 교체하는 것이 바람직하다. 지금은 현황 파악만 해라.
+보고 사항:
+
+related_majors 매칭 안 되는 학과명 전체 목록과 수
+퍼지 매칭으로 해소 가능한 수
+related_majors가 비어있는 직업 수
+major_seq 커리어넷 API 호출 결과 (빈 응답 여부)
+description data_source별 학과 수
+
+수정은 매칭 결과를 보고한 후 진행해라. 먼저 현황만 보고해 줘.

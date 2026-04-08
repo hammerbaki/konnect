@@ -1304,6 +1304,23 @@ export const insertAptitudeAnalysisSchema = createInsertSchema(aptitudeAnalyses)
 export type InsertAptitudeAnalysis = z.infer<typeof insertAptitudeAnalysisSchema>;
 export type AptitudeAnalysis = typeof aptitudeAnalyses.$inferSelect;
 
+// ===== BOOKMARKS TABLE (찜/북마크) =====
+export const bookmarks = pgTable("bookmarks", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  bookmarkType: varchar("bookmark_type", { length: 20 }).notNull(), // 'university' | 'major' | 'job'
+  targetId: integer("target_id").notNull().default(0),
+  targetName: varchar("target_name", { length: 200 }).notNull(),
+  memo: text("memo"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => [
+  uniqueIndex("unique_bookmark_idx").on(t.userId, t.bookmarkType, t.targetName),
+]);
+
+export const insertBookmarkSchema = createInsertSchema(bookmarks).omit({ id: true, createdAt: true });
+export type InsertBookmark = z.infer<typeof insertBookmarkSchema>;
+export type Bookmark = typeof bookmarks.$inferSelect;
+
 // ===== MAJOR UNIVERSITY MAP TABLE (전공별 개설 대학 정보) =====
 export const majorUniversityMap = pgTable("major_university_map", {
   id: serial("id").primaryKey(),

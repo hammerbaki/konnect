@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { 
   User, 
@@ -17,8 +18,41 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  Coins
+  Coins,
+  Brain,
+  Star,
+  X,
+  GraduationCap,
+  Briefcase,
+  Building2,
+  ArrowRight
 } from "lucide-react";
+
+const INTEREST_LABELS: Record<string, string> = {
+  SCI: "과학·탐구", ENG: "공학·기술", MED: "의료·보건", BIZ: "경영·경제",
+  LAW: "법률·행정", EDU: "교육·상담", ART: "예술·디자인", IT: "IT·정보통신", SOC: "사회·문화",
+};
+const APTITUDE_LABELS: Record<string, string> = {
+  VERBAL: "언어능력", MATH: "수리·논리력", SPATIAL: "공간·시각능력",
+  CREATIVE: "창의력", SOCIAL: "대인관계능력", SELF: "자기관리능력",
+};
+
+interface AptitudeResult {
+  id: number;
+  interestScores: Record<string, number>;
+  aptitudeScores: Record<string, number>;
+  recommendedJobs: Array<{ name: string }>;
+  recommendedMajors: Array<{ name: string }>;
+  summary: string | null;
+  createdAt: string;
+}
+interface BookmarkItem {
+  id: number;
+  bookmarkType: string;
+  targetId: number;
+  targetName: string;
+  createdAt: string;
+}
 
 function DashboardSkeleton() {
   return (
@@ -152,7 +186,35 @@ function calculateProfileCompleteness(profile: any): { percentage: number; fille
 
 export default function Dashboard() {
   const { user } = useAuth();
-  
+  const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
+  const [bmTab, setBmTab] = useState<"university" | "major" | "job">("university");
+
+  // 진로 흥미 분석 최신 결과
+  const { data: latestAptitude } = useQuery<AptitudeResult | null>({
+    queryKey: ["/api/aptitude/latest"],
+    staleTime: 1000 * 60 * 5,
+    enabled: !!user,
+  });
+
+  // 찜 목록
+  const { data: bookmarkList = [] } = useQuery<BookmarkItem[]>({
+    queryKey: ["/api/bookmarks"],
+    staleTime: 1000 * 60 * 2,
+    enabled: !!user,
+  });
+
+  const removeBm = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/bookmarks/${id}`); },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] }),
+  });
+
+  const handleRemoveBm = (id: number, name: string) => {
+    if (window.confirm(`"${name}"을(를) 관심 목록에서 제거하시겠습니까?`)) {
+      removeBm.mutate(id);
+    }
+  };
+
   // Fetch user identity for credits
   const { data: userIdentity } = useQuery({
     queryKey: ['/api/user-identity'],
@@ -292,6 +354,164 @@ export default function Dashboard() {
               <p className="text-sm text-[#8B95A1] font-medium">보유 학습권</p>
               <p className="text-xl font-bold text-[#191F28]">{credits}개</p>
             </div>
+          </Card>
+        </div>
+
+        {/* ======= 핵심 기능 영역: 흥미 분석 결과 + 관심 목록 ======= */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* 🧠 진로 흥미 분석 결과 요약 카드 */}
+          <Card className="toss-card p-5 flex flex-col" data-testid="card-aptitude-summary">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-bold text-[#191F28] flex items-center gap-2">
+                <Brain className="h-5 w-5 text-[#320e9d]" /> 나의 흥미 분석 결과
+              </h3>
+            </div>
+            {latestAptitude ? (
+              <div className="flex flex-col gap-3 flex-1">
+                {/* 상위 흥미 */}
+                {latestAptitude.interestScores && Object.keys(latestAptitude.interestScores).length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1 font-medium">상위 흥미</p>
+                    <p className="text-sm text-[#191F28]">
+                      {Object.entries(latestAptitude.interestScores)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 3)
+                        .map(([k, v]) => `${INTEREST_LABELS[k] || k} (${Math.round(v)}점)`)
+                        .join(', ')}
+                    </p>
+                  </div>
+                )}
+                {/* 상위 역량 */}
+                {latestAptitude.aptitudeScores && Object.keys(latestAptitude.aptitudeScores).length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1 font-medium">상위 역량</p>
+                    <p className="text-sm text-[#191F28]">
+                      {Object.entries(latestAptitude.aptitudeScores)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 2)
+                        .map(([k]) => APTITUDE_LABELS[k] || k)
+                        .join(', ')}
+                    </p>
+                  </div>
+                )}
+                {/* 추천 직업/학과 */}
+                {latestAptitude.recommendedJobs?.length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1 font-medium">추천 직업</p>
+                    <p className="text-sm text-[#191F28]">
+                      {latestAptitude.recommendedJobs.slice(0, 3).map(j => j.name).join(', ')}{latestAptitude.recommendedJobs.length > 3 ? ` 외 ${latestAptitude.recommendedJobs.length - 3}개` : ''}
+                    </p>
+                  </div>
+                )}
+                {latestAptitude.recommendedMajors?.length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1 font-medium">추천 학과</p>
+                    <p className="text-sm text-[#191F28]">
+                      {latestAptitude.recommendedMajors.slice(0, 3).map(m => m.name).join(', ')}{latestAptitude.recommendedMajors.length > 3 ? ` 외 ${latestAptitude.recommendedMajors.length - 3}개` : ''}
+                    </p>
+                  </div>
+                )}
+                <div className="flex gap-2 mt-auto pt-2">
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-[#320e9d] text-white font-bold rounded-xl text-xs h-8"
+                    onClick={() => navigate("/aptitude")}
+                    data-testid="btn-view-aptitude-result"
+                  >
+                    상세 결과 보기 <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 border-[#320e9d] text-[#320e9d] font-bold rounded-xl text-xs h-8"
+                    onClick={() => { navigate("/aptitude"); }}
+                    data-testid="btn-retake-aptitude"
+                  >
+                    다시 분석하기
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 flex-1">
+                <div className="p-4 bg-[#F9FAFB] rounded-xl flex-1">
+                  <p className="text-sm text-[#8B95A1] mb-2">아직 흥미 분석을 하지 않았습니다.</p>
+                  <p className="text-xs text-[#8B95A1]">30문항 · 약 5분이면 나에게 맞는 학과와 직업을 찾을 수 있습니다.</p>
+                </div>
+                <Button
+                  className="w-full bg-[#320e9d] text-white font-bold rounded-xl text-sm h-9"
+                  onClick={() => navigate("/aptitude")}
+                  data-testid="btn-start-aptitude"
+                >
+                  분석 시작 <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            )}
+          </Card>
+
+          {/* ★ 관심 목록 카드 */}
+          <Card className="toss-card p-5 flex flex-col" data-testid="card-bookmarks">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-bold text-[#191F28] flex items-center gap-2">
+                <Star className="h-5 w-5 text-[#c79e41] fill-current" /> 관심 목록
+              </h3>
+            </div>
+            {/* 탭 */}
+            {(() => {
+              const univs = bookmarkList.filter(b => b.bookmarkType === "university");
+              const majors = bookmarkList.filter(b => b.bookmarkType === "major");
+              const jobs = bookmarkList.filter(b => b.bookmarkType === "job");
+              const activeList = bmTab === "university" ? univs : bmTab === "major" ? majors : jobs;
+              return (
+                <div className="flex flex-col gap-3 flex-1">
+                  <div className="flex gap-1 bg-[#F2F4F6] rounded-xl p-1">
+                    {([["university", "학교", univs.length, Building2], ["major", "학과", majors.length, GraduationCap], ["job", "직업", jobs.length, Briefcase]] as const).map(([type, label, count, Icon]) => (
+                      <button
+                        key={type}
+                        onClick={() => setBmTab(type)}
+                        className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${bmTab === type ? 'bg-white text-[#320e9d] shadow-sm' : 'text-[#8B95A1]'}`}
+                        data-testid={`btn-bm-tab-${type}`}
+                      >
+                        <Icon className="h-3 w-3" /> {label} {count > 0 && <span className="text-[10px]">({count})</span>}
+                      </button>
+                    ))}
+                  </div>
+                  {activeList.length > 0 ? (
+                    <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto max-h-48">
+                      {activeList.map(bm => (
+                        <div
+                          key={bm.id}
+                          className="flex items-center justify-between gap-2 px-3 py-2 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group"
+                          onClick={() => navigate(`/explore?tab=${bmTab === "university" ? "universities" : bmTab === "major" ? "majors" : "jobs"}&q=${encodeURIComponent(bm.targetName)}`)}
+                          data-testid={`bm-item-${bm.id}`}
+                        >
+                          <span className="text-sm text-[#191F28] font-medium truncate">{bm.targetName}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }}
+                            className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors"
+                            data-testid={`btn-bm-remove-${bm.id}`}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3 flex-1 items-center justify-center text-center py-4">
+                      <p className="text-sm text-[#8B95A1]">학과/직업 탐색에서 ☆ 버튼을 눌러<br/>관심 있는 항목을 저장하세요.</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-[#320e9d] text-[#320e9d] font-semibold rounded-xl text-xs"
+                        onClick={() => navigate("/explore")}
+                        data-testid="btn-go-explore"
+                      >
+                        학과/직업 탐색 바로가기 <ArrowRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </Card>
         </div>
 
