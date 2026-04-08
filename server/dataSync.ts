@@ -485,38 +485,19 @@ export async function enrichMajorCareerNetData(
   const allMajors = await db.select({ id: cachedMajors.id, majorName: cachedMajors.majorName })
     .from(cachedMajors);
 
-  // DEBUG: log first 10 CareerNet mClass samples
+  // CareerNet mClass 샘플 로그 (첫 10개)
   const cnSample = careerNetList.slice(0, 10).map(m => m.mClass);
-  onProgress?.(`[DEBUG] CareerNet mClass 샘플 10개: ${JSON.stringify(cnSample)}`);
-  console.log('[DEBUG][enrichMajorCareerNetData] CareerNet mClass 샘플 10개:', cnSample);
-
-  // DEBUG: log first 10 DB major_name samples
-  const dbSample = allMajors.slice(0, 10).map(m => m.majorName);
-  onProgress?.(`[DEBUG] DB cached_majors.major_name 샘플 10개: ${JSON.stringify(dbSample)}`);
-  console.log('[DEBUG][enrichMajorCareerNetData] DB major_name 샘플 10개:', dbSample);
+  onProgress?.(`CareerNet mClass 샘플 10개: ${JSON.stringify(cnSample)}`);
 
   let updated = 0;
   let matched = 0;
   let errors = 0;
-  let debugLogCount = 0;
 
   for (const major of allMajors) {
     const dbName = major.majorName ?? '';
-    // Try: exact → DB name + 과 (e.g. "간호학" → "간호학과" stripped = "간호학" ✓)
-    const majorSeq = nameToSeq.get(dbName) || nameToSeq.get(dbName + '과');
-
-    // DEBUG: log normalization comparison for first 5 attempts
-    if (debugLogCount < 5) {
-      const exact = nameToSeq.get(dbName);
-      const withGwa = nameToSeq.get(dbName + '과');
-      const dbStripped = dbName.endsWith('과') ? dbName.slice(0, -1) : dbName;
-      const fromStripped = nameToSeq.get(dbStripped);
-      const result = majorSeq ? `매칭됨(seq=${majorSeq})` : '매칭 실패';
-      const debugMsg = `[DEBUG] DB "${dbName}" → exact="${exact ?? 'X'}" +과="${withGwa ?? 'X'}" stripped="${dbStripped}"→"${fromStripped ?? 'X'}" => ${result}`;
-      onProgress?.(debugMsg);
-      console.log('[DEBUG][enrichMajorCareerNetData]', debugMsg);
-      debugLogCount++;
-    }
+    // 양방향 매칭: exact → normalized(과/부/전공 제거) → +과
+    const norm = normalizeMajorName(dbName);
+    const majorSeq = nameToSeq.get(dbName) || nameToSeq.get(norm) || nameToSeq.get(dbName + '과');
 
     if (!majorSeq) continue; // no match — skip
     matched++;
@@ -671,8 +652,13 @@ export async function enrichMajorAptitudeData(
 }
 
 // ---- Normalize major name: strip trailing suffixes ----
+// 순서: 2글자 접미사 먼저 제거 후 단일 글자 제거
+// "컴퓨터공학과" → "컴퓨터공학" / "약학부" → "약학" / "컴퓨터공학전공" → "컴퓨터공학"
 export function normalizeMajorName(name: string): string {
-  return name.replace(/(학과|학부|전공|과|부)$/, '').trim();
+  return name
+    .replace(/전공$/, '')
+    .replace(/[과부]$/, '')
+    .trim();
 }
 
 // ---- Refill empty related_majors for jobs using CareerNet JOB API ----
@@ -803,7 +789,7 @@ export async function syncCareerMajorSeq(
   }).from(cachedMajors);
 
   let mapped = 0;
-  let unmatched = 0;
+  const unmatchedNames: string[] = [];
 
   for (const major of allMajors) {
     const dbName = (major.majorName ?? '').trim();
@@ -820,12 +806,14 @@ export async function syncCareerMajorSeq(
       `);
       mapped++;
     } else {
-      unmatched++;
+      unmatchedNames.push(dbName);
     }
   }
 
+  const unmatched = unmatchedNames.length;
   onProgress?.(`career_major_seq 매핑 완료: ${allMajors.length}개 중 ${mapped}개 매핑됨, ${unmatched}개 미매칭`);
-  return { total: allMajors.length, mapped, unmatched };
+  onProgress?.(`미매칭 상위 10개: ${JSON.stringify(unmatchedNames.slice(0, 10))}`);
+  return { total: allMajors.length, mapped, unmatched, unmatchedNames: unmatchedNames.slice(0, 10) };
 }
 
 // ---- Data quality report ----
