@@ -6122,17 +6122,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     SOC: ['교육·법률·사회복지·경찰·소방직 및 군인', '미용·여행·숙박·음식·경비·청소직'],
   };
 
-  // 같은 field를 공유하는 카테고리 구분용 2차 키워드
-  const SECONDARY_KEYWORDS: Record<string, string[]> = {
-    // SCI/ENG/IT 모두 '연구직 및 공학 기술직' 공유
-    SCI: ['연구원', '과학', '화학', '생물', '물리', '기상', '분석', '지질', '환경연구'],
-    IT:  ['IT', '소프트웨어', '프로그래', '개발자', '개발원', '데이터', '컴퓨터', '정보보호', '보안', '네트워크', '인공지능', '시스템'],
+  // 같은 field를 공유하는 카테고리 구분용 키워드 필터
+  // 적용 방식: 해당 field에서 키워드 매칭 직업을 우선 정렬, 비매칭은 후순위
+  const KEYWORD_FILTER: Record<string, string[]> = {
+    // SCI/IT/ENG → '연구직 및 공학 기술직' 공유 (ENG는 추가 field도 보유)
+    SCI: ['연구', '과학', '물리', '화학', '생물', '수학', '통계', '천문', '지질', '해양', '환경'],
+    IT:  ['프로그래', '소프트웨어', '웹', '앱', '데이터', '정보보안', 'AI', '인공지능', '시스템', '네트워크', '클라우드', 'IT', '컴퓨터'],
     ENG: ['기계', '건설', '토목', '전기', '전자', '제조', '화공', '재료', '설계', '엔지니어', '기술자', '기사'],
-    // LAW/EDU/SOC 모두 '교육·법률·사회복지...' 공유
-    LAW: ['법', '변호', '검사', '판사', '행정', '공무원', '경찰', '소방', '군', '국회'],
-    EDU: ['교사', '교수', '강사', '보육', '훈련교사', '코치', '취업알선', '직업능력'],
-    SOC: ['복지', '다문화', '카운슬러', '케어', '보호사', '성직', '재능기부', '상담원'],
+    // LAW/EDU/SOC → '교육·법률·사회복지·경찰·소방직 및 군인' 공유
+    LAW: ['법', '변호', '검사', '판사', '행정', '공무원', '경찰', '소방', '세무', '관세', '외교'],
+    EDU: ['교사', '교수', '강사', '상담', '복지', '보육', '특수교육', '사서'],
+    SOC: ['기자', '작가', '통역', '번역', '큐레이터', '사회', '심리', '문화', '여행', '미용'],
   };
+
+  // 공유 field에서 활성 카테고리 키워드로 우선순위 정렬 (하드 필터가 아닌 정렬)
+  function prioritizeByKeywords(
+    jobs: Array<{ jobName: string | null; field: string | null; salary: number | null; growth: string | null; relatedMajors: unknown; description: string | null }>,
+    activeCats: string[], // top3에 있는 공유그룹 카테고리들
+    sharedField: string
+  ) {
+    const allKws = activeCats.flatMap(c => KEYWORD_FILTER[c] || []);
+    if (allKws.length === 0) return jobs;
+    const matched: typeof jobs = [];
+    const unmatched: typeof jobs = [];
+    for (const j of jobs) {
+      if (j.field === sharedField && allKws.some(kw => j.jobName?.includes(kw))) {
+        matched.push(j);
+      } else {
+        unmatched.push(j);
+      }
+    }
+    return [...matched, ...unmatched];
+  }
 
   // GET /api/aptitude/questions
   app.get('/api/aptitude/questions', (req, res) => {
@@ -6213,30 +6234,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }).from(cachedJobs)
         .where(inArray(cachedJobs.field, targetFields));
 
-      // ── 4. 2차 키워드 필터 (같은 field를 공유하는 카테고리 구분) ──────
-      // '연구직 및 공학 기술직' 공유 그룹에서 단일 카테고리만 top3인 경우
-      const techGroup = ['SCI', 'ENG', 'IT'];
-      const techInTop3 = top3.filter(c => techGroup.includes(c));
-      if (techInTop3.length === 1) {
-        const cat = techInTop3[0];
-        const kws = SECONDARY_KEYWORDS[cat] || [];
-        if (cat === 'SCI' || cat === 'IT') {
-          // ENG는 다른 field도 포함하므로 연구직 field만 필터 적용
-          jobCandidates = jobCandidates.filter(j =>
-            j.field !== '연구직 및 공학 기술직' || kws.some(kw => j.jobName?.includes(kw))
-          );
-        }
+      // ── 4. 키워드 우선순위 정렬 (공유 field 카테고리 항상 적용) ─────────
+      // 조건 무관하게 항상 정렬: top3에 있는 카테고리 키워드 매칭 직업을 앞으로
+      const TECH_FIELD = '연구직 및 공학 기술직';
+      const EDU_FIELD = '교육·법률·사회복지·경찰·소방직 및 군인';
+
+      // 공학/IT/과학 그룹: SCI, IT는 TECH_FIELD 공유
+      // ENG는 TECH_FIELD 외 다른 field도 있으므로 해당 field 내에서 정렬
+      const techGroupCatsInTop3 = top3.filter(c => ['SCI', 'IT', 'ENG'].includes(c));
+      if (techGroupCatsInTop3.length > 0) {
+        jobCandidates = prioritizeByKeywords(jobCandidates, techGroupCatsInTop3, TECH_FIELD);
       }
 
-      // '교육·법률·사회복지...' 공유 그룹에서 단일 카테고리만 top3인 경우
-      const eduGroup = ['LAW', 'EDU', 'SOC'];
-      const eduInTop3 = top3.filter(c => eduGroup.includes(c));
-      if (eduInTop3.length === 1) {
-        const cat = eduInTop3[0];
-        const kws = SECONDARY_KEYWORDS[cat] || [];
-        jobCandidates = jobCandidates.filter(j =>
-          j.field !== '교육·법률·사회복지·경찰·소방직 및 군인' || kws.some(kw => j.jobName?.includes(kw))
-        );
+      // 교육/법/사회 그룹: LAW, EDU, SOC 모두 EDU_FIELD 공유
+      const eduGroupCatsInTop3 = top3.filter(c => ['LAW', 'EDU', 'SOC'].includes(c));
+      if (eduGroupCatsInTop3.length > 0) {
+        jobCandidates = prioritizeByKeywords(jobCandidates, eduGroupCatsInTop3, EDU_FIELD);
       }
 
       // ── 5. 관련 학과 목록 수집 (related_majors → cached_majors 조회) ──
