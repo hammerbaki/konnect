@@ -55,7 +55,18 @@
   --color-gold: #c79e41;
   --color-ink: #090b0f;
 
+  /* v3 extended palette */
+  --color-paper: oklch(0.98 0.005 80);
+  --color-dream-light: oklch(0.92 0.04 280);
+  --color-vermillion: oklch(0.58 0.22 25);
+  --color-indigo: oklch(0.45 0.18 280);
+  --color-growth: oklch(0.55 0.16 145);
+  --color-cheer: oklch(0.68 0.16 25);
+
+  /* Font families */
   --font-sans: 'Pretendard Variable', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-serif: "Nanum Myeongjo", serif;
+  --font-display: "Playfair Display", serif;
   
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
@@ -74,6 +85,7 @@
     overflow-wrap: break-word;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    font-feature-settings: "ss01", "ss02";
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -85,13 +97,37 @@
     @apply touch-manipulation;
   }
   
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
   .no-select {
     -webkit-user-select: none;
     user-select: none;
   }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.8 0.005 80);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.6 0.005 80);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
-/* Dream brand color utilities */
+/* ─── Dream brand color utilities ─── */
 .bg-dream { background-color: #320e9d; }
 .text-dream { color: #320e9d; }
 .border-dream { border-color: #320e9d; }
@@ -103,7 +139,9 @@
 .hover\:bg-dream:hover { background-color: #320e9d; }
 .hover\:text-dream:hover { color: #320e9d; }
 .hover\:bg-dream\/10:hover { background-color: #320e9d1a; }
+.hover\:bg-dream\/20:hover { background-color: #320e9d33; }
 .hover\:bg-dream\/90:hover { background-color: #2d0c8e; }
+.hover\:text-dream\/80:hover { color: #320e9dcc; }
 .focus\:ring-dream:focus { --tw-ring-color: #320e9d; }
 
 .bg-coral { background-color: #ea6a64; }
@@ -120,19 +158,111 @@
 .text-ink { color: #090b0f; }
 .bg-ink { background-color: #090b0f; }
 
-/* Dream card style */
-.dream-card {
-  background: oklch(100% 0 0);
-  border-radius: 1rem;
-  box-shadow: 0 2px 16px rgba(50, 14, 157, 0.06);
-  border: 1px solid oklch(90% .008 280);
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-.dream-card:hover {
-  box-shadow: 0 4px 24px rgba(50, 14, 157, 0.1);
+/* v3 color utilities */
+.bg-paper { background-color: oklch(0.98 0.005 80); }
+.text-paper { color: oklch(0.98 0.005 80); }
+.bg-dream-light { background-color: oklch(0.92 0.04 280); }
+.text-vermillion { color: oklch(0.58 0.22 25); }
+.bg-vermillion { background-color: oklch(0.58 0.22 25); }
+.text-indigo { color: oklch(0.45 0.18 280); }
+.bg-indigo { background-color: oklch(0.45 0.18 280); }
+.text-growth { color: oklch(0.55 0.16 145); }
+.bg-growth { background-color: oklch(0.55 0.16 145); }
+.text-cheer { color: oklch(0.68 0.16 25); }
+.bg-cheer { background-color: oklch(0.68 0.16 25); }
+
+/* ─── Typography — Editorial / Inkwell ─── */
+
+/* Korean serif heading — Nanum Myeongjo */
+.editorial-heading {
+  font-family: "Nanum Myeongjo", serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
-/* Legacy toss-card kept for compatibility */
+/* English decorative heading — Playfair Display italic */
+.display-heading {
+  font-family: "Playfair Display", serif;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Editorial Dividers ─── */
+.editorial-divider {
+  border: none;
+  border-top: 1px solid oklch(0.15 0.01 260 / 0.15);
+  margin: 1.5rem 0;
+}
+.editorial-divider-thick {
+  border: none;
+  border-top: 2px solid oklch(0.15 0.01 260);
+  margin: 1rem 0;
+}
+.editorial-divider-double {
+  border: none;
+  border-top: 3px double oklch(0.15 0.01 260);
+  margin: 1.5rem 0;
+}
+
+/* ─── Drop Cap ─── */
+.drop-cap::first-letter {
+  font-family: "Playfair Display", serif;
+  font-size: 3.5em;
+  float: left;
+  line-height: 0.8;
+  margin-right: 0.1em;
+  margin-top: 0.05em;
+  color: oklch(0.35 0.2 280);
+  font-weight: 700;
+}
+
+/* ─── Tag / Label styles ─── */
+.ink-tag {
+  font-family: "Pretendard Variable", sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid currentColor;
+  display: inline-block;
+}
+.ink-tag-filled {
+  font-family: "Pretendard Variable", sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  display: inline-block;
+}
+
+/* ─── Dream card — editorial gradient style ─── */
+.dream-card {
+  background: linear-gradient(135deg, oklch(0.92 0.04 280 / 0.3), oklch(0.98 0.005 80));
+  border: 1px solid oklch(0.35 0.2 280 / 0.2);
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+}
+.dream-card:hover {
+  border-color: oklch(0.35 0.2 280 / 0.4);
+  box-shadow: 0 4px 20px oklch(0.35 0.2 280 / 0.1);
+  transform: translateY(-2px);
+}
+
+/* ─── Ink card — clean white with hover accent ─── */
+.ink-card {
+  background: white;
+  border: 1px solid oklch(0.88 0.005 80);
+  transition: all 0.2s ease;
+}
+.ink-card:hover {
+  border-color: oklch(0.35 0.2 280 / 0.3);
+  box-shadow: 0 2px 12px oklch(0.35 0.2 280 / 0.06);
+}
+
+/* ─── Legacy cards (kept for compatibility) ─── */
 .toss-card {
   @apply bg-white rounded-xl border border-border/60;
   box-shadow: 0 2px 12px rgba(50, 14, 157, 0.05);
@@ -147,6 +277,80 @@
   background-color: #2d0c8e;
 }
 
+/* ─── Cheer button — warm coral glow ─── */
+.cheer-btn {
+  background: oklch(0.68 0.16 25);
+  color: white;
+  border: none;
+  border-radius: 2rem;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+.cheer-btn:hover {
+  background: oklch(0.6 0.18 25);
+  box-shadow: 0 2px 12px oklch(0.68 0.16 25 / 0.3);
+  transform: scale(1.02);
+}
+
+/* ─── Badges ─── */
+.growth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 700;
+  color: oklch(0.72 0.12 85);
+}
+
+.credit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 700;
+  color: oklch(0.72 0.12 85);
+}
+
+/* ─── Ink link — animated underline ─── */
+.ink-link {
+  position: relative;
+  text-decoration: none;
+}
+.ink-link::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.3s ease;
+}
+.ink-link:hover::after {
+  width: 100%;
+}
+
+/* ─── Milestone pulse animation ─── */
+@keyframes milestone-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.72 0.12 85 / 0.4); }
+  50% { box-shadow: 0 0 0 8px oklch(0.72 0.12 85 / 0); }
+}
+.milestone-active {
+  animation: milestone-pulse 2s ease-in-out infinite;
+}
+
+/* ─── Heatmap cell ─── */
+.heatmap-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+}
+.heatmap-cell:hover {
+  transform: scale(1.5);
+}
+
+/* ─── Layout utilities ─── */
 .dashboard-grid {
   @apply grid gap-6 md:grid-cols-2 lg:grid-cols-4;
 }
@@ -164,39 +368,32 @@
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-
 .safe-area-bottom-compact {
   padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+}
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .h-screen-dvh {
   height: 100vh;
   height: 100dvh;
 }
-
 .min-h-screen-dvh {
   min-height: 100vh;
   min-height: 100dvh;
 }
 
-/* Ink link style */
-.ink-link {
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  transition: text-decoration-color 0.2s;
-}
-.ink-link:hover {
-  text-decoration-color: currentColor;
-}
-
-@media (hover: none) and (pointer: coarse) {
-  button, a, [role="button"] {
-    -webkit-tap-highlight-color: rgba(50, 14, 157, 0.1);
-  }
-}
-
+/* ─── Mobile input fix ─── */
 @media screen and (max-width: 768px) {
   input, select, textarea {
     font-size: 16px !important;
+  }
+}
+
+/* ─── Touch device tap highlight ─── */
+@media (hover: none) and (pointer: coarse) {
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: rgba(50, 14, 157, 0.1);
   }
 }
