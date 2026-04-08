@@ -1488,7 +1488,7 @@ export default function ExploreDB() {
   const [region, setRegion] = useState("all");
   const [sort, setSort] = useState("name");
   const [page, setPage] = useState(1);
-  const [fromResult, setFromResult] = useState(false);
+  const [fromSource, setFromSource] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -1576,11 +1576,12 @@ export default function ExploreDB() {
     setPage(1);
   }, [searchInput]);
 
-  // 적성분석 결과 카드에서 직접 이동: ?tab=jobs&q=직업명
+  // URL 파라미터로 탭·검색어·출발지 초기화
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get("tab") as "universities" | "majors" | "jobs" | null;
     const qParam = params.get("q");
+    const fromParam = params.get("from");
     if (tabParam && ["universities", "majors", "jobs"].includes(tabParam)) {
       setTab(tabParam);
     }
@@ -1588,9 +1589,11 @@ export default function ExploreDB() {
       setSearch(qParam);
       setSearchInput(qParam);
     }
-    // URL에서 파라미터 정리 (히스토리 push 없이)
-    if (tabParam || qParam) {
-      setFromResult(true);
+    if (fromParam) {
+      setFromSource(fromParam);
+    }
+    // URL 파라미터 정리 (히스토리 push 없이)
+    if (tabParam || qParam || fromParam) {
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -1634,16 +1637,25 @@ export default function ExploreDB() {
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          {fromResult && (
-            <button
-              onClick={() => navigate("/aptitude")}
-              className="flex items-center gap-1 text-xs text-dream hover:text-dream/80 mb-2 transition-colors"
-              data-testid="btn-back-to-result"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              분석 결과로 돌아가기
-            </button>
-          )}
+          {fromSource && (() => {
+            const backMap: Record<string, { label: string; path: string }> = {
+              dashboard: { label: "대시보드로 돌아가기", path: "/" },
+              analysis:  { label: "분석 결과로 돌아가기", path: "/aptitude" },
+              "job-detail": { label: "직업 목록으로 돌아가기", path: "/explore?tab=jobs" },
+            };
+            const back = backMap[fromSource];
+            if (!back) return null;
+            return (
+              <button
+                onClick={() => navigate(back.path)}
+                className="flex items-center gap-1 text-xs text-dream hover:text-dream/80 mb-2 transition-colors"
+                data-testid="btn-back-to-source"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                {back.label}
+              </button>
+            );
+          })()}
           <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-dream" />
             학과/직업 탐색

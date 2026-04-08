@@ -447,8 +447,7 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
   };
 
   const goToExplore = (tab: "jobs" | "majors", q: string) => {
-    const url = `/explore?tab=${tab}&q=${encodeURIComponent(q)}`;
-    navigate(url);
+    navigate(`/explore?tab=${tab}&q=${encodeURIComponent(q)}&from=analysis`);
   };
 
   const interestData = Object.entries(result.interestScores).map(([k, v]) => ({

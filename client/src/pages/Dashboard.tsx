@@ -370,7 +370,7 @@ export default function Dashboard() {
               <div className="flex flex-col gap-3 flex-1 items-center justify-center text-center py-6">
                 <Star className="h-8 w-8 text-gray-200" />
                 <p className="text-sm text-[#8B95A1]">탐색 페이지에서 ☆ 버튼을 눌러<br/>관심 항목을 저장하세요.</p>
-                <Button size="sm" variant="outline" className="border-[#320e9d] text-[#320e9d] font-semibold rounded-xl text-xs" onClick={() => navigate("/explore")} data-testid="btn-go-explore">
+                <Button size="sm" variant="outline" className="border-[#320e9d] text-[#320e9d] font-semibold rounded-xl text-xs" onClick={() => navigate("/explore?from=dashboard")} data-testid="btn-go-explore">
                   학과/직업 탐색 바로가기 <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
               </div>
@@ -383,13 +383,13 @@ export default function Dashboard() {
                       <Building2 className="h-3 w-3" /> 관심 학교
                     </p>
                     {bookmarkList.filter(b => b.bookmarkType === "university").slice(0, 5).map(bm => (
-                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=universities&q=${encodeURIComponent(bm.targetName)}`)} data-testid={`bm-item-${bm.id}`}>
+                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=universities&q=${encodeURIComponent(bm.targetName)}&from=dashboard`)} data-testid={`bm-item-${bm.id}`}>
                         <span className="text-sm text-[#191F28] font-medium truncate">{bm.targetName}</span>
                         <button onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }} className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" data-testid={`btn-bm-remove-${bm.id}`}><X className="h-3.5 w-3.5" /></button>
                       </div>
                     ))}
                     {bookmarkList.filter(b => b.bookmarkType === "university").length > 5 && (
-                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore")}>+{bookmarkList.filter(b => b.bookmarkType === "university").length - 5}개 더보기</button>
+                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore?from=dashboard")}>+{bookmarkList.filter(b => b.bookmarkType === "university").length - 5}개 더보기</button>
                     )}
                   </div>
                 )}
@@ -400,13 +400,13 @@ export default function Dashboard() {
                       <GraduationCap className="h-3 w-3" /> 관심 학과
                     </p>
                     {bookmarkList.filter(b => b.bookmarkType === "major").slice(0, 5).map(bm => (
-                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=majors&q=${encodeURIComponent(bm.targetName)}`)} data-testid={`bm-item-${bm.id}`}>
+                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=majors&q=${encodeURIComponent(bm.targetName)}&from=dashboard`)} data-testid={`bm-item-${bm.id}`}>
                         <span className="text-sm text-[#191F28] font-medium truncate">{bm.targetName}</span>
                         <button onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }} className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" data-testid={`btn-bm-remove-${bm.id}`}><X className="h-3.5 w-3.5" /></button>
                       </div>
                     ))}
                     {bookmarkList.filter(b => b.bookmarkType === "major").length > 5 && (
-                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore")}>+{bookmarkList.filter(b => b.bookmarkType === "major").length - 5}개 더보기</button>
+                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore?from=dashboard")}>+{bookmarkList.filter(b => b.bookmarkType === "major").length - 5}개 더보기</button>
                     )}
                   </div>
                 )}
@@ -417,17 +417,17 @@ export default function Dashboard() {
                       <Briefcase className="h-3 w-3" /> 관심 직업
                     </p>
                     {bookmarkList.filter(b => b.bookmarkType === "job").slice(0, 5).map(bm => (
-                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=jobs&q=${encodeURIComponent(bm.targetName)}`)} data-testid={`bm-item-${bm.id}`}>
+                      <div key={bm.id} className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#F9FAFB] rounded-xl hover:bg-[#F2F4F6] transition-colors cursor-pointer group" onClick={() => navigate(`/explore?tab=jobs&q=${encodeURIComponent(bm.targetName)}&from=dashboard`)} data-testid={`bm-item-${bm.id}`}>
                         <span className="text-sm text-[#191F28] font-medium truncate">{bm.targetName}</span>
                         <button onClick={(e) => { e.stopPropagation(); handleRemoveBm(bm.id, bm.targetName); }} className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" data-testid={`btn-bm-remove-${bm.id}`}><X className="h-3.5 w-3.5" /></button>
                       </div>
                     ))}
                     {bookmarkList.filter(b => b.bookmarkType === "job").length > 5 && (
-                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore")}>+{bookmarkList.filter(b => b.bookmarkType === "job").length - 5}개 더보기</button>
+                      <button className="text-xs text-[#320e9d] font-semibold text-left pl-3 mt-0.5 hover:underline" onClick={() => navigate("/explore?from=dashboard")}>+{bookmarkList.filter(b => b.bookmarkType === "job").length - 5}개 더보기</button>
                     )}
                   </div>
                 )}
-                <Button size="sm" variant="ghost" className="mt-auto text-[#320e9d] text-xs self-start px-0 hover:bg-transparent" onClick={() => navigate("/explore")}>
+                <Button size="sm" variant="ghost" className="mt-auto text-[#320e9d] text-xs self-start px-0 hover:bg-transparent" onClick={() => navigate("/explore?from=dashboard")}>
                   학과/직업 탐색 바로가기 <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
               </div>
@@ -477,7 +477,7 @@ export default function Dashboard() {
                       {latestAptitude.recommendedJobs.slice(0, 3).map((j, i) => (
                         <button
                           key={i}
-                          onClick={() => navigate(`/explore?tab=jobs&q=${encodeURIComponent(j.name)}`)}
+                          onClick={() => navigate(`/explore?tab=jobs&q=${encodeURIComponent(j.name)}&from=dashboard`)}
                           className="text-xs px-2.5 py-1 rounded-full bg-coral/10 text-coral font-semibold hover:bg-coral/20 transition-colors"
                           data-testid={`btn-rec-job-${i}`}
                         >
@@ -498,7 +498,7 @@ export default function Dashboard() {
                       {latestAptitude.recommendedMajors.slice(0, 3).map((m, i) => (
                         <button
                           key={i}
-                          onClick={() => navigate(`/explore?tab=majors&q=${encodeURIComponent(m.name)}`)}
+                          onClick={() => navigate(`/explore?tab=majors&q=${encodeURIComponent(m.name)}&from=dashboard`)}
                           className="text-xs px-2.5 py-1 rounded-full bg-[#320e9d]/10 text-[#320e9d] font-semibold hover:bg-[#320e9d]/20 transition-colors"
                           data-testid={`btn-rec-major-${i}`}
                         >
