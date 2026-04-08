@@ -1402,17 +1402,61 @@ function StatRow({ icon, label, value, color = "text-ink" }: {
   );
 }
 
+// ---- University Majors Panel (개설 학과 — lazy loaded on expand) ----
+function UnivMajorsPanel({ univName }: { univName: string }) {
+  const { data, isLoading } = useQuery<{ majors: string[] }>({
+    queryKey: [`/api/explore/universities/${encodeURIComponent(univName)}/majors`],
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const [, navigate] = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="flex gap-2 flex-wrap pt-1">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-6 w-20 rounded-full" />
+        ))}
+      </div>
+    );
+  }
+
+  const majors = data?.majors ?? [];
+  if (majors.length === 0) {
+    return <p className="text-xs text-gray-400 pt-1">학과 데이터가 없습니다.</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5 pt-1">
+      {majors.map(name => (
+        <button
+          key={name}
+          data-testid={`chip-major-${name}`}
+          onClick={e => {
+            e.stopPropagation();
+            navigate(`/explore?tab=majors&q=${encodeURIComponent(name)}`);
+          }}
+          className="text-xs px-2.5 py-1 rounded-full bg-dream/10 text-dream hover:bg-dream/20 transition-colors cursor-pointer border border-dream/20"
+        >
+          {name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ---- University Card (2-column grid style) ----
 function UniversityCard({ univ, isBookmarked, onToggleBookmark }: {
   univ: University;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const tuitionWan = univ.avgTuition && univ.avgTuition > 0 ? Math.round(univ.avgTuition / 10) : null;
   const scholarshipWan = univ.scholarshipPerStudent && univ.scholarshipPerStudent > 0
     ? Math.round(univ.scholarshipPerStudent / 10000)
     : null;
-  const none = <span className="text-gray-400 font-normal">없음</span>;
+  const none = <span className="text-gray-400 font-normal">—</span>;
 
   return (
     <Card className="border border-gray-100 hover:shadow-md transition-shadow" data-testid={`card-univ-${univ.id}`}>
@@ -1444,8 +1488,24 @@ function UniversityCard({ univ, isBookmarked, onToggleBookmark }: {
           </div>
         </div>
 
-        {/* Stats grid — shows 없음 when missing */}
+        {/* Stats grid — 7 items: 경쟁률·취업률 / 등록금·기숙사 / 재학생·입학정원 / 장학금 */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          {univ.competitionRate != null && univ.competitionRate > 0 && (
+            <StatRow
+              icon={<TrendingUp className="w-3.5 h-3.5 text-coral" />}
+              label="경쟁률"
+              value={`${univ.competitionRate.toFixed(1)}:1`}
+              color="text-coral"
+            />
+          )}
+          {univ.employmentRate != null && univ.employmentRate > 0 && (
+            <StatRow
+              icon={<Briefcase className="w-3.5 h-3.5 text-emerald-500" />}
+              label="취업률"
+              value={`${univ.employmentRate.toFixed(1)}%`}
+              color="text-emerald-600"
+            />
+          )}
           <StatRow
             icon={<Banknote className="w-3.5 h-3.5 text-gold" />}
             label="등록금"
@@ -1453,7 +1513,7 @@ function UniversityCard({ univ, isBookmarked, onToggleBookmark }: {
           />
           <StatRow
             icon={<Home className="w-3.5 h-3.5 text-dream" />}
-            label="기숙사 수용률"
+            label="기숙사"
             value={univ.dormitoryRate && univ.dormitoryRate > 0
               ? `${univ.dormitoryRate.toFixed(1)}%` : none}
             color="text-dream"
@@ -1465,12 +1525,36 @@ function UniversityCard({ univ, isBookmarked, onToggleBookmark }: {
               ? `${univ.studentCount.toLocaleString()}명` : none}
           />
           <StatRow
+            icon={<GraduationCap className="w-3.5 h-3.5 text-purple-400" />}
+            label="입학정원"
+            value={univ.admissionQuota && univ.admissionQuota > 0
+              ? `${univ.admissionQuota.toLocaleString()}명` : none}
+          />
+          <StatRow
             icon={<Award className="w-3.5 h-3.5 text-amber-500" />}
             label="1인당 장학금"
             value={scholarshipWan ? `${scholarshipWan.toLocaleString()}만원` : none}
             color="text-amber-600"
           />
         </div>
+
+        {/* 개설 학과 토글 버튼 */}
+        <button
+          data-testid={`btn-expand-majors-${univ.id}`}
+          onClick={() => setExpanded(v => !v)}
+          className="mt-3 w-full flex items-center justify-center gap-1 text-xs text-dream hover:text-dream/80 transition-colors py-1 border-t border-gray-100"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          개설 학과 보기
+          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
+
+        {/* 개설 학과 목록 (확장 시 표시) */}
+        {expanded && (
+          <div className="mt-2">
+            <UnivMajorsPanel univName={univ.univName} />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

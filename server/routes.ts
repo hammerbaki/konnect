@@ -5995,6 +5995,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/explore/universities/:univName/majors — 대학별 개설 학과 목록
+  app.get('/api/explore/universities/:univName/majors', async (req, res) => {
+    try {
+      const univName = decodeURIComponent(req.params.univName);
+      const result = await db.execute(sqlExpr`
+        SELECT major_name FROM cached_majors
+        WHERE universities @> ${JSON.stringify([{ schoolName: univName }])}::jsonb
+          AND major_name IS NOT NULL
+        ORDER BY major_name
+        LIMIT 60
+      `);
+      const majors: string[] = ((result as any).rows ?? [])
+        .map((r: any) => r.major_name as string)
+        .filter(Boolean);
+      res.json({ majors });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // ===========================
   // ADMIN DATA SYNC ROUTES
   // ===========================
