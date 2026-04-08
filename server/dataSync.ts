@@ -72,7 +72,7 @@ export async function generateMajorDescriptions(
 ): Promise<{ updated: number; errors: number }> {
   const { default: OpenAI } = await import('openai');
   const openai = new OpenAI({
-    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
     baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
   });
 
@@ -158,7 +158,7 @@ export async function generateJobDescriptions(
 ): Promise<{ updated: number; errors: number }> {
   const { default: OpenAI } = await import('openai');
   const openai = new OpenAI({
-    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
     baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
   });
 
@@ -305,7 +305,7 @@ export async function enrichMajorRelatedData(
 ): Promise<{ demandUpdated: number; jobsUpdated: number; errors: number }> {
   const { default: OpenAI } = await import('openai');
   const openai = new OpenAI({
-    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
     baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
   });
 

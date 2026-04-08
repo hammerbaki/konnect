@@ -6340,7 +6340,10 @@ JSON 형식으로만 응답하세요:
 
       // ── 7. GPT-4o-mini 호출 ─────────────────────────────────────
       const { default: OpenAI } = await import('openai');
-      const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const openaiClient = new OpenAI({
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      });
 
       const completion = await openaiClient.chat.completions.create({
         model: 'gpt-4o-mini',
