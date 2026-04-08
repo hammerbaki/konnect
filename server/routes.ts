@@ -5922,6 +5922,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/explore/counts — 탭별 총 건수 (경량)
+  app.get('/api/explore/counts', async (_req, res) => {
+    try {
+      const [majorRow, jobRow, univRow] = await Promise.all([
+        db.select({ cnt: count() }).from(cachedMajors),
+        db.select({ cnt: count() }).from(cachedJobs),
+        db.select({ cnt: count() }).from(universityInfo),
+      ]);
+      res.json({
+        majors: majorRow[0]?.cnt ?? 0,
+        jobs: jobRow[0]?.cnt ?? 0,
+        universities: univRow[0]?.cnt ?? 0,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // GET /api/explore/universities
   app.get('/api/explore/universities', async (req, res) => {
     try {
@@ -6674,7 +6692,39 @@ JSON 형식으로만 응답하세요:
         univInfoId: null as number | null,
       }));
 
-      const combined = [...mapRowsEnriched, ...umDeduped];
+      let combined = [...mapRowsEnriched, ...umDeduped];
+
+      // 5-extra) combined가 비어있으면 cached_majors.universities JSONB 필드 사용 (CareerNet MAJOR_VIEW 데이터)
+      if (combined.length === 0) {
+        const cmRows = await db.execute(sqlExpr`
+          SELECT universities FROM cached_majors
+          WHERE major_name = ${decodedName}
+            AND universities IS NOT NULL
+            AND jsonb_array_length(universities) > 0
+          LIMIT 1
+        `);
+        const univsJson: Array<{ area: string; schoolName: string; majorName: string }> =
+          (cmRows as any).rows?.[0]?.universities ?? [];
+        // 시·도 단위 추출 (예: "서울특별시" → "서울")
+        const toRegionShort = (area: string) => area.replace(/특별시|광역시|특별자치시|도$|특별자치도$/, '').trim().slice(0, 2);
+        const cmMapped = univsJson.map((u, idx) => ({
+          id: 2000000 + idx,
+          majorName: u.majorName ?? decodedName,
+          univName: u.schoolName,
+          region: toRegionShort(u.area ?? ''),
+          quota: null as number | null,
+          competitionRate: null as number | null,
+          employmentRate: null as number | null,
+          year: null as number | null,
+          division: null as string | null,
+          universityType: null as string | null,
+          establishment: null as string | null,
+          hasUnivInfo: false,
+          univInfoId: null as number | null,
+        }));
+        combined = cmMapped;
+      }
+
       combined.sort((a, b) => (b.competitionRate ?? 0) - (a.competitionRate ?? 0) || (a.univName ?? '').localeCompare(b.univName ?? '', 'ko'));
 
       res.json({ data: combined, total: combined.length });

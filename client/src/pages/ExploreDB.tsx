@@ -44,6 +44,8 @@ interface Major {
     raw_employment?: string | null;
     raw_salary?: string | null;
     source?: string;
+    initial?: number | null;
+    unit?: string | null;
   } | null;
   aptitudeMiddle: AptitudeItem[] | null;
   aptitudeHigh: AptitudeItem[] | null;
@@ -334,7 +336,20 @@ function parseSubjects(raw: string | null): string | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed.join(', ');
+    if (Array.isArray(parsed)) {
+      // CareerNet MAJOR_VIEW: [{subject_name, subject_description}] 형태
+      if (parsed.length > 0 && typeof parsed[0] === 'object' && parsed[0] !== null) {
+        return parsed
+          .map((item: { subject_name?: string; subject_description?: string }) => {
+            const name = item.subject_name ?? '';
+            const desc = item.subject_description ?? '';
+            return desc ? `[${name}] ${desc}` : name;
+          })
+          .filter(Boolean)
+          .join(' / ');
+      }
+      return parsed.join(', ');
+    }
   } catch {}
   return raw;
 }
@@ -797,7 +812,7 @@ function MajorCard({ major, onNavigateToUniversity, isBookmarked, onToggleBookma
         })()}
 
         {/* ── 더 보기 토글 ── */}
-        {(major.demand || major.relatedSubjects || major.hollandCode) && (
+        {(major.demand || major.relatedSubjects || major.hollandCode || major.employmentRate != null || major.avgSalaryDistribution) && (
           <div>
             <button
               className="text-xs text-gray-400 hover:text-dream flex items-center gap-0.5 mt-1"
@@ -810,23 +825,50 @@ function MajorCard({ major, onNavigateToUniversity, isBookmarked, onToggleBookma
 
             {showMore && (
               <div className="mt-2 space-y-1.5 text-xs text-gray-600 pl-1">
+
+                {/* 취업률 — source: careernet */}
+                {major.employmentRate != null && major.employmentRate > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                    <span>
+                      <span className="font-medium">취업률: </span>
+                      <span className="font-semibold text-emerald-600">{major.employmentRate}% 이상</span>
+                      <span className="text-gray-400 ml-1 text-[10px]">(자료: 커리어넷)</span>
+                    </span>
+                  </div>
+                )}
+
+                {/* 초임 월급여 — source: careernet */}
+                {(() => {
+                  const initSalary = major.avgSalaryDistribution?.initial ?? major.avgSalaryDistribution?.avg_monthly_wan;
+                  if (!initSalary) return null;
+                  return (
+                    <div className="flex items-center gap-1.5">
+                      <Banknote className="w-3.5 h-3.5 text-gold flex-shrink-0" />
+                      <span>
+                        <span className="font-medium text-gold">초임 월급여: </span>
+                        <span className="font-semibold text-amber-700">약 {Math.round(initSalary).toLocaleString()}만원</span>
+                        <span className="text-gray-400 ml-1 text-[10px]">(자료: 커리어넷)</span>
+                      </span>
+                    </div>
+                  );
+                })()}
+
                 {/* 관련 직업 급여 범위 — source: cached_jobs */}
                 {jobStats && jobStats.jobsWithSalary > 0 &&
                   jobStats.minSalaryWan != null && jobStats.maxSalaryWan != null && (
                   <div className="flex items-start gap-1.5">
                     <Banknote className="w-3.5 h-3.5 text-gold flex-shrink-0 mt-0.5" />
                     <span>
-                      <span className="font-medium text-gold">관련 직업 급여 범위: </span>
+                      <span className="font-medium text-gold">관련 직업 연봉: </span>
                       <span className="font-semibold text-amber-700">
-                        연평균 {jobStats.minSalaryWan.toLocaleString()}만원
+                        {jobStats.minSalaryWan.toLocaleString()}만원
                         {jobStats.minSalaryWan !== jobStats.maxSalaryWan && (
                           <> ~ {jobStats.maxSalaryWan.toLocaleString()}만원</>
                         )}
                       </span>
                       <span className="text-gray-400 ml-1 text-[10px]">
-                        {jobs.length === jobStats.jobsWithSalary
-                          ? `(관련 직업 ${jobs.length}개 기준)`
-                          : `(관련 직업 ${jobs.length}개 중 급여 데이터 보유 ${jobStats.jobsWithSalary}개 기준)`}
+                        ({jobs.length}개 직업 기준)
                       </span>
                     </span>
                   </div>
@@ -873,11 +915,11 @@ function MajorCard({ major, onNavigateToUniversity, isBookmarked, onToggleBookma
                     <span className="text-gray-400 ml-1">(AI 예측)</span>
                   </div>
                 )}
-                {/* 관련 과목 — source: careernet */}
+                {/* 관련 고교 과목 — source: careernet */}
                 {parseSubjects(major.relatedSubjects) && (
-                  <div>
-                    <span className="font-medium">관련 과목: </span>
-                    {parseSubjects(major.relatedSubjects)}
+                  <div className="space-y-0.5">
+                    <span className="font-medium block">관련 고교 과목:</span>
+                    <span className="text-gray-500 leading-relaxed">{parseSubjects(major.relatedSubjects)}</span>
                   </div>
                 )}
 
@@ -1498,6 +1540,11 @@ export default function ExploreDB() {
     staleTime: 1000 * 60 * 10,
   });
 
+  const { data: exploreCounts } = useQuery<{ majors: number; jobs: number; universities: number }>({
+    queryKey: ["/api/explore/counts"],
+    staleTime: 1000 * 60 * 60,
+  });
+
   const { data: latestAptitude, isLoading: aptitudeLoading } = useQuery<AptitudeResult>({
     queryKey: ["/api/aptitude/latest"],
     retry: false,
@@ -1597,9 +1644,9 @@ export default function ExploreDB() {
     setPage(1);
   }, []);
 
-  const majorTotal = 235;
-  const jobTotal = 443;
-  const univTotal = univsQuery.data?.total ?? 0;
+  const majorTotal = exploreCounts?.majors ?? majorsQuery.data?.total ?? 0;
+  const jobTotal = exploreCounts?.jobs ?? jobsQuery.data?.total ?? 0;
+  const univTotal = exploreCounts?.universities ?? univsQuery.data?.total ?? 0;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
