@@ -739,7 +739,9 @@ function MajorCard({ major, onNavigateToUniversity }: { major: Major; onNavigate
                         )}
                       </span>
                       <span className="text-gray-400 ml-1 text-[10px]">
-                        (관련 직업 {jobStats.jobsWithSalary}개 기준)
+                        {jobs.length === jobStats.jobsWithSalary
+                          ? `(관련 직업 ${jobs.length}개 기준)`
+                          : `(관련 직업 ${jobs.length}개 중 급여 데이터 보유 ${jobStats.jobsWithSalary}개 기준)`}
                       </span>
                     </span>
                   </div>
@@ -905,7 +907,9 @@ function MajorDetailModal({
                     )}
                   </div>
                   <div className="text-[10px] text-gray-400 mt-0.5">
-                    (관련 직업 {jobStats.jobsWithSalary}개 기준)
+                    {Array.isArray(major.relatedJobs) && major.relatedJobs.length === jobStats.jobsWithSalary
+                      ? `(관련 직업 ${major.relatedJobs.length}개 기준)`
+                      : `(관련 직업 ${Array.isArray(major.relatedJobs) ? major.relatedJobs.length : 0}개 중 급여 데이터 보유 ${jobStats.jobsWithSalary}개 기준)`}
                   </div>
                 </div>
               )}
@@ -1127,21 +1131,8 @@ function UniversityCard({ univ }: { univ: University }) {
           </div>
         </div>
 
-        {/* Stats grid — always 3 rows × 2 cols, shows 없음 when missing */}
+        {/* Stats grid — shows 없음 when missing */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-          <StatRow
-            icon={<TrendingUp className="w-3.5 h-3.5 text-coral" />}
-            label="경쟁률 (학교 전체)"
-            value={univ.competitionRate && univ.competitionRate > 0
-              ? `${univ.competitionRate.toFixed(1)}:1` : none}
-          />
-          <StatRow
-            icon={<Briefcase className="w-3.5 h-3.5 text-emerald-500" />}
-            label="취업률 (학교 전체)"
-            value={univ.employmentRate && univ.employmentRate > 0
-              ? `${univ.employmentRate.toFixed(1)}%` : none}
-            color="text-emerald-600"
-          />
           <StatRow
             icon={<Banknote className="w-3.5 h-3.5 text-gold" />}
             label="등록금"
@@ -1286,7 +1277,7 @@ export default function ExploreDB() {
   const [field, setField] = useState("all");
   const [majorFilter, setMajorFilter] = useState("all");
   const [region, setRegion] = useState("all");
-  const [sort, setSort] = useState("competition");
+  const [sort, setSort] = useState("name");
   const [page, setPage] = useState(1);
 
   const { data: categories } = useQuery<Categories>({
@@ -1448,8 +1439,6 @@ export default function ExploreDB() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="competition">경쟁률 높은 순</SelectItem>
-                <SelectItem value="employment">취업률 높은 순</SelectItem>
                 <SelectItem value="tuition_asc">등록금 낮은 순</SelectItem>
                 <SelectItem value="tuition_desc">등록금 높은 순</SelectItem>
                 <SelectItem value="name">이름 순</SelectItem>
