@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import {
   Brain, ChevronLeft, ChevronRight, RotateCcw, Sparkles,
-  Briefcase, GraduationCap, Wifi, ArrowRight,
+  Briefcase, GraduationCap, Wifi, ArrowRight, ArrowLeft,
   AlertCircle, Layers, Zap, Star
 } from "lucide-react";
 
@@ -471,6 +471,15 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      {/* 대시보드 뒤로가기 */}
+      <button
+        onClick={() => navigate("/")}
+        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-dream transition-colors"
+        data-testid="btn-back-to-dashboard"
+      >
+        <ArrowLeft className="w-4 h-4" /> 대시보드로 돌아가기
+      </button>
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-ink">진로 흥미 분석 결과</h1>
