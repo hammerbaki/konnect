@@ -1429,6 +1429,7 @@ function SkeletonGrid({ cols = 2 }: { cols?: number }) {
 
 // ---- Main Page ----
 export default function ExploreDB() {
+  const [, navigate] = useLocation();
   const [tab, setTab] = useState<"universities" | "majors" | "jobs">("universities");
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -1438,6 +1439,7 @@ export default function ExploreDB() {
   const [region, setRegion] = useState("all");
   const [sort, setSort] = useState("name");
   const [page, setPage] = useState(1);
+  const [fromResult, setFromResult] = useState(false);
 
   const { data: categories } = useQuery<Categories>({
     queryKey: ["/api/explore/categories"],
@@ -1505,6 +1507,7 @@ export default function ExploreDB() {
     }
     // URL에서 파라미터 정리 (히스토리 push 없이)
     if (tabParam || qParam) {
+      setFromResult(true);
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -1548,6 +1551,16 @@ export default function ExploreDB() {
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
+          {fromResult && (
+            <button
+              onClick={() => navigate("/aptitude")}
+              className="flex items-center gap-1 text-xs text-dream hover:text-dream/80 mb-2 transition-colors"
+              data-testid="btn-back-to-result"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              분석 결과로 돌아가기
+            </button>
+          )}
           <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-dream" />
             학과/직업 탐색
