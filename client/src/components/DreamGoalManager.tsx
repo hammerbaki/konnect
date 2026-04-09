@@ -281,6 +281,10 @@ function InlineEdit({
 }
 
 /* ─── WeekPanel ─── */
+type TodoDrawerState =
+  | { type: "add" }
+  | { type: "edit"; todoId: string; dayId: string; value: string };
+
 function WeekPanel({
   week,
   onToggleTodo,
@@ -294,9 +298,12 @@ function WeekPanel({
   onEditTodo: (weekId: string, dayId: string, todoId: string, newTitle: string) => void;
   onDeleteTodo: (weekId: string, dayId: string, todoId: string) => void;
 }) {
+  const isMobile = useIsMobile();
   const [newTodo, setNewTodo] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [todoDrawer, setTodoDrawer] = useState<TodoDrawerState | null>(null);
+
   const allTodos = week.children.flatMap((d) => d.todos.map((t) => ({ ...t, dayId: d.id })));
   const doneTodos = allTodos.filter((t) => t.completed).length;
 
@@ -307,9 +314,13 @@ function WeekPanel({
     setNewTodo("");
   };
 
-  const startEdit = (todo: { id: string; title: string }) => {
-    setEditingId(todo.id);
-    setEditText(todo.title);
+  const startEdit = (todo: { id: string; title: string; dayId: string }) => {
+    if (isMobile) {
+      setTodoDrawer({ type: "edit", todoId: todo.id, dayId: todo.dayId, value: todo.title });
+    } else {
+      setEditingId(todo.id);
+      setEditText(todo.title);
+    }
   };
 
   const commitEdit = (dayId: string, todoId: string) => {
@@ -317,6 +328,24 @@ function WeekPanel({
     if (trimmed) onEditTodo(week.id, dayId, todoId, trimmed);
     setEditingId(null);
   };
+
+  const handleDrawerSave = (_id: string, value: string) => {
+    if (!todoDrawer) return;
+    if (todoDrawer.type === "add") {
+      onAddTodo(week.id, value);
+    } else {
+      onEditTodo(week.id, todoDrawer.dayId, todoDrawer.todoId, value);
+    }
+    setTodoDrawer(null);
+  };
+
+  const drawerItem = todoDrawer
+    ? {
+        id: todoDrawer.type === "edit" ? todoDrawer.todoId : "new",
+        value: todoDrawer.type === "edit" ? todoDrawer.value : "",
+        label: todoDrawer.type === "add" ? "할 일 추가" : "할 일 수정",
+      }
+    : null;
 
   return (
     <div className="pl-[3.25rem] pr-3 pb-3 pt-1.5 space-y-1 bg-secondary/10">
@@ -346,7 +375,7 @@ function WeekPanel({
               : <Circle size={13} className="text-muted-foreground/40 group-hover:text-dream transition-colors" />}
           </button>
 
-          {/* Title or inline edit */}
+          {/* Title or inline edit (desktop only) */}
           {editingId === todo.id ? (
             <input
               autoFocus
@@ -395,25 +424,46 @@ function WeekPanel({
         <p className="text-[10px] text-muted-foreground px-2">{doneTodos}/{allTodos.length} 완료</p>
       )}
 
-      {/* Add todo */}
+      {/* Add todo – mobile: tap to open drawer / desktop: inline input */}
       <div className="flex items-center gap-1.5 pt-1" onClick={(e) => e.stopPropagation()}>
-        <input
-          value={newTodo}
-          onChange={(e) => setNewTodo(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
-          placeholder="할 일 추가..."
-          className="flex-1 text-[12px] bg-white border border-border/60 rounded-lg px-2.5 py-1.5 outline-none focus:border-dream/60 placeholder:text-muted-foreground/50"
-          data-testid={`input-add-todo-${week.id}`}
-        />
+        {isMobile ? (
+          <button
+            onClick={() => setTodoDrawer({ type: "add" })}
+            className="flex-1 text-left text-[12px] bg-white border border-border/60 rounded-lg px-2.5 py-1.5 text-muted-foreground/50"
+            data-testid={`input-add-todo-${week.id}`}
+          >
+            할 일 추가...
+          </button>
+        ) : (
+          <input
+            value={newTodo}
+            onChange={(e) => setNewTodo(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+            placeholder="할 일 추가..."
+            className="flex-1 text-[12px] bg-white border border-border/60 rounded-lg px-2.5 py-1.5 outline-none focus:border-dream/60 placeholder:text-muted-foreground/50"
+            data-testid={`input-add-todo-${week.id}`}
+          />
+        )}
         <button
-          onClick={handleAdd}
-          disabled={!newTodo.trim()}
+          onClick={() => isMobile ? setTodoDrawer({ type: "add" }) : handleAdd()}
+          disabled={!isMobile && !newTodo.trim()}
           className="p-1.5 bg-dream/10 hover:bg-dream/20 text-dream rounded-lg disabled:opacity-40 transition-colors"
           data-testid={`button-add-todo-${week.id}`}
         >
           <Plus size={13} />
         </button>
       </div>
+
+      {/* Mobile Todo Drawer */}
+      <AnimatePresence>
+        {drawerItem && (
+          <EditDrawer
+            item={drawerItem}
+            onSave={handleDrawerSave}
+            onClose={() => setTodoDrawer(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
