@@ -366,24 +366,24 @@ function WeekPanel({
             </span>
           )}
 
-          {/* Edit / Delete actions – visible on hover */}
+          {/* Edit / Delete actions – always visible on touch, hover-only on desktop */}
           {editingId !== todo.id && (
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity shrink-0">
               <button
-                onClick={() => startEdit(todo)}
-                className="p-1 rounded hover:bg-dream/10 text-muted-foreground hover:text-dream transition-colors"
+                onClick={(e) => { e.stopPropagation(); startEdit(todo); }}
+                className="p-1.5 rounded hover:bg-dream/10 text-muted-foreground hover:text-dream transition-colors"
                 data-testid={`button-edit-todo-${todo.id}`}
                 title="수정"
               >
-                <Pencil size={11} />
+                <Pencil size={12} />
               </button>
               <button
-                onClick={() => onDeleteTodo(week.id, todo.dayId, todo.id)}
-                className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                onClick={(e) => { e.stopPropagation(); onDeleteTodo(week.id, todo.dayId, todo.id); }}
+                className="p-1.5 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
                 data-testid={`button-delete-todo-${todo.id}`}
                 title="삭제"
               >
-                <Trash2 size={11} />
+                <Trash2 size={12} />
               </button>
             </div>
           )}
