@@ -62,7 +62,8 @@ export default function Dream() {
   const [isEditing, setIsEditing] = useState(false);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [createMode, setCreateMode] = useState<"ai" | "manual" | null>(null);
+  // NOTE: AI mode is temporarily hidden. Set to null to re-enable mode selection.
+  const [createMode, setCreateMode] = useState<"ai" | "manual" | null>("manual");
   const [newTitle, setNewTitle] = useState("");
   const [newTargetYear, setNewTargetYear] = useState(String(new Date().getFullYear() + 2));
   const [newDescription, setNewDescription] = useState("");
@@ -151,7 +152,7 @@ export default function Dream() {
   };
 
   const resetModal = () => {
-    setCreateMode(null);
+    setCreateMode("manual"); // Keep as "manual"; set to null to re-enable AI mode selection
     setNewTitle("");
     setNewDescription("");
     setImportedData(null);
