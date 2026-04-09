@@ -175,6 +175,10 @@ function DotsMenu({
   );
 }
 
+/* ─── Placeholder detection ─── */
+const PLACEHOLDER_RE = /^\d{4}년 (연간 목표|\d+월 목표|\d+월 \d+주차 목표)$/;
+const isPlaceholder = (title: string) => PLACEHOLDER_RE.test(title);
+
 /* ─── useIsMobile ─── */
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() =>
@@ -712,7 +716,12 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                 {editingId === year.id ? (
                   <InlineEdit value={year.title} onSave={(v) => handleEditNode(year.id, v)} onCancel={() => setEditingId(null)} placeholder="연간 목표..." textClass="text-[11px] text-muted-foreground" />
                 ) : (
-                  <span className="text-[11px] text-muted-foreground flex-1 min-w-0 break-words">{year.description || year.title}</span>
+                  <span className={cn(
+                    "text-[11px] flex-1 min-w-0 break-words",
+                    isPlaceholder(year.description || year.title)
+                      ? "text-muted-foreground/50 italic"
+                      : "text-muted-foreground"
+                  )}>{year.description || year.title}</span>
                 )}
                 <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
                   <Donut pct={year.progress} size={32} stroke={3} />
@@ -751,7 +760,12 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                             {editingId === month.id ? (
                               <InlineEdit value={month.title} onSave={(v) => handleEditNode(month.id, v)} onCancel={() => setEditingId(null)} placeholder="월별 목표..." textClass="text-[11px] text-foreground" />
                             ) : (
-                              <span className="text-[11px] text-foreground flex-1 min-w-0 break-words">{month.title}</span>
+                              <span className={cn(
+                                "text-[11px] flex-1 min-w-0 break-words",
+                                isPlaceholder(month.title)
+                                  ? "text-muted-foreground/50 italic"
+                                  : "text-foreground"
+                              )}>{month.title}</span>
                             )}
                             <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
                               <Donut pct={month.progress} size={28} stroke={2.5} />
@@ -792,8 +806,13 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                                           <InlineEdit value={week.title} onSave={(v) => handleEditNode(week.id, v)} onCancel={() => setEditingId(null)} placeholder="주별 목표..." textClass="text-[11px] font-medium text-foreground" />
                                         ) : (
                                           <div className="flex-1 min-w-0">
-                                            <span className="text-[11px] font-medium text-foreground">{week.title}</span>
-                                            {week.description && (
+                                            <span className={cn(
+                                              "text-[11px]",
+                                              isPlaceholder(week.title)
+                                                ? "text-muted-foreground/50 italic font-normal"
+                                                : "font-medium text-foreground"
+                                            )}>{week.title}</span>
+                                            {week.description && !isPlaceholder(week.title) && (
                                               <span className="text-[10px] text-muted-foreground ml-1.5 break-words">{week.description}</span>
                                             )}
                                           </div>
