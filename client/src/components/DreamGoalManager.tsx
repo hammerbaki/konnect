@@ -481,7 +481,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                 {/* Donut */}
                 <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
                   <Donut pct={year.progress} size={34} stroke={3} />
-                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-dream rotate-90">
+                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-dream">
                     {year.progress}%
                   </span>
                 </div>
@@ -543,7 +543,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                               {/* Donut */}
                               <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
                                 <Donut pct={month.progress} size={30} stroke={2.5} />
-                                <span className="absolute inset-0 flex items-center justify-center text-[7px] font-bold text-dream rotate-90">
+                                <span className="absolute inset-0 flex items-center justify-center text-[7px] font-bold text-dream">
                                   {month.progress}%
                                 </span>
                               </div>
@@ -610,7 +610,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                                             {/* Donut */}
                                             <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
                                               <Donut pct={week.progress} size={26} stroke={2} />
-                                              <span className="absolute inset-0 flex items-center justify-center text-[6px] font-bold text-dream rotate-90">
+                                              <span className="absolute inset-0 flex items-center justify-center text-[6px] font-bold text-dream">
                                                 {week.progress}%
                                               </span>
                                             </div>

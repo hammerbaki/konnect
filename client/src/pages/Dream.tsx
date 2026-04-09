@@ -339,7 +339,7 @@ export default function Dream() {
                             style={{ transition: "stroke-dashoffset 0.6s ease" }}
                           />
                         </svg>
-                        <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-dream rotate-90">
+                        <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-dream">
                           {kompass.progress}%
                         </span>
                       </div>
