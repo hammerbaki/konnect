@@ -17,7 +17,7 @@ import {
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { generateLightTree, VisionGoal } from "@/lib/mockData";
+import { generateLightTree, generateManualTree, VisionGoal } from "@/lib/mockData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -62,6 +62,7 @@ export default function Dream() {
   const [isEditing, setIsEditing] = useState(false);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createMode, setCreateMode] = useState<"ai" | "manual" | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newTargetYear, setNewTargetYear] = useState(String(new Date().getFullYear() + 2));
   const [newDescription, setNewDescription] = useState("");
@@ -149,12 +150,19 @@ export default function Dream() {
     });
   };
 
+  const resetModal = () => {
+    setCreateMode(null);
+    setNewTitle("");
+    setNewDescription("");
+    setImportedData(null);
+  };
+
   const handleSubmit = () => {
     if (!newTitle || !newTargetYear) { toast.error("목표 제목과 달성 연도를 입력해주세요."); return; }
     if (!selectedProfileId) { toast.error("프로필을 먼저 생성해주세요."); return; }
     const targetYear = parseInt(newTargetYear);
-    if (importedData) {
-      const visionData = generateLightTree(`temp-${Date.now()}`, newTitle, targetYear, newDescription, 1);
+    if (createMode === "manual") {
+      const visionData = generateManualTree(`m-${Date.now()}`, newTitle, targetYear, 1);
       createKompassMutation.mutate({ profileId: selectedProfileId, targetYear, startMonth: 1, visionData });
     } else {
       createKompassMutation.mutate({ profileId: selectedProfileId, targetYear, startMonth: 1, title: newTitle, description: newDescription, useAI: true });
@@ -420,80 +428,171 @@ export default function Dream() {
       </div>
 
       {/* ═══ 생성 Dialog ═══ */}
-      <Dialog open={isCreateModalOpen} onOpenChange={(o) => { setIsCreateModalOpen(o); if (!o) setImportedData(null); }}>
-        <DialogContent className="sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <DialogTitle className="editorial-heading text-xl text-dream">새 꿈 목표 만들기</DialogTitle>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-dream/10 text-dream px-2 py-0.5 rounded-full">
-                <Sparkles size={10} /> AI 생성
-              </span>
-            </div>
-            <DialogDescription className="text-sm text-muted-foreground">
-              AI가 연간 → 월별 → 주별 목표를 자동으로 생성합니다
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={isCreateModalOpen} onOpenChange={(o) => { setIsCreateModalOpen(o); if (!o) resetModal(); }}>
+        <DialogContent className="sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="dk-title" className="text-sm font-semibold">목표 제목</Label>
-              <Input
-                id="dk-title"
-                placeholder="예: 서울대 의대 합격"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                className="h-11 rounded-xl border-dream/20 focus-visible:ring-dream"
-                data-testid="input-dream-kompass-title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dk-year" className="text-sm font-semibold">달성 목표 연도</Label>
-              <Input
-                id="dk-year"
-                type="number"
-                placeholder="예: 2027"
-                value={newTargetYear}
-                onChange={(e) => setNewTargetYear(e.target.value)}
-                className="h-11 rounded-xl border-dream/20 focus-visible:ring-dream"
-                data-testid="input-dream-target-year"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dk-desc" className="text-sm font-semibold">
-                꿈의 이유 <span className="font-normal text-muted-foreground">(선택)</span>
-              </Label>
-              <Textarea
-                id="dk-desc"
-                placeholder="이 꿈을 이루고 싶은 이유, 현재 상황 등을 자유롭게 적어주세요."
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-                className="min-h-[90px] rounded-xl border-dream/20 focus-visible:ring-dream resize-none text-sm"
-                data-testid="input-dream-description"
-              />
-            </div>
-            <div className="bg-dream/5 border border-dream/20 rounded-xl p-3">
-              <div className="flex items-start gap-2">
-                <Sparkles size={13} className="text-dream shrink-0 mt-0.5" />
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  <span className="font-semibold text-dream">AI가 자동으로 생성합니다: </span>
-                  연간 → 월별 → 주별 목표 전체 계층을 한 번에 만들어줍니다.
-                </p>
+          {/* ── Step 1: Mode selection ── */}
+          {createMode === null && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="editorial-heading text-xl text-dream">새 꿈 목표 만들기</DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground">
+                  목표를 어떻게 만들까요?
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-3 py-4">
+                {/* Manual */}
+                <button
+                  onClick={() => setCreateMode("manual")}
+                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-border hover:border-dream/50 hover:bg-dream/5 transition-all text-left"
+                  data-testid="button-create-manual"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center">
+                    <PenLine size={22} className="text-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-bold text-foreground">직접 만들기</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">빈 계획표로 시작해서 목표를 직접 입력</p>
+                  </div>
+                </button>
+                {/* AI */}
+                <button
+                  onClick={() => setCreateMode("ai")}
+                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-dream/30 bg-dream/5 hover:border-dream hover:bg-dream/10 transition-all text-left"
+                  data-testid="button-create-ai"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-dream flex items-center justify-center">
+                    <Sparkles size={22} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-bold text-dream">AI로 만들기</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">AI가 연간→월별→주별 목표를 자동 생성</p>
+                  </div>
+                </button>
               </div>
-            </div>
-          </div>
+            </>
+          )}
 
-          <DialogFooter>
-            <button
-              onClick={handleSubmit}
-              disabled={createKompassMutation.isPending || !selectedProfileId}
-              className="w-full h-12 bg-dream text-white font-bold rounded-xl text-base hover:bg-dream/90 disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
-              data-testid="button-submit-dream-kompass"
-            >
-              {createKompassMutation.isPending
-                ? <><Loader2 size={18} className="animate-spin" /> AI가 목표를 생성하고 있어요...</>
-                : <><Sparkles size={18} /> 꿈 목표 생성하기</>}
-            </button>
-          </DialogFooter>
+          {/* ── Step 2a: Manual form ── */}
+          {createMode === "manual" && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setCreateMode(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+                    <ChevronRight size={16} className="rotate-180" />
+                  </button>
+                  <div>
+                    <DialogTitle className="editorial-heading text-xl text-dream">직접 만들기</DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                      연간 → 월별 → 주차 빈 계획표가 생성됩니다
+                    </DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label htmlFor="dk-title-m" className="text-sm font-semibold">꿈 제목</Label>
+                  <Input id="dk-title-m" placeholder="예: 서울대 의대 합격" value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    className="h-11 rounded-xl border-dream/20 focus-visible:ring-dream"
+                    data-testid="input-dream-kompass-title" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dk-year-m" className="text-sm font-semibold">달성 목표 연도</Label>
+                  <Input id="dk-year-m" type="number" placeholder="예: 2027" value={newTargetYear}
+                    onChange={(e) => setNewTargetYear(e.target.value)}
+                    className="h-11 rounded-xl border-dream/20 focus-visible:ring-dream"
+                    data-testid="input-dream-target-year" />
+                </div>
+                <div className="bg-secondary/60 rounded-xl p-3">
+                  <div className="flex items-start gap-2">
+                    <PenLine size={13} className="text-muted-foreground shrink-0 mt-0.5" />
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      <span className="font-semibold text-foreground">빈 계획표로 시작합니다.</span>{" "}
+                      2026년 3월 2주차 목표 형식의 플레이스홀더가 채워지며, 직접 수정할 수 있습니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <button onClick={handleSubmit} disabled={createKompassMutation.isPending || !selectedProfileId || !newTitle.trim()}
+                  className="w-full h-12 bg-foreground text-background font-bold rounded-xl text-sm hover:bg-foreground/90 disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
+                  data-testid="button-submit-dream-kompass">
+                  {createKompassMutation.isPending
+                    ? <><Loader2 size={16} className="animate-spin" /> 생성 중...</>
+                    : <><PenLine size={16} /> 빈 계획표 만들기</>}
+                </button>
+              </DialogFooter>
+            </>
+          )}
+
+          {/* ── Step 2b: AI form ── */}
+          {createMode === "ai" && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setCreateMode(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+                    <ChevronRight size={16} className="rotate-180" />
+                  </button>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <DialogTitle className="editorial-heading text-xl text-dream">AI로 만들기</DialogTitle>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-dream/10 text-dream px-2 py-0.5 rounded-full">
+                        <Sparkles size={9} /> AI 생성
+                      </span>
+                    </div>
+                    <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                      AI가 연간 → 월별 → 주별 목표를 자동으로 생성합니다
+                    </DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label htmlFor="dk-title-a" className="text-sm font-semibold">꿈 제목</Label>
+                  <Input id="dk-title-a" placeholder="예: 서울대 의대 합격" value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    className="h-11 rounded-xl border-dream/20 focus-visible:ring-dream"
+                    data-testid="input-dream-kompass-title" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dk-year-a" className="text-sm font-semibold">달성 목표 연도</Label>
+                  <Input id="dk-year-a" type="number" placeholder="예: 2027" value={newTargetYear}
+                    onChange={(e) => setNewTargetYear(e.target.value)}
+                    className="h-11 rounded-xl border-dream/20 focus-visible:ring-dream"
+                    data-testid="input-dream-target-year" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dk-desc-a" className="text-sm font-semibold">
+                    꿈의 이유 <span className="font-normal text-muted-foreground">(선택)</span>
+                  </Label>
+                  <Textarea id="dk-desc-a" placeholder="이 꿈을 이루고 싶은 이유, 현재 상황 등을 자유롭게 적어주세요."
+                    value={newDescription} onChange={(e) => setNewDescription(e.target.value)}
+                    className="min-h-[80px] rounded-xl border-dream/20 focus-visible:ring-dream resize-none text-sm"
+                    data-testid="input-dream-description" />
+                </div>
+                <div className="bg-dream/5 border border-dream/20 rounded-xl p-3">
+                  <div className="flex items-start gap-2">
+                    <Sparkles size={13} className="text-dream shrink-0 mt-0.5" />
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      <span className="font-semibold text-dream">AI가 자동으로 생성합니다: </span>
+                      연간 → 월별 → 주별 목표 전체 계층을 한 번에 만들어줍니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <button onClick={handleSubmit} disabled={createKompassMutation.isPending || !selectedProfileId || !newTitle.trim()}
+                  className="w-full h-12 bg-dream text-white font-bold rounded-xl text-sm hover:bg-dream/90 disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
+                  data-testid="button-submit-dream-kompass">
+                  {createKompassMutation.isPending
+                    ? <><Loader2 size={16} className="animate-spin" /> AI가 목표를 생성하고 있어요...</>
+                    : <><Sparkles size={16} /> AI로 꿈 목표 생성하기</>}
+                </button>
+              </DialogFooter>
+            </>
+          )}
+
         </DialogContent>
       </Dialog>
     </div>

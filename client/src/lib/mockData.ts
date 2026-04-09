@@ -431,6 +431,98 @@ function createMonthNode(yearVal: number, monthNum: number, idSuffix: string): M
     return month;
 }
 
+/** Generates an empty plan skeleton for manual entry.
+ *  All titles use context-based placeholders: "2025년 3월 2주차 목표" */
+export function generateManualTree(idSuffix: string, title: string, targetYear: number, startMonth: number = 1): VisionGoal {
+    const startYear = new Date().getFullYear();
+    const yearsCount = Math.min(Math.max(targetYear - startYear + 1, 1), 3);
+
+    const vision: VisionGoal = {
+        id: `vision-${idSuffix}`,
+        title: title,
+        description: "",
+        targetYear: targetYear,
+        progress: 0,
+        children: [],
+    };
+
+    for (let y = 0; y < yearsCount; y++) {
+        const yearVal = startYear + y;
+
+        let monthsToInclude: number[] = [];
+        if (y === 0) {
+            for (let m = startMonth; m <= 12; m++) monthsToInclude.push(m);
+        } else if (y === yearsCount - 1 && startMonth > 1) {
+            for (let m = 1; m < startMonth; m++) monthsToInclude.push(m);
+        } else {
+            for (let m = 1; m <= 12; m++) monthsToInclude.push(m);
+        }
+        if (monthsToInclude.length === 0) continue;
+
+        const year: YearlyGoal = {
+            id: `year-${yearVal}-${idSuffix}`,
+            title: `${yearVal}년 연간 목표`,
+            description: "",
+            dateDisplay: `${yearVal}`,
+            progress: 0,
+            children: [],
+        };
+
+        const buildHalf = (months: number[], halfKey: string) => {
+            if (months.length === 0) return;
+            const half: HalfYearlyGoal = {
+                id: `${halfKey}-${yearVal}-${idSuffix}`,
+                title: `${halfKey === "h1" ? "상반기" : "하반기"} 목표`,
+                description: "",
+                dateDisplay: `${String(months[0]).padStart(2, "0")}-${String(months[months.length - 1]).padStart(2, "0")}`,
+                progress: 0,
+                children: [],
+            };
+            for (const monthNum of months) {
+                const daysInMonth = new Date(yearVal, monthNum, 0).getDate();
+                const numberOfWeeks = Math.ceil(daysInMonth / 7);
+                const month: MonthlyGoal = {
+                    id: `m${monthNum}-${yearVal}-${idSuffix}`,
+                    title: `${yearVal}년 ${monthNum}월 목표`,
+                    description: "",
+                    dateDisplay: String(monthNum).padStart(2, "0"),
+                    progress: 0,
+                    children: [],
+                };
+                for (let w = 1; w <= numberOfWeeks; w++) {
+                    const weekStartDay = (w - 1) * 7 + 1;
+                    const weekEndDay = Math.min(w * 7, daysInMonth);
+                    const week: WeeklyGoal = {
+                        id: `w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
+                        title: `${yearVal}년 ${monthNum}월 ${w}주차 목표`,
+                        description: "",
+                        dateDisplay: `${String(monthNum).padStart(2, "0")}.${String(weekStartDay).padStart(2, "0")}-${String(monthNum).padStart(2, "0")}.${String(weekEndDay).padStart(2, "0")}`,
+                        progress: 0,
+                        children: [],
+                    };
+                    for (let d = weekStartDay; d <= weekEndDay; d++) {
+                        week.children.push({
+                            id: `d${d}-w${w}-m${monthNum}-${yearVal}-${idSuffix}`,
+                            title: `Day ${d}`,
+                            dateDisplay: `${yearVal}.${String(monthNum).padStart(2, "0")}.${String(d).padStart(2, "0")}`,
+                            progress: 0,
+                            todos: [],
+                        });
+                    }
+                    month.children.push(week);
+                }
+                half.children.push(month);
+            }
+            year.children.push(half);
+        };
+
+        buildHalf(monthsToInclude.filter((m) => m <= 6), "h1");
+        buildHalf(monthsToInclude.filter((m) => m > 6), "h2");
+        vision.children.push(year);
+    }
+    return vision;
+}
+
 export const MOCK_VISION = generateTree('1', "CPO (Chief Product Officer)", 2028);
 
 export const MOCK_VISIONS = [
