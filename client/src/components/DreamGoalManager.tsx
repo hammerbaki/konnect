@@ -177,11 +177,11 @@ function DotsMenu({
 
 /* ─── Inline Edit Input ─── */
 function InlineEdit({
-  value, onSave, onCancel, placeholder, className = "text-[11px]",
-}: { value: string; onSave: (v: string) => void; onCancel: () => void; placeholder?: string; className?: string; }) {
+  value, onSave, onCancel, placeholder, textClass,
+}: { value: string; onSave: (v: string) => void; onCancel: () => void; placeholder?: string; textClass?: string; }) {
   const [text, setText] = useState(value);
   return (
-    <div className="flex items-center gap-1.5 flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+    <div className="flex items-center gap-1 flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
       <input
         autoFocus
         value={text}
@@ -191,10 +191,13 @@ function InlineEdit({
           if (e.key === "Escape") onCancel();
         }}
         placeholder={placeholder}
-        className={cn("flex-1 min-w-0 border border-dream/40 rounded-md px-2 py-0.5 bg-white outline-none focus:border-dream text-foreground", className)}
+        className={cn(
+          "flex-1 min-w-0 bg-white/80 border-0 border-b border-dream/50 outline-none px-0.5 py-0 leading-snug",
+          textClass
+        )}
       />
-      <button onClick={() => onSave(text)} className="text-dream shrink-0"><Check size={13} /></button>
-      <button onClick={onCancel} className="text-muted-foreground shrink-0"><X size={13} /></button>
+      <button onClick={() => onSave(text)} className="text-dream shrink-0"><Check size={11} /></button>
+      <button onClick={onCancel} className="text-muted-foreground shrink-0"><X size={11} /></button>
     </div>
   );
 }
@@ -568,7 +571,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                 <ChevronRight size={13} className={cn("text-muted-foreground shrink-0 transition-transform", isYearOpen && "rotate-90")} />
                 <span className="font-bold text-[13px] text-foreground shrink-0">{year.dateDisplay ?? year.title}년</span>
                 {editingId === year.id ? (
-                  <InlineEdit value={year.title} onSave={(v) => handleEditNode(year.id, v)} onCancel={() => setEditingId(null)} placeholder="연간 목표..." />
+                  <InlineEdit value={year.title} onSave={(v) => handleEditNode(year.id, v)} onCancel={() => setEditingId(null)} placeholder="연간 목표..." textClass="text-[11px] text-muted-foreground" />
                 ) : (
                   <span className="text-[11px] text-muted-foreground flex-1 min-w-0 break-words">{year.description || year.title}</span>
                 )}
@@ -607,7 +610,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                             <ChevronRight size={11} className={cn("text-muted-foreground/60 shrink-0 transition-transform", isMonthOpen && "rotate-90")} />
                             <span className="text-[11px] font-semibold text-dream shrink-0 w-6">{kMonth}</span>
                             {editingId === month.id ? (
-                              <InlineEdit value={month.title} onSave={(v) => handleEditNode(month.id, v)} onCancel={() => setEditingId(null)} placeholder="월별 목표..." />
+                              <InlineEdit value={month.title} onSave={(v) => handleEditNode(month.id, v)} onCancel={() => setEditingId(null)} placeholder="월별 목표..." textClass="text-[11px] text-foreground" />
                             ) : (
                               <span className="text-[11px] text-foreground flex-1 min-w-0 break-words">{month.title}</span>
                             )}
@@ -647,7 +650,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                                         <ChevronRight size={10} className={cn("text-muted-foreground/40 shrink-0 transition-transform", isWeekOpen && "rotate-90")} />
 
                                         {editingId === week.id ? (
-                                          <InlineEdit value={week.title} onSave={(v) => handleEditNode(week.id, v)} onCancel={() => setEditingId(null)} placeholder="주별 목표..." />
+                                          <InlineEdit value={week.title} onSave={(v) => handleEditNode(week.id, v)} onCancel={() => setEditingId(null)} placeholder="주별 목표..." textClass="text-[11px] font-medium text-foreground" />
                                         ) : (
                                           <div className="flex-1 min-w-0">
                                             <span className="text-[11px] font-medium text-foreground">{week.title}</span>
