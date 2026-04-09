@@ -45,10 +45,9 @@ function LoadingSpinner() {
 
 export function RoleProtectedRoute({ children, slug, fallback }: RoleProtectedRouteProps) {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
-  const { canAccess, isLoading: accessLoading, visibility } = usePageAccess();
+  const { canAccess, isVisibilityPending, visibility } = usePageAccess();
 
-  // Only show spinner on initial auth check (when we have no user data yet)
-  // This prevents full-page spinner on every navigation
+  // Wait while auth is initializing
   if (authLoading && !user) {
     return <LoadingSpinner />;
   }
@@ -57,9 +56,10 @@ export function RoleProtectedRoute({ children, slug, fallback }: RoleProtectedRo
     return <Redirect to="/" />;
   }
 
-  // Don't show spinner for page access check if we already have visibility data cached
-  // or if user has a role (we can use role-based defaults while loading)
-  if (accessLoading && !visibility && !user?.role) {
+  // Wait if we have absolutely no visibility data (no cache + no API response yet).
+  // This prevents the "접근 권한이 없습니다" flash on first login before the API responds.
+  // Returning users skip this because localStorage cache seeds visibility immediately.
+  if (isVisibilityPending && !visibility) {
     return <LoadingSpinner />;
   }
 
