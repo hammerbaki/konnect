@@ -436,24 +436,9 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
   if (!vision) return null;
 
   const years = flattenYear(vision);
-  const overall = calcOverall(vision);
 
   return (
     <div className="mt-3">
-      {/* ── Overall donut row ── */}
-      <div className="flex items-center gap-3 mb-4 px-1">
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] text-muted-foreground truncate mb-0.5">{visionTitle}</p>
-          <p className="text-[10px] text-dream font-semibold">{overall}% 달성</p>
-        </div>
-        <div className="relative shrink-0">
-          <Donut pct={overall} size={44} stroke={4} />
-          <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-dream rotate-90">
-            {overall}%
-          </span>
-        </div>
-      </div>
-
       {/* ── Year → Month → Week accordion ── */}
       <div className="space-y-1.5">
         {years.map((year) => {

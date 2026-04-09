@@ -12,8 +12,6 @@ import {
   Plus,
   Loader2,
   Trash2,
-  Compass,
-  Flag,
   ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -56,14 +54,6 @@ function calcDDay(targetYear: number): number {
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function calcJourneyPct(createdAt: string | undefined, targetYear: number): number {
-  const start = createdAt ? new Date(createdAt) : new Date();
-  const end = new Date(targetYear, 10, 1);
-  const today = new Date();
-  const total = end.getTime() - start.getTime();
-  if (total <= 0) return 100;
-  return Math.min(100, Math.max(0, Math.round(((today.getTime() - start.getTime()) / total) * 100)));
-}
 
 export default function Dream() {
   const queryClient = useQueryClient();
@@ -292,7 +282,6 @@ export default function Dream() {
               {kompassList.map((kompass, i) => {
                 const isExpanded = expandedIds.has(kompass.id);
                 const dDay = calcDDay(kompass.targetYear);
-                const journeyPct = calcJourneyPct(kompass.createdAt, kompass.targetYear);
 
                 return (
                   <motion.div
@@ -337,14 +326,22 @@ export default function Dream() {
                         <p className="text-sm font-semibold line-clamp-1">{kompass.visionData.title}</p>
                       </div>
 
-                      {/* Progress */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="hidden sm:flex items-center gap-2">
-                          <div className="w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
-                            <div className="h-full bg-dream rounded-full transition-all" style={{ width: `${kompass.progress}%` }} />
-                          </div>
-                        </div>
-                        <span className="text-xs font-bold text-dream">{kompass.progress}%</span>
+                      {/* Progress — donut */}
+                      <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <svg width="36" height="36" className="-rotate-90">
+                          <circle cx="18" cy="18" r="14" strokeWidth="3.5" fill="none" className="stroke-secondary" />
+                          <circle
+                            cx="18" cy="18" r="14" strokeWidth="3.5" fill="none"
+                            stroke={kompass.progress >= 80 ? "#10b981" : kompass.progress >= 50 ? "#320e9d" : kompass.progress >= 20 ? "#f59e0b" : "#e2e8f0"}
+                            strokeDasharray={2 * Math.PI * 14}
+                            strokeDashoffset={2 * Math.PI * 14 * (1 - kompass.progress / 100)}
+                            strokeLinecap="round"
+                            style={{ transition: "stroke-dashoffset 0.6s ease" }}
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-dream rotate-90">
+                          {kompass.progress}%
+                        </span>
                       </div>
 
                       {/* Delete */}
@@ -377,30 +374,6 @@ export default function Dream() {
                           className="overflow-hidden"
                         >
                           <div className="px-4 pb-4">
-                            {/* Journey timeline */}
-                            <div className="mt-3 mb-4 bg-secondary/30 rounded-lg p-3">
-                              <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5">
-                                <span className="flex items-center gap-1">
-                                  <Calendar size={9} />
-                                  {kompass.createdAt
-                                    ? new Date(kompass.createdAt).toLocaleDateString("ko-KR", { year: "numeric", month: "short" })
-                                    : "시작"}
-                                </span>
-                                <span className="flex items-center gap-1 text-dream font-semibold">
-                                  <Flag size={9} /> {kompass.targetYear}년 목표
-                                </span>
-                              </div>
-                              <div className="relative h-1.5 bg-secondary rounded-full overflow-hidden">
-                                <div
-                                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-dream to-coral rounded-full"
-                                  style={{ width: `${journeyPct}%` }}
-                                />
-                              </div>
-                              <p className="text-[9px] text-muted-foreground mt-1">
-                                여정의 {journeyPct}% 경과 · {dDay > 0 ? `D-${dDay}` : "D-Day"}
-                              </p>
-                            </div>
-
                             {/* 3-layer goal accordion */}
                             <DreamGoalManager
                               kompassId={kompass.id}
