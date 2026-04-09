@@ -204,12 +204,18 @@ function WeekPanel({
   week,
   onToggleTodo,
   onAddTodo,
+  onEditTodo,
+  onDeleteTodo,
 }: {
   week: WeeklyGoal;
   onToggleTodo: (weekId: string, dayId: string, todoId: string) => void;
   onAddTodo: (weekId: string, text: string) => void;
+  onEditTodo: (weekId: string, dayId: string, todoId: string, newTitle: string) => void;
+  onDeleteTodo: (weekId: string, dayId: string, todoId: string) => void;
 }) {
   const [newTodo, setNewTodo] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
   const allTodos = week.children.flatMap((d) => d.todos.map((t) => ({ ...t, dayId: d.id })));
   const doneTodos = allTodos.filter((t) => t.completed).length;
 
@@ -218,6 +224,17 @@ function WeekPanel({
     if (!trimmed) return;
     onAddTodo(week.id, trimmed);
     setNewTodo("");
+  };
+
+  const startEdit = (todo: { id: string; title: string }) => {
+    setEditingId(todo.id);
+    setEditText(todo.title);
+  };
+
+  const commitEdit = (dayId: string, todoId: string) => {
+    const trimmed = editText.trim();
+    if (trimmed) onEditTodo(week.id, dayId, todoId, trimmed);
+    setEditingId(null);
   };
 
   return (
@@ -230,20 +247,66 @@ function WeekPanel({
 
       {/* Todo list */}
       {allTodos.map((todo) => (
-        <button
+        <div
           key={todo.id}
-          onClick={() => onToggleTodo(week.id, todo.dayId, todo.id)}
           className={cn(
-            "flex items-start gap-2 w-full text-left text-[12px] rounded-lg px-2 py-1.5 transition-colors group",
+            "flex items-center gap-2 w-full text-[12px] rounded-lg px-2 py-1.5 transition-colors group",
             todo.completed ? "text-muted-foreground" : "hover:bg-secondary text-foreground"
           )}
-          data-testid={`toggle-todo-${todo.id}`}
         >
-          {todo.completed
-            ? <Check size={13} className="text-emerald-500 mt-0.5 shrink-0" />
-            : <Circle size={13} className="text-muted-foreground/40 mt-0.5 shrink-0 group-hover:text-dream transition-colors" />}
-          <span className={cn("leading-snug flex-1", todo.completed && "line-through")}>{todo.title}</span>
-        </button>
+          {/* Check toggle */}
+          <button
+            onClick={() => onToggleTodo(week.id, todo.dayId, todo.id)}
+            className="shrink-0 mt-0.5"
+            data-testid={`toggle-todo-${todo.id}`}
+          >
+            {todo.completed
+              ? <Check size={13} className="text-emerald-500" />
+              : <Circle size={13} className="text-muted-foreground/40 group-hover:text-dream transition-colors" />}
+          </button>
+
+          {/* Title or inline edit */}
+          {editingId === todo.id ? (
+            <input
+              autoFocus
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitEdit(todo.dayId, todo.id);
+                if (e.key === "Escape") setEditingId(null);
+              }}
+              onBlur={() => commitEdit(todo.dayId, todo.id)}
+              className="flex-1 text-[12px] bg-white border border-dream/50 rounded px-1.5 py-0.5 outline-none"
+              data-testid={`input-edit-todo-${todo.id}`}
+            />
+          ) : (
+            <span className={cn("leading-snug flex-1 min-w-0 break-words", todo.completed && "line-through")}>
+              {todo.title}
+            </span>
+          )}
+
+          {/* Edit / Delete actions – visible on hover */}
+          {editingId !== todo.id && (
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+              <button
+                onClick={() => startEdit(todo)}
+                className="p-1 rounded hover:bg-dream/10 text-muted-foreground hover:text-dream transition-colors"
+                data-testid={`button-edit-todo-${todo.id}`}
+                title="수정"
+              >
+                <Pencil size={11} />
+              </button>
+              <button
+                onClick={() => onDeleteTodo(week.id, todo.dayId, todo.id)}
+                className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                data-testid={`button-delete-todo-${todo.id}`}
+                title="삭제"
+              >
+                <Trash2 size={11} />
+              </button>
+            </div>
+          )}
+        </div>
       ))}
 
       {/* Count */}
@@ -397,6 +460,37 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
               });
               recalcProgress(v);
               return;
+            }
+    });
+  };
+
+  const handleEditTodo = (weekId: string, dayId: string, todoId: string, newTitle: string) => {
+    updateVision((v) => {
+      for (const year of v.children)
+        for (const half of year.children)
+          for (const month of half.children)
+            for (const week of month.children) {
+              if (week.id !== weekId) continue;
+              const day = week.children.find((d) => d.id === dayId);
+              const todo = day?.todos.find((t) => t.id === todoId);
+              if (todo) { todo.title = newTitle; return; }
+            }
+    });
+  };
+
+  const handleDeleteTodo = (weekId: string, dayId: string, todoId: string) => {
+    updateVision((v) => {
+      for (const year of v.children)
+        for (const half of year.children)
+          for (const month of half.children)
+            for (const week of month.children) {
+              if (week.id !== weekId) continue;
+              const day = week.children.find((d) => d.id === dayId);
+              if (day) {
+                day.todos = day.todos.filter((t) => t.id !== todoId);
+                recalcProgress(v);
+                return;
+              }
             }
     });
   };
@@ -651,6 +745,8 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                                                   week={week}
                                                   onToggleTodo={handleToggleTodo}
                                                   onAddTodo={handleAddTodo}
+                                                  onEditTodo={handleEditTodo}
+                                                  onDeleteTodo={handleDeleteTodo}
                                                 />
                                               </motion.div>
                                             )}
