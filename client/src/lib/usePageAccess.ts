@@ -43,9 +43,10 @@ export function usePageAccess() {
       if (user?.id) writeCache(user.id, data);
       return data;
     },
-    // Seed with localStorage so the sidebar renders correctly on the very first paint
+    // Immediately seed from localStorage so the sidebar is correct on first render
+    // after auth resolves — eliminates the flash for all returning users
     initialData: () => (user?.id ? readCache(user.id) : undefined),
-    // Always treat initialData as stale so a background refetch happens immediately
+    // Treat initialData as immediately stale so a background refetch always fires
     initialDataUpdatedAt: 0,
     enabled: isAuthenticated && !!user?.id,
     staleTime: 10 * 60 * 1000,
@@ -56,24 +57,31 @@ export function usePageAccess() {
     retryDelay: 500,
   });
 
+  // userRole is derived from visibility (most up-to-date) or user.role from auth
   const userRole = visibility?.userRole ?? user?.role ?? 'user';
   const isStaffOrAdmin = userRole === 'staff' || userRole === 'admin';
 
+  // True only when we have NO data at all (no localStorage cache + no API response yet)
+  // This is the state where we must not show restricted pages
+  const visibilityPending = !visibility && !error;
+
   const canAccess = (slug: string): boolean => {
+    // Admin page: role-based only, never needs visibility API (same as 관리자 behaviour)
+    if (slug === '/admin') return isStaffOrAdmin;
+
     if (!visibility) {
-      // No data yet (true first visit, no localStorage cache)
-      // /admin is always staff/admin-only
-      if (slug === '/admin') return isStaffOrAdmin;
-      // Allow everything else while loading — localStorage cache will have
-      // prevented this state on all subsequent loads (see initialData above)
-      return true;
+      // No visibility data yet.
+      // Deny access to prevent restricted items from flashing into view.
+      // - Returning users: this state is skipped because localStorage initialData is used.
+      // - First-time users: items stay hidden until the API responds (~200 ms after auth).
+      return false;
     }
 
     if (slug in visibility.pages) {
       return visibility.pages[slug];
     }
 
-    // Pages not in config → staff/admin only
+    // Pages not listed in config → staff/admin only (safe default)
     return isStaffOrAdmin;
   };
 
@@ -81,9 +89,9 @@ export function usePageAccess() {
     canAccess,
     userRole,
     isStaffOrAdmin,
-    // isLoading is true only when we have NO data at all (no cache, no response yet)
+    // True only on a genuine "no data" state (first-ever load, no cache)
+    isVisibilityPending: visibilityPending,
     isLoading: isLoading && !visibility && !error,
-    isRefetching: isFetching && !!visibility,
     visibility,
     error,
   };
