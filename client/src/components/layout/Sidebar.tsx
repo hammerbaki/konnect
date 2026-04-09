@@ -123,10 +123,11 @@ export function Sidebar() {
     });
   }, [queryClient]);
 
-  // 핵심 신규 기능 (최상단 고정)
-  const featuredNavItems = [
-    { href: "/explore", slug: "/explore", icon: BookOpen, label: "학과/직업 탐색" },
+  // Production — 출시 서비스 (최상단 고정)
+  const productionNavItems = [
     { href: "/aptitude", slug: "/aptitude", icon: Brain, label: "진로 흥미 분석" },
+    { href: "/dream", slug: "/dream", icon: Star, label: "꿈 선언" },
+    { href: "/explore", slug: "/explore", icon: BookOpen, label: "학과/직업 탐색" },
   ];
 
   const coreNavItems = [
@@ -148,7 +149,6 @@ export function Sidebar() {
 
   // v3 꿈을 잇다 — 별도 섹션 (slug = href, filterItems 연동)
   const v3NavItemsRaw = [
-    { href: "/dream", slug: "/dream", icon: Star, label: "꿈 선언" },
     { href: "/boards", slug: "/boards", icon: LayoutGrid, label: "꿈 보드" },
     { href: "/stories", slug: "/stories", icon: PenLine, label: "스토리" },
     { href: "/reconnect", slug: "/reconnect", icon: Sunrise, label: "다시, 잇다" },
@@ -175,7 +175,7 @@ export function Sidebar() {
       return canAccess(item.slug);
     });
 
-  const filteredFeatured = filterItems(featuredNavItems);
+  const filteredProduction = filterItems(productionNavItems);
   const filteredCore = filterItems(coreNavItems);
   const filteredAI = filterItems(aiNavItems);
   const filteredExplore = filterItems(exploreNavItems);
@@ -275,17 +275,18 @@ export function Sidebar() {
       </div>
 
       <div className="flex-1 px-3 flex flex-col overflow-y-auto space-y-4 pb-2">
-        {/* ★ Featured — 신규 핵심 기능 (최상단) */}
-        {filteredFeatured.length > 0 && (
+
+        {/* ── 출시 서비스 ── */}
+        {filteredProduction.length > 0 && (
           <div>
             <div className="flex items-center gap-1.5 px-3 mb-1.5">
-              <p className="text-[10px] uppercase tracking-widest font-semibold text-dream">핵심 기능</p>
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-dream">서비스</p>
               <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-coral text-white px-1.5 py-0.5 rounded-full leading-none">
-                NEW
+                LIVE
               </span>
             </div>
             <div className="space-y-0.5">
-              {filteredFeatured.map((item) => {
+              {filteredProduction.map((item) => {
                 const Icon = item.icon;
                 const isActive = location === item.href || location.startsWith(item.href + "/");
                 return (
@@ -293,7 +294,7 @@ export function Sidebar() {
                     key={item.href}
                     href={item.href}
                     onMouseEnter={() => prefetchPageData(item.href)}
-                    data-testid={`link-featured-${item.slug.replace("/", "")}`}
+                    data-testid={`link-production-${item.slug.replace("/", "")}`}
                     className={cn(
                       "flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-all font-medium border",
                       isActive
@@ -303,19 +304,50 @@ export function Sidebar() {
                   >
                     <Icon className="h-4 w-4 flex-shrink-0" />
                     <span className="flex-1 truncate">{item.label}</span>
-                    <span className={cn(
-                      "inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none flex-shrink-0",
-                      isActive ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-600"
-                    )}>
-                      <span className="w-1.5 h-1.5 bg-current rounded-full animate-pulse" />
-                      DB
-                    </span>
                   </Link>
                 );
               })}
             </div>
           </div>
         )}
+
+        {/* 학습 도구 section */}
+        {filteredStudy.length > 0 && (
+        <div>
+          <div className="flex items-center gap-1.5 px-3 mb-1.5">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-dream">학습 도구</p>
+          </div>
+          <div className="space-y-0.5">
+            {filteredStudy.map((item) => {
+              const Icon = item.icon;
+              const isActive = location === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-all font-medium border",
+                    isActive
+                      ? "bg-dream text-white font-semibold border-dream shadow-sm"
+                      : "text-ink border-dream/20 bg-dream/5 hover:bg-dream/10 hover:border-dream/40"
+                  )}
+                  data-testid={`link-study-${item.href.replace("/", "")}`}
+                >
+                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="flex-1 truncate">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+        )}
+
+        {/* ── 개발 중 구분선 ── */}
+        <div className="flex items-center gap-2 px-1">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/50 flex-shrink-0">개발 중</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
 
         {/* Core section */}
         {filteredCore.length > 0 && (
@@ -404,40 +436,6 @@ export function Sidebar() {
             {filteredV3.map((item) => {
               const Icon = item.icon;
               const isActive = location === item.href || location.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
-                    isActive
-                      ? "bg-gold text-white font-semibold"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  )}
-                  data-testid={`link-v3-${item.href.replace("/", "")}`}
-                >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-        )}
-
-        {/* v3 학습 도구 section */}
-        {filteredStudy.length > 0 && (
-        <div>
-          <div className="flex items-center gap-1.5 px-3 mb-1.5">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-gold">학습 도구</p>
-            <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-gold text-white px-1.5 py-0.5 rounded-full leading-none">
-              v3
-            </span>
-          </div>
-          <div className="space-y-0.5">
-            {filteredStudy.map((item) => {
-              const Icon = item.icon;
-              const isActive = location === item.href;
               return (
                 <Link
                   key={item.href}
