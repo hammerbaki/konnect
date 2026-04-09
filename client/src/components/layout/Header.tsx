@@ -1,4 +1,4 @@
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, Coins } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +14,6 @@ import {
   SheetContent,
   SheetTrigger,
   SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { RedeemDialog } from "@/components/token/RedeemDialog";
@@ -38,7 +37,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 sm:h-[60px] items-center gap-2 sm:gap-4 bg-background/95 backdrop-blur-sm border-b border-border px-3 sm:px-4 md:px-8">
-      
+
       {/* Mobile Menu Trigger */}
       <div className="md:hidden">
         <Sheet>
@@ -63,41 +62,16 @@ export function Header() {
         </Link>
       </div>
 
-      {/* Desktop Search - Hidden for now */}
-      <div className="hidden flex-1">
-        <form>
-          <div className="relative max-w-[480px]">
-            <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="분석 결과, 목표, 트렌드 검색..."
-              className="w-full h-12 bg-card border-none pl-12 rounded-xl shadow-sm text-base placeholder:text-muted-foreground"
-            />
-          </div>
-        </form>
-      </div>
+      {/* Desktop spacer */}
       <div className="hidden md:block flex-1" />
 
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
-        {/* Desktop Points Display */}
-        <div className="hidden md:flex items-center mr-2 bg-card px-4 py-1.5 rounded-full border border-border shadow-sm" data-testid="header-points-display">
-          <span className="text-xs font-bold text-emerald-600" title="선물 학습권 (무료)">{giftPoints.toLocaleString()}번</span>
-          <span className="mx-2 text-border">|</span>
-          <span className="text-xs font-bold text-dream" title="유료 학습권">{credits.toLocaleString()}번</span>
-        </div>
-        {/* Mobile Token Display Compact */}
-        <div className="md:hidden flex items-center bg-card px-2.5 py-1.5 rounded-full border border-border shadow-sm" data-testid="header-points-display-mobile">
-          <span className="text-xs font-bold text-emerald-600">{giftPoints.toLocaleString()}번</span>
-          <span className="mx-1.5 text-border">|</span>
-          <span className="text-xs font-bold text-dream">{credits.toLocaleString()}번</span>
-        </div>
-
         <div className="hidden md:block">
-            <RedeemDialog />
+          <RedeemDialog />
         </div>
 
         <NotificationBell />
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 ml-1 p-0 overflow-hidden border-2 border-border shadow-sm">
@@ -111,37 +85,48 @@ export function Header() {
               <span className="sr-only">메뉴 열기</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 rounded-xl p-2 border border-border shadow-[0_8px_30px_rgba(50,14,157,0.1)]">
+          <DropdownMenuContent align="end" className="w-60 rounded-xl p-2 border border-border shadow-[0_8px_30px_rgba(50,14,157,0.1)]">
             <DropdownMenuLabel className="px-3 py-2 text-sm font-bold text-foreground">내 계정</DropdownMenuLabel>
+
+            {/* Token Balance */}
+            <div className="mx-1 mb-1 bg-secondary/60 rounded-lg px-3 py-2.5 flex items-center justify-between" data-testid="dropdown-token-balance">
+              <div className="flex items-center gap-1.5">
+                <Coins size={13} className="text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">학습권</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                <span className="text-emerald-600" title="선물 학습권 (무료)">{giftPoints.toLocaleString()}번</span>
+                <span className="text-border">|</span>
+                <span className="text-dream" title="유료 학습권">{credits.toLocaleString()}번</span>
+              </div>
+            </div>
+
             <DropdownMenuSeparator className="bg-border" />
-            
-            {/* Mobile Only Items */}
+
+            {/* Mobile Only: 학습권 충전 */}
             <div className="md:hidden">
-                <RedeemDialog>
-                  <button className="w-full text-left rounded-lg px-3 py-2.5 font-medium cursor-pointer text-muted-foreground hover:bg-secondary hover:text-foreground text-sm">
-                      학습권 충전
-                  </button>
-                </RedeemDialog>
-                 <DropdownMenuSeparator className="bg-border" />
+              <RedeemDialog>
+                <button className="w-full text-left rounded-lg px-3 py-2.5 font-medium cursor-pointer text-muted-foreground hover:bg-secondary hover:text-foreground text-sm">
+                  학습권 충전
+                </button>
+              </RedeemDialog>
+              <DropdownMenuSeparator className="bg-border" />
             </div>
 
             <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 text-muted-foreground focus:bg-secondary focus:text-foreground font-medium cursor-pointer">
-              <Link href="/profile">
-                프로필 설정
-              </Link>
+              <Link href="/profile">프로필 설정</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild className="rounded-lg px-3 py-2.5 text-muted-foreground focus:bg-secondary focus:text-foreground font-medium cursor-pointer">
-              <Link href="/settings">
-                환경설정
-              </Link>
+              <Link href="/settings">환경설정</Link>
             </DropdownMenuItem>
             <RedeemDialog>
               <button className="w-full text-left rounded-lg px-3 py-2.5 text-muted-foreground hover:bg-secondary hover:text-foreground font-medium cursor-pointer text-sm">
                 학습권 충전
               </button>
             </RedeemDialog>
+
             <DropdownMenuSeparator className="bg-border" />
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={handleLogout}
               className="rounded-lg px-3 py-2.5 text-destructive focus:bg-red-50 focus:text-destructive font-medium cursor-pointer"
             >
