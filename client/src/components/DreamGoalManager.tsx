@@ -43,24 +43,39 @@ function flattenYear(vision: VisionGoal): FlatYear[] {
   }));
 }
 
+function pct(done: number, total: number) {
+  return total > 0 ? Math.round((done / total) * 100) : 0;
+}
+
 function recalcProgress(v: VisionGoal): void {
   v.children.forEach((year) => {
     year.children.forEach((half) => {
       half.children.forEach((month) => {
         month.children.forEach((week) => {
+          // Day: done / total todos for that day
           week.children.forEach((day) => {
             const done = day.todos.filter((t) => t.completed).length;
-            day.progress = day.todos.length > 0 ? Math.round((done / day.todos.length) * 100) : 0;
+            day.progress = pct(done, day.todos.length);
           });
-          week.progress = Math.round(week.children.reduce((s, d) => s + d.progress, 0) / (week.children.length || 1));
+          // Week: flat count of ALL todos across every day in the week
+          const wTodos = week.children.flatMap((d) => d.todos);
+          week.progress = pct(wTodos.filter((t) => t.completed).length, wTodos.length);
         });
-        month.progress = Math.round(month.children.reduce((s, w) => s + w.progress, 0) / (month.children.length || 1));
+        // Month: flat count of ALL todos across every week → day in the month
+        const mTodos = month.children.flatMap((w) => w.children.flatMap((d) => d.todos));
+        month.progress = pct(mTodos.filter((t) => t.completed).length, mTodos.length);
       });
-      half.progress = Math.round(half.children.reduce((s, m) => s + m.progress, 0) / (half.children.length || 1));
+      // Half: flat count all the way down
+      const hTodos = half.children.flatMap((m) => m.children.flatMap((w) => w.children.flatMap((d) => d.todos)));
+      half.progress = pct(hTodos.filter((t) => t.completed).length, hTodos.length);
     });
-    year.progress = Math.round(year.children.reduce((s, h) => s + h.progress, 0) / (year.children.length || 1));
+    // Year: flat count all the way down
+    const yTodos = year.children.flatMap((h) => h.children.flatMap((m) => m.children.flatMap((w) => w.children.flatMap((d) => d.todos))));
+    year.progress = pct(yTodos.filter((t) => t.completed).length, yTodos.length);
   });
-  v.progress = Math.round(v.children.reduce((s, y) => s + y.progress, 0) / (v.children.length || 1));
+  // Vision root
+  const vTodos = v.children.flatMap((y) => y.children.flatMap((h) => h.children.flatMap((m) => m.children.flatMap((w) => w.children.flatMap((d) => d.todos)))));
+  v.progress = pct(vTodos.filter((t) => t.completed).length, vTodos.length);
 }
 
 function calcOverall(v: VisionGoal): number {
