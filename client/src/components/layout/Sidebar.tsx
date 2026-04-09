@@ -280,38 +280,21 @@ export function Sidebar() {
         {/* ── 스켈레톤: visibility 로딩 중 (최초 방문, 캐시 없음) ── */}
         {isVisibilityPending && (
           <div className="space-y-4 pt-1">
-            {/* 서비스 섹션 스켈레톤 */}
+            {/* 대시보드 (최상단) 스켈레톤 */}
+            <div className="space-y-0.5">
+              <Skeleton className="h-9 w-full rounded-md" />
+            </div>
+            {/* 서비스 항목 스켈레톤 (라벨 없음) */}
+            <div className="space-y-0.5">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-9 w-full rounded-md" />
+              ))}
+            </div>
+            {/* 커뮤니티 섹션 스켈레톤 */}
             <div>
-              <div className="flex items-center gap-2 px-3 mb-1.5">
-                <Skeleton className="h-2.5 w-10" />
-                <Skeleton className="h-4 w-8 rounded-full" />
-              </div>
+              <Skeleton className="h-2.5 w-14 mx-3 mb-1.5" />
               <div className="space-y-0.5">
                 {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-9 w-full rounded-md" />
-                ))}
-              </div>
-            </div>
-            {/* 학습 도구 섹션 스켈레톤 */}
-            <div>
-              <Skeleton className="h-2.5 w-16 mx-3 mb-1.5" />
-              <div className="space-y-0.5">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-9 w-full rounded-md" />
-                ))}
-              </div>
-            </div>
-            {/* 구분선 스켈레톤 */}
-            <div className="flex items-center gap-2 px-1">
-              <div className="flex-1 h-px bg-border" />
-              <Skeleton className="h-2 w-12" />
-              <div className="flex-1 h-px bg-border" />
-            </div>
-            {/* 홈 섹션 스켈레톤 */}
-            <div>
-              <Skeleton className="h-2.5 w-6 mx-3 mb-1.5" />
-              <div className="space-y-0.5">
-                {[...Array(2)].map((_, i) => (
                   <Skeleton key={i} className="h-9 w-full rounded-md" />
                 ))}
               </div>
@@ -319,15 +302,18 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* ── 출시 서비스 ── */}
+        {/* Core section — 대시보드 최상단 */}
+        {filteredCore.length > 0 && (
+          <div>
+            <div className="space-y-0.5">
+              {filteredCore.map(renderNavItem)}
+            </div>
+          </div>
+        )}
+
+        {/* ── 출시 서비스 (타이틀 없음) ── */}
         {filteredProduction.length > 0 && (
           <div>
-            <div className="flex items-center gap-1.5 px-3 mb-1.5">
-              <p className="text-[10px] uppercase tracking-widest font-semibold text-dream">서비스</p>
-              <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-coral text-white px-1.5 py-0.5 rounded-full leading-none">
-                LIVE
-              </span>
-            </div>
             <div className="space-y-0.5">
               {filteredProduction.map((item) => {
                 const Icon = item.icon;
@@ -358,7 +344,7 @@ export function Sidebar() {
         {filteredStudy.length > 0 && (
         <div>
           <div className="flex items-center gap-1.5 px-3 mb-1.5">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-dream">학습 도구</p>
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-dream">커뮤니티</p>
           </div>
           <div className="space-y-0.5">
             {filteredStudy.map((item) => {
@@ -394,17 +380,6 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* Core section */}
-        {filteredCore.length > 0 && (
-          <div>
-            <p className="text-[10px] uppercase tracking-widest font-semibold px-3 mb-1.5 text-dream">
-              홈
-            </p>
-            <div className="space-y-0.5">
-              {filteredCore.map(renderNavItem)}
-            </div>
-          </div>
-        )}
 
         {/* AI Tools section */}
         {filteredAI.length > 0 && (
