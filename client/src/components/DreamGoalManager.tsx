@@ -691,18 +691,18 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
   return (
     <div className="mt-3">
       {/* ── Year → Month → Week accordion (Notion-style flat rows) ── */}
-      <div className="space-y-2">
+      <div className="border border-border/70 rounded-xl overflow-hidden divide-y divide-border/30">
         {years.map((year) => {
           const isYearOpen = expandedYearIds.has(year.id);
           return (
-            /* Year block: outer border only – no nested card borders */
-            <div key={year.id} className="rounded-xl border border-border overflow-hidden">
+            /* Year: flat accordion row — no individual card border */
+            <div key={year.id}>
 
               {/* ── Year header ── */}
               <div
                 className={cn(
                   "flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors select-none",
-                  isYearOpen ? "bg-dream/5" : "hover:bg-secondary/40"
+                  isYearOpen ? "bg-dream/5" : "hover:bg-secondary/30"
                 )}
                 onClick={() => setExpandedYearIds((p) => toggle(p, year.id))}
                 data-testid={`accordion-year-${year.id}`}
