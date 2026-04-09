@@ -29,6 +29,9 @@ import {
   Sunrise,
   TrendingUp,
   Route,
+  Monitor,
+  BookMarked,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
@@ -151,6 +154,13 @@ export function Sidebar() {
     { href: "/reconnect", icon: Sunrise, label: "다시, 잇다" },
     { href: "/journey", icon: Route, label: "나의 여정" },
     { href: "/growth", icon: TrendingUp, label: "성장 대시보드" },
+  ];
+
+  // v3 학습 도구 섹션
+  const studyNavItems = [
+    { href: "/lectures", icon: Monitor, label: "인강 비교" },
+    { href: "/workbooks", icon: BookMarked, label: "문제집 리뷰" },
+    { href: "/academies", icon: MapPin, label: "학원 찾기" },
   ];
 
   const allBottomItems = [
@@ -391,6 +401,38 @@ export function Sidebar() {
             {v3NavItems.map((item) => {
               const Icon = item.icon;
               const isActive = location === item.href || location.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
+                    isActive
+                      ? "bg-gold text-white font-semibold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  )}
+                  data-testid={`link-v3-${item.href.replace("/", "")}`}
+                >
+                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* v3 학습 도구 section */}
+        <div>
+          <div className="flex items-center gap-1.5 px-3 mb-1.5">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-gold">학습 도구</p>
+            <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-gold text-white px-1.5 py-0.5 rounded-full leading-none">
+              v3
+            </span>
+          </div>
+          <div className="space-y-0.5">
+            {studyNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location === item.href;
               return (
                 <Link
                   key={item.href}

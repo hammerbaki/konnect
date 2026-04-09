@@ -43,6 +43,9 @@ const Stories = lazy(() => import("./pages/Stories"));
 const ReConnect = lazy(() => import("./pages/ReConnect"));
 const Journey = lazy(() => import("./pages/Journey"));
 const Growth = lazy(() => import("./pages/Growth"));
+const Lectures = lazy(() => import("./pages/Lectures"));
+const Workbooks = lazy(() => import("./pages/Workbooks"));
+const Academies = lazy(() => import("./pages/Academies"));
 
 function LoadingSpinner() {
   return (
@@ -221,6 +224,16 @@ function AuthenticatedRoutes() {
         </Route>
         <Route path="/growth">
           {(params) => <ProtectedRoute component={Growth} params={params} />}
+        </Route>
+        {/* v3 학습 도구 페이지 */}
+        <Route path="/lectures">
+          {(params) => <ProtectedRoute component={Lectures} params={params} />}
+        </Route>
+        <Route path="/workbooks">
+          {(params) => <ProtectedRoute component={Workbooks} params={params} />}
+        </Route>
+        <Route path="/academies">
+          {(params) => <ProtectedRoute component={Academies} params={params} />}
         </Route>
         <Route component={NotFound} />
       </Switch>
