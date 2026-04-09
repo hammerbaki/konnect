@@ -146,21 +146,21 @@ export function Sidebar() {
     { href: "/explorer", slug: "/explorer", icon: Search, label: "직업 탐색" },
   ];
 
-  // v3 꿈을 잇다 — 별도 섹션 (프론트만 있는 신규 페이지들)
-  const v3NavItems = [
-    { href: "/dream", icon: Star, label: "꿈 선언" },
-    { href: "/boards", icon: LayoutGrid, label: "꿈 보드" },
-    { href: "/stories", icon: PenLine, label: "스토리" },
-    { href: "/reconnect", icon: Sunrise, label: "다시, 잇다" },
-    { href: "/journey", icon: Route, label: "나의 여정" },
-    { href: "/growth", icon: TrendingUp, label: "성장 대시보드" },
+  // v3 꿈을 잇다 — 별도 섹션 (slug = href, filterItems 연동)
+  const v3NavItemsRaw = [
+    { href: "/dream", slug: "/dream", icon: Star, label: "꿈 선언" },
+    { href: "/boards", slug: "/boards", icon: LayoutGrid, label: "꿈 보드" },
+    { href: "/stories", slug: "/stories", icon: PenLine, label: "스토리" },
+    { href: "/reconnect", slug: "/reconnect", icon: Sunrise, label: "다시, 잇다" },
+    { href: "/journey", slug: "/journey", icon: Route, label: "나의 여정" },
+    { href: "/growth", slug: "/growth", icon: TrendingUp, label: "성장 대시보드" },
   ];
 
-  // v3 학습 도구 섹션
-  const studyNavItems = [
-    { href: "/lectures", icon: Monitor, label: "인강 비교" },
-    { href: "/workbooks", icon: BookMarked, label: "문제집 리뷰" },
-    { href: "/academies", icon: MapPin, label: "학원 찾기" },
+  // v3 학습 도구 섹션 (slug = href, filterItems 연동)
+  const studyNavItemsRaw = [
+    { href: "/lectures", slug: "/lectures", icon: Monitor, label: "인강 비교" },
+    { href: "/workbooks", slug: "/workbooks", icon: BookMarked, label: "문제집 리뷰" },
+    { href: "/academies", slug: "/academies", icon: MapPin, label: "학원 찾기" },
   ];
 
   const allBottomItems = [
@@ -180,6 +180,8 @@ export function Sidebar() {
   const filteredAI = filterItems(aiNavItems);
   const filteredExplore = filterItems(exploreNavItems);
   const bottomItems = filterItems(allBottomItems);
+  const filteredV3 = filterItems(v3NavItemsRaw);
+  const filteredStudy = filterItems(studyNavItemsRaw);
 
   const isProfileActive = location.startsWith("/profile");
 
@@ -390,6 +392,7 @@ export function Sidebar() {
         )}
 
         {/* v3 꿈을 잇다 section */}
+        {filteredV3.length > 0 && (
         <div>
           <div className="flex items-center gap-1.5 px-3 mb-1.5">
             <p className="text-[10px] uppercase tracking-widest font-semibold text-gold">꿈을 잇다</p>
@@ -398,7 +401,7 @@ export function Sidebar() {
             </span>
           </div>
           <div className="space-y-0.5">
-            {v3NavItems.map((item) => {
+            {filteredV3.map((item) => {
               const Icon = item.icon;
               const isActive = location === item.href || location.startsWith(item.href + "/");
               return (
@@ -420,8 +423,10 @@ export function Sidebar() {
             })}
           </div>
         </div>
+        )}
 
         {/* v3 학습 도구 section */}
+        {filteredStudy.length > 0 && (
         <div>
           <div className="flex items-center gap-1.5 px-3 mb-1.5">
             <p className="text-[10px] uppercase tracking-widest font-semibold text-gold">학습 도구</p>
@@ -430,7 +435,7 @@ export function Sidebar() {
             </span>
           </div>
           <div className="space-y-0.5">
-            {studyNavItems.map((item) => {
+            {filteredStudy.map((item) => {
               const Icon = item.icon;
               const isActive = location === item.href;
               return (
@@ -452,6 +457,7 @@ export function Sidebar() {
             })}
           </div>
         </div>
+        )}
 
         {/* Managed Groups section */}
         {managedGroups.length > 0 && (

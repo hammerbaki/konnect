@@ -452,6 +452,17 @@ export const DEFAULT_PAGE_CONFIGS: Record<string, { title: string; defaultRoles:
   '/settings': { title: '설정', defaultRoles: ['user', 'staff', 'admin'] },
   '/recharge': { title: '진로분석 학습권', defaultRoles: ['user', 'staff', 'admin'] },
   '/admin': { title: '관리자', defaultRoles: ['staff', 'admin'], isLocked: true },
+  // v3 꿈을 잇다 페이지
+  '/dream': { title: '꿈 선언', defaultRoles: ['user', 'staff', 'admin'] },
+  '/boards': { title: '꿈 보드', defaultRoles: ['user', 'staff', 'admin'] },
+  '/stories': { title: '스토리', defaultRoles: ['user', 'staff', 'admin'] },
+  '/reconnect': { title: '다시, 잇다', defaultRoles: ['user', 'staff', 'admin'] },
+  '/journey': { title: '나의 여정', defaultRoles: ['user', 'staff', 'admin'] },
+  '/growth': { title: '성장 대시보드', defaultRoles: ['user', 'staff', 'admin'] },
+  // v3 학습 도구 페이지
+  '/lectures': { title: '인강 비교', defaultRoles: ['user', 'staff', 'admin'] },
+  '/workbooks': { title: '문제집 리뷰', defaultRoles: ['user', 'staff', 'admin'] },
+  '/academies': { title: '학원 찾기', defaultRoles: ['user', 'staff', 'admin'] },
 };
 
 // Default roles for newly created pages not in DEFAULT_PAGE_CONFIGS
