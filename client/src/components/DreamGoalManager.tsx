@@ -4,7 +4,7 @@
  * Features: donut progress, Korean months, add todos, edit/delete all levels
  */
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useDragControls } from "framer-motion";
 import {
   ChevronDown, ChevronRight, Check, Circle, Loader2, Plus,
   MoreHorizontal, Pencil, Trash2, X,
@@ -198,6 +198,8 @@ function EditDrawer({
   onClose: () => void;
 }) {
   const [text, setText] = useState(item.value);
+  const dragControls = useDragControls();
+
   return (
     <>
       <motion.div
@@ -206,11 +208,27 @@ function EditDrawer({
         onClick={onClose}
       />
       <motion.div
+        drag="y"
+        dragControls={dragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0 }}
+        dragElastic={{ top: 0, bottom: 0.4 }}
+        onDragEnd={(_, info) => {
+          if (info.offset.y > 100 || info.velocity.y > 400) onClose();
+        }}
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 28, stiffness: 320 }}
         className="fixed bottom-0 left-0 right-0 z-[200] bg-white rounded-t-2xl px-4 pt-3 pb-10 shadow-2xl"
       >
-        <div className="w-10 h-1 bg-border rounded-full mx-auto mb-3" />
+        {/* Drag handle — touch here to drag down & close */}
+        <div
+          className="flex justify-center pb-3 cursor-grab active:cursor-grabbing touch-none"
+          onPointerDown={(e) => dragControls.start(e)}
+          onClick={onClose}
+        >
+          <div className="w-10 h-1 bg-border rounded-full" />
+        </div>
+
         <p className="text-[13px] font-semibold text-foreground mb-3">{item.label} 수정</p>
         <textarea
           autoFocus
