@@ -582,7 +582,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                     placeholder="연간 목표..."
                   />
                 ) : (
-                  <span className="text-[12px] text-muted-foreground flex-1 min-w-0 truncate">
+                  <span className="text-[12px] text-muted-foreground flex-1 min-w-0 break-words">
                     {year.description || year.title}
                   </span>
                 )}
@@ -644,7 +644,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                                   placeholder="월별 목표..."
                                 />
                               ) : (
-                                <span className="text-[12px] text-foreground flex-1 min-w-0 truncate">
+                                <span className="text-[12px] text-foreground flex-1 min-w-0 break-words">
                                   {month.title}
                                 </span>
                               )}
@@ -704,7 +704,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                                                 placeholder="주별 목표..."
                                               />
                                             ) : (
-                                              <span className="text-[12px] font-medium flex-1 min-w-0 truncate text-foreground">
+                                              <span className="text-[12px] font-medium flex-1 min-w-0 break-words text-foreground">
                                                 {week.title}
                                               </span>
                                             )}
