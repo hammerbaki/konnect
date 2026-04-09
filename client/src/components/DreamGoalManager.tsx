@@ -238,9 +238,9 @@ function WeekPanel({
   };
 
   return (
-    <div className="mx-3 mb-3 mt-1 bg-secondary/20 rounded-xl p-3 space-y-1.5">
+    <div className="pl-[3.25rem] pr-3 pb-3 pt-1.5 space-y-1 bg-secondary/10">
       {week.description && (
-        <p className="text-[11px] text-muted-foreground border-l-2 border-dream/30 pl-2 mb-2 leading-relaxed">
+        <p className="text-[10px] text-muted-foreground border-l-2 border-dream/30 pl-2 mb-2 leading-relaxed">
           {week.description}
         </p>
       )}
@@ -548,220 +548,154 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
 
   return (
     <div className="mt-3">
-      {/* ── Year → Month → Week accordion ── */}
-      <div className="space-y-1.5">
+      {/* ── Year → Month → Week accordion (Notion-style flat rows) ── */}
+      <div className="space-y-2">
         {years.map((year) => {
           const isYearOpen = expandedYearIds.has(year.id);
           return (
+            /* Year block: outer border only – no nested card borders */
             <div key={year.id} className="rounded-xl border border-border overflow-hidden">
 
               {/* ── Year header ── */}
               <div
                 className={cn(
                   "flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors select-none",
-                  isYearOpen ? "bg-dream/5" : "hover:bg-secondary/50"
+                  isYearOpen ? "bg-dream/5" : "hover:bg-secondary/40"
                 )}
                 onClick={() => setExpandedYearIds((p) => toggle(p, year.id))}
                 data-testid={`accordion-year-${year.id}`}
               >
-                <ChevronRight
-                  size={14} className={cn("text-muted-foreground shrink-0 transition-transform", isYearOpen && "rotate-90")}
-                />
-
-                {/* Year number */}
-                <span className="font-bold text-sm text-foreground shrink-0">
-                  {year.dateDisplay ?? year.title}년
-                </span>
-
-                {/* Goal text — editable */}
+                <ChevronRight size={13} className={cn("text-muted-foreground shrink-0 transition-transform", isYearOpen && "rotate-90")} />
+                <span className="font-bold text-[13px] text-foreground shrink-0">{year.dateDisplay ?? year.title}년</span>
                 {editingId === year.id ? (
-                  <InlineEdit
-                    value={year.title}
-                    onSave={(v) => handleEditNode(year.id, v)}
-                    onCancel={() => setEditingId(null)}
-                    placeholder="연간 목표..."
-                  />
+                  <InlineEdit value={year.title} onSave={(v) => handleEditNode(year.id, v)} onCancel={() => setEditingId(null)} placeholder="연간 목표..." />
                 ) : (
-                  <span className="text-[12px] text-muted-foreground flex-1 min-w-0 break-words">
-                    {year.description || year.title}
-                  </span>
+                  <span className="text-[11px] text-muted-foreground flex-1 min-w-0 break-words">{year.description || year.title}</span>
                 )}
-
-                {/* Donut */}
                 <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <Donut pct={year.progress} size={34} stroke={3} />
-                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-dream">
-                    {year.progress}%
-                  </span>
+                  <Donut pct={year.progress} size={32} stroke={3} />
+                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-dream">{year.progress}%</span>
                 </div>
-
-                {/* Three dots */}
                 <div onClick={(e) => e.stopPropagation()}>
-                  <DotsMenu
-                    onEdit={() => setEditingId(year.id)}
-                    onDelete={() => handleDeleteYear(year.id)}
-                  />
+                  <DotsMenu onEdit={() => setEditingId(year.id)} onDelete={() => handleDeleteYear(year.id)} />
                 </div>
               </div>
 
-              {/* ── Months ── */}
+              {/* ── Months: flat rows, same width, left-border shows depth ── */}
               <AnimatePresence>
                 {isYearOpen && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
+                    className="overflow-hidden divide-y divide-border/20"
                   >
-                    <div className="px-2 pb-2 pt-1 space-y-1">
-                      {year.months.map((month, monthIdx) => {
-                        const isMonthOpen = expandedMonthIds.has(month.id);
-                        const kMonth = koreanMonth(month.dateDisplay, monthIdx);
-                        return (
-                          <div key={month.id} className="rounded-lg border border-border/40">
+                    {year.months.map((month, monthIdx) => {
+                      const isMonthOpen = expandedMonthIds.has(month.id);
+                      const kMonth = koreanMonth(month.dateDisplay, monthIdx);
+                      return (
+                        <div key={month.id}>
 
-                            {/* ── Month header ── */}
-                            <div
-                              className={cn(
-                                "flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors select-none",
-                                isMonthOpen ? "bg-dream/5" : "hover:bg-secondary/30"
-                              )}
-                              onClick={() => setExpandedMonthIds((p) => toggle(p, month.id))}
-                              data-testid={`accordion-month-${month.id}`}
-                            >
-                              <ChevronRight
-                                size={12} className={cn("text-muted-foreground/60 shrink-0 transition-transform", isMonthOpen && "rotate-90")}
-                              />
-
-                              {/* Korean month */}
-                              <span className="text-[12px] font-semibold text-dream/80 shrink-0 w-7">{kMonth}</span>
-
-                              {/* Goal text */}
-                              {editingId === month.id ? (
-                                <InlineEdit
-                                  value={month.title}
-                                  onSave={(v) => handleEditNode(month.id, v)}
-                                  onCancel={() => setEditingId(null)}
-                                  placeholder="월별 목표..."
-                                />
-                              ) : (
-                                <span className="text-[12px] text-foreground flex-1 min-w-0 break-words">
-                                  {month.title}
-                                </span>
-                              )}
-
-                              {/* Donut */}
-                              <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-                                <Donut pct={month.progress} size={30} stroke={2.5} />
-                                <span className="absolute inset-0 flex items-center justify-center text-[7px] font-bold text-dream">
-                                  {month.progress}%
-                                </span>
-                              </div>
-
-                              {/* Three dots */}
-                              <div onClick={(e) => e.stopPropagation()}>
-                                <DotsMenu
-                                  onEdit={() => setEditingId(month.id)}
-                                  onDelete={() => handleDeleteMonth(month.id)}
-                                />
-                              </div>
+                          {/* ── Month header: pl-7, left colored border for depth ── */}
+                          <div
+                            className={cn(
+                              "flex items-center gap-2 pl-7 pr-3 py-2 cursor-pointer transition-colors select-none border-l-2",
+                              isMonthOpen ? "bg-dream/[0.03] border-l-dream/50" : "hover:bg-secondary/20 border-l-dream/15"
+                            )}
+                            onClick={() => setExpandedMonthIds((p) => toggle(p, month.id))}
+                            data-testid={`accordion-month-${month.id}`}
+                          >
+                            <ChevronRight size={11} className={cn("text-muted-foreground/60 shrink-0 transition-transform", isMonthOpen && "rotate-90")} />
+                            <span className="text-[11px] font-semibold text-dream shrink-0 w-6">{kMonth}</span>
+                            {editingId === month.id ? (
+                              <InlineEdit value={month.title} onSave={(v) => handleEditNode(month.id, v)} onCancel={() => setEditingId(null)} placeholder="월별 목표..." />
+                            ) : (
+                              <span className="text-[11px] text-foreground flex-1 min-w-0 break-words">{month.title}</span>
+                            )}
+                            <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <Donut pct={month.progress} size={28} stroke={2.5} />
+                              <span className="absolute inset-0 flex items-center justify-center text-[7px] font-bold text-dream">{month.progress}%</span>
                             </div>
-
-                            {/* ── Weeks ── */}
-                            <AnimatePresence>
-                              {isMonthOpen && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.16 }}
-                                  className="overflow-hidden"
-                                >
-                                  <div className="px-2 pb-2 pt-1 space-y-1">
-                                    {month.weeks.map((week) => {
-                                      const isWeekOpen = expandedWeekIds.has(week.id);
-                                      const allTodos = week.children.flatMap((d) => d.todos);
-                                      const doneTodos = allTodos.filter((t) => t.completed).length;
-                                      return (
-                                        <div key={week.id} className="rounded-lg border border-border/30 bg-white">
-
-                                          {/* Week header */}
-                                          <div
-                                            className={cn(
-                                              "flex items-center gap-2 px-2.5 py-1.5 cursor-pointer select-none transition-colors",
-                                              isWeekOpen ? "bg-dream/3" : "hover:bg-secondary/20"
-                                            )}
-                                            onClick={() => setExpandedWeekIds((p) => toggle(p, week.id))}
-                                            data-testid={`accordion-week-${week.id}`}
-                                          >
-                                            <ChevronRight
-                                              size={11} className={cn("text-muted-foreground/50 shrink-0 transition-transform", isWeekOpen && "rotate-90")}
-                                            />
-
-                                            {/* Title */}
-                                            {editingId === week.id ? (
-                                              <InlineEdit
-                                                value={week.title}
-                                                onSave={(v) => handleEditNode(week.id, v)}
-                                                onCancel={() => setEditingId(null)}
-                                                placeholder="주별 목표..."
-                                              />
-                                            ) : (
-                                              <span className="text-[12px] font-medium flex-1 min-w-0 break-words text-foreground">
-                                                {week.title}
-                                              </span>
-                                            )}
-
-                                            {/* Count */}
-                                            {allTodos.length > 0 && (
-                                              <span className="text-[10px] text-muted-foreground shrink-0">
-                                                {doneTodos}/{allTodos.length}
-                                              </span>
-                                            )}
-
-                                            {/* Donut */}
-                                            <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-                                              <Donut pct={week.progress} size={26} stroke={2} />
-                                              <span className="absolute inset-0 flex items-center justify-center text-[6px] font-bold text-dream">
-                                                {week.progress}%
-                                              </span>
-                                            </div>
-
-                                            {/* Three dots */}
-                                            <div onClick={(e) => e.stopPropagation()}>
-                                              <DotsMenu
-                                                onEdit={() => setEditingId(week.id)}
-                                                onDelete={() => handleDeleteWeek(week.id)}
-                                              />
-                                            </div>
-                                          </div>
-
-                                          {/* Week content */}
-                                          <AnimatePresence>
-                                            {isWeekOpen && (
-                                              <motion.div
-                                                initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                                                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.14 }}
-                                                className="overflow-hidden"
-                                              >
-                                                <WeekPanel
-                                                  week={week}
-                                                  onToggleTodo={handleToggleTodo}
-                                                  onAddTodo={handleAddTodo}
-                                                  onEditTodo={handleEditTodo}
-                                                  onDeleteTodo={handleDeleteTodo}
-                                                />
-                                              </motion.div>
-                                            )}
-                                          </AnimatePresence>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <DotsMenu onEdit={() => setEditingId(month.id)} onDelete={() => handleDeleteMonth(month.id)} />
+                            </div>
                           </div>
-                        );
-                      })}
-                    </div>
+
+                          {/* ── Weeks: flat rows, deeper indent, lighter border ── */}
+                          <AnimatePresence>
+                            {isMonthOpen && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.16 }}
+                                className="overflow-hidden divide-y divide-border/10"
+                              >
+                                {month.weeks.map((week) => {
+                                  const isWeekOpen = expandedWeekIds.has(week.id);
+                                  const allTodos = week.children.flatMap((d) => d.todos);
+                                  const doneTodos = allTodos.filter((t) => t.completed).length;
+                                  return (
+                                    <div key={week.id}>
+
+                                      {/* Week header: pl-12, thinner left border */}
+                                      <div
+                                        className={cn(
+                                          "flex items-center gap-2 pl-12 pr-3 py-1.5 cursor-pointer select-none transition-colors border-l-2",
+                                          isWeekOpen ? "bg-secondary/30 border-l-dream/30" : "hover:bg-secondary/10 border-l-transparent"
+                                        )}
+                                        onClick={() => setExpandedWeekIds((p) => toggle(p, week.id))}
+                                        data-testid={`accordion-week-${week.id}`}
+                                      >
+                                        <ChevronRight size={10} className={cn("text-muted-foreground/40 shrink-0 transition-transform", isWeekOpen && "rotate-90")} />
+
+                                        {editingId === week.id ? (
+                                          <InlineEdit value={week.title} onSave={(v) => handleEditNode(week.id, v)} onCancel={() => setEditingId(null)} placeholder="주별 목표..." />
+                                        ) : (
+                                          <div className="flex-1 min-w-0">
+                                            <span className="text-[11px] font-medium text-foreground">{week.title}</span>
+                                            {week.description && (
+                                              <span className="text-[10px] text-muted-foreground ml-1.5 break-words">{week.description}</span>
+                                            )}
+                                          </div>
+                                        )}
+
+                                        {allTodos.length > 0 && (
+                                          <span className="text-[10px] text-muted-foreground shrink-0">{doneTodos}/{allTodos.length}</span>
+                                        )}
+                                        <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+                                          <Donut pct={week.progress} size={24} stroke={2} />
+                                          <span className="absolute inset-0 flex items-center justify-center text-[6px] font-bold text-dream">{week.progress}%</span>
+                                        </div>
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                          <DotsMenu onEdit={() => setEditingId(week.id)} onDelete={() => handleDeleteWeek(week.id)} />
+                                        </div>
+                                      </div>
+
+                                      {/* Week content */}
+                                      <AnimatePresence>
+                                        {isWeekOpen && (
+                                          <motion.div
+                                            initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.14 }}
+                                            className="overflow-hidden"
+                                          >
+                                            <WeekPanel
+                                              week={week}
+                                              onToggleTodo={handleToggleTodo}
+                                              onAddTodo={handleAddTodo}
+                                              onEditTodo={handleEditTodo}
+                                              onDeleteTodo={handleDeleteTodo}
+                                            />
+                                          </motion.div>
+                                        )}
+                                      </AnimatePresence>
+                                    </div>
+                                  );
+                                })}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
                   </motion.div>
                 )}
               </AnimatePresence>
