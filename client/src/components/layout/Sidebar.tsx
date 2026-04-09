@@ -296,14 +296,14 @@ export function Sidebar() {
                     onMouseEnter={() => prefetchPageData(item.href)}
                     data-testid={`link-production-${item.slug.replace("/", "")}`}
                     className={cn(
-                      "flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-all font-medium border",
+                      "flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
                       isActive
-                        ? "bg-dream text-white font-semibold border-dream shadow-sm"
-                        : "text-ink border-dream/20 bg-dream/5 hover:bg-dream/10 hover:border-dream/40"
+                        ? "bg-dream text-white font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                     )}
                   >
                     <Icon className="h-4 w-4 flex-shrink-0" />
-                    <span className="flex-1 truncate">{item.label}</span>
+                    {item.label}
                   </Link>
                 );
               })}
@@ -326,15 +326,15 @@ export function Sidebar() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-all font-medium border",
+                    "flex items-center gap-2.5 px-3 py-2 text-sm rounded-md transition-all",
                     isActive
-                      ? "bg-dream text-white font-semibold border-dream shadow-sm"
-                      : "text-ink border-dream/20 bg-dream/5 hover:bg-dream/10 hover:border-dream/40"
+                      ? "bg-dream text-white font-semibold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                   )}
                   data-testid={`link-study-${item.href.replace("/", "")}`}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
-                  <span className="flex-1 truncate">{item.label}</span>
+                  {item.label}
                 </Link>
               );
             })}
@@ -342,12 +342,14 @@ export function Sidebar() {
         </div>
         )}
 
-        {/* ── 개발 중 구분선 ── */}
-        <div className="flex items-center gap-2 px-1">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/50 flex-shrink-0">개발 중</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
+        {/* ── 개발 중 구분선 — staff/admin 전용 ── */}
+        {isAdminOrStaff && (
+          <div className="flex items-center gap-2 px-1">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/50 flex-shrink-0">개발 중</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+        )}
 
         {/* Core section */}
         {filteredCore.length > 0 && (
