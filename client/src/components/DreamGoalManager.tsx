@@ -202,13 +202,13 @@ function EditDrawer({
     <>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/40 z-40"
+        className="fixed inset-0 bg-black/40 z-[199]"
         onClick={onClose}
       />
       <motion.div
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 28, stiffness: 320 }}
-        className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-3 pb-10 shadow-2xl"
+        className="fixed bottom-0 left-0 right-0 z-[200] bg-white rounded-t-2xl px-4 pt-3 pb-10 shadow-2xl"
       >
         <div className="w-10 h-1 bg-border rounded-full mx-auto mb-3" />
         <p className="text-[13px] font-semibold text-foreground mb-3">{item.label} 수정</p>
