@@ -7,6 +7,23 @@ export interface PageVisibility {
   pages: Record<string, boolean>;
 }
 
+const getCacheKey = (userId: string) => `konnect-pv-${userId}`;
+
+const readCache = (userId: string): PageVisibility | undefined => {
+  try {
+    const raw = localStorage.getItem(getCacheKey(userId));
+    return raw ? (JSON.parse(raw) as PageVisibility) : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const writeCache = (userId: string, data: PageVisibility) => {
+  try {
+    localStorage.setItem(getCacheKey(userId), JSON.stringify(data));
+  } catch {}
+};
+
 export function usePageAccess() {
   const { isAuthenticated, user } = useAuth();
 
@@ -14,7 +31,6 @@ export function usePageAccess() {
     queryKey: ['page-visibility', user?.id],
     queryFn: async () => {
       const authHeaders = await getAuthHeaders();
-      // Skip if no auth headers available
       if (!authHeaders.Authorization) {
         throw new Error('No auth token available');
       }
@@ -23,47 +39,51 @@ export function usePageAccess() {
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to fetch page visibility');
-      return res.json();
+      const data = await res.json() as PageVisibility;
+      if (user?.id) writeCache(user.id, data);
+      return data;
     },
+    // Seed with localStorage so the sidebar renders correctly on the very first paint
+    initialData: () => (user?.id ? readCache(user.id) : undefined),
+    // Always treat initialData as stale so a background refetch happens immediately
+    initialDataUpdatedAt: 0,
     enabled: isAuthenticated && !!user?.id,
-    staleTime: 10 * 60 * 1000, // 10 minutes - page visibility rarely changes
-    gcTime: 15 * 60 * 1000, // 15 minutes
-    refetchOnMount: false, // Don't refetch on every mount
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    retry: 1, // Only retry once
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    retry: 1,
     retryDelay: 500,
   });
 
-  // Use user's role from auth context as fallback when visibility not loaded
   const userRole = visibility?.userRole ?? user?.role ?? 'user';
   const isStaffOrAdmin = userRole === 'staff' || userRole === 'admin';
 
   const canAccess = (slug: string): boolean => {
-    // If visibility data not loaded yet, use role-based defaults
     if (!visibility) {
-      // While loading, allow access based on user's actual role from auth
-      // Admin page is always admin/staff only
-      if (slug === '/admin') {
-        return isStaffOrAdmin;
-      }
-      // For other pages, allow access while loading (route protection will handle it)
+      // No data yet (true first visit, no localStorage cache)
+      // /admin is always staff/admin-only
+      if (slug === '/admin') return isStaffOrAdmin;
+      // Allow everything else while loading — localStorage cache will have
+      // prevented this state on all subsequent loads (see initialData above)
       return true;
     }
-    
+
     if (slug in visibility.pages) {
       return visibility.pages[slug];
     }
-    
-    // Unknown pages default to staff/admin only
+
+    // Pages not in config → staff/admin only
     return isStaffOrAdmin;
   };
 
   return {
     canAccess,
     userRole,
-    // Only show loading if we're actually fetching and don't have data yet
-    // Don't block on retries if we already have visibility data or user role
-    isLoading: (isLoading || isFetching) && !visibility && !error,
+    isStaffOrAdmin,
+    // isLoading is true only when we have NO data at all (no cache, no response yet)
+    isLoading: isLoading && !visibility && !error,
+    isRefetching: isFetching && !!visibility,
     visibility,
     error,
   };
