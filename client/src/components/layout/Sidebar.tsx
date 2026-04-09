@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
 import { usePageAccess } from "@/lib/usePageAccess";
 import { getAuthHeaders } from "@/lib/queryClient";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ManagedGroup {
   id: string;
@@ -57,7 +58,7 @@ export function Sidebar() {
   const [location, setLocation] = useLocation();
   const searchString = useSearch();
   const { logout, isAuthenticated } = useAuth();
-  const { canAccess, userRole } = usePageAccess();
+  const { canAccess, userRole, isVisibilityPending } = usePageAccess();
   const [profileExpanded, setProfileExpanded] = useState(location.startsWith("/profile"));
   const [groupsExpanded, setGroupsExpanded] = useState(location.startsWith("/group"));
 
@@ -275,6 +276,48 @@ export function Sidebar() {
       </div>
 
       <div className="flex-1 px-3 flex flex-col overflow-y-auto space-y-4 pb-2">
+
+        {/* ── 스켈레톤: visibility 로딩 중 (최초 방문, 캐시 없음) ── */}
+        {isVisibilityPending && (
+          <div className="space-y-4 pt-1">
+            {/* 서비스 섹션 스켈레톤 */}
+            <div>
+              <div className="flex items-center gap-2 px-3 mb-1.5">
+                <Skeleton className="h-2.5 w-10" />
+                <Skeleton className="h-4 w-8 rounded-full" />
+              </div>
+              <div className="space-y-0.5">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-9 w-full rounded-md" />
+                ))}
+              </div>
+            </div>
+            {/* 학습 도구 섹션 스켈레톤 */}
+            <div>
+              <Skeleton className="h-2.5 w-16 mx-3 mb-1.5" />
+              <div className="space-y-0.5">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-9 w-full rounded-md" />
+                ))}
+              </div>
+            </div>
+            {/* 구분선 스켈레톤 */}
+            <div className="flex items-center gap-2 px-1">
+              <div className="flex-1 h-px bg-border" />
+              <Skeleton className="h-2 w-12" />
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            {/* 홈 섹션 스켈레톤 */}
+            <div>
+              <Skeleton className="h-2.5 w-6 mx-3 mb-1.5" />
+              <div className="space-y-0.5">
+                {[...Array(2)].map((_, i) => (
+                  <Skeleton key={i} className="h-9 w-full rounded-md" />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── 출시 서비스 ── */}
         {filteredProduction.length > 0 && (
