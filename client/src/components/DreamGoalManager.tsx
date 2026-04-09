@@ -175,6 +175,66 @@ function DotsMenu({
   );
 }
 
+/* ─── useIsMobile ─── */
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isMobile;
+}
+
+/* ─── Mobile Edit Drawer ─── */
+function EditDrawer({
+  item, onSave, onClose,
+}: {
+  item: { id: string; value: string; label: string };
+  onSave: (id: string, value: string) => void;
+  onClose: () => void;
+}) {
+  const [text, setText] = useState(item.value);
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/40 z-40"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 28, stiffness: 320 }}
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-3 pb-10 shadow-2xl"
+      >
+        <div className="w-10 h-1 bg-border rounded-full mx-auto mb-3" />
+        <p className="text-[13px] font-semibold text-foreground mb-3">{item.label} 수정</p>
+        <textarea
+          autoFocus
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={3}
+          className="w-full text-[16px] border border-border rounded-xl px-3 py-2.5 outline-none focus:border-dream resize-none leading-snug mb-3"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-xl border border-border text-[13px] text-muted-foreground active:bg-secondary"
+          >취소</button>
+          <button
+            onClick={() => { if (text.trim()) { onSave(item.id, text.trim()); onClose(); } }}
+            disabled={!text.trim()}
+            className="flex-1 py-3 rounded-xl bg-dream text-white text-[13px] font-semibold disabled:opacity-40 active:bg-dream/90"
+          >저장</button>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
 /* ─── Inline Edit Input ─── */
 function InlineEdit({
   value, onSave, onCancel, placeholder, textClass,
@@ -345,11 +405,22 @@ interface Props { kompassId: string; visionTitle: string; }
 
 export function DreamGoalManager({ kompassId, visionTitle }: Props) {
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [vision, setVision] = useState<VisionGoal | null>(null);
   const [expandedYearIds, setExpandedYearIds] = useState<Set<string>>(new Set());
   const [expandedMonthIds, setExpandedMonthIds] = useState<Set<string>>(new Set());
   const [expandedWeekIds, setExpandedWeekIds] = useState<Set<string>>(new Set());
-  const [editingId, setEditingId] = useState<string | null>(null);   // id of node being edited
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [drawerEdit, setDrawerEdit] = useState<{ id: string; value: string; label: string } | null>(null);
+
+  /** Route to inline (desktop) or drawer (mobile) */
+  const openEdit = (id: string, value: string, label: string) => {
+    if (isMobile) {
+      setDrawerEdit({ id, value, label });
+    } else {
+      setEditingId(id);
+    }
+  };
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedRef = useRef("");
@@ -580,7 +651,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                   <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-dream">{year.progress}%</span>
                 </div>
                 <div onClick={(e) => e.stopPropagation()}>
-                  <DotsMenu onEdit={() => setEditingId(year.id)} onDelete={() => handleDeleteYear(year.id)} />
+                  <DotsMenu onEdit={() => openEdit(year.id, year.description || year.title, "연간 목표")} onDelete={() => handleDeleteYear(year.id)} />
                 </div>
               </div>
 
@@ -619,7 +690,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                               <span className="absolute inset-0 flex items-center justify-center text-[7px] font-bold text-dream">{month.progress}%</span>
                             </div>
                             <div onClick={(e) => e.stopPropagation()}>
-                              <DotsMenu onEdit={() => setEditingId(month.id)} onDelete={() => handleDeleteMonth(month.id)} />
+                              <DotsMenu onEdit={() => openEdit(month.id, month.title, "월별 목표")} onDelete={() => handleDeleteMonth(month.id)} />
                             </div>
                           </div>
 
@@ -668,7 +739,7 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
                                           <span className="absolute inset-0 flex items-center justify-center text-[6px] font-bold text-dream">{week.progress}%</span>
                                         </div>
                                         <div onClick={(e) => e.stopPropagation()}>
-                                          <DotsMenu onEdit={() => setEditingId(week.id)} onDelete={() => handleDeleteWeek(week.id)} />
+                                          <DotsMenu onEdit={() => openEdit(week.id, week.title, "주별 목표")} onDelete={() => handleDeleteWeek(week.id)} />
                                         </div>
                                       </div>
 
@@ -713,6 +784,17 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
           <Loader2 size={10} className="animate-spin" /> 저장 중...
         </div>
       )}
+
+      {/* Mobile bottom drawer for editing */}
+      <AnimatePresence>
+        {drawerEdit && (
+          <EditDrawer
+            item={drawerEdit}
+            onSave={(id, value) => { handleEditNode(id, value); }}
+            onClose={() => setDrawerEdit(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
