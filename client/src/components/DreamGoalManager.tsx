@@ -177,8 +177,8 @@ function DotsMenu({
 
 /* ─── Inline Edit Input ─── */
 function InlineEdit({
-  value, onSave, onCancel, placeholder,
-}: { value: string; onSave: (v: string) => void; onCancel: () => void; placeholder?: string; }) {
+  value, onSave, onCancel, placeholder, className = "text-[11px]",
+}: { value: string; onSave: (v: string) => void; onCancel: () => void; placeholder?: string; className?: string; }) {
   const [text, setText] = useState(value);
   return (
     <div className="flex items-center gap-1.5 flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
@@ -191,7 +191,7 @@ function InlineEdit({
           if (e.key === "Escape") onCancel();
         }}
         placeholder={placeholder}
-        className="flex-1 min-w-0 text-sm border border-dream/40 rounded-md px-2 py-0.5 bg-white outline-none focus:border-dream text-foreground"
+        className={cn("flex-1 min-w-0 border border-dream/40 rounded-md px-2 py-0.5 bg-white outline-none focus:border-dream text-foreground", className)}
       />
       <button onClick={() => onSave(text)} className="text-dream shrink-0"><Check size={13} /></button>
       <button onClick={onCancel} className="text-muted-foreground shrink-0"><X size={13} /></button>
