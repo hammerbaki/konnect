@@ -477,18 +477,11 @@ export default function Dream() {
           {/* ── Step 2a: Manual form ── */}
           {createMode === "manual" && (
             <>
-              <DialogHeader>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setCreateMode(null)} className="text-muted-foreground hover:text-foreground transition-colors">
-                    <ChevronRight size={16} className="rotate-180" />
-                  </button>
-                  <div>
-                    <DialogTitle className="editorial-heading text-xl text-dream">직접 만들기</DialogTitle>
-                    <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                      연간 → 월별 → 주차 빈 계획표가 생성됩니다
-                    </DialogDescription>
-                  </div>
-                </div>
+              <DialogHeader className="space-y-0 pb-2">
+                <DialogTitle className="editorial-heading text-xl text-dream">목표 만들기</DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground">
+                  꿈의 제목과 달성 연도를 입력하세요
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="space-y-2">
@@ -505,23 +498,21 @@ export default function Dream() {
                     className="h-11 rounded-xl border-dream/20 focus-visible:ring-dream"
                     data-testid="input-dream-target-year" />
                 </div>
-                <div className="bg-secondary/60 rounded-xl p-3">
-                  <div className="flex items-start gap-2">
-                    <PenLine size={13} className="text-muted-foreground shrink-0 mt-0.5" />
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      <span className="font-semibold text-foreground">빈 계획표로 시작합니다.</span>{" "}
-                      2026년 3월 2주차 목표 형식의 플레이스홀더가 채워지며, 직접 수정할 수 있습니다.
-                    </p>
-                  </div>
+                <div className="bg-secondary/40 border border-border/50 rounded-xl p-3.5">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    제목과 연도를 입력하면{" "}
+                    <span className="font-semibold text-foreground">연간 → 월별 → 주차별 목표 구조</span>가
+                    자동으로 생성됩니다. 생성 후 각 항목을 직접 수정해 나만의 계획을 완성할 수 있습니다.
+                  </p>
                 </div>
               </div>
               <DialogFooter>
                 <button onClick={handleSubmit} disabled={createKompassMutation.isPending || !selectedProfileId || !newTitle.trim()}
-                  className="w-full h-12 bg-foreground text-background font-bold rounded-xl text-sm hover:bg-foreground/90 disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
+                  className="w-full h-12 bg-dream text-white font-bold rounded-xl text-sm hover:bg-dream/90 disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
                   data-testid="button-submit-dream-kompass">
                   {createKompassMutation.isPending
                     ? <><Loader2 size={16} className="animate-spin" /> 생성 중...</>
-                    : <><PenLine size={16} /> 빈 계획표 만들기</>}
+                    : <><Target size={16} /> 목표 만들기</>}
                 </button>
               </DialogFooter>
             </>
