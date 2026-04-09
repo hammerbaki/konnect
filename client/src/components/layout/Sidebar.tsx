@@ -45,6 +45,19 @@ interface ManagedGroup {
   role: string;
 }
 
+interface KompassItem {
+  id: string;
+  targetYear: number;
+  visionData: { title: string; description?: string };
+  profileTitle?: string;
+}
+
+function calcDDay(targetYear: number): number {
+  const suneungDate = new Date(targetYear, 10, 1);
+  const today = new Date();
+  return Math.ceil((suneungDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 const profileSubItems = [
   { id: "general", label: "구직자", icon: Briefcase },
   { id: "international_university", label: "외국인유학생", icon: Globe },
@@ -63,6 +76,21 @@ export function Sidebar() {
   const [groupsExpanded, setGroupsExpanded] = useState(location.startsWith("/group"));
 
   const isAdminOrStaff = userRole === "admin" || userRole === "staff";
+
+  const { data: kompassList = [] } = useQuery<KompassItem[]>({
+    queryKey: ["/api/kompass"],
+    queryFn: async () => {
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/kompass", { headers, credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const latestDream = kompassList[0] ?? null;
+  const dDay = latestDream ? calcDDay(latestDream.targetYear) : null;
 
   const { data: managedGroups = [] } = useQuery<ManagedGroup[]>({
     queryKey: ["managed-groups"],
@@ -275,7 +303,29 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <div className="flex-1 px-3 flex flex-col overflow-y-auto space-y-4 pb-2">
+      <div className="flex-1 px-3 flex flex-col overflow-y-auto space-y-3 pb-2">
+
+        {/* ── 나의 꿈 카드 ── */}
+        {latestDream && (
+          <Link
+            href="/dream"
+            data-testid="link-sidebar-dream-card"
+            className="block mx-0 mb-3 mt-1 rounded-xl border border-[#e4daf7] bg-gradient-to-br from-[#f5f0ff] to-[#fffaf5] p-3 hover:shadow-sm transition-shadow"
+          >
+            <p className="text-[10px] font-semibold text-[#9b7de0] mb-1.5 tracking-wide">나의 꿈</p>
+            <p className="text-[12px] font-medium text-foreground leading-snug line-clamp-2">
+              &ldquo;{latestDream.visionData.title}&rdquo;
+            </p>
+            {dDay !== null && (
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-[10px] text-muted-foreground">{latestDream.targetYear}년 목표</span>
+                <span className="text-[10px] font-bold text-coral">
+                  {dDay > 0 ? `D-${dDay}` : dDay === 0 ? "D-Day" : "달성!"}
+                </span>
+              </div>
+            )}
+          </Link>
+        )}
 
         {/* ── 스켈레톤: visibility 로딩 중 (최초 방문, 캐시 없음) ── */}
         {isVisibilityPending && (
@@ -340,11 +390,11 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* 학습 도구 section */}
+        {/* 커뮤니티 section */}
         {filteredStudy.length > 0 && (
         <div>
-          <div className="flex items-center gap-1.5 px-3 mb-1.5">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-dream">커뮤니티</p>
+          <div className="flex items-center gap-1.5 px-3 mb-1.5 mt-1">
+            <p className="text-[10px] font-semibold text-muted-foreground/70 tracking-wider">커뮤니티 <span className="text-[9px] font-normal opacity-60">COMMUNITY</span></p>
           </div>
           <div className="space-y-0.5">
             {filteredStudy.map((item) => {
@@ -384,8 +434,8 @@ export function Sidebar() {
         {/* AI Tools section */}
         {filteredAI.length > 0 && (
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-semibold px-3 mb-1.5 text-coral">
-              AI 도구
+            <p className="text-[10px] font-semibold px-3 mb-1.5 mt-1 text-muted-foreground/70 tracking-wider">
+              AI 도구 <span className="text-[9px] font-normal opacity-60">TOOLS</span>
             </p>
             <div className="space-y-0.5">
               {filteredAI.map((item) => {
@@ -415,8 +465,8 @@ export function Sidebar() {
         {/* Explore section */}
         {filteredExplore.length > 0 && (
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-semibold px-3 mb-1.5 text-gold">
-              탐색
+            <p className="text-[10px] font-semibold px-3 mb-1.5 mt-1 text-muted-foreground/70 tracking-wider">
+              탐색 <span className="text-[9px] font-normal opacity-60">EXPLORE</span>
             </p>
             <div className="space-y-0.5">
               {filteredExplore.map((item) => {
