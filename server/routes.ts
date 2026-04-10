@@ -6727,11 +6727,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/admin/community/reviews — admin only, all reviews with filters
-  app.get('/api/admin/community/reviews', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/community/reviews', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin' && req.user?.role !== 'staff') {
-        return res.status(403).json({ message: '관리자 전용' });
-      }
       const { type, subject, sort = 'recent', page = '1', limit = '20', search } = req.query;
       const { reviews, total } = await storage.getCommunityReviews({
         type: (type as string) || 'lecture',
