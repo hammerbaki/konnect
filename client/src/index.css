@@ -131,6 +131,7 @@
 .bg-dream { background-color: #320e9d; }
 .text-dream { color: #320e9d; }
 .border-dream { border-color: #320e9d; }
+.border-dream\/20 { border-color: #320e9d33; }
 .ring-dream { --tw-ring-color: #320e9d; }
 .bg-dream\/10 { background-color: #320e9d1a; }
 .bg-dream\/20 { background-color: #320e9d33; }
@@ -153,7 +154,9 @@
 
 .bg-gold { background-color: #c79e41; }
 .text-gold { color: #c79e41; }
+.fill-gold { fill: #c79e41; }
 .bg-gold\/10 { background-color: #c79e411a; }
+.border-coral\/10 { border-color: #ea6a641a; }
 
 .text-ink { color: #090b0f; }
 .bg-ink { background-color: #090b0f; }
