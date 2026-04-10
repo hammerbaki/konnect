@@ -4,7 +4,8 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import helmet from "helmet";
 import compression from "compression";
-import { generateMajorDescriptions, generateJobDescriptions, enrichMajorRelatedData, enrichMajorCareerNetData, refillEmptyRelatedMajors, syncCareerMajorSeq } from "./dataSync";
+import { generateMajorDescriptions, generateJobDescriptions, enrichMajorRelatedData, enrichMajorCareerNetData, refillEmptyRelatedMajors, syncCareerMajorSeq, syncJobsFromCareerNetNew, syncMajorsFromCareerNetNew } from "./dataSync";
+import { syncUniversityApi } from "./universityApiSync";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
 
@@ -241,9 +242,46 @@ app.use((req, res, next) => {
         log(`serving on port ${port} (host: ${host})`);
         console.log('✓ Server ready');
 
-        // Background: generate missing descriptions via GPT-4o-mini (runs once if needed)
+        // Background: initial seed + generate missing descriptions via GPT-4o-mini
         setTimeout(async () => {
           try {
+            // ── Step 0: Initial seed if tables are empty ──
+            const countCheck = await db.execute(sql`
+              SELECT
+                (SELECT COUNT(*) FROM cached_majors) AS majors,
+                (SELECT COUNT(*) FROM cached_jobs) AS jobs,
+                (SELECT COUNT(*) FROM university_info) AS universities
+            `);
+            const counts = (countCheck as any).rows?.[0] ?? {};
+            const majorsCount = parseInt(counts.majors ?? '0');
+            const jobsCount = parseInt(counts.jobs ?? '0');
+            const univCount = parseInt(counts.universities ?? '0');
+
+            if (majorsCount === 0) {
+              console.log('[DataSync] cached_majors is empty — running initial CareerNet sync...');
+              try {
+                const r = await syncMajorsFromCareerNetNew((m) => console.log('[InitSync Majors]', m));
+                console.log('[DataSync] Initial major sync done:', r);
+              } catch (e) { console.error('[DataSync] Major initial sync error:', e); }
+            }
+
+            if (jobsCount === 0) {
+              console.log('[DataSync] cached_jobs is empty — running initial CareerNet sync...');
+              try {
+                const r = await syncJobsFromCareerNetNew((m) => console.log('[InitSync Jobs]', m));
+                console.log('[DataSync] Initial job sync done:', r);
+              } catch (e) { console.error('[DataSync] Job initial sync error:', e); }
+            }
+
+            if (univCount === 0) {
+              console.log('[DataSync] university_info is empty — running initial university API sync...');
+              try {
+                const r = await syncUniversityApi();
+                console.log('[DataSync] Initial university sync done:', r);
+              } catch (e) { console.error('[DataSync] University initial sync error:', e); }
+            }
+            // ─────────────────────────────────────────────
+
             const check = await db.execute(sql`
               SELECT COUNT(*) as missing FROM cached_majors
               WHERE description IS NULL OR description = ''
