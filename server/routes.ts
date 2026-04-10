@@ -6020,9 +6020,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===========================
 
   // GET /api/admin/data-quality — 데이터 품질 리포트
-  app.get('/api/admin/data-quality', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/data-quality', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const report = await getDataQualityReport();
       res.json(report);
     } catch (error: any) {
@@ -6031,9 +6030,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/admin/sync-majors — GPT-4o-mini로 누락된 학과 설명 생성
-  app.post('/api/admin/sync-majors', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/sync-majors', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const logs: string[] = [];
       const result = await generateMajorDescriptions((msg) => logs.push(msg));
       res.json({ ...result, logs });
@@ -6043,9 +6041,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/admin/sync-major-careernet — CareerNet 학과별 취업률·급여 동기화
-  app.post('/api/admin/sync-major-careernet', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/sync-major-careernet', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const logs: string[] = [];
       // force=true → bypass "already done" check
       if (req.body?.force) {
@@ -6062,9 +6059,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/admin/sync-aptitude — CareerNet 학과별 적성 데이터 동기화
-  app.post('/api/admin/sync-aptitude', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/sync-aptitude', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const logs: string[] = [];
       const result = await enrichMajorAptitudeData((msg) => logs.push(msg));
       res.json({ ...result, logs });
@@ -6074,9 +6070,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/admin/sync-jobs — CareerNet + GPT-4o-mini 직업 설명 생성
-  app.post('/api/admin/sync-jobs', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/sync-jobs', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const logs: string[] = [];
       // Try CareerNet first, then GPT fallback
       const cnResult = await syncJobDescriptionsFromCareerNet((msg) => logs.push(msg));
@@ -6088,9 +6083,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/admin/clean-duplicates — 중복 직업 제거
-  app.post('/api/admin/clean-duplicates', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/clean-duplicates', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const result = await removeDuplicateJobs();
       res.json(result);
     } catch (error: any) {
@@ -6099,9 +6093,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/admin/sync-all — 전체 동기화 (중복제거 → 학과 → 직업)
-  app.post('/api/admin/sync-all', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/sync-all', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const logs: string[] = [];
       const dupResult = await removeDuplicateJobs();
       logs.push(`중복 직업 제거: ${dupResult.removed}개`);
@@ -6122,9 +6115,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/admin/refill-related-majors — 빈 related_majors 재수집
-  app.post('/api/admin/refill-related-majors', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/refill-related-majors', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const logs: string[] = [];
       const result = await refillEmptyRelatedMajors((msg) => logs.push(msg));
       res.json({ ...result, logs });
@@ -6134,9 +6126,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/admin/sync-career-major-seq — career_major_seq 매핑
-  app.post('/api/admin/sync-career-major-seq', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/sync-career-major-seq', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const logs: string[] = [];
       const result = await syncCareerMajorSeq((msg) => logs.push(msg));
       res.json({ ...result, logs });
@@ -6146,9 +6137,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/admin/sync-jobs-new — 신규 CareerNet API로 직업 552개 전수 재수집 + salary 교체
-  app.post('/api/admin/sync-jobs-new', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/sync-jobs-new', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const logs: string[] = [];
       const result = await syncJobsFromCareerNetNew((msg) => logs.push(msg));
       res.json({ ...result, logs });
@@ -6158,9 +6148,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/admin/sync-majors-new — 신규 파라미터로 학과 501개 전수 재수집
-  app.post('/api/admin/sync-majors-new', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/sync-majors-new', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'admin') return res.status(403).json({ message: '관리자 전용' });
       const logs: string[] = [];
       const result = await syncMajorsFromCareerNetNew((msg) => logs.push(msg));
       res.json({ ...result, logs });
@@ -6716,8 +6705,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/community/reviews/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session?.userId || req.user?.id;
+      if (!userId) return res.status(401).json({ message: "인증이 필요합니다." });
       const id = parseInt(req.params.id);
-      const isAdmin = req.user?.role === 'admin' || req.user?.role === 'staff';
+      if (isNaN(id)) return res.status(400).json({ message: "잘못된 ID" });
+      // Fetch role from DB — req.user.role is NOT set by isAuthenticated
+      const dbUser = await storage.getUser(userId);
+      const isAdmin = dbUser?.role === 'admin' || dbUser?.role === 'staff';
       const ok = await storage.deleteCommunityReview(id, userId, isAdmin);
       if (!ok) return res.status(404).json({ message: "리뷰를 찾을 수 없거나 삭제 권한이 없습니다." });
       res.json({ success: true });
