@@ -1,0 +1,168 @@
+2026-04-10 15:47:24.14
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:47:24.25
+ec2ee1d6
+User
+6:47:24 AM [express] GET /api/explore/categories 500 in 1546ms :: {"message":"relation \"cached_jobs\" does not exist"}
+2026-04-10 15:47:24.29
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:47:24.33
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:47:24.49
+ec2ee1d6
+User
+6:47:24 AM [express] GET /api/bookmarks 500 in 1790ms :: {"message":"relation \"bookmarks\" does not exist"}
+2026-04-10 15:47:25.06
+ec2ee1d6
+User
+6:47:25 AM [express] GET /api/aptitude/latest 500 in 2360ms :: {"message":"relation \"aptitude_analyses\" does not exist"}
+2026-04-10 15:47:25.10
+ec2ee1d6
+User
+6:47:25 AM [express] GET /api/my-managed-groups 200 in 2838ms :: []
+2026-04-10 15:47:25.32
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:47:26.28
+ec2ee1d6
+User
+6:47:26 AM [express] GET /api/kompass 200 in 5024ms :: [array:1]
+2026-04-10 15:57:47.53
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:48.50
+ec2ee1d6
+User
+6:57:48 AM [express] GET /api/auth/user 200 in 3225ms :: [object:20]
+2026-04-10 15:57:48.81
+ec2ee1d6
+User
+6:57:48 AM [express] GET /api/sso/session 200 in 166ms :: {"authenticated":false}
+2026-04-10 15:57:48.85
+ec2ee1d6
+User
+6:57:48 AM [express] GET /api/config 200 in 205ms :: [object:2]
+2026-04-10 15:57:49.56
+ec2ee1d6
+User
+6:57:49 AM [express] POST /api/track/pageview 200 in 888ms :: {"tracked":true}
+2026-04-10 15:57:50.97
+ec2ee1d6
+User
+6:57:50 AM [express] GET /api/notifications/unread-count 200 in 1703ms :: {"count":0}
+2026-04-10 15:57:51.37
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:51.42
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:52.18
+ec2ee1d6
+User
+6:57:52 AM [express] GET /api/notifications 200 in 2913ms :: [array:4]
+2026-04-10 15:57:52.32
+ec2ee1d6
+User
+6:57:52 AM [express] GET /api/auth/user 200 in 3055ms :: [object:20]
+2026-04-10 15:57:53.87
+ec2ee1d6
+User
+6:57:53 AM [express] GET /api/explore/universities 500 in 356ms :: {"message":"relation \"university_info\" does not exist"}
+2026-04-10 15:57:54.04
+ec2ee1d6
+User
+6:57:54 AM [express] GET /api/my-managed-groups 200 in 1209ms :: []
+2026-04-10 15:57:54.31
+ec2ee1d6
+User
+6:57:54 AM [express] GET /api/explore/categories 500 in 355ms :: {"message":"relation \"cached_majors\" does not exist"}
+2026-04-10 15:57:54.90
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:54.91
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:55.08
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:55.08
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:55.08
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:55.14
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:55.19
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:55.26
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:55.27
+ec2ee1d6
+User
+6:57:55 AM [express] GET /api/explore/counts 500 in 1502ms :: {"message":"relation \"university_info\" does not exist"}
+2026-04-10 15:57:55.28
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:55.46
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:55.86
+ec2ee1d6
+User
+6:57:55 AM [express] GET /api/bookmarks 500 in 2342ms :: {"message":"relation \"bookmarks\" does not exist"}
+2026-04-10 15:57:55.86
+ec2ee1d6
+User
+[PageVisibility] User aliveperson106@gmail.com (role: user) - /admin access: false
+2026-04-10 15:57:55.86
+ec2ee1d6
+User
+6:57:55 AM [express] GET /api/page-visibility 200 in 3041ms :: [object:2]
+2026-04-10 15:57:55.91
+ec2ee1d6
+User
+6:57:55 AM [express] GET /api/aptitude/latest 500 in 2386ms :: {"message":"relation \"aptitude_analyses\" does not exist"}
+2026-04-10 15:57:56.43
+ec2ee1d6
+User
+✓ Database connection established
+2026-04-10 15:57:57.21
+ec2ee1d6
+User
+6:57:57 AM [express] GET /api/auth/user 200 in 4393ms :: [object:20]
+2026-04-10 15:58:26.19
+ec2ee1d6
+User
+6:58:26 AM [express] GET /api/auth/user 200 in 1970ms :: [object:20]
+2026-04-10 15:58:35.71
+ec2ee1d6
+User
+6:58:35 AM [express] GET /api/auth/user 200 in 1994ms :: [object:20]
+2026-04-10 15:58:35.71
+ec2ee1d6
+User
+6:58:35 AM [express] GET /api/auth/user 200 in 1994ms :: [object:20]
