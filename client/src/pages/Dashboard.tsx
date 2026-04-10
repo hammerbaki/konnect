@@ -222,14 +222,22 @@ interface WeekEntry {
   kompassId: string;
 }
 
-function SingleWeekRow({ entry, showGoalTitle = false }: { entry: WeekEntry; showGoalTitle?: boolean }) {
+function SingleWeekRow({ entry }: { entry: WeekEntry }) {
   const progress = entry.week.progress ?? 0;
+  // Build a readable week subtitle: prefer description, fallback to title ("Week 1" → "1주차")
+  const weekSubtitle = entry.week.description?.split("\n")[0]?.replace(/^•\s*/, "").trim()
+    || entry.week.title?.replace(/week\s*/i, "").replace(/^(\d+)$/, "$1주차");
+
   return (
-    <div className="space-y-1.5">
-      {showGoalTitle && (
-        <p className="text-[11px] font-semibold text-[#191F28] truncate">{entry.goalTitle}</p>
+    <div className="space-y-1">
+      {/* Main goal title */}
+      <p className="text-sm font-bold text-[#191F28] leading-snug">{entry.goalTitle}</p>
+      {/* Week subtitle */}
+      {weekSubtitle && (
+        <p className="text-[11px] text-muted-foreground truncate">{weekSubtitle}</p>
       )}
-      <div className="flex items-center gap-2.5">
+      {/* Progress bar */}
+      <div className="flex items-center gap-2.5 pt-0.5">
         <Progress
           value={progress}
           className="flex-1 h-2 bg-dream/10"
@@ -237,9 +245,6 @@ function SingleWeekRow({ entry, showGoalTitle = false }: { entry: WeekEntry; sho
         />
         <span className="text-xs font-bold text-dream min-w-[30px] text-right">{progress}%</span>
       </div>
-      {entry.week.description && (
-        <p className="text-[10px] text-muted-foreground line-clamp-1">{entry.week.description}</p>
-      )}
     </div>
   );
 }
@@ -297,7 +302,6 @@ function WeeklyGoalBar({ kompassList }: { kompassList: KompassData[] }) {
 
       {/* First goal — always visible */}
       <div className="px-4 pb-3">
-        <p className="text-[11px] text-muted-foreground mb-2 truncate">{first.goalTitle}</p>
         <SingleWeekRow entry={first} />
       </div>
 
@@ -314,7 +318,7 @@ function WeeklyGoalBar({ kompassList }: { kompassList: KompassData[] }) {
           >
             <div className="px-4 pb-3 space-y-4 border-t border-dream/10 pt-3">
               {rest.map((entry) => (
-                <SingleWeekRow key={entry.kompassId} entry={entry} showGoalTitle />
+                <SingleWeekRow key={entry.kompassId} entry={entry} />
               ))}
             </div>
           </motion.div>
