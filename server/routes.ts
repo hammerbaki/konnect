@@ -28,7 +28,7 @@ import { getQueueStats, estimateProgress } from "./jobQueue";
 import { db } from "./db";
 import { handleKJobsSSO, generateTestToken, ssoMiddleware } from "./kjobs-sso";
 import { desc, count, sum, and, eq, gte, lte, gt, ilike, or, asc, inArray, sql as sqlExpr } from "drizzle-orm";
-import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap, universityMajors, bookmarks, insertBookmarkSchema } from "@shared/schema";
+import { giftPointLedger, users, referrals, profiles, careerAnalyses, personalEssays, kompassGoals, kjobsAssessments, cachedJobs, cachedMajors, universityInfo, aptitudeAnalyses, majorUniversityMap, universityMajors, bookmarks, insertBookmarkSchema, insertCommunityReviewSchema } from "@shared/schema";
 import { syncJobDescriptionsFromCareerNet, generateMajorDescriptions, generateJobDescriptions, removeDuplicateJobs, getDataQualityReport, enrichMajorCareerNetData, enrichMajorAptitudeData, refillEmptyRelatedMajors, syncCareerMajorSeq, normalizeMajorName, syncJobsFromCareerNetNew, syncMajorsFromCareerNetNew } from "./dataSync";
 import { syncUniversityApi } from "./universityApiSync";
 import { APTITUDE_QUESTIONS, computeScores } from "./aptitudeConstants";
@@ -6659,6 +6659,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)))
         .returning();
       res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ── Community Reviews ────────────────────────────────────────────
+  // GET /api/community/reviews?type=lecture&subject=수학&sort=recent&page=1
+  app.get('/api/community/reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const { type, subject, sort, page, limit } = req.query;
+      if (!type) return res.status(400).json({ message: "type is required" });
+      const result = await storage.getCommunityReviews({
+        type: String(type),
+        subject: subject ? String(subject) : undefined,
+        sort: sort ? String(sort) : "recent",
+        page: page ? parseInt(String(page)) : 1,
+        limit: limit ? parseInt(String(limit)) : 20,
+      });
+      // Attach liked status for current user
+      const userId = req.session?.userId || req.user?.id;
+      const ids = result.reviews.map(r => r.id);
+      const likedIds = userId ? await storage.getUserLikedReviews(userId, ids) : [];
+      res.json({ ...result, likedIds });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/community/reviews
+  app.post('/api/community/reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const parsed = insertCommunityReviewSchema.safeParse({ ...req.body, userId });
+      if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.flatten() });
+      const review = await storage.createCommunityReview(parsed.data);
+      res.status(201).json(review);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // POST /api/community/reviews/:id/like
+  app.post('/api/community/reviews/:id/like', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const id = parseInt(req.params.id);
+      const result = await storage.toggleCommunityReviewLike(id, userId);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // DELETE /api/community/reviews/:id
+  app.delete('/api/community/reviews/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session?.userId || req.user?.id;
+      const id = parseInt(req.params.id);
+      const ok = await storage.deleteCommunityReview(id, userId);
+      if (!ok) return res.status(404).json({ message: "리뷰를 찾을 수 없거나 삭제 권한이 없습니다." });
+      res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

@@ -21,6 +21,8 @@ import {
   iapTransactions,
   groups,
   groupMembers,
+  communityReviews,
+  communityReviewLikes,
   type User,
   type UpsertUser,
   type Profile,
@@ -88,9 +90,11 @@ import {
   NEW_PAGE_DEFAULT_ROLES,
   DEFAULT_SERVICE_PRICING,
   DEFAULT_SYSTEM_SETTINGS,
+  type InsertCommunityReview,
+  type CommunityReview,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, ilike, and, inArray, sql, count, gte, lte, sum, isNull } from "drizzle-orm";
+import { eq, desc, ilike, and, inArray, sql, count, gte, lte, sum, isNull, asc, or } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -453,6 +457,14 @@ export interface IStorage {
       createdAt: string;
     }>;
   }>;
+
+  // Community Reviews
+  getCommunityReviews(opts: { type: string; subject?: string; sort?: string; page?: number; limit?: number }): Promise<{ reviews: CommunityReview[]; total: number }>;
+  getCommunityReview(id: number): Promise<CommunityReview | undefined>;
+  createCommunityReview(data: InsertCommunityReview): Promise<CommunityReview>;
+  deleteCommunityReview(id: number, userId: string): Promise<boolean>;
+  toggleCommunityReviewLike(reviewId: number, userId: string): Promise<{ liked: boolean; likes: number }>;
+  getUserLikedReviews(userId: string, reviewIds: number[]): Promise<number[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3821,6 +3833,80 @@ export class DatabaseStorage implements IStorage {
         createdAt: e.createdAt?.toISOString() || '',
       })),
     };
+  }
+
+  // ── Community Reviews ────────────────────────────────────────────
+  async getCommunityReviews(opts: { type: string; subject?: string; sort?: string; page?: number; limit?: number }): Promise<{ reviews: CommunityReview[]; total: number }> {
+    const { type, subject, sort = "recent", page = 1, limit: lim = 20 } = opts;
+    const offset = (page - 1) * lim;
+
+    const conditions = [
+      eq(communityReviews.type, type),
+      eq(communityReviews.isApproved, 1),
+    ];
+    if (subject && subject !== "전체") {
+      conditions.push(eq(communityReviews.subject, subject));
+    }
+
+    const orderBy = sort === "likes"
+      ? desc(communityReviews.likes)
+      : sort === "rating"
+        ? desc(communityReviews.overallRating)
+        : desc(communityReviews.createdAt);
+
+    const [countResult, reviews] = await Promise.all([
+      db.select({ count: count() }).from(communityReviews).where(and(...conditions)),
+      db.select().from(communityReviews).where(and(...conditions)).orderBy(orderBy).limit(lim).offset(offset),
+    ]);
+
+    return { reviews, total: countResult[0]?.count ?? 0 };
+  }
+
+  async getCommunityReview(id: number): Promise<CommunityReview | undefined> {
+    await db.update(communityReviews).set({ views: sql`${communityReviews.views} + 1` }).where(eq(communityReviews.id, id));
+    const [review] = await db.select().from(communityReviews).where(eq(communityReviews.id, id));
+    return review;
+  }
+
+  async createCommunityReview(data: InsertCommunityReview): Promise<CommunityReview> {
+    const [review] = await db.insert(communityReviews).values(data).returning();
+    return review;
+  }
+
+  async deleteCommunityReview(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(communityReviews)
+      .where(and(eq(communityReviews.id, id), eq(communityReviews.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async toggleCommunityReviewLike(reviewId: number, userId: string): Promise<{ liked: boolean; likes: number }> {
+    const [existing] = await db.select().from(communityReviewLikes)
+      .where(and(eq(communityReviewLikes.reviewId, reviewId), eq(communityReviewLikes.userId, userId)));
+
+    if (existing) {
+      await db.delete(communityReviewLikes)
+        .where(and(eq(communityReviewLikes.reviewId, reviewId), eq(communityReviewLikes.userId, userId)));
+      const [updated] = await db.update(communityReviews)
+        .set({ likes: sql`GREATEST(${communityReviews.likes} - 1, 0)` })
+        .where(eq(communityReviews.id, reviewId))
+        .returning({ likes: communityReviews.likes });
+      return { liked: false, likes: updated?.likes ?? 0 };
+    } else {
+      await db.insert(communityReviewLikes).values({ reviewId, userId });
+      const [updated] = await db.update(communityReviews)
+        .set({ likes: sql`${communityReviews.likes} + 1` })
+        .where(eq(communityReviews.id, reviewId))
+        .returning({ likes: communityReviews.likes });
+      return { liked: true, likes: updated?.likes ?? 0 };
+    }
+  }
+
+  async getUserLikedReviews(userId: string, reviewIds: number[]): Promise<number[]> {
+    if (!reviewIds.length) return [];
+    const rows = await db.select({ reviewId: communityReviewLikes.reviewId })
+      .from(communityReviewLikes)
+      .where(and(eq(communityReviewLikes.userId, userId), inArray(communityReviewLikes.reviewId, reviewIds)));
+    return rows.map(r => r.reviewId);
   }
 }
 

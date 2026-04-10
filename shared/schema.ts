@@ -1372,3 +1372,58 @@ export const universityMajors = pgTable("university_majors", {
 export const insertUniversityMajorSchema = createInsertSchema(universityMajors).omit({ id: true });
 export type InsertUniversityMajor = z.infer<typeof insertUniversityMajorSchema>;
 export type UniversityMajor = typeof universityMajors.$inferSelect;
+
+// ===== COMMUNITY REVIEWS (인강·문제집·학원 리뷰) =====
+export const communityReviews = pgTable("community_reviews", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: varchar("type", { length: 20 }).notNull(), // 'lecture' | 'workbook' | 'academy'
+
+  // Target info
+  targetName: varchar("target_name", { length: 200 }).notNull(),
+  instructor: varchar("instructor", { length: 100 }),   // 강사 (lectures)
+  platform: varchar("platform", { length: 100 }),       // 플랫폼 (lectures)
+  publisher: varchar("publisher", { length: 100 }),     // 출판사 (workbooks)
+  subject: varchar("subject", { length: 50 }).notNull(),
+  region: varchar("region", { length: 50 }),            // 시/도 (academies)
+  district: varchar("district", { length: 50 }),        // 구/군 (academies)
+
+  // Core ratings (1–5)
+  overallRating: integer("overall_rating").notNull(),
+  ratingContent: integer("rating_content").default(0), // 내용 충실도 / 수업 품질
+  ratingValue: integer("rating_value").default(0),     // 가성비
+  ratingManage: integer("rating_manage").default(0),   // 관리·시설 (academies)
+
+  // Written content
+  title: varchar("title", { length: 200 }).notNull(),
+  content: text("content").notNull(),
+
+  // Preset tag arrays (pros / cons)
+  prosTagIds: text("pros_tag_ids").array().default([]),
+  consTagIds: text("cons_tag_ids").array().default([]),
+
+  // Student context
+  gradeLevel: varchar("grade_level", { length: 20 }),  // 고1, 고2, 고3, N수생
+  gradeBefore: varchar("grade_before", { length: 10 }), // 수강 전 등급
+  gradeAfter: varchar("grade_after", { length: 10 }),   // 수강 후 등급
+  studyDuration: varchar("study_duration", { length: 30 }), // 수강 기간
+
+  // Metadata
+  likes: integer("likes").notNull().default(0),
+  views: integer("views").notNull().default(0),
+  isApproved: integer("is_approved").notNull().default(1),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const communityReviewLikes = pgTable("community_review_likes", {
+  id: serial("id").primaryKey(),
+  reviewId: integer("review_id").notNull().references(() => communityReviews.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [uniqueIndex("unique_review_like").on(table.reviewId, table.userId)]);
+
+export const insertCommunityReviewSchema = createInsertSchema(communityReviews).omit({ id: true, likes: true, views: true, isApproved: true, createdAt: true });
+export type InsertCommunityReview = z.infer<typeof insertCommunityReviewSchema>;
+export type CommunityReview = typeof communityReviews.$inferSelect;
+export type CommunityReviewLike = typeof communityReviewLikes.$inferSelect;
+
