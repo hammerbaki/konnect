@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { ReviewModal } from "@/components/community/ReviewModal";
 import { ReviewCard } from "@/components/community/ReviewCard";
+import { CommunityTabNav } from "@/components/community/CommunityTabNav";
 import { getAuthHeaders } from "@/lib/queryClient";
 import type { CommunityReview } from "@shared/schema";
 
@@ -79,8 +80,11 @@ export default function Workbooks() {
         실사용자 후기와 난이도별 비교로 나에게 맞는 문제집을 찾으세요.
       </p>
 
-      {/* Banner */}
-      <div className="dream-card p-4 mb-4 flex items-center gap-3">
+      {/* Mobile tab nav */}
+      <CommunityTabNav />
+
+      {/* Banner — desktop only */}
+      <div className="hidden md:flex dream-card p-4 mb-4 items-center gap-3">
         <BookOpen size={18} className="text-dream shrink-0" />
         <div className="flex-1">
           <p className="text-sm font-medium">풀어본 문제집 후기를 공유해보세요</p>
@@ -88,6 +92,15 @@ export default function Workbooks() {
         </div>
         <button onClick={() => setReviewOpen(true)}
           className="flex items-center gap-1 bg-dream text-white text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-dream/90 transition-colors">
+          <PenLine size={12} /> 후기 쓰기
+        </button>
+      </div>
+
+      {/* Mobile: write button row */}
+      <div className="md:hidden flex items-center justify-between mb-3">
+        <span className="text-xs text-muted-foreground">문제집 리뷰 커뮤니티</span>
+        <button onClick={() => setReviewOpen(true)}
+          className="flex items-center gap-1 bg-dream text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-dream/90 transition-colors">
           <PenLine size={12} /> 후기 쓰기
         </button>
       </div>

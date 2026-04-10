@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { ReviewModal } from "@/components/community/ReviewModal";
 import { ReviewCard } from "@/components/community/ReviewCard";
+import { CommunityTabNav } from "@/components/community/CommunityTabNav";
 import { getAuthHeaders } from "@/lib/queryClient";
 import type { CommunityReview } from "@shared/schema";
 
@@ -82,8 +83,11 @@ export default function Academies() {
         지역별 실제 수강 후기로 나에게 맞는 학원을 찾으세요.
       </p>
 
-      {/* Banner */}
-      <div className="dream-card p-4 mb-4 flex items-center gap-3">
+      {/* Mobile tab nav */}
+      <CommunityTabNav />
+
+      {/* Banner — desktop only */}
+      <div className="hidden md:flex dream-card p-4 mb-4 items-center gap-3">
         <MapPin size={18} className="text-dream shrink-0" />
         <div className="flex-1">
           <p className="text-sm font-medium">다녀본 학원 후기를 남겨보세요</p>
@@ -91,6 +95,15 @@ export default function Academies() {
         </div>
         <button onClick={() => setReviewOpen(true)}
           className="flex items-center gap-1 bg-dream text-white text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-dream/90 transition-colors">
+          <PenLine size={12} /> 후기 쓰기
+        </button>
+      </div>
+
+      {/* Mobile: write button row */}
+      <div className="md:hidden flex items-center justify-between mb-3">
+        <span className="text-xs text-muted-foreground">학원 리뷰 커뮤니티</span>
+        <button onClick={() => setReviewOpen(true)}
+          className="flex items-center gap-1 bg-dream text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-dream/90 transition-colors">
           <PenLine size={12} /> 후기 쓰기
         </button>
       </div>
