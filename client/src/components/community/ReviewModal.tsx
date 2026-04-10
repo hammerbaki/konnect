@@ -4,7 +4,7 @@
  */
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Star, X, PenLine, ChevronRight } from "lucide-react";
+import { Star, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { getAuthHeaders } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
@@ -185,14 +185,9 @@ export function ReviewModal({ open, onClose, type, defaultSubject = "전체", de
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border">
-          <div>
-            <DialogTitle className="editorial-heading text-lg">{lbl.name} 후기 남기기</DialogTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">솔직한 경험을 공유해 주세요</p>
-          </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-secondary text-muted-foreground">
-            <X size={18} />
-          </button>
+        <div className="px-5 pt-5 pb-4 border-b border-border">
+          <DialogTitle className="editorial-heading text-lg">{lbl.name} 후기 남기기</DialogTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">솔직한 경험을 공유해 주세요</p>
         </div>
 
         <div className="px-5 py-5 space-y-6">
