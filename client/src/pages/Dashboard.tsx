@@ -258,9 +258,9 @@ function WeeklyGoalBar({ kompassList }: { kompassList: KompassData[] }) {
             </span>
           )}
         </div>
-        <Link href={`/goals/${kompassId}`}>
+        <Link href="/dream">
           <span className="text-[11px] text-dream font-semibold flex items-center gap-0.5 cursor-pointer">
-            상세보기 <ChevronRight size={11} />
+            꿈 보기 <ChevronRight size={11} />
           </span>
         </Link>
       </div>
@@ -277,6 +277,52 @@ function WeeklyGoalBar({ kompassList }: { kompassList: KompassData[] }) {
         <p className="mt-2 text-[10px] text-muted-foreground line-clamp-2">{week.description}</p>
       )}
     </motion.div>
+  );
+}
+
+/* ─── Hero Banner ───────────────────────────────────────────────── */
+function HeroBanner() {
+  return (
+    <section>
+      <div className="relative overflow-hidden rounded-xl">
+        <img
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663433131621/A3XszkVKVy7WNitpyWDbEe/v3-hero-dream-kSVtSQjiGKaTguFYwP6Y5v.webp"
+          alt="꿈을 잇다"
+          className="w-full h-44 sm:h-56 lg:h-72 object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/30 to-transparent" />
+        <div className="absolute bottom-6 left-6 sm:bottom-10 sm:left-10 right-6 sm:right-10">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55 }}
+          >
+            <span className="text-[10px] uppercase tracking-[0.25em] text-gold font-semibold">
+              Konnect
+            </span>
+            <h1 className="editorial-heading text-2xl sm:text-[2.25rem] text-white mt-2 leading-tight">
+              KONNECT, 나와 꿈을 연결한다
+            </h1>
+            <p className="text-white/65 text-xs sm:text-sm mt-3 max-w-md leading-relaxed">
+              어떤 인강을 들을지 묻기 전에, 왜 공부하는지를 먼저 묻는다.
+            </p>
+            <div className="flex items-center gap-3 mt-5">
+              <Link href="/explore">
+                <span className="inline-flex items-center gap-2 px-4 py-2.5 bg-dream text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-dream/90 transition-colors shadow-sm">
+                  <Star size={14} />
+                  학과·직업 탐색
+                </span>
+              </Link>
+              <Link href="/aptitude">
+                <span className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/15 text-white text-xs sm:text-sm font-medium rounded-lg backdrop-blur-sm border border-white/20 hover:bg-white/25 transition-colors">
+                  진로 흥미 분석
+                </span>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -313,6 +359,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 pb-8">
+
+      {/* ── Hero Banner ── */}
+      <HeroBanner />
 
       {/* ── Weekly Goal Progress (only if goals exist) ── */}
       {kompassList.length > 0 && (
