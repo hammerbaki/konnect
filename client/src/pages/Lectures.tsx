@@ -31,8 +31,8 @@ const topRanking = [
 ];
 
 export default function Lectures() {
-  const [activeSubject, setActiveSubject] = useState
-  usePageTitle("인강 리뷰 — Konnect 커뮤니티", "고등학생들이 직접 남긴 인터넷 강의 솔직 후기를 확인하세요.");("전체");
+  usePageTitle("인강 리뷰 — Konnect 커뮤니티", "고등학생들이 직접 남긴 인터넷 강의 솔직 후기를 확인하세요.");
+  const [activeSubject, setActiveSubject] = useState("전체");
   const [sortBy, setSortBy] = useState<"recent" | "likes" | "rating">("recent");
   const [reviewOpen, setReviewOpen] = useState(false);
   const [page, setPage] = useState(1);

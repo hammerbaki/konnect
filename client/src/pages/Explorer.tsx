@@ -328,8 +328,8 @@ interface ServerStats {
 }
 
 export default function Explorer() {
-    const [searchQuery, setSearchQuery] = useState
-  usePageTitle("진로 탐험가 — Konnect", "다양한 직업 세계를 탐험하고 나에게 맞는 커리어를 찾아보세요.");("");
+    usePageTitle("진로 탐험가 — Konnect", "다양한 직업 세계를 탐험하고 나에게 맞는 커리어를 찾아보세요.");
+    const [searchQuery, setSearchQuery] = useState("");
     const [selectedLargeClass, setSelectedLargeClass] = useState<string>("all");
     const [selectedMediumClass, setSelectedMediumClass] = useState<string>("all");
     const [visibleCount, setVisibleCount] = useState(30);

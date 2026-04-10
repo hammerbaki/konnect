@@ -35,8 +35,8 @@ const difficultyGuide = [
 ];
 
 export default function Workbooks() {
-  const [activeSubject, setActiveSubject] = useState
-  usePageTitle("문제집 리뷰 — Konnect 커뮤니티", "수험생들이 직접 남긴 문제집 솔직 후기를 확인하세요.");("전체");
+  usePageTitle("문제집 리뷰 — Konnect 커뮤니티", "수험생들이 직접 남긴 문제집 솔직 후기를 확인하세요.");
+  const [activeSubject, setActiveSubject] = useState("전체");
   const [sortBy, setSortBy] = useState<"recent" | "likes" | "rating">("recent");
   const [reviewOpen, setReviewOpen] = useState(false);
   const [page, setPage] = useState(1);

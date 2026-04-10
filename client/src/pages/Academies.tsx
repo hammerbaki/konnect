@@ -31,8 +31,8 @@ const sortOptions = [
 ];
 
 export default function Academies() {
-  const [activeRegion, setActiveRegion] = useState
-  usePageTitle("학원 리뷰 — Konnect 커뮤니티", "학원 정보와 재원생들의 솔직한 리뷰를 확인하세요.");("서울");
+  usePageTitle("학원 리뷰 — Konnect 커뮤니티", "학원 정보와 재원생들의 솔직한 리뷰를 확인하세요.");
+  const [activeRegion, setActiveRegion] = useState("서울");
   const [activeSubject, setActiveSubject] = useState("전체");
   const [sortBy, setSortBy] = useState<"recent" | "likes" | "rating">("recent");
   const [reviewOpen, setReviewOpen] = useState(false);
