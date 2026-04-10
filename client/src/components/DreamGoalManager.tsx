@@ -473,9 +473,9 @@ function WeekPanel({
 }
 
 /* ─── Main Component ─── */
-interface Props { kompassId: string; visionTitle: string; }
+interface Props { kompassId: string; visionTitle: string; focusWeekId?: string; }
 
-export function DreamGoalManager({ kompassId, visionTitle }: Props) {
+export function DreamGoalManager({ kompassId, visionTitle, focusWeekId }: Props) {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [vision, setVision] = useState<VisionGoal | null>(null);
@@ -531,14 +531,41 @@ export function DreamGoalManager({ kompassId, visionTitle }: Props) {
     if (kompassData) {
       setVision(kompassData.visionData);
       lastSavedRef.current = JSON.stringify(kompassData.visionData);
-      const firstYear = kompassData.visionData.children[0];
-      if (firstYear) {
-        setExpandedYearIds(new Set([firstYear.id]));
-        const firstMonth = firstYear.children[0]?.children[0];
-        if (firstMonth) setExpandedMonthIds(new Set([firstMonth.id]));
+      const v = kompassData.visionData;
+
+      if (focusWeekId) {
+        // Find the path: year → half → month → week matching focusWeekId
+        let foundYearId: string | null = null;
+        let foundMonthId: string | null = null;
+        let foundWeekId: string | null = null;
+        outer: for (const year of v.children) {
+          for (const half of year.children) {
+            for (const month of half.children) {
+              for (const week of month.children) {
+                if (week.id === focusWeekId) {
+                  foundYearId = year.id;
+                  foundMonthId = month.id;
+                  foundWeekId = week.id;
+                  break outer;
+                }
+              }
+            }
+          }
+        }
+        if (foundYearId) setExpandedYearIds(new Set([foundYearId]));
+        if (foundMonthId) setExpandedMonthIds(new Set([foundMonthId]));
+        if (foundWeekId) setExpandedWeekIds(new Set([foundWeekId]));
+      } else {
+        // Default: open first year and first month
+        const firstYear = v.children[0];
+        if (firstYear) {
+          setExpandedYearIds(new Set([firstYear.id]));
+          const firstMonth = firstYear.children[0]?.children[0];
+          if (firstMonth) setExpandedMonthIds(new Set([firstMonth.id]));
+        }
       }
     }
-  }, [kompassData]);
+  }, [kompassData, focusWeekId]);
 
   useEffect(() => {
     return () => {

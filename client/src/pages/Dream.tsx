@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { useState, useEffect, useRef } from "react";
+import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Star,
@@ -57,6 +57,16 @@ function calcDDay(targetYear: number): number {
 
 export default function Dream() {
   const queryClient = useQueryClient();
+  const [location] = useLocation();
+
+  // Parse focus params from URL: /dream?kompassId=xxx&weekId=yyy
+  const urlParams = new URLSearchParams(
+    typeof window !== "undefined" ? window.location.search : ""
+  );
+  const focusKompassId = urlParams.get("kompassId") ?? null;
+  const focusWeekId = urlParams.get("weekId") ?? null;
+  // Track if we've applied the focus (so it only triggers once)
+  const focusAppliedRef = useRef(false);
 
   const [dreamText, setDreamText] = useState("나의 꿈을 선언해보세요");
   const [isEditing, setIsEditing] = useState(false);
@@ -136,12 +146,20 @@ export default function Dream() {
     }
   }, [kompassList]);
 
-  // Auto-expand first kompass
+  // Auto-expand: if URL has focusKompassId open only that one; else open first
   useEffect(() => {
-    if (kompassList.length > 0 && expandedIds.size === 0) {
+    if (kompassList.length === 0 || focusAppliedRef.current) return;
+    if (focusKompassId) {
+      const target = kompassList.find((k) => k.id === focusKompassId);
+      if (target) {
+        setExpandedIds(new Set([target.id]));
+        focusAppliedRef.current = true;
+      }
+    } else if (expandedIds.size === 0) {
       setExpandedIds(new Set([kompassList[0].id]));
+      focusAppliedRef.current = true;
     }
-  }, [kompassList]);
+  }, [kompassList, focusKompassId]);
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
@@ -387,6 +405,7 @@ export default function Dream() {
                             <DreamGoalManager
                               kompassId={kompass.id}
                               visionTitle={kompass.visionData.title}
+                              focusWeekId={focusKompassId === kompass.id && focusWeekId ? focusWeekId : undefined}
                             />
                           </div>
                         </motion.div>

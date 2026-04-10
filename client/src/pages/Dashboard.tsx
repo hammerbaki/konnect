@@ -223,13 +223,22 @@ interface WeekEntry {
 }
 
 function SingleWeekRow({ entry }: { entry: WeekEntry }) {
+  const [, navigate] = useLocation();
   const progress = entry.week.progress ?? 0;
   // Build a readable week subtitle: prefer description, fallback to title ("Week 1" → "1주차")
   const weekSubtitle = entry.week.description?.split("\n")[0]?.replace(/^•\s*/, "").trim()
     || entry.week.title?.replace(/week\s*/i, "").replace(/^(\d+)$/, "$1주차");
 
+  const handleClick = () => {
+    navigate(`/dream?kompassId=${encodeURIComponent(entry.kompassId)}&weekId=${encodeURIComponent(entry.week.id)}`);
+  };
+
   return (
-    <div className="space-y-1">
+    <button
+      onClick={handleClick}
+      className="w-full text-left space-y-1 rounded-xl px-3 py-2.5 -mx-3 transition-colors hover:bg-dream/5 active:bg-dream/10"
+      data-testid={`btn-weekly-goal-${entry.kompassId}`}
+    >
       {/* Main goal title */}
       <p className="text-sm font-bold text-[#191F28] leading-snug">{entry.goalTitle}</p>
       {/* Week subtitle */}
@@ -245,7 +254,7 @@ function SingleWeekRow({ entry }: { entry: WeekEntry }) {
         />
         <span className="text-xs font-bold text-dream min-w-[30px] text-right">{progress}%</span>
       </div>
-    </div>
+    </button>
   );
 }
 
