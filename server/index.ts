@@ -344,6 +344,31 @@ app.use((req, res, next) => {
             console.error('[DataSync] Background sync error:', e);
           }
         }, 5000); // Wait 5s after server starts
+
+        // ── Periodic re-sync: CareerNet data refreshed every 7 days ──
+        // Clients are always served from our DB; this keeps the DB fresh.
+        const RESYNC_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+        let periodicSyncRunning = false;
+
+        setInterval(async () => {
+          if (periodicSyncRunning) {
+            console.log('[PeriodicSync] Previous sync still running — skipping.');
+            return;
+          }
+          periodicSyncRunning = true;
+          console.log('[PeriodicSync] Starting weekly CareerNet data refresh...');
+          try {
+            const majResult = await syncMajorsFromCareerNetNew((m) => console.log('[PeriodicSync Majors]', m));
+            console.log('[PeriodicSync] Majors done:', majResult);
+            const jobResult = await syncJobsFromCareerNetNew((m) => console.log('[PeriodicSync Jobs]', m));
+            console.log('[PeriodicSync] Jobs done:', jobResult);
+            console.log('[PeriodicSync] Weekly refresh complete.');
+          } catch (e) {
+            console.error('[PeriodicSync] Error during weekly refresh:', e);
+          } finally {
+            periodicSyncRunning = false;
+          }
+        }, RESYNC_INTERVAL_MS);
       },
     );
 
