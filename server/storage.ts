@@ -459,7 +459,8 @@ export interface IStorage {
   }>;
 
   // Community Reviews
-  getCommunityReviews(opts: { type: string; subject?: string; sort?: string; page?: number; limit?: number; adminAll?: boolean; search?: string }): Promise<{ reviews: CommunityReview[]; total: number }>;
+  getCommunityReviews(opts: { type: string; subject?: string; sort?: string; page?: number; limit?: number; adminAll?: boolean; search?: string }): Promise<{ reviews: Array<CommunityReview & { userName?: string | null; userEmail?: string | null }>; total: number }>;
+  updateCommunityReview(id: number, data: Partial<Pick<CommunityReview, 'targetName'|'instructor'|'platform'|'publisher'|'subject'|'region'|'district'|'overallRating'|'ratingContent'|'ratingValue'|'ratingManage'|'title'|'content'|'prosTagIds'|'consTagIds'|'gradeLevel'|'gradeBefore'|'gradeAfter'|'studyDuration'|'isApproved'>>): Promise<CommunityReview | undefined>;
   getCommunityReview(id: number): Promise<CommunityReview | undefined>;
   createCommunityReview(data: InsertCommunityReview): Promise<CommunityReview>;
   deleteCommunityReview(id: number, userId: string, isAdmin?: boolean): Promise<boolean>;
@@ -3836,7 +3837,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // ── Community Reviews ────────────────────────────────────────────
-  async getCommunityReviews(opts: { type: string; subject?: string; sort?: string; page?: number; limit?: number; adminAll?: boolean; search?: string }): Promise<{ reviews: CommunityReview[]; total: number }> {
+  async getCommunityReviews(opts: { type: string; subject?: string; sort?: string; page?: number; limit?: number; adminAll?: boolean; search?: string }): Promise<{ reviews: Array<CommunityReview & { userName?: string | null; userEmail?: string | null }>; total: number }> {
     const { type, subject, sort = "recent", page = 1, limit: lim = 20, adminAll = false, search } = opts;
     const offset = (page - 1) * lim;
 
@@ -3863,12 +3864,60 @@ export class DatabaseStorage implements IStorage {
         ? desc(communityReviews.overallRating)
         : desc(communityReviews.createdAt);
 
+    if (adminAll) {
+      const [countResult, rows] = await Promise.all([
+        db.select({ count: count() }).from(communityReviews).where(and(...conditions)),
+        db.select({
+          id: communityReviews.id,
+          userId: communityReviews.userId,
+          type: communityReviews.type,
+          targetName: communityReviews.targetName,
+          instructor: communityReviews.instructor,
+          platform: communityReviews.platform,
+          publisher: communityReviews.publisher,
+          subject: communityReviews.subject,
+          region: communityReviews.region,
+          district: communityReviews.district,
+          overallRating: communityReviews.overallRating,
+          ratingContent: communityReviews.ratingContent,
+          ratingValue: communityReviews.ratingValue,
+          ratingManage: communityReviews.ratingManage,
+          title: communityReviews.title,
+          content: communityReviews.content,
+          prosTagIds: communityReviews.prosTagIds,
+          consTagIds: communityReviews.consTagIds,
+          gradeLevel: communityReviews.gradeLevel,
+          gradeBefore: communityReviews.gradeBefore,
+          gradeAfter: communityReviews.gradeAfter,
+          studyDuration: communityReviews.studyDuration,
+          likes: communityReviews.likes,
+          views: communityReviews.views,
+          isApproved: communityReviews.isApproved,
+          createdAt: communityReviews.createdAt,
+          userName: users.displayName,
+          userEmail: users.email,
+        })
+        .from(communityReviews)
+        .leftJoin(users, eq(communityReviews.userId, users.id))
+        .where(and(...conditions))
+        .orderBy(orderBy)
+        .limit(lim)
+        .offset(offset),
+      ]);
+      return { reviews: rows, total: countResult[0]?.count ?? 0 };
+    }
+
     const [countResult, reviews] = await Promise.all([
       db.select({ count: count() }).from(communityReviews).where(and(...conditions)),
       db.select().from(communityReviews).where(and(...conditions)).orderBy(orderBy).limit(lim).offset(offset),
     ]);
 
     return { reviews, total: countResult[0]?.count ?? 0 };
+  }
+
+  async updateCommunityReview(id: number, data: Partial<Pick<CommunityReview, 'targetName'|'instructor'|'platform'|'publisher'|'subject'|'region'|'district'|'overallRating'|'ratingContent'|'ratingValue'|'ratingManage'|'title'|'content'|'prosTagIds'|'consTagIds'|'gradeLevel'|'gradeBefore'|'gradeAfter'|'studyDuration'|'isApproved'>>): Promise<CommunityReview | undefined> {
+    const [updated] = await db.update(communityReviews).set(data).where(eq(communityReviews.id, id)).returning();
+    return updated;
   }
 
   async getCommunityReview(id: number): Promise<CommunityReview | undefined> {

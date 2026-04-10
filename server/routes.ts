@@ -6726,6 +6726,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PATCH /api/admin/community/reviews/:id — admin edit
+  app.patch('/api/admin/community/reviews/:id', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: '잘못된 ID' });
+      const updated = await storage.updateCommunityReview(id, req.body);
+      if (!updated) return res.status(404).json({ message: '리뷰를 찾을 수 없습니다.' });
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // GET /api/admin/community/reviews — admin only, all reviews with filters
   app.get('/api/admin/community/reviews', isAuthenticated, requireStaffOrAdmin, async (req: any, res) => {
     try {

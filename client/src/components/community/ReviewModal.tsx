@@ -2,9 +2,9 @@
  * Structured review writing modal for 인강 / 문제집 / 학원
  * Industry-best practice: guided form with preset tags + dimension ratings
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Star, PenLine } from "lucide-react";
+import { Star, PenLine, Save, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { getAuthHeaders } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
@@ -89,6 +89,308 @@ const LABEL: Record<ReviewType, { name: string; nameLabel: string; extra: string
 
 const OVERALL_LABELS = ["", "별로예요", "아쉬워요", "보통이에요", "좋아요", "최고예요!"];
 
+// ── Admin Edit Modal ───────────────────────────────────────────────
+interface AdminEditReviewModalProps {
+  open: boolean;
+  onClose: () => void;
+  review: any; // existing review record from DB
+  onSaved: () => void;
+}
+
+export function AdminEditReviewModal({ open, onClose, review, onSaved }: AdminEditReviewModalProps) {
+  const type: ReviewType = review?.type ?? "lecture";
+  const lbl = LABEL[type];
+
+  const [overallRating, setOverallRating] = useState(review?.overallRating ?? 0);
+  const [ratingContent, setRatingContent] = useState(review?.ratingContent ?? 0);
+  const [ratingValue, setRatingValue] = useState(review?.ratingValue ?? 0);
+  const [ratingManage, setRatingManage] = useState(review?.ratingManage ?? 0);
+  const [targetName, setTargetName] = useState(review?.targetName ?? "");
+  const [extra1, setExtra1] = useState(review?.instructor ?? review?.publisher ?? review?.region ?? "");
+  const [extra2, setExtra2] = useState(review?.platform ?? review?.district ?? "");
+  const [subject, setSubject] = useState(review?.subject ?? "");
+  const [gradeLevel, setGradeLevel] = useState(review?.gradeLevel ?? "");
+  const [gradeBefore, setGradeBefore] = useState(review?.gradeBefore ?? "");
+  const [gradeAfter, setGradeAfter] = useState(review?.gradeAfter ?? "");
+  const [studyDuration, setStudyDuration] = useState(review?.studyDuration ?? "");
+  const [prosTags, setProsTags] = useState<string[]>(review?.prosTagIds ?? []);
+  const [consTags, setConsTags] = useState<string[]>(review?.consTagIds ?? []);
+  const [title, setTitle] = useState(review?.title ?? "");
+  const [content, setContent] = useState(review?.content ?? "");
+  const [isApproved, setIsApproved] = useState<number>(review?.isApproved ?? 1);
+  const [submitError, setSubmitError] = useState("");
+
+  useEffect(() => {
+    if (review && open) {
+      setOverallRating(review.overallRating ?? 0);
+      setRatingContent(review.ratingContent ?? 0);
+      setRatingValue(review.ratingValue ?? 0);
+      setRatingManage(review.ratingManage ?? 0);
+      setTargetName(review.targetName ?? "");
+      setExtra1(review.instructor ?? review.publisher ?? review.region ?? "");
+      setExtra2(review.platform ?? review.district ?? "");
+      setSubject(review.subject ?? "");
+      setGradeLevel(review.gradeLevel ?? "");
+      setGradeBefore(review.gradeBefore ?? "");
+      setGradeAfter(review.gradeAfter ?? "");
+      setStudyDuration(review.studyDuration ?? "");
+      setProsTags(review.prosTagIds ?? []);
+      setConsTags(review.consTagIds ?? []);
+      setTitle(review.title ?? "");
+      setContent(review.content ?? "");
+      setIsApproved(review.isApproved ?? 1);
+      setSubmitError("");
+    }
+  }, [review, open]);
+
+  const mutation = useMutation({
+    mutationFn: async (data: object) => {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`/api/admin/community/reviews/${review.id}`, {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error((await res.json()).message || "수정 실패");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("리뷰가 수정되었습니다.");
+      onSaved();
+      onClose();
+    },
+    onError: (e: Error) => setSubmitError(e.message),
+  });
+
+  const toggleTag = (tag: string, list: string[], setList: (v: string[]) => void) => {
+    setList(list.includes(tag) ? list.filter(t => t !== tag) : [...list, tag]);
+  };
+
+  const handleSubmit = () => {
+    setSubmitError("");
+    if (!overallRating) { setSubmitError("전체 별점을 선택해주세요."); return; }
+    if (!targetName.trim()) { setSubmitError(`${lbl.nameLabel}을 입력해주세요.`); return; }
+    if (!title.trim()) { setSubmitError("제목을 입력해주세요."); return; }
+    if (content.trim().length < 20) { setSubmitError("내용을 20자 이상 작성해주세요."); return; }
+
+    const body: Record<string, unknown> = {
+      targetName: targetName.trim(),
+      subject: subject || "기타",
+      overallRating,
+      ratingContent: ratingContent || null,
+      ratingValue: ratingValue || null,
+      ratingManage: ratingManage || null,
+      title: title.trim(),
+      content: content.trim(),
+      prosTagIds: prosTags,
+      consTagIds: consTags,
+      gradeLevel: gradeLevel || null,
+      gradeBefore: gradeBefore || null,
+      gradeAfter: gradeAfter || null,
+      studyDuration: studyDuration || null,
+      isApproved,
+    };
+    if (type === "lecture") { body.instructor = extra1 || null; body.platform = extra2 || null; }
+    else if (type === "workbook") { body.publisher = extra1 || null; }
+    else { body.region = extra1 || null; body.district = extra2 || null; }
+    mutation.mutate(body);
+  };
+
+  const subjects = ["국어", "수학", "영어", "한국사", "사탐", "과탐", "논술", "기타"];
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-lg w-[calc(100vw-2rem)] flex flex-col max-h-[92dvh] p-0 gap-0 rounded-2xl overflow-hidden">
+        <div className="flex-none px-5 pt-5 pb-4 border-b border-border">
+          <DialogTitle className="text-lg font-bold flex items-center gap-2">
+            <Pencil size={16} className="text-dream" /> 리뷰 수정 (#{review?.id})
+          </DialogTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">{lbl.name} 리뷰 — 어드민 편집 모드</p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+        <div className="px-5 py-5 space-y-6">
+
+          {/* Section 1: Target info */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">1 · {lbl.name} 정보</h3>
+            <div>
+              <Label className="text-sm font-semibold mb-1.5 block">{lbl.nameLabel} <span className="text-destructive">*</span></Label>
+              <Input value={targetName} onChange={(e) => setTargetName(e.target.value)} className="h-10 rounded-xl border-border/60 focus-visible:ring-dream" />
+            </div>
+            <div className={cn("grid gap-3", lbl.extra.length === 2 ? "grid-cols-2" : "grid-cols-1")}>
+              {lbl.extra.map((label, i) => (
+                <div key={label}>
+                  <Label className="text-xs font-semibold mb-1 block text-muted-foreground">{label}</Label>
+                  <Input value={i === 0 ? extra1 : extra2} onChange={(e) => i === 0 ? setExtra1(e.target.value) : setExtra2(e.target.value)}
+                    className="h-9 rounded-xl border-border/60 focus-visible:ring-dream text-sm" />
+                </div>
+              ))}
+            </div>
+            <div>
+              <Label className="text-xs font-semibold mb-1.5 block text-muted-foreground">과목</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {subjects.map(s => (
+                  <button key={s} type="button" onClick={() => setSubject(s)}
+                    className={cn("px-2.5 py-1 text-xs rounded-full border transition-all",
+                      subject === s ? "border-dream bg-dream/10 text-dream font-semibold" : "border-border text-muted-foreground hover:border-dream/50"
+                    )}>{s}</button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Section 2: Ratings */}
+          <section className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">2 · 평점</h3>
+            <div className="text-center py-2">
+              <p className="text-xs text-muted-foreground mb-2">전체 만족도 <span className="text-destructive">*</span></p>
+              <div className="flex justify-center mb-1">
+                <StarRating value={overallRating} onChange={setOverallRating} size={36} />
+              </div>
+              {overallRating > 0 && <p className="text-sm font-semibold">{OVERALL_LABELS[overallRating]}</p>}
+            </div>
+            <div className="bg-secondary/40 rounded-xl px-4 py-3 space-y-2.5">
+              <DimRating label={lbl.dim1} value={ratingContent} onChange={setRatingContent} />
+              <DimRating label={lbl.dim2} value={ratingValue} onChange={setRatingValue} />
+              {lbl.dim3 && <DimRating label={lbl.dim3} value={ratingManage} onChange={setRatingManage} />}
+            </div>
+          </section>
+
+          {/* Section 3: Tags */}
+          <section className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">3 · 장단점 태그</h3>
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">좋았던 점</p>
+              <div className="flex flex-wrap gap-1.5">
+                {PROS_TAGS[type].map(tag => (
+                  <button key={tag} type="button" onClick={() => toggleTag(tag, prosTags, setProsTags)}
+                    className={cn("px-2.5 py-1 text-xs rounded-full border transition-all",
+                      prosTags.includes(tag) ? "border-green-500 bg-green-50 text-green-700 font-semibold" : "border-border text-muted-foreground hover:border-green-400"
+                    )}>{tag}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">아쉬웠던 점</p>
+              <div className="flex flex-wrap gap-1.5">
+                {CONS_TAGS[type].map(tag => (
+                  <button key={tag} type="button" onClick={() => toggleTag(tag, consTags, setConsTags)}
+                    className={cn("px-2.5 py-1 text-xs rounded-full border transition-all",
+                      consTags.includes(tag) ? "border-red-400 bg-red-50 text-red-600 font-semibold" : "border-border text-muted-foreground hover:border-red-300"
+                    )}>{tag}</button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Section 4: Context */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">4 · 학생 상황</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">학년</Label>
+                <div className="flex flex-wrap gap-1">
+                  {GRADE_LEVELS.map(g => (
+                    <button key={g} type="button" onClick={() => setGradeLevel(g === gradeLevel ? "" : g)}
+                      className={cn("px-2 py-0.5 text-xs rounded-full border transition-all",
+                        gradeLevel === g ? "border-dream bg-dream/10 text-dream" : "border-border text-muted-foreground"
+                      )}>{g}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">수강 기간</Label>
+                <div className="flex flex-col gap-1">
+                  {DURATIONS[type].map(d => (
+                    <button key={d} type="button" onClick={() => setStudyDuration(d === studyDuration ? "" : d)}
+                      className={cn("px-2 py-0.5 text-xs rounded-full border text-left transition-all",
+                        studyDuration === d ? "border-dream bg-dream/10 text-dream" : "border-border text-muted-foreground"
+                      )}>{d}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">수강 전 등급</Label>
+                <div className="flex flex-wrap gap-1">
+                  {GRADES.map(g => (
+                    <button key={g} type="button" onClick={() => setGradeBefore(g === gradeBefore ? "" : g)}
+                      className={cn("px-2 py-0.5 text-xs rounded-full border transition-all",
+                        gradeBefore === g ? "border-dream bg-dream/10 text-dream" : "border-border text-muted-foreground"
+                      )}>{g}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">수강 후 등급</Label>
+                <div className="flex flex-wrap gap-1">
+                  {GRADES.map(g => (
+                    <button key={g} type="button" onClick={() => setGradeAfter(g === gradeAfter ? "" : g)}
+                      className={cn("px-2 py-0.5 text-xs rounded-full border transition-all",
+                        gradeAfter === g ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-border text-muted-foreground"
+                      )}>{g}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 5: Written review */}
+          <section className="space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">5 · 리뷰 내용</h3>
+            <div>
+              <Label className="text-sm font-semibold mb-1.5 block">제목 <span className="text-destructive">*</span></Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)}
+                className="h-10 rounded-xl border-border/60 focus-visible:ring-dream" maxLength={100} />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <Label className="text-sm font-semibold">상세 후기 <span className="text-destructive">*</span></Label>
+                <span className={cn("text-xs", content.length < 20 ? "text-muted-foreground" : "text-green-600")}>{content.length} / 최소 20자</span>
+              </div>
+              <Textarea value={content} onChange={(e) => setContent(e.target.value)}
+                className="min-h-[120px] rounded-xl border-border/60 focus-visible:ring-dream resize-none text-sm" maxLength={2000} />
+            </div>
+          </section>
+
+          {/* Section 6: Admin controls */}
+          <section className="space-y-3 pb-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">6 · 어드민 설정</h3>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-muted-foreground">승인 상태</span>
+              <div className="flex gap-2">
+                {[{ v: 1, label: "승인됨" }, { v: 0, label: "미승인" }].map(opt => (
+                  <button key={opt.v} type="button" onClick={() => setIsApproved(opt.v)}
+                    className={cn("px-3 py-1 text-xs rounded-full border font-semibold transition-all",
+                      isApproved === opt.v
+                        ? opt.v === 1 ? "border-green-500 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-600"
+                        : "border-border text-muted-foreground"
+                    )}>{opt.label}</button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+        </div>
+        </div>
+
+        <div className="flex-none px-5 pt-3 pb-5 border-t border-border bg-background">
+          {submitError && (
+            <p className="text-xs text-destructive font-medium mb-2 text-center bg-destructive/10 rounded-lg py-2 px-3">⚠ {submitError}</p>
+          )}
+          <button onClick={handleSubmit} disabled={mutation.isPending}
+            className="w-full h-12 bg-dream text-white font-bold rounded-xl text-sm hover:bg-dream/90 disabled:opacity-60 transition-colors flex items-center justify-center gap-2">
+            {mutation.isPending ? "저장 중..." : <><Save size={16} /> 수정 완료</>}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Main ReviewModal (create) ──────────────────────────────────────
 export function ReviewModal({ open, onClose, type, defaultSubject = "전체", defaultTarget }: ReviewModalProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();

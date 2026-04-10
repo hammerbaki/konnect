@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -12,7 +14,7 @@ import {
   BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
   ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download, Users2, X, MessageSquare, Star,
   Briefcase, GraduationCap, FileText, Target, Mic, ClipboardList, ChevronRight, Calendar, MapPin,
-  Database
+  Database, Pencil
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
@@ -37,6 +39,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAx
 import { useLocation } from "wouter";
 import { apiRequest, getAuthHeaders } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
+import { AdminEditReviewModal } from "@/components/community/ReviewModal";
 
 interface AdminUser {
   id: string;
@@ -903,6 +906,7 @@ function CommunityReviewsAdminTab() {
   const [type, setType] = useState<"lecture" | "workbook" | "academy">("lecture");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [editingReview, setEditingReview] = useState<any>(null);
 
   const { data, refetch, isFetching, status } = useQuery<{ reviews: any[]; total: number }>({
     queryKey: [`/api/admin/community/reviews`, type, search, page],
@@ -976,37 +980,49 @@ function CommunityReviewsAdminTab() {
                 <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">대상</th>
                 <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">제목</th>
                 <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground w-14">별점</th>
-                <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">작성자 ID</th>
+                <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">작성자</th>
                 <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">작성일</th>
                 <th className="px-4 py-2.5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {reviews.map((review: any) => (
-                <tr key={review.id} className="hover:bg-secondary/30 transition-colors group">
-                  <td className="px-4 py-3 text-muted-foreground">#{review.id}</td>
-                  <td className="px-4 py-3 font-medium max-w-[120px] truncate">{review.targetName}</td>
-                  <td className="px-4 py-3 max-w-[180px] truncate text-muted-foreground">{review.title}</td>
-                  <td className="px-4 py-3">
-                    <span className="flex items-center gap-0.5">
-                      <Star className="h-3 w-3 fill-gold text-gold" />
-                      <span className="font-semibold">{review.overallRating}</span>
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground font-mono text-[10px] max-w-[100px] truncate">{review.userId}</td>
-                  <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                    {review.createdAt ? new Date(review.createdAt).toLocaleDateString('ko-KR') : '-'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <button onClick={() => { if (confirm(`리뷰 #${review.id}를 삭제할까요?`)) deleteMutation.mutate(review.id); }}
-                      disabled={deleteMutation.isPending}
-                      className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                      data-testid={`button-admin-delete-review-${review.id}`}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {reviews.map((review: any) => {
+                const displayName = review.userName || review.userEmail?.split('@')[0] || `#${review.userId?.slice(0,8)}`;
+                return (
+                  <tr key={review.id} className="hover:bg-secondary/30 transition-colors group">
+                    <td className="px-4 py-3 text-muted-foreground">#{review.id}</td>
+                    <td className="px-4 py-3 font-medium max-w-[120px] truncate">{review.targetName}</td>
+                    <td className="px-4 py-3 max-w-[180px] truncate text-muted-foreground">{review.title}</td>
+                    <td className="px-4 py-3">
+                      <span className="flex items-center gap-0.5">
+                        <Star className="h-3 w-3 fill-gold text-gold" />
+                        <span className="font-semibold">{review.overallRating}</span>
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground max-w-[120px] truncate">
+                      <span title={review.userEmail || review.userId}>{displayName}</span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                      {review.createdAt ? new Date(review.createdAt).toLocaleDateString('ko-KR') : '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => setEditingReview(review)}
+                          className="text-muted-foreground hover:text-dream transition-colors"
+                          data-testid={`button-admin-edit-review-${review.id}`}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => { if (confirm(`리뷰 #${review.id}를 삭제할까요?`)) deleteMutation.mutate(review.id); }}
+                          disabled={deleteMutation.isPending}
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                          data-testid={`button-admin-delete-review-${review.id}`}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1021,6 +1037,16 @@ function CommunityReviewsAdminTab() {
           <button onClick={() => setPage(p => p + 1)} disabled={page >= totalPages}
             className="px-3 py-1 rounded-lg border border-border text-xs disabled:opacity-40 hover:bg-secondary">다음</button>
         </div>
+      )}
+
+      {/* Edit modal */}
+      {editingReview && (
+        <AdminEditReviewModal
+          open={!!editingReview}
+          onClose={() => setEditingReview(null)}
+          review={editingReview}
+          onSaved={() => { refetch(); setEditingReview(null); }}
+        />
       )}
     </div>
   );
