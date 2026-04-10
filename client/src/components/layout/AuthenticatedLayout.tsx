@@ -17,7 +17,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
       
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-5 md:px-8 md:py-8 pb-[100px] md:pb-10 scroll-smooth">
+        <main className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-5 md:px-8 md:py-8 pb-[calc(100px+env(safe-area-inset-bottom,0px))] md:pb-10 scroll-smooth">
           <Suspense fallback={<ContentSkeleton />}>
             {children}
           </Suspense>

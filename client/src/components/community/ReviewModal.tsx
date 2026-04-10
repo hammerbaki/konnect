@@ -183,13 +183,15 @@ export function ReviewModal({ open, onClose, type, defaultSubject = "전체", de
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 gap-0 rounded-2xl">
-        {/* Header */}
-        <div className="px-5 pt-5 pb-4 border-b border-border">
+      <DialogContent className="max-w-lg w-[calc(100vw-2rem)] flex flex-col max-h-[92dvh] p-0 gap-0 rounded-2xl overflow-hidden">
+        {/* Header — fixed */}
+        <div className="flex-none px-5 pt-5 pb-4 border-b border-border">
           <DialogTitle className="editorial-heading text-lg">{lbl.name} 후기 남기기</DialogTitle>
           <p className="text-xs text-muted-foreground mt-0.5">솔직한 경험을 공유해 주세요</p>
         </div>
 
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto overscroll-contain">
         <div className="px-5 py-5 space-y-6">
           {/* ── Section 1: Target info ── */}
           <section className="space-y-3">
@@ -348,7 +350,11 @@ export function ReviewModal({ open, onClose, type, defaultSubject = "전체", de
             </div>
           </section>
 
-          {/* Submit */}
+        </div>
+        </div>{/* end scrollable body */}
+
+        {/* Footer — fixed, above iPhone home indicator */}
+        <div className="flex-none px-5 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-border bg-background">
           <button
             onClick={handleSubmit}
             disabled={mutation.isPending}
