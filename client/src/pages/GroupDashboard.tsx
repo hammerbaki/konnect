@@ -35,7 +35,6 @@ import { getAuthHeaders } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import {
-import { usePageTitle } from "@/hooks/usePageTitle";
   BarChart,
   Bar,
   XAxis,
@@ -46,6 +45,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
   Cell,
   Legend,
 } from "recharts";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface GroupStats {
   totalMembers: number;

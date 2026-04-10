@@ -12,11 +12,11 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from "recharts";
 import {
-import { usePageTitle } from "@/hooks/usePageTitle";
   Brain, ChevronLeft, ChevronRight, RotateCcw, Sparkles,
   Briefcase, GraduationCap, Wifi, ArrowRight, ArrowLeft,
   AlertCircle, Layers, Zap, Star
 } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // ---- Types ----
 interface Question {

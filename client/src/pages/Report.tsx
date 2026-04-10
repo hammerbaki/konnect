@@ -6,7 +6,6 @@ import { ArrowLeft, Download, Share2, CheckCircle2, AlertCircle } from "lucide-r
 import { Link } from "wouter";
 import { MOCK_ANALYSIS } from "@/lib/mockData";
 import {
-import { usePageTitle } from "@/hooks/usePageTitle";
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
@@ -21,6 +20,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
   Tooltip,
   Cell
 } from "recharts";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const radarData = [
   { subject: '직무 적합성', A: 120, fullMark: 150 },

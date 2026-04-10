@@ -7,13 +7,13 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
-import { usePageTitle } from "@/hooks/usePageTitle";
   Star, Users, FileText, TrendingUp, Search, Flame,
   GraduationCap, Briefcase, BookOpen, Sunrise, ChevronRight,
   Sparkles, Heart, PenLine, Brain, Zap, Mic, FileEdit,
   Compass, Route, Crown, ClipboardCheck, Stethoscope,
   Scale, FlaskConical, Palette, Monitor,
 } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 /* ─── 계열 보드 데이터 (Phase 1) ─── */
 const fieldBoards = [

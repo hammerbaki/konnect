@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-import { usePageTitle } from "@/hooks/usePageTitle";
   Search, ChevronDown, ChevronUp, GraduationCap, Briefcase, Building2,
   TrendingUp, TrendingDown, Minus, BookOpen, Award, MapPin, Banknote,
   Database, Sparkles, Home, Users, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight,
   Star
 } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 // ---- Types ----
 interface AptitudeItem {

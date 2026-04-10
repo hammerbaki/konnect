@@ -11,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
 import { 
-import { usePageTitle } from "@/hooks/usePageTitle";
   Mic, 
   MicOff,
   Video,
@@ -39,6 +38,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
   PenLine,
   Volume2,
 } from 'lucide-react';
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface InterviewSession {
   id: string;

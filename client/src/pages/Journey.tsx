@@ -5,7 +5,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
-import { usePageTitle } from "@/hooks/usePageTitle";
   Star,
   Calendar,
   TrendingUp,
@@ -23,6 +22,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
   ArrowRight,
   Sunrise,
 } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const journeyPhases = [
   {

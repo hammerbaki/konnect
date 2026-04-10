@@ -5,7 +5,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
-import { usePageTitle } from "@/hooks/usePageTitle";
   TrendingUp,
   Award,
   Coins,
@@ -23,6 +22,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
   Sunrise,
   RotateCcw,
 } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 /* Heatmap mock — 12 weeks × 7 days */
 const heatmapWeeks: number[][] = [];
