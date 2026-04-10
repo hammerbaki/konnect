@@ -6734,21 +6734,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { type, subject, sort = 'recent', page = '1', limit = '20', search } = req.query;
       const { reviews, total } = await storage.getCommunityReviews({
-        type: type || 'lecture',
+        type: (type as string) || 'lecture',
         subject: subject as string | undefined,
         sort: sort as 'recent' | 'likes' | 'rating',
         page: parseInt(page as string),
         limit: parseInt(limit as string),
+        adminAll: true,
+        search: search as string | undefined,
       });
-      // apply search filter on title/content/targetName
-      const filtered = search
-        ? reviews.filter(r =>
-            r.targetName?.includes(search as string) ||
-            r.title?.includes(search as string) ||
-            r.content?.includes(search as string)
-          )
-        : reviews;
-      res.json({ reviews: filtered, total });
+      res.json({ reviews, total });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

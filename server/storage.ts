@@ -459,7 +459,7 @@ export interface IStorage {
   }>;
 
   // Community Reviews
-  getCommunityReviews(opts: { type: string; subject?: string; sort?: string; page?: number; limit?: number }): Promise<{ reviews: CommunityReview[]; total: number }>;
+  getCommunityReviews(opts: { type: string; subject?: string; sort?: string; page?: number; limit?: number; adminAll?: boolean; search?: string }): Promise<{ reviews: CommunityReview[]; total: number }>;
   getCommunityReview(id: number): Promise<CommunityReview | undefined>;
   createCommunityReview(data: InsertCommunityReview): Promise<CommunityReview>;
   deleteCommunityReview(id: number, userId: string, isAdmin?: boolean): Promise<boolean>;
@@ -3836,16 +3836,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   // ── Community Reviews ────────────────────────────────────────────
-  async getCommunityReviews(opts: { type: string; subject?: string; sort?: string; page?: number; limit?: number }): Promise<{ reviews: CommunityReview[]; total: number }> {
-    const { type, subject, sort = "recent", page = 1, limit: lim = 20 } = opts;
+  async getCommunityReviews(opts: { type: string; subject?: string; sort?: string; page?: number; limit?: number; adminAll?: boolean; search?: string }): Promise<{ reviews: CommunityReview[]; total: number }> {
+    const { type, subject, sort = "recent", page = 1, limit: lim = 20, adminAll = false, search } = opts;
     const offset = (page - 1) * lim;
 
-    const conditions = [
-      eq(communityReviews.type, type),
-      eq(communityReviews.isApproved, 1),
-    ];
+    const conditions: any[] = [eq(communityReviews.type, type)];
+    if (!adminAll) {
+      conditions.push(eq(communityReviews.isApproved, 1));
+    }
     if (subject && subject !== "전체") {
       conditions.push(eq(communityReviews.subject, subject));
+    }
+    if (search) {
+      conditions.push(
+        or(
+          ilike(communityReviews.targetName, `%${search}%`),
+          ilike(communityReviews.title, `%${search}%`),
+          ilike(communityReviews.content, `%${search}%`),
+        )
+      );
     }
 
     const orderBy = sort === "likes"
