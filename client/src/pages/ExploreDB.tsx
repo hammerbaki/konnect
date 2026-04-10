@@ -190,7 +190,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
     <div className="space-y-3">
       {/* Banner row */}
       <div
-        className="flex items-center justify-between bg-dream/6 border border-dream/15 rounded-2xl px-5 py-4 cursor-pointer hover:bg-dream/10 transition-colors"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-dream/6 border border-dream/15 rounded-2xl px-4 sm:px-5 py-4 cursor-pointer hover:bg-dream/10 transition-colors"
         onClick={() => result ? setExpanded(e => !e) : navigate("/aptitude")}
         data-testid="ai-recommend-banner"
       >
@@ -198,7 +198,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
           <div className="w-9 h-9 bg-dream/10 rounded-xl flex items-center justify-center flex-shrink-0">
             <Sparkles className="w-4.5 h-4.5 text-dream" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-semibold text-ink">
               진로 흥미 분석
               {result && (
@@ -207,10 +207,10 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
                 </span>
               )}
             </p>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
               {result
-                ? "많은 사람이 동시에 이용해도 순서대로 안정적으로 분석되어 결과를 제공합니다."
-                : "30문항 설문으로 흥미와 강점을 파악해 맞춤 진로를 제안합니다. 동시에 많은 사람이 이용해도 순서대로 안정적으로 분석됩니다."}
+                ? "흥미 분석 결과를 기반으로 추천 학과·직업을 확인하세요."
+                : "30문항 설문으로 흥미와 강점을 파악해 맞춤 진로를 제안합니다."}
             </p>
           </div>
         </div>
@@ -218,7 +218,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
           <Button
             size="sm"
             variant="outline"
-            className="border-dream/30 text-dream hover:bg-dream/10 shrink-0"
+            className="border-dream/30 text-dream hover:bg-dream/10 w-full sm:w-auto shrink-0"
             data-testid="btn-toggle-ai-result"
           >
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
@@ -227,7 +227,7 @@ function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefin
         ) : (
           <Button
             size="sm"
-            className="bg-dream hover:bg-dream/90 text-white shrink-0"
+            className="bg-dream hover:bg-dream/90 text-white w-full sm:w-auto shrink-0"
             onClick={(e) => { e.stopPropagation(); navigate("/aptitude"); }}
             data-testid="btn-go-aptitude"
           >
@@ -634,21 +634,23 @@ function MajorCard({ major, onNavigateToUniversity, isBookmarked, onToggleBookma
       <CardContent className="p-4 space-y-3">
 
         {/* ── Header: name + badges ── */}
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-bold text-ink text-base leading-tight" data-testid={`text-major-name-${major.id}`}>
-            {major.majorName}
-          </h3>
-          <div className="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end">
-            {major.category && (
-              <span className="text-xs font-medium bg-dream/10 text-dream px-2 py-0.5 rounded-full">
-                {major.category}
-              </span>
-            )}
-            <DemandBadge demand={major.demand} />
-            {onToggleBookmark && (
-              <BookmarkStar isBookmarked={!!isBookmarked} onToggle={onToggleBookmark} testId={`btn-bookmark-major-${major.id}`} />
-            )}
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-ink text-base leading-tight" data-testid={`text-major-name-${major.id}`}>
+              {major.majorName}
+            </h3>
+            <div className="flex flex-wrap items-center gap-1 mt-1">
+              {major.category && (
+                <span className="text-xs font-medium bg-dream/10 text-dream px-2 py-0.5 rounded-full">
+                  {major.category}
+                </span>
+              )}
+              <DemandBadge demand={major.demand} />
+            </div>
           </div>
+          {onToggleBookmark && (
+            <BookmarkStar isBookmarked={!!isBookmarked} onToggle={onToggleBookmark} testId={`btn-bookmark-major-${major.id}`} />
+          )}
         </div>
 
         {/* ── Description ── */}
@@ -1475,30 +1477,30 @@ function UniversityCard({ univ, isBookmarked, onToggleBookmark, onMajorClick }: 
     <Card className="border border-gray-100 hover:shadow-md transition-shadow" data-testid={`card-univ-${univ.id}`}>
       <CardContent className="p-4">
         {/* Header */}
-        <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex items-start gap-2 mb-3">
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-ink text-sm leading-tight" data-testid={`text-univ-name-${univ.id}`}>
               {univ.univName}
             </h3>
-            {univ.campusType && univ.campusType !== "본교" && (
-              <p className="text-xs text-gray-400 mt-0.5">{univ.campusType}</p>
-            )}
+            <div className="flex flex-wrap items-center gap-1 mt-1">
+              {univ.region && (
+                <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                  <MapPin className="w-2.5 h-2.5" /> {univ.region}
+                </span>
+              )}
+              {univ.foundationType && (
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                  {univ.foundationType}
+                </span>
+              )}
+              {univ.campusType && univ.campusType !== "본교" && (
+                <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{univ.campusType}</span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
-            {univ.region && (
-              <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                <MapPin className="w-2.5 h-2.5" /> {univ.region}
-              </span>
-            )}
-            {univ.foundationType && (
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                {univ.foundationType}
-              </span>
-            )}
-            {onToggleBookmark && (
-              <BookmarkStar isBookmarked={!!isBookmarked} onToggle={onToggleBookmark} testId={`btn-bookmark-univ-${univ.id}`} />
-            )}
-          </div>
+          {onToggleBookmark && (
+            <BookmarkStar isBookmarked={!!isBookmarked} onToggle={onToggleBookmark} testId={`btn-bookmark-univ-${univ.id}`} />
+          )}
         </div>
 
         {/* Stats grid — 7 items: 경쟁률·취업률 / 등록금·기숙사 / 재학생·입학정원 / 장학금 */}
@@ -1841,11 +1843,11 @@ export default function ExploreDB() {
               </button>
             );
           })()}
-          <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-dream" />
+          <h1 className="text-xl sm:text-2xl font-bold text-ink flex items-center gap-2">
+            <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-dream" />
             학과/직업 탐색
           </h1>
-          <p className="text-sm text-gray-500 mt-1">대학·학과·직업 정보를 탐색하고 나에게 맞는 진로를 찾아보세요</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">대학·학과·직업 정보를 탐색하고 나에게 맞는 진로를 찾아보세요</p>
         </div>
       </div>
 
@@ -1854,35 +1856,41 @@ export default function ExploreDB() {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={handleTabChange}>
-        <TabsList className="bg-gray-100 p-1 rounded-xl h-auto" data-testid="tabs-explore">
+        <TabsList className="bg-gray-100 p-1 rounded-xl h-auto w-full grid grid-cols-3" data-testid="tabs-explore">
           <TabsTrigger
             value="universities"
-            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-dream data-[state=active]:text-white"
+            className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-dream data-[state=active]:text-white"
             data-testid="tab-universities"
           >
-            <Building2 className="w-4 h-4" /> 대학 정보 <span className="text-xs opacity-70">({univTotal})</span>
+            <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+            <span className="truncate">대학</span>
+            <span className="hidden sm:inline opacity-70">({univTotal})</span>
           </TabsTrigger>
           <TabsTrigger
             value="majors"
-            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-dream data-[state=active]:text-white"
+            className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-dream data-[state=active]:text-white"
             data-testid="tab-majors"
           >
-            <GraduationCap className="w-4 h-4" /> 전공 정보 <span className="text-xs opacity-70">({majorTotal})</span>
+            <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+            <span className="truncate">전공</span>
+            <span className="hidden sm:inline opacity-70">({majorTotal})</span>
           </TabsTrigger>
           <TabsTrigger
             value="jobs"
-            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg data-[state=active]:bg-coral data-[state=active]:text-white"
+            className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 text-xs sm:text-sm rounded-lg data-[state=active]:bg-coral data-[state=active]:text-white"
             data-testid="tab-jobs"
           >
-            <Briefcase className="w-4 h-4" /> 직업 정보 <span className="text-xs opacity-70">({jobTotal})</span>
+            <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+            <span className="truncate">직업</span>
+            <span className="hidden sm:inline opacity-70">({jobTotal})</span>
           </TabsTrigger>
         </TabsList>
 
         {/* ===== 대학 정보 탭 ===== */}
         <TabsContent value="universities" className="mt-4 space-y-4">
           {/* Search + Filter row */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
+          <div className="flex flex-col gap-2">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 data-testid="input-search-univ"
@@ -1893,30 +1901,32 @@ export default function ExploreDB() {
                 onKeyDown={e => e.key === "Enter" && handleSearch()}
               />
             </div>
-            <Select value={region} onValueChange={v => handleFilter(v, setRegion)} data-testid="select-region">
-              <SelectTrigger className="w-28" data-testid="select-trigger-region">
-                <SelectValue placeholder="전체" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                {categories?.regions.map(r => (
-                  <SelectItem key={r} value={r}>{r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={sort} onValueChange={v => { setSort(v); setPage(1); }} data-testid="select-sort">
-              <SelectTrigger className="w-38" data-testid="select-trigger-sort">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="tuition_asc">등록금 낮은 순</SelectItem>
-                <SelectItem value="tuition_desc">등록금 높은 순</SelectItem>
-                <SelectItem value="name">이름 순</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={handleSearch} className="bg-dream hover:bg-dream/90 text-white" data-testid="btn-search-univ">
-              검색
-            </Button>
+            <div className="flex gap-2">
+              <Select value={region} onValueChange={v => handleFilter(v, setRegion)} data-testid="select-region">
+                <SelectTrigger className="flex-1" data-testid="select-trigger-region">
+                  <SelectValue placeholder="지역 전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">지역 전체</SelectItem>
+                  {categories?.regions.map(r => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={sort} onValueChange={v => { setSort(v); setPage(1); }} data-testid="select-sort">
+                <SelectTrigger className="flex-1" data-testid="select-trigger-sort">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tuition_asc">등록금 낮은 순</SelectItem>
+                  <SelectItem value="tuition_desc">등록금 높은 순</SelectItem>
+                  <SelectItem value="name">이름 순</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={handleSearch} className="bg-dream hover:bg-dream/90 text-white px-4 shrink-0" data-testid="btn-search-univ">
+                검색
+              </Button>
+            </div>
           </div>
 
           {/* Count */}
@@ -1952,8 +1962,8 @@ export default function ExploreDB() {
 
         {/* ===== 전공 탭 ===== */}
         <TabsContent value="majors" className="mt-4 space-y-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
+          <div className="flex flex-col gap-2">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 data-testid="input-search-major"
@@ -1964,24 +1974,26 @@ export default function ExploreDB() {
                 onKeyDown={e => e.key === "Enter" && handleSearch()}
               />
             </div>
-            <Select value={category} onValueChange={v => handleFilter(v, setCategory)} data-testid="select-category">
-              <SelectTrigger className="w-36" data-testid="select-trigger-category">
-                <SelectValue placeholder="계열 전체" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">계열 전체</SelectItem>
-                {[...(categories?.majorCategories ?? [])].sort((a, b) => {
-                  if (a === "기타") return 1;
-                  if (b === "기타") return -1;
-                  return a.localeCompare(b, "ko");
-                }).map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button onClick={handleSearch} className="bg-dream hover:bg-dream/90 text-white" data-testid="btn-search-major">
-              검색
-            </Button>
+            <div className="flex gap-2">
+              <Select value={category} onValueChange={v => handleFilter(v, setCategory)} data-testid="select-category">
+                <SelectTrigger className="flex-1" data-testid="select-trigger-category">
+                  <SelectValue placeholder="계열 전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">계열 전체</SelectItem>
+                  {[...(categories?.majorCategories ?? [])].sort((a, b) => {
+                    if (a === "기타") return 1;
+                    if (b === "기타") return -1;
+                    return a.localeCompare(b, "ko");
+                  }).map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={handleSearch} className="bg-dream hover:bg-dream/90 text-white px-4 shrink-0" data-testid="btn-search-major">
+                검색
+              </Button>
+            </div>
           </div>
           {!majorsQuery.isLoading && (
             <p className="text-xs text-gray-400">총 {majorsQuery.data?.total ?? 0}개 학과</p>
@@ -2014,8 +2026,8 @@ export default function ExploreDB() {
 
         {/* ===== 직업 탭 ===== */}
         <TabsContent value="jobs" className="mt-4 space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <div className="relative flex-1 min-w-40">
+          <div className="flex flex-col gap-2">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 data-testid="input-search-job"
@@ -2026,31 +2038,33 @@ export default function ExploreDB() {
                 onKeyDown={e => e.key === "Enter" && handleSearch()}
               />
             </div>
-            <Select value={field} onValueChange={v => handleFilter(v, setField)} data-testid="select-field">
-              <SelectTrigger className="w-40" data-testid="select-trigger-field">
-                <SelectValue placeholder="직업 분야 전체" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">직업 분야 전체</SelectItem>
-                {categories?.jobFields.map(f => (
-                  <SelectItem key={f} value={f}>{f}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={majorFilter} onValueChange={v => handleFilter(v, setMajorFilter)} data-testid="select-major-filter">
-              <SelectTrigger className="w-40" data-testid="select-trigger-major-filter">
-                <SelectValue placeholder="관련 전공 전체" />
-              </SelectTrigger>
-              <SelectContent className="max-h-64">
-                <SelectItem value="all">관련 전공 전체</SelectItem>
-                {(categories?.majorNames ?? []).map(m => (
-                  <SelectItem key={m} value={m}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button onClick={handleSearch} className="bg-dream hover:bg-dream/90 text-white" data-testid="btn-search-job">
-              검색
-            </Button>
+            <div className="flex gap-2">
+              <Select value={field} onValueChange={v => handleFilter(v, setField)} data-testid="select-field">
+                <SelectTrigger className="flex-1" data-testid="select-trigger-field">
+                  <SelectValue placeholder="직업 분야" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">직업 분야 전체</SelectItem>
+                  {categories?.jobFields.map(f => (
+                    <SelectItem key={f} value={f}>{f}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={majorFilter} onValueChange={v => handleFilter(v, setMajorFilter)} data-testid="select-major-filter">
+                <SelectTrigger className="flex-1" data-testid="select-trigger-major-filter">
+                  <SelectValue placeholder="관련 전공" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  <SelectItem value="all">관련 전공 전체</SelectItem>
+                  {(categories?.majorNames ?? []).map(m => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={handleSearch} className="bg-dream hover:bg-dream/90 text-white px-4 shrink-0" data-testid="btn-search-job">
+                검색
+              </Button>
+            </div>
           </div>
           {!jobsQuery.isLoading && (
             <p className="text-xs text-gray-400">총 {jobsQuery.data?.total ?? 0}개 직업</p>
