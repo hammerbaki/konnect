@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,7 +10,7 @@ import { useBookmarks } from "@/hooks/useBookmarks";
 import { apiRequest, getAuthHeaders } from "@/lib/queryClient";
 import {
   Star, ArrowRight, GraduationCap, Briefcase, Building2,
-  Brain, Target, ChevronRight, BookOpen, School, Tv, MessageSquare,
+  Brain, Target, ChevronRight, ChevronDown, BookOpen, School, Tv, MessageSquare,
 } from "lucide-react";
 import { VisionGoal, WeeklyGoal } from "@/lib/mockData";
 import { formatDistanceToNow } from "date-fns";
@@ -216,45 +216,75 @@ function CommunityTab({
 }
 
 /* ─── Weekly Goal Progress ──────────────────────────────────────── */
+interface WeekEntry {
+  week: WeeklyGoal;
+  goalTitle: string;
+  kompassId: string;
+}
+
+function SingleWeekRow({ entry, showGoalTitle = false }: { entry: WeekEntry; showGoalTitle?: boolean }) {
+  const progress = entry.week.progress ?? 0;
+  return (
+    <div className="space-y-1.5">
+      {showGoalTitle && (
+        <p className="text-[11px] font-semibold text-[#191F28] truncate">{entry.goalTitle}</p>
+      )}
+      <div className="flex items-center gap-2.5">
+        <Progress
+          value={progress}
+          className="flex-1 h-2 bg-dream/10"
+          indicatorClassName="bg-dream"
+        />
+        <span className="text-xs font-bold text-dream min-w-[30px] text-right">{progress}%</span>
+      </div>
+      {entry.week.description && (
+        <p className="text-[10px] text-muted-foreground line-clamp-1">{entry.week.description}</p>
+      )}
+    </div>
+  );
+}
+
 function WeeklyGoalBar({ kompassList }: { kompassList: KompassData[] }) {
+  const [expanded, setExpanded] = useState(false);
+
   if (!kompassList.length) return null;
 
-  // Find the first kompass that has a current week
-  let found: { week: WeeklyGoal; monthTitle: string; goalTitle: string; kompassId: string } | null = null;
+  // Collect current-week entry for every kompass goal
+  const entries: WeekEntry[] = [];
   for (const k of kompassList) {
     if (!k.visionData) continue;
     const result = findCurrentWeek(k.visionData);
     if (result) {
-      found = {
+      entries.push({
         week: result.week,
-        monthTitle: result.monthTitle,
         goalTitle: k.visionData.title,
         kompassId: k.id,
-      };
-      break;
+      });
     }
   }
 
-  if (!found) return null;
+  if (entries.length === 0) return null;
 
-  const { week, goalTitle, kompassId } = found;
-  const progress = week.progress ?? 0;
+  const first = entries[0];
+  const rest = entries.slice(1);
+  const hasMore = rest.length > 0;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="rounded-2xl border border-dream/20 bg-gradient-to-r from-dream/5 to-transparent p-4"
+      className="rounded-2xl border border-dream/20 bg-gradient-to-br from-dream/5 to-transparent overflow-hidden"
       data-testid="card-weekly-goal"
     >
-      <div className="flex items-center justify-between mb-2.5">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-2">
           <Target size={14} className="text-dream" />
           <span className="text-xs font-bold text-[#191F28]">이번 주 목표</span>
-          {week.dateDisplay && (
+          {first.week.dateDisplay && (
             <span className="text-[10px] text-muted-foreground bg-dream/10 px-1.5 py-0.5 rounded-full">
-              {week.dateDisplay}
+              {first.week.dateDisplay}
             </span>
           )}
         </div>
@@ -264,17 +294,66 @@ function WeeklyGoalBar({ kompassList }: { kompassList: KompassData[] }) {
           </span>
         </Link>
       </div>
-      <p className="text-[11px] text-muted-foreground mb-2.5 truncate">{goalTitle}</p>
-      <div className="flex items-center gap-3">
-        <Progress
-          value={progress}
-          className="flex-1 h-2 bg-dream/10"
-          indicatorClassName="bg-dream"
-        />
-        <span className="text-xs font-bold text-dream min-w-[32px] text-right">{progress}%</span>
+
+      {/* First goal — always visible */}
+      <div className="px-4 pb-3">
+        <p className="text-[11px] text-muted-foreground mb-2 truncate">{first.goalTitle}</p>
+        <SingleWeekRow entry={first} />
       </div>
-      {week.description && (
-        <p className="mt-2 text-[10px] text-muted-foreground line-clamp-2">{week.description}</p>
+
+      {/* Expanded: rest of goals */}
+      <AnimatePresence initial={false}>
+        {expanded && hasMore && (
+          <motion.div
+            key="expanded-goals"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-3 space-y-4 border-t border-dream/10 pt-3">
+              {rest.map((entry) => (
+                <SingleWeekRow key={entry.kompassId} entry={entry} showGoalTitle />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Expand / collapse toggle */}
+      {hasMore && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="w-full flex items-center justify-center gap-1.5 py-2.5 border-t border-dream/10 text-[11px] text-dream font-semibold hover:bg-dream/5 transition-colors"
+          data-testid="btn-weekly-goal-toggle"
+        >
+          {expanded ? (
+            <>
+              <motion.span
+                key="up"
+                animate={{ rotate: 180 }}
+                transition={{ duration: 0.22 }}
+                style={{ display: "inline-flex" }}
+              >
+                <ChevronDown size={13} />
+              </motion.span>
+              접기
+            </>
+          ) : (
+            <>
+              <motion.span
+                key="down"
+                animate={{ rotate: 0 }}
+                transition={{ duration: 0.22 }}
+                style={{ display: "inline-flex" }}
+              >
+                <ChevronDown size={13} />
+              </motion.span>
+              {rest.length}개 목표 더 보기
+            </>
+          )}
+        </button>
       )}
     </motion.div>
   );
