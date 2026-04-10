@@ -24,6 +24,7 @@ import {
   Target,
 } from "lucide-react";
 import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 /* ── 성장 증명 데이터 ── */
 const growthProofs = [
@@ -116,6 +117,7 @@ const stats = [
 ];
 
 export default function ReConnect() {
+  usePageTitle("다시 연결 — Konnect", "그룹 초대를 수락하고 멘토·멘티와 연결하세요.");
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-6 py-0">
       {/* ═══════════════════════════════════════════════════

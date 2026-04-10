@@ -22,6 +22,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const stories = [
   {
@@ -169,6 +170,7 @@ export default function Stories() {
     }
   };
 
+  usePageTitle("스토리 — Konnect", "선배들의 진로 스토리에서 영감을 얻어보세요.");
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
       {/* Header */}

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
+import { usePageTitle } from "@/hooks/usePageTitle";
   Star, Users, FileText, TrendingUp, Search, Flame,
   GraduationCap, Briefcase, BookOpen, Sunrise, ChevronRight,
   Sparkles, Heart, PenLine, Brain, Zap, Mic, FileEdit,
@@ -113,6 +114,7 @@ export default function DreamBoards() {
   const filterBySearch = <T extends { name: string }>(items: T[]) =>
     searchQuery ? items.filter((b) => b.name.includes(searchQuery) || ('includes' in b && typeof (b as any).includes === 'string' && (b as any).includes.includes(searchQuery))) : items;
 
+  usePageTitle("드림 보드 — Konnect", "학생들이 나누는 진로 이야기를 읽고 참여하세요.");
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
       {/* Hero */}

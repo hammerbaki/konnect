@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/AuthContext';
 import { apiRequest } from '@/lib/queryClient';
 import { 
+import { usePageTitle } from "@/hooks/usePageTitle";
   Mic, 
   MicOff,
   Video,
@@ -1156,6 +1157,7 @@ function InterviewContent() {
 }
 
 export default function Interview() {
+  usePageTitle("면접 준비 — Konnect", "AI 모의 면접으로 실전 면접을 완벽하게 준비하세요.");
   return (
     <>
       <div className="pb-20 px-4">

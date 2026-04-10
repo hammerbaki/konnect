@@ -15,6 +15,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { ProfileDataType, ProfileType, getDefaultProfileData, ProfileFormProps } from "@/components/profile/types";
 import { ResponsiveModal, ResponsiveDatePickerContent } from "@/components/profile";
 import { useDebounce } from "@/hooks/useDebounce";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const ElementaryForm = lazy(() => import("@/components/profile/ElementaryForm").then(m => ({ default: m.ElementaryForm })));
 const MiddleSchoolForm = lazy(() => import("@/components/profile/MiddleSchoolForm").then(m => ({ default: m.MiddleSchoolForm })));
@@ -495,6 +496,7 @@ export default function ProfileOptimized() {
     }
   }, [selectedType, formProps]);
 
+  usePageTitle("내 프로필 — Konnect", "나의 진로 목표·분석 결과·활동 현황을 확인하세요.");
   return (
     <>
       <div className="max-w-4xl mx-auto space-y-8 pb-20">

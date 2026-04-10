@@ -5,6 +5,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
+import { usePageTitle } from "@/hooks/usePageTitle";
   TrendingUp,
   Award,
   Coins,
@@ -93,6 +94,7 @@ const nextLevel = levels[currentLevel.level] || levels[4];
 const progress = ((currentKNC - currentLevel.min) / (currentLevel.max - currentLevel.min)) * 100;
 
 export default function Growth() {
+  usePageTitle("성장 기록 — Konnect", "KNC 포인트와 레벨로 나의 성장을 기록하고 확인하세요.");
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
       {/* Header */}

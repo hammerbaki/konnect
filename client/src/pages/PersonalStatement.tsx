@@ -45,6 +45,7 @@ import { useAIJob } from "@/hooks/useAIJob";
 import { useTokens } from "@/lib/TokenContext";
 import type { Profile, PersonalEssay } from "@shared/schema";
 import { Link } from "wouter";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const ESSAY_CREDIT_COST = 100;
 const REVISION_CREDIT_COST = 30;
@@ -299,6 +300,7 @@ function essayToSession(essay: PersonalEssay): ChatSession {
 
 export default function PersonalStatement() {
     const { toast } = useToast();
+  usePageTitle("자기소개서 — Konnect", "AI 첨삭과 맞춤 피드백으로 완성도 높은 자기소개서를 작성하세요.");
     const scrollRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
     const { deductCredit, restoreCredits, refreshCredits } = useTokens();

@@ -15,6 +15,7 @@ import {
 import { VisionGoal, WeeklyGoal } from "@/lib/mockData";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 /* ─── Labels ───────────────────────────────────────────────────── */
 const INTEREST_LABELS: Record<string, string> = {
@@ -421,6 +422,7 @@ function HeroBanner() {
 /* ─── Main Dashboard ────────────────────────────────────────────── */
 export default function Dashboard() {
   const { user } = useAuth();
+  usePageTitle("홈 대시보드 — Konnect", "오늘의 목표·추천 학과·직업을 한눈에 확인하세요.");
   const [, navigate] = useLocation();
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [showAllMajors, setShowAllMajors] = useState(false);

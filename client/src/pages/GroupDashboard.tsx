@@ -35,6 +35,7 @@ import { getAuthHeaders } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import {
+import { usePageTitle } from "@/hooks/usePageTitle";
   BarChart,
   Bar,
   XAxis,
@@ -477,6 +478,7 @@ export default function GroupDashboard() {
     );
   }
 
+  usePageTitle("그룹 대시보드 — Konnect", "선생님·학원과 함께 목표를 공유하고 피드백을 받아보세요.");
   return (
     <>
       <div className="p-6 max-w-7xl mx-auto space-y-6">

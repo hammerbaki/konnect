@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface ImportedCareerData {
   title: string;
@@ -59,6 +60,7 @@ const profileTypeOrder: Record<string, number> = {
 
 export default function Goals() {
   const [_, setLocation] = useLocation();
+  usePageTitle("목표 관리 — Konnect", "비전골을 설정하고 연간·월간·주간 목표를 체계적으로 관리하세요.");
   const { setAction } = useMobileAction();
   const { toast } = useToast();
   const queryClient = useQueryClient();

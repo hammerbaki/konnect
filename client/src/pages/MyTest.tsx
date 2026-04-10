@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ExtendedResultView } from "@/components/ExtendedResultView";
 import { getExtendedResult, ExtendedResult } from "@/lib/extendedDiagnosis";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface KJobsQuestion {
   id: string;
@@ -447,6 +448,7 @@ export default function MyTest() {
     );
   }
 
+  usePageTitle("내 검사 결과 — Konnect", "진로 흥미 검사 결과와 AI 분석 리포트를 확인하세요.");
   return (
     <>
       <div className="max-w-2xl mx-auto p-4">

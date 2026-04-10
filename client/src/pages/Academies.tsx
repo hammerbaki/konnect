@@ -12,6 +12,7 @@ import { ReviewCard } from "@/components/community/ReviewCard";
 import { CommunityTabNav } from "@/components/community/CommunityTabNav";
 import { getAuthHeaders } from "@/lib/queryClient";
 import type { CommunityReview } from "@shared/schema";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const regions: Record<string, string[]> = {
   "서울": ["전체", "강남구", "서초구", "송파구", "양천구", "노원구", "마포구", "중구", "강서구"],
@@ -30,7 +31,8 @@ const sortOptions = [
 ];
 
 export default function Academies() {
-  const [activeRegion, setActiveRegion] = useState("서울");
+  const [activeRegion, setActiveRegion] = useState
+  usePageTitle("학원 리뷰 — Konnect 커뮤니티", "학원 정보와 재원생들의 솔직한 리뷰를 확인하세요.");("서울");
   const [activeSubject, setActiveSubject] = useState("전체");
   const [sortBy, setSortBy] = useState<"recent" | "likes" | "rating">("recent");
   const [reviewOpen, setReviewOpen] = useState(false);

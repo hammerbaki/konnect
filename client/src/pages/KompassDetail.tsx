@@ -21,6 +21,7 @@ import { useTokens } from "@/lib/TokenContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 type GoalLevel = 'vision' | 'year' | 'half' | 'month' | 'week' | 'day';
 
@@ -972,6 +973,7 @@ export default function KompassDetail() {
       );
     }
 
+  usePageTitle("진로 나침반 상세 — Konnect", "나침반별 진행 현황과 목표를 상세히 확인하세요.");
   return (
     <>
       <div className="space-y-8 max-w-5xl mx-auto pb-20 px-4 md:px-0">

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+import { usePageTitle } from "@/hooks/usePageTitle";
   Search, ChevronDown, ChevronUp, GraduationCap, Briefcase, Building2,
   TrendingUp, TrendingDown, Minus, BookOpen, Award, MapPin, Banknote,
   Database, Sparkles, Home, Users, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight,
@@ -178,6 +179,7 @@ function GrowthBadge({ growth }: { growth: string | null }) {
 // ---- AI Recommendation Banner ----
 function AiRecommendBanner({ result }: { result: AptitudeResult | null | undefined; isLoading: boolean }) {
   const [, navigate] = useLocation();
+  usePageTitle("학과·직업 탐색 — Konnect", "전국 대학 학과 정보와 직업 데이터를 검색하고 북마크하세요.");
   const [expanded, setExpanded] = useState(false);
 
   const majors = result?.recommendedMajors?.slice(0, 3) ?? [];

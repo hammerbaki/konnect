@@ -17,6 +17,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation, useSearch } from "wouter";
 import { format } from "date-fns";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 declare global {
   interface Window {
@@ -345,6 +346,7 @@ export default function TokenRecharge() {
     return labels[type] || type;
   };
 
+  usePageTitle("KNC 충전 — Konnect", "AI 기능을 더 많이 사용하기 위해 KNC 토큰을 충전하세요.");
   return (
     <>
       <div className="max-w-2xl mx-auto pb-20">

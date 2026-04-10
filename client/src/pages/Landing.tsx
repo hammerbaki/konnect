@@ -22,9 +22,11 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/AuthContext";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
+  usePageTitle("Konnect — 꿈을 잇다", "너와 나의 꿈이 만나는 곳. AI 기반 맞춤형 진로 분석, 학과 탐색, 목표 관리 플랫폼.");
   const { isAuthenticated, isLoading } = useAuth();
   const featuresRef = useRef<HTMLDivElement>(null);
 

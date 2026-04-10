@@ -26,6 +26,7 @@ import { useTokens } from "@/lib/TokenContext";
 import { generateCareerReportPDF, CareerReportData, ReportMetadata, KJobsDiagnosisData } from "@/lib/pdfReportGenerator";
 import { EnhancedCareerCard } from "@/components/analysis/EnhancedCareerCard";
 import type { CareerRecommendation } from "@/types/career-analysis";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const ANALYSIS_CREDIT_COST = 100;
 
@@ -310,6 +311,7 @@ function AnalysisLoadingState({ progress, isSubmitting, isCurrentProfileAnalyzin
 }
 
 export default function Analysis() {
+    usePageTitle("분석 결과 — Konnect", "AI가 분석한 나의 강점·관심사·진로 적합도 리포트를 확인하세요.");
     const { toast } = useToast();
     const { setAction } = useMobileAction();
     const { user } = useAuth();

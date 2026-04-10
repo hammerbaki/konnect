@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DreamGoalManager } from "@/components/DreamGoalManager";
 import { cn } from "@/lib/utils";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface KompassItem {
   id: string;
@@ -57,6 +58,7 @@ function calcDDay(targetYear: number): number {
 
 export default function Dream() {
   const queryClient = useQueryClient();
+  usePageTitle("드림 목표 관리 — Konnect", "비전부터 주간 목표까지, 나만의 진로 나침반을 관리하세요.");
   const [location] = useLocation();
 
   // Parse focus params from URL: /dream?kompassId=xxx&weekId=yyy

@@ -12,6 +12,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from "recharts";
 import {
+import { usePageTitle } from "@/hooks/usePageTitle";
   Brain, ChevronLeft, ChevronRight, RotateCcw, Sparkles,
   Briefcase, GraduationCap, Wifi, ArrowRight, ArrowLeft,
   AlertCircle, Layers, Zap, Star
@@ -760,6 +761,7 @@ function ResultScreen({ result, onRetake }: { result: AptitudeResult; onRetake: 
 // ---- Main Page ----
 export default function Aptitude() {
   const queryClient = useQueryClient();
+  usePageTitle("진로 흥미 분석 — Konnect", "30문항 AI 분석으로 나에게 맞는 학과와 직업을 발견하세요.");
   const [stage, setStage] = useState<"start" | "banner1" | "questions" | "banner2" | "result">("start");
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [currentIdx, setCurrentIdx] = useState(0);

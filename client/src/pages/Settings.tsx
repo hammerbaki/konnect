@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface ReferralInfo {
     referralCode: string | null;
@@ -104,6 +105,7 @@ function SettingsSkeleton() {
 
 export default function Settings() {
     const { toast } = useToast();
+  usePageTitle("설정 — Konnect", "계정·알림·보안 설정을 관리하세요.");
     const { user, isLoading, updatePassword, logout, getAccessToken } = useAuth();
     const queryClient = useQueryClient();
     const [, setLocation] = useLocation();

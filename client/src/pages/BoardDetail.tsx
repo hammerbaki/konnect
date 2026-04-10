@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 /* ─── Board Metadata (계열 보드 중심) ─── */
 type BoardMeta = {
@@ -288,6 +289,7 @@ export default function BoardDetail() {
   const totalPages = Math.max(1, Math.ceil(sorted.length / POSTS_PER_PAGE));
   const paginated = sorted.slice((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE);
 
+  usePageTitle("드림 보드 — Konnect", "커뮤니티 게시판에서 진로 정보를 나눠보세요.");
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
       {/* Back */}

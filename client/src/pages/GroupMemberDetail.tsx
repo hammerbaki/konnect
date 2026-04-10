@@ -34,6 +34,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { generateGroupMemberReportPDF, type GroupMemberReportData } from "@/lib/pdfReportGenerator";
 import { useToast } from "@/hooks/use-toast";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface AnalysisEntry {
   id: string;
@@ -322,6 +323,7 @@ export default function GroupMemberDetail() {
   const skillAnalysis = analysisResult?.skillAnalysis || analysisResult?.skill_analysis || null;
   const personalityTraits = analysisResult?.personalityTraits || analysisResult?.personality || [];
 
+  usePageTitle("그룹 멤버 — Konnect", "그룹 멤버의 목표와 진행 현황을 확인하세요.");
   return (
     <>
       <div className="p-6 max-w-5xl mx-auto space-y-6">

@@ -5,6 +5,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
+import { usePageTitle } from "@/hooks/usePageTitle";
   Star,
   Calendar,
   TrendingUp,
@@ -93,6 +94,7 @@ const studyStats = [
 ];
 
 export default function Journey() {
+  usePageTitle("학습 여정 — Konnect", "나의 학습 여정과 누적 성취를 한눈에 확인하세요.");
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
       {/* Header */}

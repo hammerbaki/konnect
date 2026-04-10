@@ -6,6 +6,7 @@ import { ArrowLeft, Download, Share2, CheckCircle2, AlertCircle } from "lucide-r
 import { Link } from "wouter";
 import { MOCK_ANALYSIS } from "@/lib/mockData";
 import {
+import { usePageTitle } from "@/hooks/usePageTitle";
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
@@ -38,6 +39,7 @@ const salaryData = [
 ];
 
 export default function Report() {
+  usePageTitle("진로 리포트 — Konnect", "AI가 분석한 나의 종합 진로 리포트를 다운로드하세요.");
   return (
     <>
       <div className="max-w-5xl mx-auto space-y-8 pb-10">

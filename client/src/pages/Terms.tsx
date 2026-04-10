@@ -1,8 +1,10 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Terms() {
+  usePageTitle("이용약관 — Konnect", "Konnect 서비스 이용약관을 확인하세요.");
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       <div className="max-w-4xl mx-auto px-4 py-8">

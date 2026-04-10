@@ -1,8 +1,10 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function Privacy() {
+  usePageTitle("개인정보처리방침 — Konnect", "Konnect의 개인정보 수집·이용·보호 방침을 확인하세요.");
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       <div className="max-w-4xl mx-auto px-4 py-8">

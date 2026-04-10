@@ -40,6 +40,7 @@ import { useLocation } from "wouter";
 import { apiRequest, getAuthHeaders } from "@/lib/queryClient";
 import { useAuth } from "@/lib/AuthContext";
 import { AdminEditReviewModal } from "@/components/community/ReviewModal";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface AdminUser {
   id: string;
@@ -1053,6 +1054,7 @@ function CommunityReviewsAdminTab() {
 }
 
 export default function Admin() {
+  usePageTitle("관리자 — Konnect", "사용자·그룹·콘텐츠를 관리하는 어드민 패널입니다.");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
