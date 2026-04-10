@@ -110,6 +110,7 @@ export function ReviewModal({ open, onClose, type, defaultSubject = "전체", de
   const [consTags, setConsTags] = useState<string[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const mutation = useMutation({
     mutationFn: async (data: object) => {
@@ -128,7 +129,7 @@ export function ReviewModal({ open, onClose, type, defaultSubject = "전체", de
       onClose();
       reset();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => setSubmitError(e.message),
   });
 
   const reset = () => {
@@ -136,6 +137,7 @@ export function ReviewModal({ open, onClose, type, defaultSubject = "전체", de
     setTargetName(""); setExtra1(""); setExtra2(""); setSubject("");
     setGradeLevel(""); setGradeBefore(""); setGradeAfter(""); setStudyDuration("");
     setProsTags([]); setConsTags([]); setTitle(""); setContent("");
+    setSubmitError("");
   };
 
   const toggleTag = (tag: string, list: string[], setList: (v: string[]) => void) => {
@@ -143,10 +145,11 @@ export function ReviewModal({ open, onClose, type, defaultSubject = "전체", de
   };
 
   const handleSubmit = () => {
-    if (!overallRating) return toast.error("전체 별점을 선택해주세요.");
-    if (!targetName.trim()) return toast.error(`${lbl.nameLabel}을 입력해주세요.`);
-    if (!title.trim()) return toast.error("리뷰 제목을 입력해주세요.");
-    if (content.trim().length < 20) return toast.error("리뷰 내용을 20자 이상 작성해주세요.");
+    setSubmitError("");
+    if (!overallRating) { setSubmitError("전체 별점을 선택해주세요."); return; }
+    if (!targetName.trim()) { setSubmitError(`${lbl.nameLabel}을 입력해주세요.`); return; }
+    if (!title.trim()) { setSubmitError("리뷰 제목을 입력해주세요."); return; }
+    if (content.trim().length < 20) { setSubmitError("리뷰 내용을 20자 이상 작성해주세요."); return; }
 
     const body: Record<string, unknown> = {
       type,
@@ -355,9 +358,15 @@ export function ReviewModal({ open, onClose, type, defaultSubject = "전체", de
 
         {/* Footer — fixed, above iPhone home indicator */}
         <div className="flex-none px-5 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-border bg-background">
+          {submitError && (
+            <p className="text-xs text-destructive font-medium mb-2 text-center bg-destructive/10 rounded-lg py-2 px-3">
+              ⚠ {submitError}
+            </p>
+          )}
           <button
             onClick={handleSubmit}
             disabled={mutation.isPending}
+            data-testid="button-submit-review"
             className="w-full h-12 bg-dream text-white font-bold rounded-xl text-sm hover:bg-dream/90 disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
           >
             {mutation.isPending ? "등록 중..." : <><PenLine size={16} /> 리뷰 등록하기</>}
