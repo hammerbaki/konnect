@@ -3,7 +3,7 @@
  * - Inline expand/collapse ("전체보기") with animation
  * - No avatar circle, no views counter
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Star, Heart, Trash2, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
@@ -14,7 +14,15 @@ import { useAuth } from "@/lib/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 
-const TRUNCATE_AT = 180;
+function useTruncateAt() {
+  const [limit, setLimit] = useState(() => window.innerWidth < 768 ? 80 : 180);
+  useEffect(() => {
+    const handler = () => setLimit(window.innerWidth < 768 ? 80 : 180);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return limit;
+}
 
 interface ReviewCardProps {
   review: CommunityReview;
@@ -36,6 +44,7 @@ export function ReviewCard({ review, isLiked, queryKey }: ReviewCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
+  const TRUNCATE_AT = useTruncateAt();
 
   const likeMutation = useMutation({
     mutationFn: async () => {
