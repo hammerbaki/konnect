@@ -95,6 +95,8 @@ export function ReviewCard({ review, isLiked, queryKey }: ReviewCardProps) {
   };
 
   const isOwner = user?.id === review.userId;
+  const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
+  const canDelete = isOwner || isAdminOrStaff;
   const isLong = review.content.length > TRUNCATE_AT;
 
   const timeAgo = review.createdAt
@@ -117,9 +119,15 @@ export function ReviewCard({ review, isLiked, queryKey }: ReviewCardProps) {
             <span className="text-green-600 font-semibold">{review.gradeAfter}</span>
           </span>
         )}
-        {isOwner && (
+        {canDelete && (
           <button onClick={handleDelete} disabled={deleteMutation.isPending}
-            className="ml-auto text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100">
+            title={isAdminOrStaff && !isOwner ? "관리자 삭제" : "삭제"}
+            className={cn(
+              "ml-auto transition-colors",
+              isAdminOrStaff && !isOwner
+                ? "text-destructive/60 hover:text-destructive"
+                : "text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
+            )}>
             <Trash2 size={13} />
           </button>
         )}

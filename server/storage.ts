@@ -462,7 +462,7 @@ export interface IStorage {
   getCommunityReviews(opts: { type: string; subject?: string; sort?: string; page?: number; limit?: number }): Promise<{ reviews: CommunityReview[]; total: number }>;
   getCommunityReview(id: number): Promise<CommunityReview | undefined>;
   createCommunityReview(data: InsertCommunityReview): Promise<CommunityReview>;
-  deleteCommunityReview(id: number, userId: string): Promise<boolean>;
+  deleteCommunityReview(id: number, userId: string, isAdmin?: boolean): Promise<boolean>;
   toggleCommunityReviewLike(reviewId: number, userId: string): Promise<{ liked: boolean; likes: number }>;
   getUserLikedReviews(userId: string, reviewIds: number[]): Promise<number[]>;
 }
@@ -3873,9 +3873,11 @@ export class DatabaseStorage implements IStorage {
     return review;
   }
 
-  async deleteCommunityReview(id: number, userId: string): Promise<boolean> {
-    const result = await db.delete(communityReviews)
-      .where(and(eq(communityReviews.id, id), eq(communityReviews.userId, userId)));
+  async deleteCommunityReview(id: number, userId: string, isAdmin = false): Promise<boolean> {
+    const condition = isAdmin
+      ? eq(communityReviews.id, id)
+      : and(eq(communityReviews.id, id), eq(communityReviews.userId, userId));
+    const result = await db.delete(communityReviews).where(condition);
     return (result.rowCount ?? 0) > 0;
   }
 

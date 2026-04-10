@@ -6717,9 +6717,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session?.userId || req.user?.id;
       const id = parseInt(req.params.id);
-      const ok = await storage.deleteCommunityReview(id, userId);
+      const isAdmin = req.user?.role === 'admin' || req.user?.role === 'staff';
+      const ok = await storage.deleteCommunityReview(id, userId, isAdmin);
       if (!ok) return res.status(404).json({ message: "리뷰를 찾을 수 없거나 삭제 권한이 없습니다." });
       res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // GET /api/admin/community/reviews — admin only, all reviews with filters
+  app.get('/api/admin/community/reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      if (req.user?.role !== 'admin' && req.user?.role !== 'staff') {
+        return res.status(403).json({ message: '관리자 전용' });
+      }
+      const { type, subject, sort = 'recent', page = '1', limit = '20', search } = req.query;
+      const { reviews, total } = await storage.getCommunityReviews({
+        type: type || 'lecture',
+        subject: subject as string | undefined,
+        sort: sort as 'recent' | 'likes' | 'rating',
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+      });
+      // apply search filter on title/content/targetName
+      const filtered = search
+        ? reviews.filter(r =>
+            r.targetName?.includes(search as string) ||
+            r.title?.includes(search as string) ||
+            r.content?.includes(search as string)
+          )
+        : reviews;
+      res.json({ reviews: filtered, total });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

@@ -10,7 +10,7 @@ import {
   Users, Settings, Coins, Activity, 
   RefreshCw, Search, Shield, User, Crown,
   BarChart3, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp, Eye,
-  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download, Users2, X,
+  ChevronUp, ChevronDown, Gift, Plus, Minus, UserPlus, Trash2, Loader2, Download, Users2, X, MessageSquare, Star,
   Briefcase, GraduationCap, FileText, Target, Mic, ClipboardList, ChevronRight, Calendar, MapPin,
   Database
 } from "lucide-react";
@@ -936,6 +936,11 @@ export default function Admin() {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const toggleExpanded = (id: string) => setExpandedItems(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
 
+  // Community Reviews admin state
+  const [reviewAdminType, setReviewAdminType] = useState<"lecture" | "workbook" | "academy">("lecture");
+  const [reviewAdminSearch, setReviewAdminSearch] = useState("");
+  const [reviewAdminPage, setReviewAdminPage] = useState(1);
+
   const { user: currentUser, isLoading: userLoading, getAccessToken } = useAuth();
 
   const isAdmin = currentUser?.role === 'admin';
@@ -1203,6 +1208,26 @@ export default function Admin() {
   const signupBonus = parseInt(systemSettings.signup_bonus?.value || '1000', 10);
   const gpExpirationDays = parseInt(systemSettings.gp_default_expiration_days?.value || '90', 10);
   const [editingGpExpirationDays, setEditingGpExpirationDays] = useState<number | null>(null);
+
+  // Community Reviews admin query
+  const { data: adminReviewsData, refetch: refetchAdminReviews, isLoading: reviewsLoading } = useQuery<{ reviews: any[]; total: number }>({
+    queryKey: ['admin-community-reviews', reviewAdminType, reviewAdminSearch, reviewAdminPage],
+    queryFn: async () => {
+      const params = new URLSearchParams({ type: reviewAdminType, page: String(reviewAdminPage), limit: '20' });
+      if (reviewAdminSearch) params.set('search', reviewAdminSearch);
+      const res = await apiRequest('GET', `/api/admin/community/reviews?${params}`);
+      return res.json();
+    },
+    enabled: isStaffOrAdmin,
+  });
+  const deleteAdminReviewMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest('DELETE', `/api/community/reviews/${id}`);
+      if (!res.ok) throw new Error('삭제 실패');
+    },
+    onSuccess: () => { refetchAdminReviews(); toast({ title: "리뷰가 삭제되었습니다." }); },
+    onError: () => toast({ title: "삭제에 실패했습니다.", variant: "destructive" }),
+  });
 
   const initServicePricingMutation = useMutation({
     mutationFn: async () => {
@@ -1768,6 +1793,10 @@ export default function Admin() {
             <TabsTrigger value="groups" className="rounded-lg px-4" data-testid="tab-groups">
               <Users2 className="h-4 w-4 mr-2" />
               그룹 관리
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="rounded-lg px-4" data-testid="tab-reviews">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              커뮤니티 리뷰
             </TabsTrigger>
           </TabsList>
 
@@ -3913,6 +3942,99 @@ export default function Admin() {
           {/* Groups Management Tab */}
           <TabsContent value="groups" className="space-y-6">
             <GroupManagementTab />
+          </TabsContent>
+
+          {/* Community Reviews Tab */}
+          <TabsContent value="reviews" className="space-y-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <h2 className="font-semibold text-lg flex items-center gap-2"><MessageSquare className="h-5 w-5 text-dream" /> 커뮤니티 리뷰 관리</h2>
+              <span className="text-sm text-muted-foreground">총 {adminReviewsData?.total ?? 0}개</span>
+            </div>
+
+            {/* Type selector + search */}
+            <div className="flex flex-wrap gap-2 items-center">
+              {(["lecture", "workbook", "academy"] as const).map(t => (
+                <button key={t} onClick={() => { setReviewAdminType(t); setReviewAdminPage(1); }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${reviewAdminType === t ? "bg-dream text-white border-dream" : "border-border text-muted-foreground hover:border-dream/40"}`}>
+                  {t === "lecture" ? "인강" : t === "workbook" ? "문제집" : "학원"}
+                </button>
+              ))}
+              <div className="flex-1 relative min-w-[180px]">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  value={reviewAdminSearch}
+                  onChange={e => { setReviewAdminSearch(e.target.value); setReviewAdminPage(1); }}
+                  placeholder="강의명 / 제목 / 내용 검색..."
+                  className="w-full pl-8 pr-3 h-8 text-xs rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-dream"
+                />
+              </div>
+              <button onClick={() => refetchAdminReviews()} className="h-8 px-3 rounded-lg border border-border text-xs hover:bg-secondary">
+                <RefreshCw className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {/* Reviews table */}
+            {reviewsLoading ? (
+              <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            ) : (adminReviewsData?.reviews ?? []).length === 0 ? (
+              <div className="text-center py-12 text-sm text-muted-foreground">리뷰가 없습니다.</div>
+            ) : (
+              <div className="border border-border rounded-xl overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-secondary/60 border-b border-border">
+                    <tr>
+                      <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">ID</th>
+                      <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">대상</th>
+                      <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">제목</th>
+                      <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground w-14">별점</th>
+                      <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">작성자 ID</th>
+                      <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">작성일</th>
+                      <th className="px-4 py-2.5"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {(adminReviewsData?.reviews ?? []).map((review: any) => (
+                      <tr key={review.id} className="hover:bg-secondary/30 transition-colors group">
+                        <td className="px-4 py-3 text-muted-foreground">#{review.id}</td>
+                        <td className="px-4 py-3 font-medium max-w-[120px] truncate">{review.targetName}</td>
+                        <td className="px-4 py-3 max-w-[180px] truncate text-muted-foreground">{review.title}</td>
+                        <td className="px-4 py-3">
+                          <span className="flex items-center gap-0.5">
+                            <Star className="h-3 w-3 fill-gold text-gold" />
+                            <span className="font-semibold">{review.overallRating}</span>
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground font-mono text-[10px] max-w-[100px] truncate">{review.userId}</td>
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                          {review.createdAt ? new Date(review.createdAt).toLocaleDateString('ko-KR') : '-'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => { if (confirm(`리뷰 #${review.id}를 삭제할까요?`)) deleteAdminReviewMutation.mutate(review.id); }}
+                            disabled={deleteAdminReviewMutation.isPending}
+                            className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                            data-testid={`button-admin-delete-review-${review.id}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {(adminReviewsData?.total ?? 0) > 20 && (
+              <div className="flex items-center justify-center gap-2">
+                <button onClick={() => setReviewAdminPage(p => Math.max(1, p - 1))} disabled={reviewAdminPage === 1}
+                  className="px-3 py-1 rounded-lg border border-border text-xs disabled:opacity-40 hover:bg-secondary">이전</button>
+                <span className="text-xs text-muted-foreground">{reviewAdminPage} / {Math.ceil((adminReviewsData?.total ?? 0) / 20)}</span>
+                <button onClick={() => setReviewAdminPage(p => p + 1)} disabled={reviewAdminPage >= Math.ceil((adminReviewsData?.total ?? 0) / 20)}
+                  className="px-3 py-1 rounded-lg border border-border text-xs disabled:opacity-40 hover:bg-secondary">다음</button>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
