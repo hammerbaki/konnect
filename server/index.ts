@@ -257,20 +257,41 @@ app.use((req, res, next) => {
             const jobsCount = parseInt(counts.jobs ?? '0');
             const univCount = parseInt(counts.universities ?? '0');
 
+            // ── Reachability check before any CareerNet calls ──
+            let careerNetReachable = false;
+            try {
+              const probe = await fetch(
+                'https://www.career.go.kr/cnet/openapi/getOpenApi.json?apiKey=d0b761c825e0a9e4b163e05c50d0bad8&svcType=api&svcCode=MAJOR&contentType=json&gubun=univ_list&thisPage=1&perPage=1',
+                { signal: AbortSignal.timeout(8000) }
+              );
+              careerNetReachable = probe.ok;
+            } catch (_) {
+              careerNetReachable = false;
+            }
+            console.log(`[DataSync] CareerNet API reachable: ${careerNetReachable}`);
+
             if (majorsCount === 0) {
-              console.log('[DataSync] cached_majors is empty — running initial CareerNet sync...');
-              try {
-                const r = await syncMajorsFromCareerNetNew((m) => console.log('[InitSync Majors]', m));
-                console.log('[DataSync] Initial major sync done:', r);
-              } catch (e) { console.error('[DataSync] Major initial sync error:', e); }
+              if (!careerNetReachable) {
+                console.log('[DataSync] cached_majors is empty but CareerNet is unreachable — skipping auto-sync. Populate manually.');
+              } else {
+                console.log('[DataSync] cached_majors is empty — running initial CareerNet sync...');
+                try {
+                  const r = await syncMajorsFromCareerNetNew((m) => console.log('[InitSync Majors]', m));
+                  console.log('[DataSync] Initial major sync done:', r);
+                } catch (e) { console.error('[DataSync] Major initial sync error:', e); }
+              }
             }
 
             if (jobsCount === 0) {
-              console.log('[DataSync] cached_jobs is empty — running initial CareerNet sync...');
-              try {
-                const r = await syncJobsFromCareerNetNew((m) => console.log('[InitSync Jobs]', m));
-                console.log('[DataSync] Initial job sync done:', r);
-              } catch (e) { console.error('[DataSync] Job initial sync error:', e); }
+              if (!careerNetReachable) {
+                console.log('[DataSync] cached_jobs is empty but CareerNet is unreachable — skipping auto-sync. Populate manually.');
+              } else {
+                console.log('[DataSync] cached_jobs is empty — running initial CareerNet sync...');
+                try {
+                  const r = await syncJobsFromCareerNetNew((m) => console.log('[InitSync Jobs]', m));
+                  console.log('[DataSync] Initial job sync done:', r);
+                } catch (e) { console.error('[DataSync] Job initial sync error:', e); }
+              }
             }
 
             if (univCount === 0) {
@@ -358,6 +379,16 @@ app.use((req, res, next) => {
           periodicSyncRunning = true;
           console.log('[PeriodicSync] Starting weekly CareerNet data refresh...');
           try {
+            // Reachability check first — skip if CareerNet is blocked
+            let reachable = false;
+            try {
+              const p = await fetch('https://www.career.go.kr/cnet/openapi/getOpenApi.json?apiKey=d0b761c825e0a9e4b163e05c50d0bad8&svcType=api&svcCode=MAJOR&contentType=json&gubun=univ_list&thisPage=1&perPage=1', { signal: AbortSignal.timeout(8000) });
+              reachable = p.ok;
+            } catch (_) { reachable = false; }
+            if (!reachable) {
+              console.log('[PeriodicSync] CareerNet unreachable — skipping weekly refresh. Data remains current.');
+              return;
+            }
             const majResult = await syncMajorsFromCareerNetNew((m) => console.log('[PeriodicSync Majors]', m));
             console.log('[PeriodicSync] Majors done:', majResult);
             const jobResult = await syncJobsFromCareerNetNew((m) => console.log('[PeriodicSync Jobs]', m));
