@@ -1,0 +1,27 @@
+index-DcJXzexn.js:315 [Referral] Checking URL for referral code: null
+linkify.js:96 Grabbit: Linkify enabled (Aggressive: false). Scanning page...
+index-DcJXzexn.js:315 [Auth] fetchUserData called, isNewSession: false
+index-DcJXzexn.js:315 [Auth] fetchUserData called, isNewSession: false
+api/explore/categories:1  Failed to load resource: the server responded with a status of 500 ()
+api/community/reviews?type=workbook&sort=recent&limit=5:1  Failed to load resource: the server responded with a status of 500 ()
+api/community/reviews?type=academy&sort=recent&limit=5:1  Failed to load resource: the server responded with a status of 500 ()
+api/community/reviews?type=lecture&sort=recent&limit=5:1  Failed to load resource: the server responded with a status of 500 ()
+api/bookmarks:1  Failed to load resource: the server responded with a status of 500 ()
+api/aptitude/latest:1  Failed to load resource: the server responded with a status of 500 ()
+api/aptitude/latest:1  Failed to load resource: the server responded with a status of 500 ()
+api/explore/categories:1  Failed to load resource: the server responded with a status of 500 ()
+api/community/reviews?type=academy&sort=recent&page=1&limit=15:1  Failed to load resource: the server responded with a status of 500 ()
+api/explore/categories:1  Failed to load resource: the server responded with a status of 500 ()
+api/explore/universities?page=1&limit=20&sort=name:1  Failed to load resource: the server responded with a status of 500 ()
+api/explore/counts:1  Failed to load resource: the server responded with a status of 500 ()
+api/bookmarks:1  Failed to load resource: the server responded with a status of 500 ()
+api/aptitude/latest:1  Failed to load resource: the server responded with a status of 500 ()
+api/explore/majors?page=1&limit=20:1  Failed to load resource: the server responded with a status of 500 ()
+api/explore/jobs?page=1&limit=20:1  Failed to load resource: the server responded with a status of 500 ()
+index-DcJXzexn.js:315 [Auth] fetchUserData called, isNewSession: true
+Connecting to 'https://cdn.jsdelivr.net/sm/49af798104dba87a942919357f383e653ce9152ba9bdc9bbfa8ba846a1b04235.map' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://apis.google.com https://api.tosspayments.com https://*.tosspayments.com". The request has been blocked.
+
+index-DcJXzexn.js:315 [Referral] New session detected, triggering claim
+index-DcJXzexn.js:315 [Referral] Retrieved referral code from localStorage: null
+index-DcJXzexn.js:315 [Referral] claimReferralReward called, code: null alreadyAttempted: false
+index-DcJXzexn.js:315 [Referral] Skipping claim - no code or already attempted
